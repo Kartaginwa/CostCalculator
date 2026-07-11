@@ -1,0 +1,261 @@
+import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.jsx';
+
+export const calculateCosts = (product, generalInfo, baseIngredients, allProducts, laborDatabase, overridePrice = null, memo = {}, visitedIds = new Set()) => {
+    if (memo[product.id]) {
+        return memo[product.id];
+    }
+
+    if (visitedIds.has(product.id)) {
+        console.error(`Boucle circulaire détectée pour le produit: ${product.platName}`);
+        // On retourne un objet de coûts vides pour éviter le crash
+        return {
+            totalIngredientsCost: 0, totalLaborCost: 0, totalDirectLaborCost: 0, indirectCostTotal: 0, totalRecipeCost: 0,
+            costMatierePerPortion: 0, costLaborPerPortion: 0, costIndirectPerPortion: 0, totalDirectCostPerPortion: 0,
+            totalCostPerPortion: 0, margeBruteDollar: 0, margeBrutePercent: 0, margeNetteDollar: 0, margeNettePercent: 0,
+            costMatierePercent: 0, costLaborPercent: 0, costIndirectPercent: 0, totalBaseIngredientsCost: 0, totalLossCost: 0
+        };
+    }
+
+    // On crée une copie de la pile actuelle et on y ajoute le produit courant
+    const currentPath = new Set(visitedIds);
+    currentPath.add(product.id);
+
+    // Note: This function now expects generalInfo to have pre-parsed numbers
+    const { totalIndirects, totalRevenue, operationCostPerHour, kitchenProductivity } = generalInfo;
+    const prixVente = overridePrice !== null ? parseLocaleNumber(overridePrice) : parseLocaleNumber(product.prixVente);
+    const nbPortions = parseInt(product.nbPortions, 10) || 1;
+    const productivityFactor = (kitchenProductivity > 0 && kitchenProductivity <= 100) ? kitchenProductivity / 100 : 1;
+        let totalIngredientsCost = 0;
+        let totalBaseIngredientsCost = 0;
+        let totalLossCost = 0;
+        let totalDirectLaborCost = 0;
+        let totalProductionMinutes = 0;
+
+        if (product.isResaleProduct) {
+            const purchaseCost = parseLocaleNumber(product.purchaseCost);
+            totalIngredientsCost = purchaseCost;
+            totalBaseIngredientsCost = purchaseCost;
+        } else {
+            // Coûts d'ingrédients
+            const ingredientsCosts = product.ingredients.reduce((acc, item) => {
+                let unitPrice = 0;
+                let lossPercentage = 0;
+                let ingredientUnit = 'unité';
+
+                // Tente de trouver l'ingrédient dans la liste de base
+                const baseIngredient = baseIngredients.find(ing => ing.id === item.id);
+
+                if (baseIngredient) { // C'est un ingrédient de base
+                    unitPrice = parseLocaleNumber(baseIngredient.unitPrice);
+                    lossPercentage = parseLocaleNumber(baseIngredient.lossPercentage) / 100;
+                    ingredientUnit = baseIngredient.unit;
+                } else { // Sinon, c'est peut-être une sous-recette
+                    const subRecipeProduct = allProducts.find(p => p.id === item.id);
+                    if (subRecipeProduct && subRecipeProduct.isIngredient) {
+                        // Appel récursif pour obtenir les coûts de la sous-recette
+                        const subRecipeCosts = calculateCosts(subRecipeProduct, generalInfo, baseIngredients, allProducts, laborDatabase, null, memo, currentPath);
+                        const sanitizedPortionSize = parseLocaleNumber(subRecipeProduct.portionSize) || 1;
+                        unitPrice = subRecipeCosts.totalCostPerPortion / sanitizedPortionSize;
+                        ingredientUnit = subRecipeProduct.portionUnit;
+                        // Note: La perte et le rendement sont gérés à l'intérieur de la sous-recette, donc lossPercentage est 0 ici.
+                    }
+                }
+
+                const recipeUnit = item.recipeUnit || ingredientUnit;
+                const conversionFactorFromRecipeToBase = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[ingredientUnit]?.factor || 1);
+                const quantityInBaseUnit = parseLocaleNumber(item.quantity) * conversionFactorFromRecipeToBase;
+                const baseCost = quantityInBaseUnit * unitPrice;
+
+                const costAfterLoss = lossPercentage > 0 && lossPercentage < 1
+                    ? baseCost / (1 - lossPercentage)
+                    : baseCost;
+
+                const lossCost = costAfterLoss - baseCost;
+
+                const yieldPercent = parseLocaleNumber(item.yieldPercentage);
+                const finalCost = (yieldPercent && yieldPercent > 0)
+                    ? costAfterLoss / (yieldPercent / 100)
+                    : costAfterLoss;
+
+                acc.totalBaseCost += baseCost;
+                acc.totalLossCost += lossCost;
+                acc.totalFinalCost += finalCost;
+
+                return acc;
+            }, { totalBaseCost: 0, totalLossCost: 0, totalFinalCost: 0 });
+
+                totalIngredientsCost = ingredientsCosts.totalFinalCost;
+                totalBaseIngredientsCost = ingredientsCosts.totalBaseCost;
+                totalLossCost = ingredientsCosts.totalLossCost;
+
+            // Coûts de main-d'œuvre basés sur les étapes de production
+            totalDirectLaborCost = 0;
+            totalProductionMinutes = 0;
+
+            (product.productionSteps || []).forEach(step => {
+                const durationSeconds = parseLocaleNumber(step.duration);
+
+                (step.personnel || []).forEach(person => {
+                    const postData = laborDatabase.find(p => p.postName === person.postId);
+                    if (postData && postData.employees.length > 0) {
+                        const totalHours = postData.employees.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
+                        const totalCost = postData.employees.reduce((sum, emp) => {
+                            const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
+                            return sum + (baseHourlyCost * parseLocaleNumber(emp.workedHours));
+                        }, 0);
+                        const weightedAverageCost = totalHours > 0 ? totalCost / totalHours : 0;
+
+                        totalDirectLaborCost += (durationSeconds / 3600) * weightedAverageCost;
+                    }
+                });
+
+                const endTime = parseLocaleNumber(step.startTime) + durationSeconds;
+                if (endTime > totalProductionMinutes) {
+                    totalProductionMinutes = endTime;
+                }
+            });
+        }
+
+
+    const totalLaborCost = totalDirectLaborCost / productivityFactor;
+
+    // Frais indirects
+    let indirectCostTotal = 0;
+    const method = product.indirectCosts.method;
+
+    if (method === 'laborIntensity') {
+        // Nouvelle méthode basée sur le temps de personnel total
+        let totalLaborTimeSeconds = 0;
+        (product.productionSteps || []).forEach(step => {
+            const durationSeconds = parseLocaleNumber(step.duration);
+            const personnelCount = step.personnel?.length || 0;
+            totalLaborTimeSeconds += durationSeconds * personnelCount;
+        });
+        // Convertit le temps total en secondes vers des heures pour le calcul
+        indirectCostTotal = (totalLaborTimeSeconds / 3600) * (operationCostPerHour || 0);
+    } else if (method === 'salesAllocation') {
+        // Répartit le pool total de frais indirects entre tous les produits actifs du
+        // menu au prorata de leur mix des ventes, normalisé sur la somme réelle des mix
+        // actifs (et non sur 100% implicite) afin que le total alloué corresponde
+        // exactement aux frais indirects réels même si les mix ne totalisent pas 100%.
+        // Note : le dénominateur "portions vendues" doit être une donnée indépendante du
+        // mix des ventes (saisie manuellement) — sans quoi le mix s'annule algébriquement
+        // dans le ratio $/portion et n'a alors plus aucun effet sur le résultat.
+        const totalIndirectsParsed = parseLocaleNumber(generalInfo.totalIndirects);
+        const menuRevenuePercentage = (parseLocaleNumber(generalInfo.menuRevenuePercentage) || 100) / 100;
+        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
+
+        // Si l'utilisateur n'a pas saisi de portions vendues (ex. projets existants créés
+        // avant l'ajout de ce champ), on se rabat sur une estimation à partir du revenu —
+        // moins précise (non sensible au mix), mais évite une division par une valeur par
+        // défaut de 1 qui ferait exploser le coût indirect calculé.
+        const portionsSoldRaw = parseLocaleNumber(product.indirectCosts.portionsSold);
+        const totalRevenueParsed = parseLocaleNumber(generalInfo.totalRevenue);
+        let portionsSold;
+        if (portionsSoldRaw > 0) {
+            portionsSold = portionsSoldRaw;
+        } else if (totalRevenueParsed > 0 && prixVente > 0) {
+            portionsSold = (totalRevenueParsed * menuRevenuePercentage * salesMixPercent) / prixVente;
+        } else {
+            portionsSold = 1;
+        }
+
+        const totalActiveSalesMix = (allProducts || [])
+            .filter(p => p.onMenu)
+            .reduce((sum, p) => sum + (parseLocaleNumber(p.salesMix) / 100), 0);
+
+        if (totalIndirectsParsed > 0 && totalActiveSalesMix > 0 && salesMixPercent > 0) {
+            const normalizedSharePercent = salesMixPercent / totalActiveSalesMix;
+            const allocatedIndirects = totalIndirectsParsed * normalizedSharePercent * menuRevenuePercentage;
+            indirectCostTotal = (allocatedIndirects / portionsSold) * nbPortions;
+        } else {
+            indirectCostTotal = 0;
+        }
+    } else if (method === 'portionAllocation') {
+        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
+        const allocatedIndirects = (totalIndirects || 0) * salesMixPercent;
+        const portionsSold = parseLocaleNumber(product.indirectCosts.portionsSold) || 1;
+        const indirectCostPerPortionCalc = allocatedIndirects / portionsSold;
+        indirectCostTotal = indirectCostPerPortionCalc * nbPortions;
+    } else if (method === 'fixed') {
+        indirectCostTotal = parseLocaleNumber(product.indirectCosts.fixedAmount) * nbPortions;
+    } else if (method === 'percentSales') {
+        indirectCostTotal = (prixVente * nbPortions) * (parseLocaleNumber(product.indirectCosts.percentSalesAmount) / 100);
+    } else if (method === 'percentDirect') {
+        indirectCostTotal = (totalIngredientsCost + totalLaborCost) * (parseLocaleNumber(product.indirectCosts.percentDirectAmount) / 100);
+    }
+
+    const totalRecipeCost = totalIngredientsCost + totalLaborCost + indirectCostTotal;
+
+    // Soupape de sécurité : ne s'applique qu'aux méthodes qui puisent réellement dans le
+    // pool "Total Frais Indirects" de l'entreprise (salesAllocation, portionAllocation).
+    // Les autres méthodes (fixed, percentSales, percentDirect, laborIntensity) sont des
+    // saisies indépendantes par produit et ne doivent pas être plafonnées par ce total —
+    // sans quoi un projet où ce champ est encore vide (0$) forcerait tous les coûts
+    // indirects à 0, quelle que soit la méthode choisie.
+    const methodsBoundedByTotalIndirects = ['salesAllocation', 'portionAllocation'];
+    if (methodsBoundedByTotalIndirects.includes(method)) {
+        const maxIndirects = parseLocaleNumber(generalInfo.totalIndirects);
+        if (indirectCostTotal > maxIndirects) {
+            indirectCostTotal = maxIndirects;
+        }
+    }
+
+    // Coûts par portion
+    let costMatierePerPortion = 0;
+    let costLaborPerPortion = 0;
+
+    if (product.isResaleProduct) {
+        costMatierePerPortion = nbPortions > 0 ? totalIngredientsCost / nbPortions : 0;
+        costLaborPerPortion = 0; // Un produit de revente n'a pas de coût de main-d'oeuvre direct
+    } else {
+        costMatierePerPortion = nbPortions > 0 ? totalIngredientsCost / nbPortions : 0;
+        costLaborPerPortion = nbPortions > 0 ? totalLaborCost / nbPortions : 0;
+    }
+
+    const costIndirectPerPortion = nbPortions > 0 ? indirectCostTotal / nbPortions : 0;
+
+    const totalDirectCostPerPortion = costMatierePerPortion + costLaborPerPortion;
+    const totalCostPerPortion = totalDirectCostPerPortion + costIndirectPerPortion;
+
+    // Marges
+    const margeBruteDollar = prixVente - totalDirectCostPerPortion;
+    const margeBrutePercent = prixVente > 0 ? margeBruteDollar / prixVente : 0;
+    const margeNetteDollar = prixVente - totalCostPerPortion;
+    const margeNettePercent = prixVente > 0 ? margeNetteDollar / prixVente : 0;
+
+    // Nouveaux pourcentages
+    const costMatierePercent = prixVente > 0 ? costMatierePerPortion / prixVente : 0;
+    const costLaborPercent = prixVente > 0 ? costLaborPerPortion / prixVente : 0;
+    const costIndirectPercent = prixVente > 0 ? costIndirectPerPortion / prixVente : 0;
+
+    const portionSize = parseLocaleNumber(product.portionSize) || 1;
+    const costPerUnit = portionSize > 0 ? totalCostPerPortion / portionSize : 0;
+
+    const result = {
+        totalIngredientsCost,
+        totalLaborCost,
+        totalDirectLaborCost,
+        indirectCostTotal,
+        totalRecipeCost,
+        costMatierePerPortion,
+        costLaborPerPortion,
+        costIndirectPerPortion,
+        totalDirectCostPerPortion,
+        totalCostPerPortion,
+        margeBruteDollar,
+        margeBrutePercent,
+        margeNetteDollar,
+        margeNettePercent,
+        costPerUnit,
+        costMatierePercent,
+        costLaborPercent,
+        costIndirectPercent,
+        totalBaseIngredientsCost,
+        totalLossCost
+    };
+
+    memo[product.id] = result;
+    return result;
+
+};

@@ -21,7 +21,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     currentPath.add(product.id);
 
     // Note: This function now expects generalInfo to have pre-parsed numbers
-    const { totalIndirects, totalRevenue, operationCostPerHour, kitchenProductivity } = generalInfo;
+    const { totalIndirects, operationCostPerHour, kitchenProductivity } = generalInfo;
     const prixVente = overridePrice !== null ? parseLocaleNumber(overridePrice) : parseLocaleNumber(product.prixVente);
     const nbPortions = parseInt(product.nbPortions, 10) || 1;
     const productivityFactor = (kitchenProductivity > 0 && kitchenProductivity <= 100) ? kitchenProductivity / 100 : 1;

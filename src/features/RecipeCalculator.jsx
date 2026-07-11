@@ -789,7 +789,7 @@ const handleIngredientUpdate = (itemIndex, selection) => {
                 {/* --- FIN DU BLOC A REMPLACER --- */}
                 {/* Diagramme de Gantt */}
                     <div className="mt-6">
-                        <GanttChart productionSteps={product.productionSteps} laborDatabase={laborDatabase} />
+                        <GanttChart productionSteps={product.productionSteps} />
                     </div>
                 <div className="mt-4 p-3 bg-yellow-100 rounded-md space-y-2">
                     <div className="grid grid-cols-2 gap-4">

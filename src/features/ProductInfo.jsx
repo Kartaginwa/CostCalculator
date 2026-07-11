@@ -6,7 +6,7 @@ import { useProject } from '../state/ProjectContext.jsx';
 
 export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct, handleProductValueChange, itemsPerPage, onItemsPerPageChange, onOpenPosImport }) => {
     const { companyName, onUpdateCompanyName, logoUrl, onUpdateLogoUrl, generalInfo, onUpdateGeneralInfo, products } = useProject();
-    const { period, totalIndirects, totalRevenue, operationHours, operationCostPerHour, kitchenProductivity, showProductivityWarning } = generalInfo;
+    const { period, operationCostPerHour, showProductivityWarning } = generalInfo;
 
     const [filterName, setFilterName] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');

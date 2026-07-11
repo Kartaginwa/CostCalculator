@@ -10,7 +10,6 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
     const fileInputRef = useRef(null);
     const [mappings, setMappings] = useState({});
     const [processedData, setProcessedData] = useState([]);
-    const [importSummary, setImportSummary] = useState(null);
     const [sheetNames, setSheetNames] = useState([]);
     const [selectedSheet, setSelectedSheet] = useState('');
     const [workbook, setWorkbook] = useState(null);
@@ -46,8 +45,6 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                 reverseMappings[mappings[key]] = key;
             }
         }
-        const processedIdentifiers = new Map();
-
         const dataToProcess = [];
         const seenIdentifiers = new Set(); // Pour suivre les doublons dans le fichier
 
@@ -140,7 +137,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
         setProcessedData(dataToProcess);
         setSelectedItems(new Set(dataToProcess.filter(i => i.importStatus !== 'error').map(i => i.rowIndex)));
 
-    }, [step, fileData, mappings, baseIngredients]);
+    }, [step, fileData, mappings, baseIngredients, defaultProvider]);
 
     // Tente de deviner les correspondances initiales
     useEffect(() => {
@@ -250,15 +247,11 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
     const handleImport = () => {
         let updatedCount = 0;
         let newCount = 0;
-        let errorCount = 0;
-        const errorRows = [];
 
         let ingredientsToUpdate = [...baseIngredients];
 
         processedData.filter(item => selectedItems.has(item.rowIndex)).forEach(item => {
             if (item.importStatus === 'error') {
-                errorCount++;
-                errorRows.push({ ...item.originalData, Erreur: Object.values(item.errors).join(' ') });
                 return;
             }
 
@@ -338,13 +331,6 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
         } else {
             setSelectedItems(new Set());
         }
-    };
-
-    const handleSelectUpdates = () => {
-        const updates = processedData
-            .filter(item => item.importStatus === 'update')
-            .map(item => item.rowIndex);
-        setSelectedItems(new Set(updates));
     };
 
     const handleManualLink = (rowIndex, linkedIngredientId) => {

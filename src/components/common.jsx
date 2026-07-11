@@ -212,11 +212,17 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
     );
 };
 
-export const GanttChart = ({ productionSteps, laborDatabase }) => {
+// Palette hissée hors du composant : une constante recréée à chaque rendu invaliderait la
+// mémoïsation de postColorMap ci-dessous à chaque fois.
+const GANTT_POST_COLORS = ['bg-blue-500', 'bg-green-500', 'bg-indigo-500', 'bg-pink-500', 'bg-amber-500', 'bg-teal-500'];
+
+export const GanttChart = ({ productionSteps }) => {
     // Les hooks doivent s'exécuter dans le même ordre à chaque rendu : on ne peut pas les
     // placer après un retour anticipé (sinon React plante dès qu'on passe de 0 à 1 étape).
-    // On retombe donc sur un tableau vide plutôt que de sortir avant les hooks.
-    const steps = productionSteps || [];
+    // On retombe donc sur un tableau vide plutôt que de sortir avant les hooks. Mémoïsé pour
+    // que les useMemo ci-dessous ne recalculent pas à chaque rendu quand productionSteps est
+    // vide (sinon `[]` recrée une référence différente à chaque fois).
+    const steps = useMemo(() => productionSteps || [], [productionSteps]);
 
     // Calculate total duration for the timeline
     const totalDuration = useMemo(() => {
@@ -225,12 +231,11 @@ export const GanttChart = ({ productionSteps, laborDatabase }) => {
     }, [steps]);
 
     // Color mapping for posts
-    const colors = ['bg-blue-500', 'bg-green-500', 'bg-indigo-500', 'bg-pink-500', 'bg-amber-500', 'bg-teal-500'];
     const postColorMap = useMemo(() => {
         const postNames = new Set(steps.flatMap(step => (step.personnel || []).map(p => p.postId)));
         const uniquePosts = Array.from(postNames);
         return uniquePosts.reduce((acc, post, index) => {
-            acc[post] = colors[index % colors.length];
+            acc[post] = GANTT_POST_COLORS[index % GANTT_POST_COLORS.length];
             return acc;
         }, {});
     }, [steps]);

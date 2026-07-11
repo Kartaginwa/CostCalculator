@@ -122,8 +122,6 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
     const [sortConfig, setSortConfig] = useState({ key: 'costs.margeNettePercent', direction: 'descending' });
     const [showAllContributions, setShowAllContributions] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isSortDisabled, setIsSortDisabled] = useState(false);
-
     useEffect(() => {
         setCurrentPage(1);
     }, [sortConfig]);
@@ -170,7 +168,6 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
     const totalContributionsCount = contributionData.length;
 
     const requestSort = (key) => {
-        setIsSortDisabled(false);
         let direction = 'ascending';
         if (sortConfig.key === key && sortConfig.direction === 'ascending') {
             direction = 'descending';

@@ -69,7 +69,7 @@ const App = () => {
     const [showOnboardingModal, setShowOnboardingModal] = useState(false);
     const [runTutorial, setRunTutorial] = useState(false);
     const [tutorialStep, setTutorialStep] = useState(0);
-    const [undoState, setUndoState] = useState(null); // Pour la logique d'annulation
+    const [, setUndoState] = useState(null); // Pour la logique d'annulation
 
     const [openPostIds, setOpenPostIds] = useState(new Set());
     const [openRecipeSections, setOpenRecipeSections] = useState(new Set(['ingredients', 'labor', 'indirects', 'recap']));
@@ -944,8 +944,6 @@ const App = () => {
             const startX = 14;
             const gap = 5;
             const quadrantWidth = (pageWidth - (startX * 2) - gap) / 2;
-            const estimatedQuadrantHeight = 70; // Hauteur estimée pour une rangée de quadrants
-            const requiredHeightForMatrix = 15 + (estimatedQuadrantHeight * 2); // Hauteur pour le titre + 2 rangées
 
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
@@ -1167,7 +1165,7 @@ const App = () => {
             doc.text("Analyse Détaillée par Produit", pageWidth / 2, pageHeight / 2, { align: 'center' });
 
             // Pages 6 et suivantes: Boucle sur chaque produit
-            productsWithCosts.forEach((product, index) => {
+            productsWithCosts.forEach((product) => {
                 const costs = product.costs; // Les coûts sont déjà calculés dans productsWithCosts
                 const productivityFactor = (calculatedGeneralInfo.kitchenProductivity > 0 && calculatedGeneralInfo.kitchenProductivity <= 100) ? calculatedGeneralInfo.kitchenProductivity / 100 : 1;
                 
@@ -1349,7 +1347,6 @@ const App = () => {
                     tableWidth: tableWidth,
                     margin: { left: 14 }
                 });
-                const leftFinalY = doc.lastAutoTable.finalY;
 
                 // Section 5: Point Mort et Classification
                 const breakEvenInfo = (() => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowUpDown, Upload, AlertCircle, Copy, Trash2 } from 'lucide-react';
 import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.jsx';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal } from '../components/common.jsx';
@@ -6,7 +6,7 @@ import { ImportWizardModal } from './ImportWizardModal.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { ingredientsList, baseIngredients, onUpdateIngredientsList, products, generalInfo, showNotification, setNotification, analysisData } = useProject();
+    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, analysisData } = useProject();
 
     // --- LOGIQUE CENTRALISÉE : ON EXTRAIT LES DONNÉES DU CERVEAU ---
     // // you should modify this part : on récupère les données pré-calculées
@@ -16,8 +16,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     const [filterProvider, setFilterProvider] = useState('all');
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
     const [newlyAddedId, setNewlyAddedId] = useState(null);
-    const [editingIngredientId, setEditingIngredientId] = useState(null); 
-    const prevIngredientsLength = useRef(baseIngredients.length);
+    const [editingIngredientId, setEditingIngredientId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [comparisonIngredient, setComparisonIngredient] = useState('');
     const [isSortDisabled, setIsSortDisabled] = useState(false);

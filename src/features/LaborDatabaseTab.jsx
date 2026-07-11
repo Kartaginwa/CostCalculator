@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { XCircle, ChevronDown, Copy, Trash2 } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency } from '../utils.jsx';
 import { Tooltip } from '../components/common.jsx';
@@ -22,7 +22,6 @@ const togglePost = (postId) => {
         return newSet;
     });
 };
-const prevLaborDbRef = useRef(JSON.parse(JSON.stringify(laborDatabase)));
 
 useEffect(() => {
     if (newlyAddedPostId) {

@@ -10,24 +10,30 @@ export const toProjectState = (flatState) => ({
     uiSettings: flatState.uiSettings,
 });
 
+// Résout une "valeur ou fonction de mise à jour" (même convention que useState) contre la
+// valeur actuelle. Fait ici, dans le reducer, plutôt que dans les setters exposés par App.jsx,
+// pour que ces derniers puissent être stables (dispatch seul en dépendance) sans avoir besoin
+// de fermer sur l'état courant — ce qui permet de mémoïser le contexte du projet.
+const resolve = (value, currentValue) => (typeof value === 'function' ? value(currentValue) : value);
+
 export function projectReducer(state, action) {
     switch (action.type) {
         case 'SET_COMPANY_NAME':
-            return { ...state, companyName: action.payload };
+            return { ...state, companyName: resolve(action.payload, state.companyName) };
         case 'SET_LOGO_URL':
-            return { ...state, logoUrl: action.payload };
+            return { ...state, logoUrl: resolve(action.payload, state.logoUrl) };
         case 'SET_GENERAL_INFO':
-            return { ...state, generalInfo: action.payload };
+            return { ...state, generalInfo: resolve(action.payload, state.generalInfo) };
         case 'SET_BASE_INGREDIENTS':
-            return { ...state, baseIngredients: action.payload };
+            return { ...state, baseIngredients: resolve(action.payload, state.baseIngredients) };
         case 'SET_PRODUCTS':
-            return { ...state, products: action.payload };
+            return { ...state, products: resolve(action.payload, state.products) };
         case 'SET_LABOR_DATABASE':
-            return { ...state, laborDatabase: action.payload };
+            return { ...state, laborDatabase: resolve(action.payload, state.laborDatabase) };
         case 'SET_TRACKING_POINTS':
-            return { ...state, trackingPoints: action.payload };
+            return { ...state, trackingPoints: resolve(action.payload, state.trackingPoints) };
         case 'SET_UI_SETTINGS':
-            return { ...state, uiSettings: action.payload };
+            return { ...state, uiSettings: resolve(action.payload, state.uiSettings) };
         default:
             return state;
     }

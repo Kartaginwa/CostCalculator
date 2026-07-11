@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
     Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
     PlusCircle, TrendingUp, Settings,
@@ -36,17 +36,26 @@ const App = () => {
     const [projectState, dispatch] = useReducer(projectReducer, undefined, () => toProjectState(getEmptyState()));
     const { companyName, logoUrl, generalInfo, baseIngredients, products, trackingPoints, laborDatabase, uiSettings } = projectState;
 
-    const makeSetter = (type, key) => (value) =>
-        dispatch({ type, payload: typeof value === 'function' ? value(projectState[key]) : value });
-
-    const setCompanyName = makeSetter('SET_COMPANY_NAME', 'companyName');
-    const setLogoUrl = makeSetter('SET_LOGO_URL', 'logoUrl');
-    const setGeneralInfo = makeSetter('SET_GENERAL_INFO', 'generalInfo');
-    const setBaseIngredients = makeSetter('SET_BASE_INGREDIENTS', 'baseIngredients');
-    const setProducts = makeSetter('SET_PRODUCTS', 'products');
-    const setLaborDatabase = makeSetter('SET_LABOR_DATABASE', 'laborDatabase');
-    const setTrackingPoints = makeSetter('SET_TRACKING_POINTS', 'trackingPoints');
-    const setUiSettings = makeSetter('SET_UI_SETTINGS', 'uiSettings');
+    // Setters stables (dispatch seul en dépendance, garanti stable par React) : la résolution
+    // des mises à jour fonctionnelles (value => ...) se fait dans le reducer lui-même plutôt
+    // que par fermeture sur projectState ici. Nécessaire pour pouvoir mémoïser sereinement
+    // projectContextValue plus bas (sinon un nouveau setter à chaque rendu invaliderait le memo).
+    const {
+        setCompanyName, setLogoUrl, setGeneralInfo, setBaseIngredients,
+        setProducts, setLaborDatabase, setTrackingPoints, setUiSettings,
+    } = useMemo(() => {
+        const makeSetter = (type) => (value) => dispatch({ type, payload: value });
+        return {
+            setCompanyName: makeSetter('SET_COMPANY_NAME'),
+            setLogoUrl: makeSetter('SET_LOGO_URL'),
+            setGeneralInfo: makeSetter('SET_GENERAL_INFO'),
+            setBaseIngredients: makeSetter('SET_BASE_INGREDIENTS'),
+            setProducts: makeSetter('SET_PRODUCTS'),
+            setLaborDatabase: makeSetter('SET_LABOR_DATABASE'),
+            setTrackingPoints: makeSetter('SET_TRACKING_POINTS'),
+            setUiSettings: makeSetter('SET_UI_SETTINGS'),
+        };
+    }, [dispatch]);
 
     const [activeTab, setActiveTab] = useState('info');
     const [editingProductIndex, setEditingProductIndex] = useState(0);
@@ -145,7 +154,9 @@ const App = () => {
         generatePdf(options); 
     };
 
-    const showNotification = ({ message, type = 'success', onUndo }) => {
+    // Stable (ne ferme que sur des setters useState, eux-mêmes stables) : nécessaire pour que
+    // projectContextValue puisse être mémoïsé sans se recréer à chaque rendu de App.
+    const showNotification = useCallback(({ message, type = 'success', onUndo }) => {
         // Crée un ID unique pour cette notification pour éviter les conflits de timers
         const id = Date.now();
 
@@ -160,7 +171,7 @@ const App = () => {
         };
 
         setNotification({ id, message, type, onClose: closeNotification, onUndo });
-    };
+    }, []);
 
     // Charger le logo de l'application pour le PDF
     useEffect(() => {
@@ -278,9 +289,11 @@ const App = () => {
             });
         return [...baseIngredients, ...recipeIngredients];
     }, [products, baseIngredients, calculatedGeneralInfo]);
-    const handleUpdateGeneralInfo = (field, value) => {
+    // Stable (setGeneralInfo est lui-même stable) : nécessaire pour la mémoïsation de
+    // projectContextValue.
+    const handleUpdateGeneralInfo = useCallback((field, value) => {
         setGeneralInfo(prev => ({ ...prev, [field]: value }));
-    };
+    }, [setGeneralInfo]);
 
     const handleProductValueChange = (index, field, value) => {
         const newProducts = [...products];
@@ -1992,7 +2005,10 @@ const App = () => {
         // Données et setters du projet, exposés via ProjectContext pour éviter de les faire
         // descendre manuellement à travers chaque onglet. Seul l'état UI local à un onglet
         // (pagination, accordéons ouverts...) continue de transiter par les props ci-dessous.
-        const projectContextValue = {
+        // Mémoïsé : tous les setters/handlers ici sont stables (voir plus haut), donc cet objet
+        // ne change de référence que lorsque les données qu'il transporte changent réellement —
+        // sans quoi les 6 onglets se re-rendraient à chaque rendu de App, quelle qu'en soit la cause.
+        const projectContextValue = useMemo(() => ({
             companyName, onUpdateCompanyName: setCompanyName,
             logoUrl, onUpdateLogoUrl: setLogoUrl,
             generalInfo: calculatedGeneralInfo, onUpdateGeneralInfo: handleUpdateGeneralInfo,
@@ -2002,7 +2018,13 @@ const App = () => {
             trackingPoints, setTrackingPoints,
             analysisData,
             showNotification, setNotification,
-        };
+        }), [
+            companyName, setCompanyName, logoUrl, setLogoUrl,
+            calculatedGeneralInfo, handleUpdateGeneralInfo,
+            products, setProducts, baseIngredients, setBaseIngredients, ingredientsList,
+            laborDatabase, setLaborDatabase, trackingPoints, setTrackingPoints,
+            analysisData, showNotification, setNotification,
+        ]);
 
         const renderActiveTab = () => {
 

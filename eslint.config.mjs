@@ -48,11 +48,11 @@ export default [
         },
     },
     {
-        files: ['*.config.mjs', 'eslint.config.mjs'],
+        files: ['*.config.mjs', 'eslint.config.mjs', 'playwright.config.js', 'e2e/**/*.js'],
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'module',
-            globals: { ...globals.node },
+            globals: { ...globals.node, ...globals.browser },
         },
     },
 ];

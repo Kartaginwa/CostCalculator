@@ -2,7 +2,14 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <!-- La balise meta http-equiv="Content-Security-Policy" a été retirée -->
+    <!--
+      CSP restrictive : tous les scripts/styles/images de l'app sont désormais servis en
+      local (plus de dépendance CDN depuis le retrait du chargement distant de xlsx), donc
+      'self' suffit. 'unsafe-inline' sur style-src est nécessaire pour les styles inline React
+      (style={{...}}) utilisés dans plusieurs composants (Tooltip, Combobox, GanttChart...).
+      ws:/wss: sur connect-src permet le rechargement à chaud de Vite en développement.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self';" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calculateur coût de revient</title>
   </head>

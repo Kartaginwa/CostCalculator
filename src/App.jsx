@@ -288,7 +288,7 @@ const App = () => {
                 };
             });
         return [...baseIngredients, ...recipeIngredients];
-    }, [products, baseIngredients, calculatedGeneralInfo]);
+    }, [products, baseIngredients, calculatedGeneralInfo, laborDatabase]);
     // Stable (setGeneralInfo est lui-même stable) : nécessaire pour la mémoïsation de
     // projectContextValue.
     const handleUpdateGeneralInfo = useCallback((field, value) => {
@@ -705,55 +705,6 @@ const App = () => {
                     doc.text(`Page ${i} sur ${pageCount}`, pageWidth / 2, pageHeight - 7, { align: 'center' });
                     doc.text(`Rapport généré le ${new Date().toLocaleDateString('fr-FR')}`, 14, pageHeight - 7);
                 }
-            };
-
-            const drawPdfPieChart = (doc, { title, data, x, y, radius = 25 }) => {
-                const totalValue = data.reduce((sum, slice) => sum + slice.value, 0);
-                if (totalValue <= 0) return y;
-            
-                const chartX = x + radius;
-                const chartY = y + 10 + radius;
-                let startAngleDeg = -90;
-            
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(themeColors.darkText);
-                const titleLines = doc.splitTextToSize(title, (radius * 2) + 10);
-                doc.text(titleLines, x + radius, y, { align: 'center' });
-            
-                data.forEach(slice => {
-                    if (slice.value <= 0) return;
-                    const sliceAngleDeg = (slice.value / totalValue) * 360;
-                    const endAngleDeg = startAngleDeg + sliceAngleDeg;
-            
-                    doc.setFillColor(slice.color[0], slice.color[1], slice.color[2]);
-                    
-                    doc.moveTo(chartX, chartY);
-                    const steps = Math.max(2, Math.ceil(Math.abs(sliceAngleDeg) / 5));
-                    for (let i = 0; i <= steps; i++) {
-                        const angle = startAngleDeg + (i * (sliceAngleDeg / steps));
-                        const angleRad = angle * Math.PI / 180;
-                        doc.lineTo(chartX + radius * Math.cos(angleRad), chartY + radius * Math.sin(angleRad));
-                    }
-                    doc.lineTo(chartX, chartY);
-                    doc.fill();
-            
-                    startAngleDeg = endAngleDeg;
-                });
-            
-                let legendY = chartY + radius + 10;
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
-                data.forEach(slice => {
-                    doc.setFillColor(slice.color[0], slice.color[1], slice.color[2]);
-                    doc.rect(x, legendY - 2.5, 3, 3, 'F');
-                    doc.setTextColor(themeColors.darkText);
-                    const percentage = (slice.value / totalValue * 100).toFixed(1);
-                    doc.text(`${slice.label}: ${percentage}% (${formatCurrency(slice.value)}$)`, x + 5, legendY);
-                    legendY += 6;
-                });
-            
-                return legendY;
             };
 
             const drawPdfLineChart = (doc, { title, data, lines, x, y, width, height }) => {

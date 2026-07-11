@@ -9,5 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // e2e/ contient les tests Playwright (npm run test:e2e), pas des tests Vitest.
+    exclude: ['**/node_modules/**', 'e2e/**'],
   },
 });

@@ -11,11 +11,15 @@ import { useProject } from '../state/ProjectContext.jsx';
 
 export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRecipeSections, setOpenRecipeSections }) => {
     const { products, baseIngredients, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification } = useProject();
+    const product = products[editingProductIndex] || null;
+
     const [isSimulating, setIsSimulating] = useState(false);
     const [simulatedPrice, setSimulatedPrice] = useState('');
     const [newlyAddedRowId, setNewlyAddedRowId] = useState(null);
     const [newlyAddedStepId, setNewlyAddedStepId] = useState(null);
     const [isResaleAllergenModalOpen, setIsResaleAllergenModalOpen] = useState(false);
+    const [draggedItem, setDraggedItem] = useState(null); // { index: number, type: 'ingredient' | 'step' }
+    const [editingStepIndex, setEditingStepIndex] = useState(null);
 
     const toggleSection = (sectionId) => {
         setOpenRecipeSections(prev => {
@@ -45,26 +49,91 @@ export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRec
     }, [newlyAddedStepId]);
 
 
-    if (!products[editingProductIndex]) return <div className="text-center p-8">Veuillez d'abord sélectionner ou ajouter un plat.</div>;
-    
-    const product = products[editingProductIndex];
-        const recipeAllergens = useMemo(() => {
-            // SI c'est un produit de revente, on utilise sa liste manuelle
-            if (product.isResaleProduct) {
-                return product.manualAllergens || [];
+    // Tous les hooks ci-dessous doivent s'exécuter dans le même ordre à chaque rendu : on ne
+    // peut pas les placer après un retour anticipé, sinon React plante dès qu'on passe de 0 à
+    // 1 produit (nombre de hooks incohérent entre deux rendus du même composant monté).
+    const recipeAllergens = useMemo(() => {
+        if (!product) return [];
+        // SI c'est un produit de revente, on utilise sa liste manuelle
+        if (product.isResaleProduct) {
+            return product.manualAllergens || [];
+        }
+        // SINON, on calcule à partir des ingrédients
+        const allergens = new Set();
+        (product.ingredients || []).forEach(item => {
+            const baseIngredient = ingredientsList.find(ing => ing.id === item.id);
+            if (baseIngredient && baseIngredient.allergens) {
+                baseIngredient.allergens.forEach(allergen => allergens.add(allergen));
             }
-            // SINON, on calcule à partir des ingrédients
-            const allergens = new Set();
-            (product.ingredients || []).forEach(item => {
-                const baseIngredient = ingredientsList.find(ing => ing.id === item.id);
-                if (baseIngredient && baseIngredient.allergens) {
-                    baseIngredient.allergens.forEach(allergen => allergens.add(allergen));
-                }
-            });
-            return Array.from(allergens);
-        }, [product, ingredientsList]);
+        });
+        return Array.from(allergens);
+    }, [product, ingredientsList]);
 
-    const [draggedItem, setDraggedItem] = useState(null); // { index: number, type: 'ingredient' | 'step' }
+    const costs = product ? calculateCosts(product, generalInfo, baseIngredients, products, laborDatabase) : null;
+
+    const productionSummary = useMemo(() => {
+        if (!product || !product.productionSteps || product.productionSteps.length === 0) {
+            return { totalProductionTime: 0, totalLaborTime: 0, laborIntensity: 0 };
+        }
+
+        let totalProductionTime = 0;
+        let totalLaborTime = 0;
+
+        product.productionSteps.forEach(step => {
+            const duration = parseLocaleNumber(step.duration) || 0;
+            const startTime = parseLocaleNumber(step.startTime) || 0;
+            const personnelCount = step.personnel?.length || 0;
+
+            const endTime = startTime + duration;
+            if (endTime > totalProductionTime) {
+                totalProductionTime = endTime;
+            }
+            totalLaborTime += duration * personnelCount;
+        });
+
+        const laborIntensity = totalProductionTime > 0 ? (totalLaborTime / totalProductionTime) : 0;
+
+        return { totalProductionTime, totalLaborTime, laborIntensity };
+    }, [product]);
+
+    const flashTotalCost = useValueFlash(costs?.totalCostPerPortion ?? 0);
+    const flashNetMargin = useValueFlash(costs?.margeNetteDollar ?? 0);
+
+    const simulatedCosts = (product && isSimulating && isValidNumber(simulatedPrice))
+        ? calculateCosts(product, generalInfo, baseIngredients, products, laborDatabase, simulatedPrice)
+        : null;
+
+    const { breakEvenForProduct, breakEvenDescription } = useMemo(() => {
+        if (!product || !costs) return { breakEvenForProduct: null, breakEvenDescription: '' };
+        const relevantCosts = simulatedCosts || costs;
+        if (relevantCosts.margeBruteDollar <= 0) {
+            return { breakEvenForProduct: null, breakEvenDescription: "La marge brute par unité est nulle ou négative. Le point mort ne peut être atteint." };
+        }
+
+        const method = product.indirectCosts.method;
+        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
+
+        if (['fixed', 'percentSales', 'percentDirect'].includes(method)) {
+             return {
+                breakEvenForProduct: null,
+                breakEvenDescription: `Avec cette méthode, le coût indirect est une charge variable par unité. Le produit est rentable si sa marge nette (${formatCurrency(relevantCosts.margeNetteDollar)}$) est positive.`
+            };
+        }
+
+        if (salesMixPercent <= 0) {
+            return { breakEvenForProduct: null, breakEvenDescription: "Le mix des ventes doit être supérieur à 0 pour calculer le point mort." };
+        }
+
+        const allocatedIndirects = parseLocaleNumber(generalInfo.totalIndirects) * salesMixPercent;
+        const breakEvenUnits = Math.ceil(allocatedIndirects / relevantCosts.margeBruteDollar);
+        return {
+            breakEvenForProduct: breakEvenUnits,
+            breakEvenDescription: "Unités à vendre pour couvrir la part des frais indirects totaux allouée à ce plat (basé sur le mix des ventes)."
+        };
+
+    }, [product, generalInfo.totalIndirects, costs, simulatedCosts]);
+
+    if (!product) return <div className="text-center p-8">Veuillez d'abord sélectionner ou ajouter un plat.</div>;
 
     const handleDragStart = (e, index, type) => {
         setDraggedItem({ index, type });
@@ -103,41 +172,6 @@ export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRec
     const handleDragEnd = () => {
         setDraggedItem(null);
     };
-
-    
-    // Calculs
-    const costs = calculateCosts(product, generalInfo, baseIngredients, products, laborDatabase);
-
-    const productionSummary = useMemo(() => {
-        if (!product.productionSteps || product.productionSteps.length === 0) {
-            return { totalProductionTime: 0, totalLaborTime: 0, laborIntensity: 0 };
-        }
-
-        let totalProductionTime = 0;
-        let totalLaborTime = 0;
-
-        product.productionSteps.forEach(step => {
-            const duration = parseLocaleNumber(step.duration) || 0;
-            const startTime = parseLocaleNumber(step.startTime) || 0;
-            const personnelCount = step.personnel?.length || 0;
-
-            const endTime = startTime + duration;
-            if (endTime > totalProductionTime) {
-                totalProductionTime = endTime;
-            }
-            totalLaborTime += duration * personnelCount;
-        });
-
-        const laborIntensity = totalProductionTime > 0 ? (totalLaborTime / totalProductionTime) : 0;
-
-        return { totalProductionTime, totalLaborTime, laborIntensity };
-    }, [product.productionSteps]);
-
-    const flashTotalCost = useValueFlash(costs.totalCostPerPortion);
-    const flashNetMargin = useValueFlash(costs.margeNetteDollar);
-    const simulatedCosts = isSimulating && isValidNumber(simulatedPrice)
-        ? calculateCosts(product, generalInfo, baseIngredients, products, laborDatabase, simulatedPrice)
-        : null;
 
     const productivityFactor = (generalInfo.kitchenProductivity > 0 && generalInfo.kitchenProductivity <= 100) ? generalInfo.kitchenProductivity / 100 : 1;
     const availableIngredients = ingredientsList.filter(ing => ing.id !== product.id);
@@ -243,8 +277,6 @@ export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRec
         });
         onUpdateProducts(newProducts);
     };
-
-    const [editingStepIndex, setEditingStepIndex] = useState(null);
 
     const openPersonnelModal = (index) => {
         setEditingStepIndex(index);
@@ -378,36 +410,6 @@ const handleIngredientUpdate = (itemIndex, selection) => {
         if (margin < 0) return 'text-red-600';
         return 'text-gray-800';
     };
-
-    const { breakEvenForProduct, breakEvenDescription } = useMemo(() => {
-        const relevantCosts = simulatedCosts || costs;
-        if (relevantCosts.margeBruteDollar <= 0) {
-            return { breakEvenForProduct: null, breakEvenDescription: "La marge brute par unité est nulle ou négative. Le point mort ne peut être atteint." };
-        }
-
-        const method = product.indirectCosts.method;
-        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-
-        if (['fixed', 'percentSales', 'percentDirect'].includes(method)) {
-             return {
-                breakEvenForProduct: null,
-                breakEvenDescription: `Avec cette méthode, le coût indirect est une charge variable par unité. Le produit est rentable si sa marge nette (${formatCurrency(relevantCosts.margeNetteDollar)}$) est positive.`
-            };
-        }
-
-        if (salesMixPercent <= 0) {
-            return { breakEvenForProduct: null, breakEvenDescription: "Le mix des ventes doit être supérieur à 0 pour calculer le point mort." };
-        }
-        
-        const allocatedIndirects = parseLocaleNumber(generalInfo.totalIndirects) * salesMixPercent;
-        const breakEvenUnits = Math.ceil(allocatedIndirects / relevantCosts.margeBruteDollar);
-        return {
-            breakEvenForProduct: breakEvenUnits,
-            breakEvenDescription: "Unités à vendre pour couvrir la part des frais indirects totaux allouée à ce plat (basé sur le mix des ventes)."
-        };
-
-    }, [product, generalInfo.totalIndirects, costs, simulatedCosts]);
-    
 
     const renderComparison = (original, simulated, formatFn, higherIsBetter, suffix = '') => {
         const diff = simulated - original;

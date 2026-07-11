@@ -13,7 +13,8 @@
     "build:linux": "npm run build && npx electron-builder --linux",
     "postinstall": "node scripts/copy-libs.cjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint ."
   },
   "dependencies": {
     "jspdf": "^3.0.2",
@@ -49,12 +50,17 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.20",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "electron": "^29.0.0",
     "electron-builder": "^26.0.12",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.7.0",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.13",
     "vite": "^7.1.3",

@@ -5,6 +5,28 @@ import { parseLocaleNumber } from '../utils.jsx';
 import { calculateCosts } from '../engine/calculateCosts.js';
 import { useProject } from '../state/ProjectContext.jsx';
 
+// Doit être déclaré en dehors de SimpleLineChart : un composant recréé à chaque rendu
+// perdrait son état à chaque frappe. Recharts fournit déjà le point de donnée complet via
+// payload[0].payload, donc ce composant n'a besoin d'aucune fermeture sur les props du parent.
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        const pointData = payload[0]?.payload;
+        return (
+            <div className="bg-white p-4 border rounded-lg shadow-lg">
+                <p className="font-bold mb-2">{label}</p>
+                {pointData && <p className="text-xs text-gray-500 mb-2">{pointData.name}</p>}
+                {payload.map(pld => (
+                    <p key={pld.dataKey} style={{ color: pld.color }}>
+                        {`${pld.name}: ${pld.value.toFixed(2)}${pld.payload[pld.dataKey + "_unit"] || ''}`}
+                    </p>
+                ))}
+                 {pointData && pointData.note && <p className="text-xs text-gray-600 mt-2 border-t pt-2">Note: {pointData.note}</p>}
+            </div>
+        );
+    }
+    return null;
+};
+
 // --- NOUVEAU COMPOSANT GRAPHIQUE (AVEC RECHARTS) ---
 const SimpleLineChart = ({ data, lines, yAxisLabel }) => {
     // Cette version utilise directement les composants importés
@@ -21,26 +43,6 @@ const SimpleLineChart = ({ data, lines, yAxisLabel }) => {
         if (yAxisLabel && yAxisLabel.includes('%')) return `${value.toFixed(0)}%`;
         if (yAxisLabel && yAxisLabel.includes('$')) return `${value.toFixed(2)}$`;
         return value.toFixed(1);
-    };
-
-    // Custom Tooltip Component
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            const pointData = data.find(d => d.label === label);
-            return (
-                <div className="bg-white p-4 border rounded-lg shadow-lg">
-                    <p className="font-bold mb-2">{label}</p>
-                    {pointData && <p className="text-xs text-gray-500 mb-2">{pointData.name}</p>}
-                    {payload.map(pld => (
-                        <p key={pld.dataKey} style={{ color: pld.color }}>
-                            {`${pld.name}: ${pld.value.toFixed(2)}${pld.payload[pld.dataKey + "_unit"] || ''}`}
-                        </p>
-                    ))}
-                     {pointData && pointData.note && <p className="text-xs text-gray-600 mt-2 border-t pt-2">Note: {pointData.note}</p>}
-                </div>
-            );
-        }
-        return null;
     };
 
     // Add unit to each data point for tooltip

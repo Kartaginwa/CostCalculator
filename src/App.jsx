@@ -1,10 +1,7 @@
 import React, { useState, useReducer, useRef, useMemo, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import {
-    GripVertical, Users, ChefHat, Table, Info, ShoppingCart, FileDown, Trash2, Save, FolderOpen,
-    PlusCircle, AlertTriangle, HelpCircle, X, Copy, Star, Milk, HelpCircle as QuestionMark, Bone,
-    ArrowUpDown, Scale, Upload, CheckCircle, FilePlus, FileText, History, Camera, TrendingUp,
-    Pencil, Settings, XCircle, AlertCircle, ChevronDown
+    Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
+    PlusCircle, TrendingUp, Settings,
 } from 'lucide-react';
 
 import {

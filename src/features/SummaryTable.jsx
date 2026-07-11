@@ -5,6 +5,26 @@ import { parseLocaleNumber, formatCurrency, formatPercent, getCostTargetIndicato
 import { Tooltip, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
+// Doit être déclaré en dehors de StrategicAnalysis : un composant recréé à chaque rendu
+// perdrait son état et forcerait un remontage complet de ses enfants à chaque frappe.
+const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => (
+    <div className={`rounded-lg p-4 ${bgColor} ${borderColor} border-2`}>
+        <h3 className="font-bold text-lg mb-2 flex items-center">
+            {icon} {title} <Tooltip text={tooltipText} />
+        </h3>
+        <ul className="text-sm space-y-2">
+            {items.length > 0 ? items.map(p => (
+                <li key={p.id} className="flex justify-between items-center">
+                    <span>• {p.platName}</span>
+                    <span className="text-xs text-gray-600 ml-2 flex-shrink-0">
+                        {`Pop: ${parseLocaleNumber(p.salesMix).toFixed(1)}% | Marge: ${formatCurrency(p.costs.margeBruteDollar)}$`}
+                    </span>
+                </li>
+            )) : <li className="text-gray-500 list-none">Aucun</li>}
+        </ul>
+    </div>
+);
+
 // --- COMPOSANT D'ANALYSE STRATÉGIQUE ---
 const StrategicAnalysis = ({ analysisData, generalInfo }) => {
     // Tout est déjà prêt dans analysisData
@@ -20,24 +40,6 @@ const StrategicAnalysis = ({ analysisData, generalInfo }) => {
     const { stars, cows, questions, dogs } = menuEngineeringData;
 
     if (!analysisData.activeProducts || analysisData.activeProducts.length === 0) return null;
-
-    const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => (
-        <div className={`rounded-lg p-4 ${bgColor} ${borderColor} border-2`}>
-            <h3 className="font-bold text-lg mb-2 flex items-center">
-                {icon} {title} <Tooltip text={tooltipText} />
-            </h3>
-            <ul className="text-sm space-y-2">
-                {items.length > 0 ? items.map(p => (
-                    <li key={p.id} className="flex justify-between items-center">
-                        <span>• {p.platName}</span>
-                        <span className="text-xs text-gray-600 ml-2 flex-shrink-0">
-                            {`Pop: ${parseLocaleNumber(p.salesMix).toFixed(1)}% | Marge: ${formatCurrency(p.costs.margeBruteDollar)}$`}
-                        </span>
-                    </li>
-                )) : <li className="text-gray-500 list-none">Aucun</li>}
-            </ul>
-        </div>
-    );
 
     return (
         <div id="strategic-analysis" className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">

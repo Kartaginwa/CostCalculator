@@ -213,30 +213,27 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
 };
 
 export const GanttChart = ({ productionSteps, laborDatabase }) => {
-    // Check for empty steps
-    if (!productionSteps || productionSteps.length === 0) {
-        return (
-            <div className="text-center p-4 bg-gray-50 rounded-md text-sm text-gray-500">
-                Ajoutez des étapes de production pour visualiser le diagramme de Gantt.
-            </div>
-        );
-    }
+    // Les hooks doivent s'exécuter dans le même ordre à chaque rendu : on ne peut pas les
+    // placer après un retour anticipé (sinon React plante dès qu'on passe de 0 à 1 étape).
+    // On retombe donc sur un tableau vide plutôt que de sortir avant les hooks.
+    const steps = productionSteps || [];
 
     // Calculate total duration for the timeline
     const totalDuration = useMemo(() => {
-        return Math.max(1, ...productionSteps.map(step => parseLocaleNumber(step.startTime) + parseLocaleNumber(step.duration)));
-    }, [productionSteps]);
+        if (steps.length === 0) return 1;
+        return Math.max(1, ...steps.map(step => parseLocaleNumber(step.startTime) + parseLocaleNumber(step.duration)));
+    }, [steps]);
 
     // Color mapping for posts
     const colors = ['bg-blue-500', 'bg-green-500', 'bg-indigo-500', 'bg-pink-500', 'bg-amber-500', 'bg-teal-500'];
     const postColorMap = useMemo(() => {
-        const postNames = new Set(productionSteps.flatMap(step => (step.personnel || []).map(p => p.postId)));
+        const postNames = new Set(steps.flatMap(step => (step.personnel || []).map(p => p.postId)));
         const uniquePosts = Array.from(postNames);
         return uniquePosts.reduce((acc, post, index) => {
             acc[post] = colors[index % colors.length];
             return acc;
         }, {});
-    }, [productionSteps]);
+    }, [steps]);
 
     // The core layout logic to handle overlapping tasks
     const layoutData = useMemo(() => {
@@ -246,7 +243,7 @@ export const GanttChart = ({ productionSteps, laborDatabase }) => {
         allPosts.forEach(post => {
             // 1. Get all individual tasks for this post
             // An "étape" with 2 cooks becomes 2 separate tasks for the chart
-            const tasks = productionSteps.flatMap(step =>
+            const tasks = steps.flatMap(step =>
                 (step.personnel || [])
                 .filter(p => p.postId === post)
                 .map(() => ({ // Create one task per person
@@ -285,7 +282,15 @@ export const GanttChart = ({ productionSteps, laborDatabase }) => {
             };
         });
         return postsData;
-    }, [productionSteps, postColorMap]);
+    }, [steps, postColorMap]);
+
+    if (steps.length === 0) {
+        return (
+            <div className="text-center p-4 bg-gray-50 rounded-md text-sm text-gray-500">
+                Ajoutez des étapes de production pour visualiser le diagramme de Gantt.
+            </div>
+        );
+    }
 
     // Time intervals for the X-axis (in minutes)
     const timeIntervals = [];

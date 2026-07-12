@@ -39,10 +39,11 @@ describe('computeAnalysisData - moyennes pondérées et point mort global', () =
         // A : coût matière 10/20 = 0.5, B : 2/10 = 0.2 -> pondéré 70/30 = 0.41
         expect(result.weightedMaterialCost).toBeCloseTo(0.41);
         expect(result.weightedLaborCost).toBeCloseTo(0);
-        // Point mort = frais indirects fixes / taux de marge pondéré par le REVENU (pas par les
-        // unités). Prix moyen pondéré = (70×20 + 30×10)/100 = 17 ; ratio de marge sur revenu =
-        // (10×0.7 + 8×0.3)/17 = 9.4/17. Point mort = 1000 / (9.4/17) ≈ 1808.5.
-        expect(result.globalBreakEven).toBeCloseTo(1000 / (9.4 / 17));
+        // Point mort EN UNITÉS = frais indirects fixes / marge moyenne par unité (pondérée par la
+        // popularité) = 1000 / (10×0.7 + 8×0.3) = 1000 / 9.4 ≈ 106,4 unités.
+        expect(result.globalBreakEvenUnits).toBeCloseTo(1000 / 9.4);
+        // Point mort en chiffre d'affaires (conservé pour l'export) = unités × prix moyen (17).
+        expect(result.globalBreakEven).toBeCloseTo((1000 / 9.4) * 17);
     });
 
     it('exclut les produits hors menu du calcul des moyennes pondérées', () => {
@@ -148,12 +149,12 @@ describe('computeAnalysisData - reconstruction des volumes (mix = popularité en
     });
 });
 
-describe('computeAnalysisData - matrice sur marge de contribution (main-d\'œuvre exclue)', () => {
-    it('classe selon la marge de contribution (prix − coût matière), pas la marge après main-d\'œuvre', () => {
-        // Deux plats à popularité égale. Le plat 1 est intensif en main-d'œuvre mais à faible coût
-        // matière : marge de CONTRIBUTION élevée (18) mais marge après MO faible (8). Sur la base
-        // correcte (contribution), c'est un STAR ; sur l'ancienne base (après MO), ce serait une
-        // vache et le classement serait inversé.
+describe('computeAnalysisData - matrice sur marge incluant la main-d\'œuvre (semi-variable)', () => {
+    it('classe selon la marge de contribution incluant la MO (prix − coût matière − MO)', () => {
+        // Deux plats à popularité égale. Le plat 1 est intensif en main-d'œuvre : à faible coût
+        // matière mais fort coût MO, sa marge (MO incluse) est faible (8) — c'est une VACHE.
+        // Le plat 2, sans MO, a une marge plus élevée (12) — c'est un STAR. La MO étant traitée
+        // comme un coût semi-variable, elle pèse bien dans la rentabilité (choix méthodologique).
         const laborDatabase = [
             { postName: 'Cuisinier', employees: [{ hourlyRate: 60, socialCharges: 0, vacationPercentage: 0, workedHours: 1 }] },
         ];
@@ -175,10 +176,9 @@ describe('computeAnalysisData - matrice sur marge de contribution (main-d\'œuvr
 
         const result = computeAnalysisData([laborHeavy, laborLight], baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo);
 
-        // laborHeavy : contribution 18 (star) ; laborLight : contribution 12 (vache). Inversé si on
-        // avait utilisé la marge après MO (8 vs 12).
-        expect(result.menuEngineeringData.stars.map(p => p.id)).toEqual(['laborHeavy']);
-        expect(result.menuEngineeringData.cows.map(p => p.id)).toEqual(['laborLight']);
+        // Marges (MO incluse) : laborHeavy 20−(2+10)=8 < moyenne 10 -> vache ; laborLight 20−8=12 -> star.
+        expect(result.menuEngineeringData.stars.map(p => p.id)).toEqual(['laborLight']);
+        expect(result.menuEngineeringData.cows.map(p => p.id)).toEqual(['laborHeavy']);
     });
 });
 

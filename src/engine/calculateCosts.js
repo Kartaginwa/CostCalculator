@@ -233,18 +233,14 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     const totalCostPerPortion = totalDirectCostPerPortion + costIndirectPerPortion;
 
     // Marges
-    // margeBrute ici = prix − (coût matière + main-d'œuvre directe) : c'est une marge sur COÛT
-    // PRIMAIRE (prime cost), pas la marge de contribution au sens de l'ingénierie de menu.
+    // margeBrute = prix − (coût matière + main-d'œuvre directe). La main-d'œuvre est traitée comme
+    // un coût semi-variable (on ne produit pas si le stock suffit) et est donc, par choix
+    // méthodologique de conseil, incluse dans cette marge — qui sert d'axe de rentabilité à la
+    // matrice de menu, de base au classement par contribution et de marge variable au point mort.
     const margeBruteDollar = prixVente - totalDirectCostPerPortion;
     const margeBrutePercent = prixVente > 0 ? margeBruteDollar / prixVente : 0;
     const margeNetteDollar = prixVente - totalCostPerPortion;
     const margeNettePercent = prixVente > 0 ? margeNetteDollar / prixVente : 0;
-
-    // Marge de CONTRIBUTION (base coût matière uniquement) = prix − coût matière par portion.
-    // C'est l'axe de rentabilité standard de l'ingénierie de menu (Kasavana-Smith) et la base
-    // correcte du classement par contribution. Distincte de la marge sur coût primaire ci-dessus.
-    const margeContributionDollar = prixVente - costMatierePerPortion;
-    const margeContributionPercent = prixVente > 0 ? margeContributionDollar / prixVente : 0;
 
     // Nouveaux pourcentages
     const costMatierePercent = prixVente > 0 ? costMatierePerPortion / prixVente : 0;
@@ -267,8 +263,6 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         totalCostPerPortion,
         margeBruteDollar,
         margeBrutePercent,
-        margeContributionDollar,
-        margeContributionPercent,
         margeNetteDollar,
         margeNettePercent,
         costPerUnit,

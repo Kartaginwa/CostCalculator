@@ -41,7 +41,8 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
 
     // 4. KPIs globaux + point mort
     let weightedGrossMargin = 0;   // pondéré par la popularité (unités) — cohérent avec l'affichage
-    let globalBreakEven = 0;
+    let globalBreakEven = 0;       // en CHIFFRE D'AFFAIRES ($) — conservé pour l'export Excel
+    let globalBreakEvenUnits = 0;  // en UNITÉS — objectif principal affiché dans l'app
     let weightedMaterialCost = 0;
     let weightedLaborCost = 0;
 
@@ -56,15 +57,21 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             weightedLaborCost += (p.costs.costLaborPercent * weight);
         }
 
-        // Point mort : coûts fixes / TAUX de marge sur le chiffre d'affaires. Ce taux doit être
-        // pondéré par le REVENU (dollars de vente), pas par les unités — sinon un plat cher à faible
-        // volume pèse autant qu'un plat bon marché à fort volume. Hypothèse du modèle actuel :
-        // matière + main-d'œuvre = variables, frais indirects = seuls coûts fixes (un traitement
-        // fixe/variable complet de la main-d'œuvre est prévu ultérieurement).
+        // Point mort. Hypothèse du modèle : matière + main-d'œuvre = variables (MO semi-variable,
+        // cf. calculateCosts), frais indirects = seuls coûts fixes.
+        //  - EN UNITÉS (objectif de l'outil) : coûts fixes / marge de contribution moyenne PAR UNITÉ,
+        //    pondérée par la popularité — soit le nombre d'unités à vendre, au mix actuel, pour
+        //    couvrir les frais indirects.
+        //  - EN CHIFFRE D'AFFAIRES : coûts fixes / taux de marge pondéré par le REVENU (conservé
+        //    pour l'export ; équivaut au point mort en unités × prix moyen).
+        const avgMarginPerUnit = activeProducts.reduce(
+            (s, p) => s + p.costs.margeBruteDollar * (parseLocaleNumber(p.salesMix) / totalSalesMix), 0
+        );
         const totalMarginDollar = activeProducts.reduce((s, p) => s + p.costs.margeBruteDollar * (unitsSoldById[p.id] || 0), 0);
         const revenueWeightedMarginRatio = menuRevenue > 0 ? totalMarginDollar / menuRevenue : 0;
         const menuRevPerc = (parseLocaleNumber(generalInfo.menuRevenuePercentage) || 100) / 100;
         const indirectsMenu = parseLocaleNumber(generalInfo.totalIndirects) * menuRevPerc;
+        globalBreakEvenUnits = avgMarginPerUnit > 0 ? indirectsMenu / avgMarginPerUnit : 0;
         globalBreakEven = revenueWeightedMarginRatio > 0 ? indirectsMenu / revenueWeightedMarginRatio : 0;
     }
 
@@ -133,23 +140,23 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
         cumulativeValue += item.value;
     }
 
-    // 7. Matrice d'ingénierie de menu (Kasavana-Smith) — CORRIGÉE :
-    //    - axe rentabilité = marge de CONTRIBUTION (prix − coût matière), et non la marge après
-    //      main-d'œuvre ;
+    // 7. Matrice d'ingénierie de menu (Kasavana-Smith) :
+    //    - axe rentabilité = marge de contribution incluant la main-d'œuvre semi-variable
+    //      (margeBruteDollar), conformément à la pratique de conseil retenue ;
     //    - seuil de popularité = 70 % de la part moyenne (règle des 70 %) ;
-    //    - seuil de rentabilité = marge de contribution moyenne pondérée par les unités vendues.
+    //    - seuil de rentabilité = marge moyenne pondérée par les unités vendues.
     const menuEngineeringData = { stars: [], cows: [], questions: [], dogs: [] };
     if (activeProducts.length > 0) {
         const avgShare = totalSalesMix / activeProducts.length;         // part moyenne (en points de %)
         const popularityThreshold = 0.70 * avgShare;                    // règle des 70 %
         const totalUnitsActive = activeProducts.reduce((s, p) => s + (unitsSoldById[p.id] || 0), 0);
-        const totalContributionDollar = activeProducts.reduce((s, p) => s + p.costs.margeContributionDollar * (unitsSoldById[p.id] || 0), 0);
-        const avgContributionMargin = totalUnitsActive > 0
-            ? totalContributionDollar / totalUnitsActive
-            : activeProducts.reduce((s, p) => s + p.costs.margeContributionDollar, 0) / activeProducts.length;
+        const totalMarginActive = activeProducts.reduce((s, p) => s + p.costs.margeBruteDollar * (unitsSoldById[p.id] || 0), 0);
+        const avgMargin = totalUnitsActive > 0
+            ? totalMarginActive / totalUnitsActive
+            : activeProducts.reduce((s, p) => s + p.costs.margeBruteDollar, 0) / activeProducts.length;
         for (const p of activeProducts) {
             const highPop = parseLocaleNumber(p.salesMix) >= popularityThreshold;
-            const highProf = p.costs.margeContributionDollar >= avgContributionMargin;
+            const highProf = p.costs.margeBruteDollar >= avgMargin;
             if (highPop && highProf) menuEngineeringData.stars.push(p);
             else if (highPop && !highProf) menuEngineeringData.cows.push(p);
             else if (!highPop && highProf) menuEngineeringData.questions.push(p);
@@ -157,16 +164,16 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
         }
     }
 
-    // 8. Données de contribution — unités vendues × marge de CONTRIBUTION par portion.
-    //    (Contribution totale au profit d'un plat = volume × marge de contribution.)
+    // 8. Données de contribution — unités vendues × marge de contribution par portion (MO incluse).
     const contributionData = activeProducts.map(p => ({
         name: p.platName,
-        totalContribution: (unitsSoldById[p.id] || 0) * p.costs.margeContributionDollar,
+        totalContribution: (unitsSoldById[p.id] || 0) * p.costs.margeBruteDollar,
     })).sort((a, b) => b.totalContribution - a.totalContribution);
 
     return {
         productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin, globalBreakEven,
-        weightedMaterialCost, weightedLaborCost, menuEngineeringData, purchasingReportData,
-        abcAnalysisData, contributionData, productivityReport: calculatedGeneralInfo.productivityReport
+        globalBreakEvenUnits, weightedMaterialCost, weightedLaborCost, menuEngineeringData,
+        purchasingReportData, abcAnalysisData, contributionData,
+        productivityReport: calculatedGeneralInfo.productivityReport
     };
 }

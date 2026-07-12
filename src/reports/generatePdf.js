@@ -210,10 +210,10 @@ export const generatePdf = (options, deps) => {
                 return legendY + 5;
             };
 
-            const { 
-                productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin, 
-                globalBreakEven, weightedMaterialCost, weightedLaborCost, contributionData, 
-                menuEngineeringData, purchasingReportData, abcAnalysisData, productivityReport 
+            const {
+                productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin,
+                globalBreakEvenUnits, weightedMaterialCost, weightedLaborCost, contributionData,
+                menuEngineeringData, purchasingReportData, abcAnalysisData, productivityReport
             } = analysisData;
 
             // --- PARTIE 1 : PAGE DE GARDE ---
@@ -315,7 +315,7 @@ export const generatePdf = (options, deps) => {
 
             const kpiBody = [
                 [ 'Coût Matière Moyen Pondéré:', `${formatPercent(weightedMaterialCost)} %`, 'Marge Brute Moyenne Pondérée:', `${formatPercent(weightedGrossMargin)} %`],
-                [ 'Coût Main-d\'œuvre Moyen Pondéré:', `${formatPercent(weightedLaborCost)} %`, 'Point Mort du Menu:', `${formatCurrency(globalBreakEven)} $`]
+                [ 'Coût Main-d\'œuvre Moyen Pondéré:', `${formatPercent(weightedLaborCost)} %`, 'Point Mort du Menu:', `${Math.ceil(globalBreakEvenUnits).toLocaleString('fr-CA')} unités`]
             ];
             doc.autoTable({
                 startY: yPos,

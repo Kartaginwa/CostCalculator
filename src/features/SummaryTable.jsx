@@ -18,9 +18,8 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
                 <li key={p.id} className="flex justify-between items-center">
                     <span>• {p.platName}</span>
                     <span className="text-xs text-gray-600 ml-2 flex-shrink-0">
-                        {/* Affiche la marge de CONTRIBUTION (prix − coût matière), soit l'axe de
-                            rentabilité sur lequel la matrice classe désormais les plats. */}
-                        {`Pop: ${parseLocaleNumber(p.salesMix).toFixed(1)}% | Contrib.: ${formatCurrency(p.costs.margeContributionDollar)}$`}
+                        {/* Marge brute (coût matière + main-d'œuvre) : l'axe de rentabilité de la matrice. */}
+                        {`Pop: ${parseLocaleNumber(p.salesMix).toFixed(1)}% | Marge: ${formatCurrency(p.costs.margeBruteDollar)}$`}
                     </span>
                 </li>
             )) : <li className="text-gray-500 list-none">Aucun</li>}
@@ -33,7 +32,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo }) => {
     // Tout est déjà prêt dans analysisData
     const {
         weightedGrossMargin,
-        globalBreakEven,
+        globalBreakEvenUnits,
         weightedMaterialCost,
         weightedLaborCost,
         menuEngineeringData,
@@ -66,12 +65,12 @@ const StrategicAnalysis = ({ analysisData, generalInfo }) => {
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
                 </div>
                 <div className="p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip text="La marge brute moyenne de votre menu, en tenant compte de la popularité de chaque plat." /></div>
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip text="Marge après coût matière ET main-d'œuvre (la MO étant un coût semi-variable), pondérée par la popularité de chaque plat." /></div>
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
                 <div className="p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort du Menu Analysé <Tooltip text="Le chiffre d'affaires que votre menu doit générer pour couvrir sa part des frais indirects." /></div>
-                    <p className="text-3xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort du Menu (unités) <Tooltip text="Le nombre total d'unités à vendre, au mix des ventes actuel, pour couvrir les frais indirects du menu." /></div>
+                    <p className="text-3xl font-bold text-blue-600">{Math.ceil(globalBreakEvenUnits).toLocaleString('fr-CA')} unités</p>
                 </div>
             </div>
             {Math.round(totalSalesMix) !== 100 && totalSalesMix > 0 && (

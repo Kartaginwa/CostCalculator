@@ -151,16 +151,25 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
 
         // Si l'utilisateur n'a pas saisi de portions vendues (ex. projets existants créés
-        // avant l'ajout de ce champ), on se rabat sur une estimation à partir du revenu —
-        // moins précise (non sensible au mix), mais évite une division par une valeur par
-        // défaut de 1 qui ferait exploser le coût indirect calculé.
+        // avant l'ajout de ce champ), on se rabat sur une estimation à partir du revenu.
+        // Le mix étant une part de POPULARITÉ (unités), on reconstruit les volumes de façon
+        // dimensionnellement cohérente : unités totales = revenu du menu / prix moyen pondéré par
+        // le mix, puis part de ce plat. (L'ancienne formule revenu × mix / prix traitait le mix
+        // comme une part de revenu, ce qui faussait l'estimation dès que les prix différaient.)
         const portionsSoldRaw = parseLocaleNumber(product.indirectCosts.portionsSold);
         const totalRevenueParsed = parseLocaleNumber(generalInfo.totalRevenue);
+        const activeForVolume = (allProducts || []).filter(p => p.onMenu);
+        const sumActiveMix = activeForVolume.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix), 0);
+        const weightedAvgPrice = sumActiveMix > 0
+            ? activeForVolume.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix) * parseLocaleNumber(p.prixVente), 0) / sumActiveMix
+            : 0;
         let portionsSold;
         if (portionsSoldRaw > 0) {
             portionsSold = portionsSoldRaw;
-        } else if (totalRevenueParsed > 0 && prixVente > 0) {
-            portionsSold = (totalRevenueParsed * menuRevenuePercentage * salesMixPercent) / prixVente;
+        } else if (totalRevenueParsed > 0 && weightedAvgPrice > 0 && sumActiveMix > 0) {
+            const totalUnits = (totalRevenueParsed * menuRevenuePercentage) / weightedAvgPrice;
+            portionsSold = totalUnits * (parseLocaleNumber(product.salesMix) / sumActiveMix);
+            if (!(portionsSold > 0)) portionsSold = 1;
         } else {
             portionsSold = 1;
         }
@@ -224,10 +233,18 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     const totalCostPerPortion = totalDirectCostPerPortion + costIndirectPerPortion;
 
     // Marges
+    // margeBrute ici = prix − (coût matière + main-d'œuvre directe) : c'est une marge sur COÛT
+    // PRIMAIRE (prime cost), pas la marge de contribution au sens de l'ingénierie de menu.
     const margeBruteDollar = prixVente - totalDirectCostPerPortion;
     const margeBrutePercent = prixVente > 0 ? margeBruteDollar / prixVente : 0;
     const margeNetteDollar = prixVente - totalCostPerPortion;
     const margeNettePercent = prixVente > 0 ? margeNetteDollar / prixVente : 0;
+
+    // Marge de CONTRIBUTION (base coût matière uniquement) = prix − coût matière par portion.
+    // C'est l'axe de rentabilité standard de l'ingénierie de menu (Kasavana-Smith) et la base
+    // correcte du classement par contribution. Distincte de la marge sur coût primaire ci-dessus.
+    const margeContributionDollar = prixVente - costMatierePerPortion;
+    const margeContributionPercent = prixVente > 0 ? margeContributionDollar / prixVente : 0;
 
     // Nouveaux pourcentages
     const costMatierePercent = prixVente > 0 ? costMatierePerPortion / prixVente : 0;
@@ -250,6 +267,8 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         totalCostPerPortion,
         margeBruteDollar,
         margeBrutePercent,
+        margeContributionDollar,
+        margeContributionPercent,
         margeNetteDollar,
         margeNettePercent,
         costPerUnit,

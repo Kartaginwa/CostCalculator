@@ -39,8 +39,10 @@ describe('computeAnalysisData - moyennes pondérées et point mort global', () =
         // A : coût matière 10/20 = 0.5, B : 2/10 = 0.2 -> pondéré 70/30 = 0.41
         expect(result.weightedMaterialCost).toBeCloseTo(0.41);
         expect(result.weightedLaborCost).toBeCloseTo(0);
-        // point mort = frais indirects alloués au menu / marge brute pondérée = 1000 / 0.59
-        expect(result.globalBreakEven).toBeCloseTo(1000 / 0.59);
+        // Point mort = frais indirects fixes / taux de marge pondéré par le REVENU (pas par les
+        // unités). Prix moyen pondéré = (70×20 + 30×10)/100 = 17 ; ratio de marge sur revenu =
+        // (10×0.7 + 8×0.3)/17 = 9.4/17. Point mort = 1000 / (9.4/17) ≈ 1808.5.
+        expect(result.globalBreakEven).toBeCloseTo(1000 / (9.4 / 17));
     });
 
     it('exclut les produits hors menu du calcul des moyennes pondérées', () => {
@@ -118,6 +120,85 @@ describe('computeAnalysisData - contribution au profit', () => {
 
         expect(result.contributionData[0].name).toBe('Produit Test'); // le plus haut contributeur en premier
         expect(result.contributionData[0].totalContribution).toBeGreaterThan(result.contributionData[1].totalContribution);
+    });
+});
+
+describe('computeAnalysisData - reconstruction des volumes (mix = popularité en unités)', () => {
+    it('répartit les volumes selon la part de popularité, indépendamment du prix (mix ≠ part de revenu)', () => {
+        // Deux plats à popularité égale (50/50) mais à prix très différents. Le mix étant une part
+        // d'UNITÉS, les deux doivent vendre le même nombre d'unités — donc consommer la même
+        // quantité de leur ingrédient respectif. L'ancienne formule (revenu × mix / prix) aurait
+        // donné 4× plus d'unités au plat bon marché.
+        const baseIngredients = [
+            { id: 'ingA', name: 'Ing A', provider: 'PA', unit: 'unité', unitPrice: 1, lossPercentage: 0 },
+            { id: 'ingB', name: 'Ing B', provider: 'PB', unit: 'unité', unitPrice: 1, lossPercentage: 0 },
+        ];
+        const p1 = baseProduct({ id: 'cher', prixVente: 40, salesMix: 50, nbPortions: 1, ingredients: [{ id: 'ingA', quantity: 1, recipeUnit: 'unité' }] });
+        const p2 = baseProduct({ id: 'bon_marche', prixVente: 10, salesMix: 50, nbPortions: 1, ingredients: [{ id: 'ingB', quantity: 1, recipeUnit: 'unité' }] });
+        // Prix moyen pondéré = (50×40 + 50×10)/100 = 25 ; unités totales = 2500/25 = 100 ; 50 chacun.
+        const generalInfo = baseGeneralInfo({ totalRevenue: 2500, menuRevenuePercentage: 100 });
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([p1, p2], baseIngredients, [], generalInfo, calculatedGeneralInfo);
+
+        const qtyA = result.purchasingReportData.groupedByProvider['PA'].items.find(i => i.id === 'ingA').totalQuantity;
+        const qtyB = result.purchasingReportData.groupedByProvider['PB'].items.find(i => i.id === 'ingB').totalQuantity;
+        expect(qtyA).toBeCloseTo(50);
+        expect(qtyB).toBeCloseTo(50);
+    });
+});
+
+describe('computeAnalysisData - matrice sur marge de contribution (main-d\'œuvre exclue)', () => {
+    it('classe selon la marge de contribution (prix − coût matière), pas la marge après main-d\'œuvre', () => {
+        // Deux plats à popularité égale. Le plat 1 est intensif en main-d'œuvre mais à faible coût
+        // matière : marge de CONTRIBUTION élevée (18) mais marge après MO faible (8). Sur la base
+        // correcte (contribution), c'est un STAR ; sur l'ancienne base (après MO), ce serait une
+        // vache et le classement serait inversé.
+        const laborDatabase = [
+            { postName: 'Cuisinier', employees: [{ hourlyRate: 60, socialCharges: 0, vacationPercentage: 0, workedHours: 1 }] },
+        ];
+        const baseIngredients = [
+            { id: 'faible', name: 'Peu coûteux', unit: 'unité', unitPrice: 2, lossPercentage: 0 },
+            { id: 'eleve', name: 'Coûteux', unit: 'unité', unitPrice: 8, lossPercentage: 0 },
+        ];
+        const laborHeavy = baseProduct({
+            id: 'laborHeavy', prixVente: 20, salesMix: 50, nbPortions: 1,
+            ingredients: [{ id: 'faible', quantity: 1, recipeUnit: 'unité' }],
+            productionSteps: [{ stepId: 's1', personnel: [{ postId: 'Cuisinier' }], startTime: 0, duration: 600 }],
+        });
+        const laborLight = baseProduct({
+            id: 'laborLight', prixVente: 20, salesMix: 50, nbPortions: 1,
+            ingredients: [{ id: 'eleve', quantity: 1, recipeUnit: 'unité' }],
+        });
+        const generalInfo = baseGeneralInfo({ totalRevenue: 2000, menuRevenuePercentage: 100 });
+        const calculatedGeneralInfo = { ...generalInfo, kitchenProductivity: 100, operationCostPerHour: 0, productivityReport: {} };
+
+        const result = computeAnalysisData([laborHeavy, laborLight], baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo);
+
+        // laborHeavy : contribution 18 (star) ; laborLight : contribution 12 (vache). Inversé si on
+        // avait utilisé la marge après MO (8 vs 12).
+        expect(result.menuEngineeringData.stars.map(p => p.id)).toEqual(['laborHeavy']);
+        expect(result.menuEngineeringData.cows.map(p => p.id)).toEqual(['laborLight']);
+    });
+});
+
+describe('computeAnalysisData - règle des 70 % sur la popularité', () => {
+    it('classe comme populaire un plat au-dessus de 70 % de la part moyenne (et non de la moyenne brute)', () => {
+        // 3 plats, part moyenne = 33,3 %. Seuil à 70 % = 23,3 %. Le plat à 25 % est POPULAIRE selon
+        // la règle des 70 % (alors qu'il serait « peu populaire » avec le seuil = moyenne brute).
+        const products = [
+            baseProduct({ id: 'gros', prixVente: 20, isResaleProduct: true, purchaseCost: 15, salesMix: 50, onMenu: true }),      // contribution 5
+            baseProduct({ id: 'borderline', prixVente: 20, isResaleProduct: true, purchaseCost: 5, salesMix: 25, onMenu: true }), // contribution 15
+            baseProduct({ id: 'petit', prixVente: 20, isResaleProduct: true, purchaseCost: 15, salesMix: 25, onMenu: true }),     // contribution 5
+        ];
+        const generalInfo = baseGeneralInfo(); // totalRevenue 0 -> seuil de rentabilité = moyenne simple des contributions
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData(products, [], [], generalInfo, calculatedGeneralInfo);
+
+        // 'borderline' (pop 25 % ≥ 23,3 % et contribution 15 ≥ moyenne 8,33) -> STAR.
+        // Avec l'ancien seuil (= moyenne 33,3 %), il aurait été « dilemme » (peu populaire).
+        expect(result.menuEngineeringData.stars.map(p => p.id)).toEqual(['borderline']);
     });
 });
 

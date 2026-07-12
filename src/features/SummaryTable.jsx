@@ -18,7 +18,9 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
                 <li key={p.id} className="flex justify-between items-center">
                     <span>• {p.platName}</span>
                     <span className="text-xs text-gray-600 ml-2 flex-shrink-0">
-                        {`Pop: ${parseLocaleNumber(p.salesMix).toFixed(1)}% | Marge: ${formatCurrency(p.costs.margeBruteDollar)}$`}
+                        {/* Affiche la marge de CONTRIBUTION (prix − coût matière), soit l'axe de
+                            rentabilité sur lequel la matrice classe désormais les plats. */}
+                        {`Pop: ${parseLocaleNumber(p.salesMix).toFixed(1)}% | Contrib.: ${formatCurrency(p.costs.margeContributionDollar)}$`}
                     </span>
                 </li>
             )) : <li className="text-gray-500 list-none">Aucun</li>}

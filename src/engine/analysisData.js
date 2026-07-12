@@ -6,7 +6,7 @@ import { calculateCosts } from './calculateCosts.js';
 // matrice BCG (menu engineering) et classement par contribution au profit. Extrait de App.jsx
 // pour pouvoir être testé isolément, au même titre que calculateCosts.
 export function computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo) {
-    // 1. Calcul initial des coûts
+    // 1. Calcul initial des coûts (une seule passe, memo partagé)
     const costsMemo = {};
     const productsWithCosts = [];
     for (const p of products) {
@@ -20,14 +20,31 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
     const activeProducts = productsWithCosts.filter(p => p.onMenu);
     const totalSalesMix = activeProducts.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix), 0);
 
-    // 3. Initialisation des KPIs globaux
-    let weightedGrossMargin = 0;
+    // 3. Reconstruction des VOLUMES à partir du mix.
+    //    Le mix des ventes est une part de POPULARITÉ (unités vendues), pas de revenu — c'est ainsi
+    //    qu'il est saisi et importé depuis les données de caisse. On reconstruit donc les unités de
+    //    façon dimensionnellement cohérente : unités totales = revenu du menu / prix moyen pondéré
+    //    par le mix, puis réparties selon la part de popularité de chaque plat. (L'ancienne formule
+    //    « revenu × mix / prix » traitait implicitement le mix comme une part de revenu, ce qui
+    //    faussait tous les volumes — achats, ABC, contribution — dès que les prix différaient d'un
+    //    plat à l'autre.)
+    const menuRevenue = parseLocaleNumber(generalInfo.totalRevenue) * (parseLocaleNumber(generalInfo.menuRevenuePercentage) / 100);
+    const weightedAvgPrice = totalSalesMix > 0
+        ? activeProducts.reduce((s, p) => s + parseLocaleNumber(p.salesMix) * parseLocaleNumber(p.prixVente), 0) / totalSalesMix
+        : 0;
+    const totalUnitsSold = weightedAvgPrice > 0 ? menuRevenue / weightedAvgPrice : 0;
+    const unitsSoldById = {};
+    for (const p of activeProducts) {
+        const share = totalSalesMix > 0 ? parseLocaleNumber(p.salesMix) / totalSalesMix : 0;
+        unitsSoldById[p.id] = totalUnitsSold * share;
+    }
+
+    // 4. KPIs globaux + point mort
+    let weightedGrossMargin = 0;   // pondéré par la popularité (unités) — cohérent avec l'affichage
     let globalBreakEven = 0;
     let weightedMaterialCost = 0;
     let weightedLaborCost = 0;
-    const menuRevenue = parseLocaleNumber(generalInfo.totalRevenue) * (parseLocaleNumber(generalInfo.menuRevenuePercentage) / 100);
 
-    // 4. Calcul des moyennes pondérées
     if (totalSalesMix > 0) {
         for (const p of activeProducts) {
             const prixVente = parseLocaleNumber(p.prixVente);
@@ -39,12 +56,19 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             weightedLaborCost += (p.costs.costLaborPercent * weight);
         }
 
+        // Point mort : coûts fixes / TAUX de marge sur le chiffre d'affaires. Ce taux doit être
+        // pondéré par le REVENU (dollars de vente), pas par les unités — sinon un plat cher à faible
+        // volume pèse autant qu'un plat bon marché à fort volume. Hypothèse du modèle actuel :
+        // matière + main-d'œuvre = variables, frais indirects = seuls coûts fixes (un traitement
+        // fixe/variable complet de la main-d'œuvre est prévu ultérieurement).
+        const totalMarginDollar = activeProducts.reduce((s, p) => s + p.costs.margeBruteDollar * (unitsSoldById[p.id] || 0), 0);
+        const revenueWeightedMarginRatio = menuRevenue > 0 ? totalMarginDollar / menuRevenue : 0;
         const menuRevPerc = (parseLocaleNumber(generalInfo.menuRevenuePercentage) || 100) / 100;
         const indirectsMenu = parseLocaleNumber(generalInfo.totalIndirects) * menuRevPerc;
-        globalBreakEven = weightedGrossMargin > 0 ? indirectsMenu / weightedGrossMargin : 0;
+        globalBreakEven = revenueWeightedMarginRatio > 0 ? indirectsMenu / revenueWeightedMarginRatio : 0;
     }
 
-    // 5. Calcul du Rapport d'Achats
+    // 5. Calcul du Rapport d'Achats — quantités basées sur les unités reconstruites (étape 3).
     let totalNetCost = 0;
     let totalLossCost = 0;
     const groupedByProvider = {};
@@ -52,9 +76,8 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
     for (const ing of baseIngredients) {
         let totalQty = 0;
         for (const product of activeProducts) {
-            const prixVente = parseLocaleNumber(product.prixVente);
-            if (prixVente <= 0) continue;
-            const portionsSold = (menuRevenue * (parseLocaleNumber(product.salesMix) / 100)) / prixVente;
+            const portionsSold = unitsSoldById[product.id] || 0;
+            if (portionsSold <= 0) continue;
             const batchesNeeded = portionsSold / (parseLocaleNumber(product.nbPortions) || 1);
             for (const item of (product.ingredients || [])) {
                 if (item.id === ing.id) {
@@ -80,14 +103,14 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
     }
     const purchasingReportData = { totalNetCost, totalLossCost, totalPurchaseCost: totalNetCost + totalLossCost, groupedByProvider, grandTotal: { purchase: totalNetCost, loss: totalLossCost, total: totalNetCost + totalLossCost } };
 
-    // 6. Analyse ABC
+    // 6. Analyse ABC — valeur de consommation basée sur les mêmes unités reconstruites.
     const allItems = [];
     for (const ing of baseIngredients) {
         let consumptionValue = 0;
         for (const product of activeProducts) {
-            const prixVente = parseLocaleNumber(product.prixVente);
-            if (prixVente <= 0) continue;
-            const batchesNeeded = (menuRevenue * (parseLocaleNumber(product.salesMix) / 100)) / prixVente / (parseLocaleNumber(product.nbPortions) || 1);
+            const portionsSold = unitsSoldById[product.id] || 0;
+            if (portionsSold <= 0) continue;
+            const batchesNeeded = portionsSold / (parseLocaleNumber(product.nbPortions) || 1);
             for (const item of (product.ingredients || [])) {
                 if (item.id === ing.id) {
                     const conv = (CONVERSION_FACTORS[item.recipeUnit || ing.unit]?.factor || 1) / (CONVERSION_FACTORS[ing.unit]?.factor || 1);
@@ -110,15 +133,23 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
         cumulativeValue += item.value;
     }
 
-    // 7. Matrice BCG
+    // 7. Matrice d'ingénierie de menu (Kasavana-Smith) — CORRIGÉE :
+    //    - axe rentabilité = marge de CONTRIBUTION (prix − coût matière), et non la marge après
+    //      main-d'œuvre ;
+    //    - seuil de popularité = 70 % de la part moyenne (règle des 70 %) ;
+    //    - seuil de rentabilité = marge de contribution moyenne pondérée par les unités vendues.
     const menuEngineeringData = { stars: [], cows: [], questions: [], dogs: [] };
     if (activeProducts.length > 0) {
-        const avgSalesMix = 100 / activeProducts.length;
-        const totalGrossMarginDollar = activeProducts.reduce((sum, p) => sum + p.costs.margeBruteDollar, 0);
-        const avgGrossMargin = totalGrossMarginDollar / activeProducts.length;
+        const avgShare = totalSalesMix / activeProducts.length;         // part moyenne (en points de %)
+        const popularityThreshold = 0.70 * avgShare;                    // règle des 70 %
+        const totalUnitsActive = activeProducts.reduce((s, p) => s + (unitsSoldById[p.id] || 0), 0);
+        const totalContributionDollar = activeProducts.reduce((s, p) => s + p.costs.margeContributionDollar * (unitsSoldById[p.id] || 0), 0);
+        const avgContributionMargin = totalUnitsActive > 0
+            ? totalContributionDollar / totalUnitsActive
+            : activeProducts.reduce((s, p) => s + p.costs.margeContributionDollar, 0) / activeProducts.length;
         for (const p of activeProducts) {
-            const highPop = parseLocaleNumber(p.salesMix) >= avgSalesMix;
-            const highProf = p.costs.margeBruteDollar >= avgGrossMargin;
+            const highPop = parseLocaleNumber(p.salesMix) >= popularityThreshold;
+            const highProf = p.costs.margeContributionDollar >= avgContributionMargin;
             if (highPop && highProf) menuEngineeringData.stars.push(p);
             else if (highPop && !highProf) menuEngineeringData.cows.push(p);
             else if (!highPop && highProf) menuEngineeringData.questions.push(p);
@@ -126,11 +157,12 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
         }
     }
 
-    // 8. Données de contribution
-    const contributionData = activeProducts.map(p => {
-        const portionsSold = (menuRevenue * (parseLocaleNumber(p.salesMix) / 100)) / (parseLocaleNumber(p.prixVente) || 1);
-        return { name: p.platName, totalContribution: portionsSold * p.costs.margeBruteDollar };
-    }).sort((a, b) => b.totalContribution - a.totalContribution);
+    // 8. Données de contribution — unités vendues × marge de CONTRIBUTION par portion.
+    //    (Contribution totale au profit d'un plat = volume × marge de contribution.)
+    const contributionData = activeProducts.map(p => ({
+        name: p.platName,
+        totalContribution: (unitsSoldById[p.id] || 0) * p.costs.margeContributionDollar,
+    })).sort((a, b) => b.totalContribution - a.totalContribution);
 
     return {
         productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin, globalBreakEven,

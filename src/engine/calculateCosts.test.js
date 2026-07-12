@@ -306,3 +306,39 @@ describe('calculateCosts - marges', () => {
         expect(costs.margeNettePercent).toBeCloseTo(0.75);
     });
 });
+
+describe('calculateCosts - cache memo et prix simulé', () => {
+    it("ne renvoie pas le résultat au prix réel lorsqu'un prix simulé est demandé avec un memo partagé", () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct({
+            prixVente: 20,
+            ingredients: [{ id: 'farine', quantity: 2, recipeUnit: 'kg', yieldPercentage: 0 }],
+            indirectCosts: { method: 'fixed', fixedAmount: 0 },
+        });
+        const sharedMemo = {};
+
+        // Premier appel au prix réel : peuple le cache pour product.id
+        const real = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], null, sharedMemo);
+        expect(real.margeNetteDollar).toBeCloseTo(16); // 20 - 4
+
+        // Deuxième appel AVEC prix simulé mais MÊME memo : ne doit pas renvoyer le résultat caché
+        const simulated = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], 30, sharedMemo);
+        expect(simulated.margeNetteDollar).toBeCloseTo(26); // 30 - 4, et non 16
+    });
+
+    it("ne pollue pas le cache avec un résultat au prix simulé", () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct({
+            prixVente: 20,
+            ingredients: [{ id: 'farine', quantity: 2, recipeUnit: 'kg', yieldPercentage: 0 }],
+            indirectCosts: { method: 'fixed', fixedAmount: 0 },
+        });
+        const sharedMemo = {};
+
+        // Appel au prix simulé d'abord : ne doit rien écrire dans le cache
+        calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], 30, sharedMemo);
+        // Appel au prix réel ensuite : doit calculer 20, pas le 30 simulé
+        const real = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], null, sharedMemo);
+        expect(real.margeNetteDollar).toBeCloseTo(16); // 20 - 4
+    });
+});

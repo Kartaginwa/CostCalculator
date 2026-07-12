@@ -1,7 +1,12 @@
 import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.jsx';
 
 export const calculateCosts = (product, generalInfo, baseIngredients, allProducts, laborDatabase, overridePrice = null, memo = {}, visitedIds = new Set()) => {
-    if (memo[product.id]) {
+    // Le cache n'est valide que pour les appels sans prix simulé : overridePrice change le
+    // résultat (marges) mais pas la clé product.id. Les appels avec override sont donc calculés
+    // à neuf et non mis en cache, pour ne jamais renvoyer un résultat au prix réel à la place
+    // d'un prix simulé (ni l'inverse). Les sous-recettes, elles, sont toujours appelées sans
+    // override et restent pleinement cacheables via le memo partagé.
+    if (overridePrice === null && memo[product.id]) {
         return memo[product.id];
     }
 
@@ -255,7 +260,9 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         totalLossCost
     };
 
-    memo[product.id] = result;
+    if (overridePrice === null) {
+        memo[product.id] = result;
+    }
     return result;
 
 };

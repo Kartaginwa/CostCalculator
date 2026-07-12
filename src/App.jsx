@@ -15,6 +15,7 @@ import { ProjectContext } from './state/ProjectContext.jsx';
 import { Notification, WelcomeModal, OnboardingModal, TutorialGuide, PdfOptionsModal } from './components/AppDialogs.jsx';
 import { InstructionModal } from './components/InstructionModal.jsx';
 import { ConfirmationModal } from './components/common.jsx';
+import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 
 import { ProductInfo } from './features/ProductInfo.jsx';
 import { PosImportWizardModal } from './features/PosImportWizardModal.jsx';
@@ -822,7 +823,11 @@ const App = () => {
                     ) : (
                         <>
                             {renderContent()}
-                            {renderActiveTab()}
+                            {/* key={activeTab} : un onglet qui plante affiche l'UI de récupération
+                                sans emporter le reste de l'app ; changer d'onglet remonte le garde-fou. */}
+                            <ErrorBoundary key={activeTab}>
+                                {renderActiveTab()}
+                            </ErrorBoundary>
                             <footer className="w-full text-center py-4 mt-8 text-gray-500 text-sm">
                                 <p>© {new Date().getFullYear()} Antoine Thibault-Lepage. Tous droits réservés.</p>
                             </footer>

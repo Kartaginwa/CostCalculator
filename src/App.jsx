@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 
 import { parseLocaleNumber } from './utils.js';
-import { calculateCosts } from './engine/calculateCosts.js';
 import { computeAnalysisData } from './engine/analysisData.js';
 import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
 import { exportToExcel as exportToExcelReport } from './reports/exportToExcel.js';
@@ -266,11 +265,21 @@ const App = () => {
             productivityReport: productivityReport,
         };
     }, [generalInfo, products, laborDatabase, autoCalculatedLaborCost]);
+    // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---
+    // Source unique de vérité pour les coûts : computeAnalysisData calcule productsWithCosts une
+    // seule fois (avec un memo partagé) puis en dérive tous les KPIs. Défini ici, avant
+    // ingredientsList, pour que ce dernier — comme les autres consommateurs (RecipeCalculator,
+    // TrackingTab, rapports) — réutilise ces coûts au lieu de relancer un calcul redondant.
+    const analysisData = useMemo(
+        () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo),
+        [products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo]
+    );
+
     const ingredientsList = useMemo(() => {
-        const recipeIngredients = products
+        const recipeIngredients = analysisData.productsWithCosts
             .filter(p => p.isIngredient && p.platName)
             .map(p => {
-                const costs = calculateCosts(p, calculatedGeneralInfo, baseIngredients, products, laborDatabase);
+                const costs = p.costs;
                 const sanitizedPortionSize = parseLocaleNumber(p.portionSize) || 1;
                 const calculatedUnitPrice = sanitizedPortionSize > 0 ? costs.totalCostPerPortion / sanitizedPortionSize : 0;
 
@@ -287,7 +296,7 @@ const App = () => {
                 };
             });
         return [...baseIngredients, ...recipeIngredients];
-    }, [products, baseIngredients, calculatedGeneralInfo, laborDatabase]);
+    }, [analysisData, baseIngredients]);
     // Stable (setGeneralInfo est lui-même stable) : nécessaire pour la mémoïsation de
     // projectContextValue.
     const handleUpdateGeneralInfo = useCallback((field, value) => {
@@ -379,14 +388,6 @@ const App = () => {
         setEditingProductIndex(index);
         setActiveTab('recipe');
     };
-
-    // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---
-    // // modify this part : transformation de la fonction en valeur mémorisée
-    const analysisData = useMemo(
-        () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo),
-        [products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo]
-    );
-
 
     // --- GESTION DE PROJET (NOUVEAU / SAUVEGARDE / OUVERTURE) ---
     const handleStartTutorial = () => {

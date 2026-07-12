@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { Camera, Pencil, Trash2 } from 'lucide-react';
 import { parseLocaleNumber } from '../utils.js';
-import { calculateCosts } from '../engine/calculateCosts.js';
 import { useProject } from '../state/ProjectContext.jsx';
 
 // Doit être déclaré en dehors de SimpleLineChart : un composant recréé à chaque rendu
@@ -160,7 +159,7 @@ const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
 
 // --- NOUVEL ONGLET: SUIVI ---
 export const TrackingTab = () => {
-    const { trackingPoints, setTrackingPoints, products, generalInfo, showNotification, setNotification, laborDatabase, baseIngredients } = useProject();
+    const { trackingPoints, setTrackingPoints, generalInfo, showNotification, setNotification, baseIngredients, analysisData } = useProject();
     const [selectedProductId, setSelectedProductId] = useState('');
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedSnapshotIds, setSelectedSnapshotIds] = useState(new Set());
@@ -208,11 +207,10 @@ export const TrackingTab = () => {
             ));
             showNotification({ message: "Point de référence mis à jour !", type: 'success' });
         } else {
-            // Creating new snapshot
-            const productsWithCosts = products.map(p => ({
-                ...p,
-                costs: calculateCosts(p, generalInfo, baseIngredients, products, laborDatabase)
-            }));
+            // Creating new snapshot : on capture les coûts déjà calculés dans la source unique
+            // (analysisData.productsWithCosts) plutôt que de les recalculer. Le deep-clone ci-dessous
+            // fige la copie du point de référence, indépendante des recalculs ultérieurs.
+            const productsWithCosts = analysisData.productsWithCosts;
             const newSnapshot = {
                 id: Date.now(),
                 name: name || new Date().toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),

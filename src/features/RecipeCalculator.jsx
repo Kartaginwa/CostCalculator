@@ -11,7 +11,7 @@ import { calculateCosts } from '../engine/calculateCosts.js';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRecipeSections, setOpenRecipeSections }) => {
-    const { products, baseIngredients, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification } = useProject();
+    const { products, baseIngredients, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, analysisData, showNotification, setNotification } = useProject();
     const product = products[editingProductIndex] || null;
 
     const [isSimulating, setIsSimulating] = useState(false);
@@ -70,7 +70,13 @@ export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRec
         return Array.from(allergens);
     }, [product, ingredientsList]);
 
-    const costs = product ? calculateCosts(product, generalInfo, baseIngredients, products, laborDatabase) : null;
+    // Réutilise les coûts déjà calculés dans la source unique (analysisData.productsWithCosts)
+    // plutôt que de relancer calculateCosts : le produit édité est celui du tableau products, donc
+    // ses coûts y sont à jour au même rendu. La simulation de prix, elle, reste un calcul dédié
+    // (ci-dessous) car elle utilise un prix de vente override.
+    const costs = product
+        ? (analysisData.productsWithCosts.find(p => p.id === product.id)?.costs ?? null)
+        : null;
 
     const productionSummary = useMemo(() => {
         if (!product || !product.productionSteps || product.productionSteps.length === 0) {

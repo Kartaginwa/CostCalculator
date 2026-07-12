@@ -10,6 +10,7 @@ import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
 import { exportToExcel as exportToExcelReport } from './reports/exportToExcel.js';
 import { getDefaultState, getEmptyState } from './state/initialState.js';
 import { projectReducer, toProjectState } from './state/projectReducer.js';
+import { buildProjectData, parseProjectData } from './state/projectSerialization.js';
 import { ProjectContext } from './state/ProjectContext.jsx';
 
 import { Notification, WelcomeModal, OnboardingModal, TutorialGuide, PdfOptionsModal } from './components/AppDialogs.jsx';
@@ -480,16 +481,10 @@ const App = () => {
 
     const saveProject = () => {
         try {
-            const projectData = {
-                companyName,
-                logoUrl,
-                generalInfo,
-                baseIngredients,
-                products,
-                trackingPoints,
-                laborDatabase,
-                uiSettings,
-            };
+            const projectData = buildProjectData({
+                companyName, logoUrl, generalInfo, baseIngredients,
+                products, trackingPoints, laborDatabase, uiSettings,
+            });
 
             const jsonString = JSON.stringify(projectData, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
@@ -520,77 +515,17 @@ const App = () => {
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                const emptyState = getEmptyState();
-                setCompanyName(data.companyName || emptyState.companyName);
-                setLogoUrl(data.logoUrl || emptyState.logoUrl);
-                const loadedGeneralInfo = { ...emptyState.generalInfo, ...data.generalInfo };
-                if (data.generalInfo && data.generalInfo.menuRevenuePercentage === undefined) {
-                    loadedGeneralInfo.menuRevenuePercentage = 100;
-                }
-                setGeneralInfo(loadedGeneralInfo);
-                const loadedUiSettings = { ...getEmptyState().uiSettings, ...data.uiSettings };
-                setUiSettings(loadedUiSettings);
-                
-                const loadedTrackingPoints = (data.trackingPoints || []).map(point => ({
-                    ...point,
-                    name: point.name || new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), // Backwards compatibility
-                    note: point.note || ''
-                }));
-                setTrackingPoints(loadedTrackingPoints);
-                let loadedLaborDatabase = data.laborDatabase || [];
-                // Vérifie si nous devons migrer depuis l'ancien format
-                if (loadedLaborDatabase.length > 0 && loadedLaborDatabase[0].employees === undefined) {
-                    // C'est l'ancien format, nous le convertissons.
-                    const postsMap = new Map();
-                    loadedLaborDatabase.forEach(employee => {
-                        const postName = employee.postName || 'Non défini';
-                        if (!postsMap.has(postName)) {
-                            postsMap.set(postName, {
-                                id: `post_${Date.now()}_${postName}`,
-                                postName: postName,
-                                employees: []
-                            });
-                        }
-                        postsMap.get(postName).employees.push({
-                            ...employee,
-                            id: employee.id || `emp_${Date.now()}_${Math.random()}`
-                        });
-                    });
-                    loadedLaborDatabase = Array.from(postsMap.values());
-                }
-                setLaborDatabase(loadedLaborDatabase);
-                setOpenPostIds(new Set(loadedLaborDatabase.map(p => p.id)));
-                
-                const loadedBaseIngredients = (data.baseIngredients || data.ingredientsList || emptyState.ingredientsList).map(ing => ({
-                    ...ing,
-                    uniqueId: ing.uniqueId || '',
-                    isRecipe: ing.isRecipe || false,
-                    id: String(ing.id || `manual_${Date.now()}_${Math.random()}`),
-                    lossPercentage: ing.lossPercentage || 0,
-                    lastUpdated: ing.lastUpdated || new Date().toISOString().split('T')[0]
-                }));
-                setBaseIngredients(loadedBaseIngredients);
+                const parsed = parseProjectData(data, getEmptyState());
+                setCompanyName(parsed.companyName);
+                setLogoUrl(parsed.logoUrl);
+                setGeneralInfo(parsed.generalInfo);
+                setUiSettings(parsed.uiSettings);
+                setTrackingPoints(parsed.trackingPoints);
+                setLaborDatabase(parsed.laborDatabase);
+                setOpenPostIds(new Set(parsed.laborDatabase.map(p => p.id)));
+                setBaseIngredients(parsed.baseIngredients);
+                setProducts(parsed.products);
 
-                const loadedProducts = (data.products || emptyState.products).map(p => ({
-                    ...p,
-                    id: String(p.id || Date.now() + Math.random()),
-                    isResaleProduct: p.isResaleProduct || false,
-                    purchaseCost: p.purchaseCost || 0,
-                    category: p.category || '',
-                    portionSize: p.portionSize !== undefined ? p.portionSize : 1,
-                    portionUnit: p.portionUnit || 'unité',
-                    isIngredient: p.isIngredient || false,
-                    onMenu: p.onMenu !== undefined ? p.onMenu : true,
-                    salesMix: p.salesMix !== undefined ? p.salesMix : 0,
-                    prixVente: p.prixVente !== undefined ? p.prixVente : 0,
-                    nbPortions: p.nbPortions || 1,
-                    indirectCosts: p.indirectCosts || { method: 'time', fixedAmount: 0, percentSalesAmount: 0, percentDirectAmount: 0, portionsSold: 100 },
-                    ingredients: (p.ingredients || []).map(ing => ({ ...ing, rowId: ing.rowId || `ing_${Date.now()}_${Math.random()}`, yieldPercentage: ing.yieldPercentage || 100 })),
-                    productionSteps: (p.productionSteps || []).map(step => ({ ...step, stepId: step.stepId || `step_${Date.now()}_${Math.random()}` })),
-                    labor: undefined // Supprimer l'ancienne clé
-                }));
-                setProducts(loadedProducts);
-                
                 setEditingProductIndex(0);
                 setActiveTab('info');
                 showNotification({ message: 'Projet importé avec succès !', type: 'success' });

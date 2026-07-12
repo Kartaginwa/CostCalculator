@@ -39,10 +39,9 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
         unitsSoldById[p.id] = totalUnitsSold * share;
     }
 
-    // 4. KPIs globaux + point mort
+    // 4. KPIs globaux + point mort GLOBAL (en chiffre d'affaires $)
     let weightedGrossMargin = 0;   // pondéré par la popularité (unités) — cohérent avec l'affichage
-    let globalBreakEven = 0;       // en CHIFFRE D'AFFAIRES ($) — conservé pour l'export Excel
-    let globalBreakEvenUnits = 0;  // en UNITÉS — objectif principal affiché dans l'app
+    let globalBreakEven = 0;
     let weightedMaterialCost = 0;
     let weightedLaborCost = 0;
 
@@ -57,21 +56,15 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             weightedLaborCost += (p.costs.costLaborPercent * weight);
         }
 
-        // Point mort. Hypothèse du modèle : matière + main-d'œuvre = variables (MO semi-variable,
-        // cf. calculateCosts), frais indirects = seuls coûts fixes.
-        //  - EN UNITÉS (objectif de l'outil) : coûts fixes / marge de contribution moyenne PAR UNITÉ,
-        //    pondérée par la popularité — soit le nombre d'unités à vendre, au mix actuel, pour
-        //    couvrir les frais indirects.
-        //  - EN CHIFFRE D'AFFAIRES : coûts fixes / taux de marge pondéré par le REVENU (conservé
-        //    pour l'export ; équivaut au point mort en unités × prix moyen).
-        const avgMarginPerUnit = activeProducts.reduce(
-            (s, p) => s + p.costs.margeBruteDollar * (parseLocaleNumber(p.salesMix) / totalSalesMix), 0
-        );
+        // Point mort global en CHIFFRE D'AFFAIRES : coûts fixes / taux de marge pondéré par le
+        // REVENU (dollars de vente), et non par les unités. Hypothèse : matière + main-d'œuvre =
+        // variables (MO semi-variable), frais indirects = seuls coûts fixes. (Le point mort en
+        // UNITÉS est calculé par plat dans RecipeCalculator : part de frais indirects allouée /
+        // marge brute par unité.)
         const totalMarginDollar = activeProducts.reduce((s, p) => s + p.costs.margeBruteDollar * (unitsSoldById[p.id] || 0), 0);
         const revenueWeightedMarginRatio = menuRevenue > 0 ? totalMarginDollar / menuRevenue : 0;
         const menuRevPerc = (parseLocaleNumber(generalInfo.menuRevenuePercentage) || 100) / 100;
         const indirectsMenu = parseLocaleNumber(generalInfo.totalIndirects) * menuRevPerc;
-        globalBreakEvenUnits = avgMarginPerUnit > 0 ? indirectsMenu / avgMarginPerUnit : 0;
         globalBreakEven = revenueWeightedMarginRatio > 0 ? indirectsMenu / revenueWeightedMarginRatio : 0;
     }
 
@@ -172,7 +165,7 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
 
     return {
         productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin, globalBreakEven,
-        globalBreakEvenUnits, weightedMaterialCost, weightedLaborCost, menuEngineeringData,
+        weightedMaterialCost, weightedLaborCost, menuEngineeringData,
         purchasingReportData, abcAnalysisData, contributionData,
         productivityReport: calculatedGeneralInfo.productivityReport
     };

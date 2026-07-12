@@ -32,7 +32,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo }) => {
     // Tout est déjà prêt dans analysisData
     const {
         weightedGrossMargin,
-        globalBreakEvenUnits,
+        globalBreakEven,
         weightedMaterialCost,
         weightedLaborCost,
         menuEngineeringData,
@@ -69,8 +69,8 @@ const StrategicAnalysis = ({ analysisData, generalInfo }) => {
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
                 <div className="p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort du Menu (unités) <Tooltip text="Le nombre total d'unités à vendre, au mix des ventes actuel, pour couvrir les frais indirects du menu." /></div>
-                    <p className="text-3xl font-bold text-blue-600">{Math.ceil(globalBreakEvenUnits).toLocaleString('fr-CA')} unités</p>
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort du Menu Analysé <Tooltip text="Le chiffre d'affaires que votre menu doit générer, au mix des ventes actuel, pour couvrir sa part des frais indirects." /></div>
+                    <p className="text-3xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
                 </div>
             </div>
             {Math.round(totalSalesMix) !== 100 && totalSalesMix > 0 && (

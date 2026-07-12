@@ -212,7 +212,7 @@ export const generatePdf = (options, deps) => {
 
             const {
                 productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin,
-                globalBreakEvenUnits, weightedMaterialCost, weightedLaborCost, contributionData,
+                globalBreakEven, weightedMaterialCost, weightedLaborCost, contributionData,
                 menuEngineeringData, purchasingReportData, abcAnalysisData, productivityReport
             } = analysisData;
 
@@ -315,7 +315,7 @@ export const generatePdf = (options, deps) => {
 
             const kpiBody = [
                 [ 'Coût Matière Moyen Pondéré:', `${formatPercent(weightedMaterialCost)} %`, 'Marge Brute Moyenne Pondérée:', `${formatPercent(weightedGrossMargin)} %`],
-                [ 'Coût Main-d\'œuvre Moyen Pondéré:', `${formatPercent(weightedLaborCost)} %`, 'Point Mort du Menu:', `${Math.ceil(globalBreakEvenUnits).toLocaleString('fr-CA')} unités`]
+                [ 'Coût Main-d\'œuvre Moyen Pondéré:', `${formatPercent(weightedLaborCost)} %`, 'Point Mort du Menu:', `${formatCurrency(globalBreakEven)} $`]
             ];
             doc.autoTable({
                 startY: yPos,

@@ -39,11 +39,10 @@ describe('computeAnalysisData - moyennes pondérées et point mort global', () =
         // A : coût matière 10/20 = 0.5, B : 2/10 = 0.2 -> pondéré 70/30 = 0.41
         expect(result.weightedMaterialCost).toBeCloseTo(0.41);
         expect(result.weightedLaborCost).toBeCloseTo(0);
-        // Point mort EN UNITÉS = frais indirects fixes / marge moyenne par unité (pondérée par la
-        // popularité) = 1000 / (10×0.7 + 8×0.3) = 1000 / 9.4 ≈ 106,4 unités.
-        expect(result.globalBreakEvenUnits).toBeCloseTo(1000 / 9.4);
-        // Point mort en chiffre d'affaires (conservé pour l'export) = unités × prix moyen (17).
-        expect(result.globalBreakEven).toBeCloseTo((1000 / 9.4) * 17);
+        // Point mort GLOBAL en chiffre d'affaires ($) = frais indirects fixes / taux de marge
+        // pondéré par le REVENU. Prix moyen pondéré = (70×20 + 30×10)/100 = 17 ; taux de marge sur
+        // revenu = (10×0.7 + 8×0.3)/17 = 9.4/17. Point mort = 1000 / (9.4/17) ≈ 1808,5 $.
+        expect(result.globalBreakEven).toBeCloseTo(1000 / (9.4 / 17));
     });
 
     it('exclut les produits hors menu du calcul des moyennes pondérées', () => {

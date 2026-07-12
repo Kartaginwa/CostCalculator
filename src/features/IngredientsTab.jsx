@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { ArrowUpDown, Upload, AlertCircle, Copy, Trash2 } from 'lucide-react';
 import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal } from '../components/common.jsx';
-import { ImportWizardModal } from './ImportWizardModal.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
+
+// Chargé à la demande : l'assistant d'import est volumineux et rarement ouvert.
+const ImportWizardModal = lazy(() => import('./ImportWizardModal.jsx').then(m => ({ default: m.ImportWizardModal })));
 
 export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, analysisData } = useProject();
@@ -589,13 +591,17 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 assignedAllergens={ingredientToEdit?.allergens || []}
                 onUpdateAllergens={(newAllergens) => handleUpdateAllergens(ingredientToEdit.id, newAllergens)}
             />
-            <ImportWizardModal
-                isOpen={isImportWizardOpen}
-                onClose={() => setIsImportWizardOpen(false)}
-                baseIngredients={baseIngredients}
-                onUpdateIngredientsList={onUpdateIngredientsList}
-                showNotification={showNotification}
-            />
+            {isImportWizardOpen && (
+                <Suspense fallback={null}>
+                    <ImportWizardModal
+                        isOpen={isImportWizardOpen}
+                        onClose={() => setIsImportWizardOpen(false)}
+                        baseIngredients={baseIngredients}
+                        onUpdateIngredientsList={onUpdateIngredientsList}
+                        showNotification={showNotification}
+                    />
+                </Suspense>
+            )}
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import {
     Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
     PlusCircle, TrendingUp, Settings,
@@ -18,12 +18,16 @@ import { ConfirmationModal } from './components/common.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 
 import { ProductInfo } from './features/ProductInfo.jsx';
-import { PosImportWizardModal } from './features/PosImportWizardModal.jsx';
 import { IngredientsTab } from './features/IngredientsTab.jsx';
 import { LaborDatabaseTab } from './features/LaborDatabaseTab.jsx';
-import { RecipeCalculator } from './features/RecipeCalculator.jsx';
-import { SummaryTable } from './features/SummaryTable.jsx';
-import { TrackingTab } from './features/TrackingTab.jsx';
+
+// Code-splitting : ces vues/wizards sont chargés à la demande (chunks séparés). Cela sort du
+// bundle initial les dépendances lourdes qu'ils tirent — notamment recharts (SummaryTable,
+// TrackingTab) — et le code volumineux de RecipeCalculator et des assistants d'import.
+const RecipeCalculator = lazy(() => import('./features/RecipeCalculator.jsx').then(m => ({ default: m.RecipeCalculator })));
+const SummaryTable = lazy(() => import('./features/SummaryTable.jsx').then(m => ({ default: m.SummaryTable })));
+const TrackingTab = lazy(() => import('./features/TrackingTab.jsx').then(m => ({ default: m.TrackingTab })));
+const PosImportWizardModal = lazy(() => import('./features/PosImportWizardModal.jsx').then(m => ({ default: m.PosImportWizardModal })));
 
 const App = () => {
     // --- ÉTATS ---
@@ -800,12 +804,18 @@ const App = () => {
                         initialData={pdfOptions}
                     />
 
-                    <PosImportWizardModal
-                        isOpen={isPosWizardOpen}
-                        onClose={() => setIsPosWizardOpen(false)}
-                        onImportComplete={handlePosImport}
-                        products={products}
-                    />
+                    {/* Rendu seulement à l'ouverture : le chunk de l'assistant n'est chargé
+                        que lorsqu'on en a besoin, pas au démarrage. */}
+                    {isPosWizardOpen && (
+                        <Suspense fallback={null}>
+                            <PosImportWizardModal
+                                isOpen={isPosWizardOpen}
+                                onClose={() => setIsPosWizardOpen(false)}
+                                onImportComplete={handlePosImport}
+                                products={products}
+                            />
+                        </Suspense>
+                    )}
 
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept=".json" />
                     
@@ -826,7 +836,9 @@ const App = () => {
                             {/* key={activeTab} : un onglet qui plante affiche l'UI de récupération
                                 sans emporter le reste de l'app ; changer d'onglet remonte le garde-fou. */}
                             <ErrorBoundary key={activeTab}>
-                                {renderActiveTab()}
+                                <Suspense fallback={<div className="w-full text-center py-16 text-gray-500">Chargement…</div>}>
+                                    {renderActiveTab()}
+                                </Suspense>
                             </ErrorBoundary>
                             <footer className="w-full text-center py-4 mt-8 text-gray-500 text-sm">
                                 <p>© {new Date().getFullYear()} Antoine Thibault-Lepage. Tous droits réservés.</p>

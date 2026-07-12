@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, isNotEmpty, isValidNumber, isValidPercentage, APP_FIELDS, formatCurrency } from '../utils.jsx';
+import { parseLocaleNumber, generateSlug, isNotEmpty, isValidNumber, isValidPercentage, APP_FIELDS, formatCurrency } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 
 export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIngredientsList, showNotification }) => {

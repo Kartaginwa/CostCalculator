@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { XCircle, ChevronDown, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, formatCurrency } from '../utils.jsx';
+import { parseLocaleNumber, formatCurrency } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ArrowUpDown, AlertTriangle, Upload, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, isValidNumber, isValidPercentage, isNotEmpty, formatCurrency } from '../utils.jsx';
+import { parseLocaleNumber, isValidNumber, isValidPercentage, isNotEmpty, formatCurrency } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 

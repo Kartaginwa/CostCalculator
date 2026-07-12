@@ -7,7 +7,7 @@ import {
 import {
     formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime,
     CONVERSION_FACTORS, MAJOR_ALLERGENS,
-} from './utils.jsx';
+} from './utils.js';
 import { calculateCosts } from './engine/calculateCosts.js';
 import { computeAnalysisData } from './engine/analysisData.js';
 import { getDefaultState, getEmptyState, indirectCostMethodLabels, periodTranslations } from './state/initialState.js';

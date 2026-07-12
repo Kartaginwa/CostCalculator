@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown } from 'lucide-react';
-import { formatCurrency, useValueFlash, parseLocaleNumber, MAJOR_ALLERGENS } from '../utils.jsx';
+import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS } from '../utils.js';
+import { useValueFlash } from '../ui-utils.jsx';
 
 // Composant pour les messages de validation
 export const ValidationMessage = ({ message }) => (

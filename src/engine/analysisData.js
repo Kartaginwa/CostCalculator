@@ -1,4 +1,4 @@
-import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.jsx';
+import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.js';
 import { calculateCosts } from './calculateCosts.js';
 
 // Calcule l'ensemble des données d'analyse dérivées du projet : coûts de tous les produits,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { Camera, Pencil, Trash2 } from 'lucide-react';
-import { parseLocaleNumber } from '../utils.jsx';
+import { parseLocaleNumber } from '../utils.js';
 import { calculateCosts } from '../engine/calculateCosts.js';
 import { useProject } from '../state/ProjectContext.jsx';
 

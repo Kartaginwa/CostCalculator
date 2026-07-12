@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Upload } from 'lucide-react';
-import { parseLocaleNumber, excelSerialDateToJSDate, POS_APP_FIELDS, formatCurrency } from '../utils.jsx';
+import { parseLocaleNumber, excelSerialDateToJSDate, POS_APP_FIELDS, formatCurrency } from '../utils.js';
 
 export const PosImportWizardModal = ({ isOpen, onClose, onImportComplete, products: existingProducts }) => {
     const [step, setStep] = useState(1);

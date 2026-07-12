@@ -3,8 +3,9 @@ import { AlertCircle, ChevronDown, GripVertical, Trash2, Scale } from 'lucide-re
 import {
     parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPercentage,
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent,
-    getCompatibleUnits, CONVERSION_FACTORS, getCostTargetIndicator, useValueFlash, MAJOR_ALLERGENS,
-} from '../utils.jsx';
+    getCompatibleUnits, CONVERSION_FACTORS, MAJOR_ALLERGENS,
+} from '../utils.js';
+import { getCostTargetIndicator, useValueFlash } from '../ui-utils.jsx';
 import { Tooltip, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput } from '../components/common.jsx';
 import { calculateCosts } from '../engine/calculateCosts.js';
 import { useProject } from '../state/ProjectContext.jsx';

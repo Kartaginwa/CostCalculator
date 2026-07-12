@@ -1,4 +1,4 @@
-import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.jsx';
+import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.js';
 
 export const calculateCosts = (product, generalInfo, baseIngredients, allProducts, laborDatabase, overridePrice = null, memo = {}, visitedIds = new Set()) => {
     // Le cache n'est valide que pour les appels sans prix simulé : overridePrice change le

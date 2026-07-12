@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowUpDown, Upload, AlertCircle, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.jsx';
+import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal } from '../components/common.jsx';
 import { ImportWizardModal } from './ImportWizardModal.jsx';
 import { useProject } from '../state/ProjectContext.jsx';

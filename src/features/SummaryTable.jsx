@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Bar, LabelList, Cell } from 'recharts';
 import { ArrowUpDown, FileDown, Pencil, AlertTriangle, Star, HelpCircle as QuestionMark, Milk, Bone } from 'lucide-react';
-import { parseLocaleNumber, formatCurrency, formatPercent, getCostTargetIndicator } from '../utils.jsx';
+import { parseLocaleNumber, formatCurrency, formatPercent } from '../utils.js';
+import { getCostTargetIndicator } from '../ui-utils.jsx';
 import { Tooltip, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 

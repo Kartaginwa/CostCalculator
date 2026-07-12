@@ -1,0 +1,268 @@
+// Export du rapport Excel — extrait de App.jsx (aucune logique modifiée).
+// Fonction pure "données -> classeur" : reçoit tout son contexte via l'objet `deps`. XLSX est
+// fourni en global via scripts/copy-libs. Le contenu des feuilles est intentionnellement un
+// export de données brutes (handoff spécialiste), volontairement distinct de l'analyse du PDF.
+import { formatCurrency, parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS } from '../utils.js';
+import { indirectCostMethodLabels, periodTranslations } from '../state/initialState.js';
+import { calculateCosts } from '../engine/calculateCosts.js';
+
+export const exportToExcel = (deps) => {
+    const {
+        showNotification, analysisData, generalInfo, calculatedGeneralInfo,
+        products, baseIngredients, laborDatabase, companyName, ingredientsList,
+    } = deps;
+            if (typeof XLSX === 'undefined') {
+                showNotification({ message: "La bibliothèque Excel (XLSX) n'a pas pu être chargée. L'exportation est impossible.", type: 'error' });
+                return;
+            }
+            try {
+                const { 
+                    productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin, 
+                    globalBreakEven, weightedMaterialCost, weightedLaborCost, contributionData, 
+                    menuEngineeringData, purchasingReportData, abcAnalysisData 
+                } = analysisData;
+                const wb = XLSX.utils.book_new();
+                const headerStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4B5563" } }, alignment: { horizontal: "center" } };
+                const titleStyle = { font: { bold: true, sz: 16 } };
+                const currencyFormat = '"$"#,##0.00';
+                const percentFormat = '0.00%';
+
+                // --- Feuille 1: Tableau de Bord ---
+                let ws_dashboard_data = [
+                    ["Tableau de Bord Stratégique"],
+                    [],
+                    ["Paramètres Généraux"],
+                    ["Période:", `${generalInfo.period === 'custom' ? `Personnalisée (${generalInfo.startDate} au ${generalInfo.endDate})` : (periodTranslations[generalInfo.period] || 'N/A')}`],
+                    ["Revenus Totaux:", { t: 'n', v: Number(calculatedGeneralInfo.totalRevenue), z: currencyFormat }],
+                    ["Frais Indirects Totaux:", { t: 'n', v: Number(calculatedGeneralInfo.totalIndirects), z: currencyFormat }],
+                    ["Coût M-O Cuisine:", { t: 'n', v: Number(calculatedGeneralInfo.totalKitchenLaborCost), z: currencyFormat }],
+                    ["Heures d'opération:", `${calculatedGeneralInfo.operationHours} h`],
+                    ["Coût horaire op.:", { t: 'n', v: Number(calculatedGeneralInfo.operationCostPerHour), z: currencyFormat }],
+                    [],
+                    ["Indicateurs Clés de Performance (KPIs) Globaux"],
+                    ["Coût Matière Moyen Pondéré:", { t: 'n', v: Number(weightedMaterialCost), z: percentFormat }],
+                    ["Coût Main-d'œuvre Moyen Pondéré:", { t: 'n', v: Number(weightedLaborCost), z: percentFormat }],
+                    ["Marge Brute Moyenne Pondérée:", { t: 'n', v: Number(weightedGrossMargin), z: percentFormat }],
+                    ["Point Mort du Menu:", { t: 'n', v: Number(globalBreakEven), z: currencyFormat }],
+                ];
+                const ws_dashboard = XLSX.utils.aoa_to_sheet(ws_dashboard_data);
+                
+                ws_dashboard["A1"].s = { font: { bold: true, sz: 18 } };
+                ws_dashboard["A3"].s = titleStyle;
+                ws_dashboard["A11"].s = titleStyle;
+                
+                ws_dashboard['!cols'] = [{wch: 35}, {wch: 25}];
+                XLSX.utils.book_append_sheet(wb, ws_dashboard, "Tableau de Bord");
+
+                // --- Feuille 2: Résumé ---
+                const summaryHeaders = [
+                    'Plat', 'Catégorie', 'Prix Vente', 'Coût Total', 'Coût Matière (%)', 
+                    'Coût Main-d\'oeuvre (%)', 'Coût Indirects (%)', 'Marge Brute ($)', 
+                    'Marge Brute (%)', 'Marge Nette ($)', 'Marge Nette (%)', 'Mix Ventes'
+                ];
+                const summarySheetData = [summaryHeaders.map(h => ({ v: h, s: headerStyle }))];
+
+                products.forEach(product => {
+                    const costs = calculateCosts(product, calculatedGeneralInfo, baseIngredients, products, laborDatabase);
+                    summarySheetData.push([
+                        product.platName || `Plat Inconnu`,
+                        product.category || '',
+                        { t: 'n', v: Number(parseLocaleNumber(product.prixVente)), z: currencyFormat },
+                        { t: 'n', v: Number(costs.totalCostPerPortion), z: currencyFormat },
+                        { t: 'n', v: Number(costs.costMatierePercent), z: percentFormat },
+                        { t: 'n', v: Number(costs.costLaborPercent), z: percentFormat },
+                        { t: 'n', v: Number(costs.costIndirectPercent), z: percentFormat },
+                        { t: 'n', v: Number(costs.margeBruteDollar), z: currencyFormat },
+                        { t: 'n', v: Number(costs.margeBrutePercent), z: percentFormat },
+                        { t: 'n', v: Number(costs.margeNetteDollar), z: currencyFormat },
+                        { t: 'n', v: Number(costs.margeNettePercent), z: percentFormat },
+                        { t: 'n', v: Number(parseLocaleNumber(product.salesMix)) / 100, z: percentFormat }
+                    ]);
+                });
+
+                const ws_summary = XLSX.utils.aoa_to_sheet(summarySheetData);
+                ws_summary['!cols'] = [{wch: 25}, {wch: 15}, {wch: 12}, {wch: 12}, {wch: 15}, {wch: 18}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 12}];
+                XLSX.utils.book_append_sheet(wb, ws_summary, "Résumé");
+
+                // --- Feuille 3: Ingrédients ---
+                const ingredientsHeaders = ['Ingrédient', 'Fournisseur', 'SKU/PLU', 'Format Achat', 'Prix Achat', 'Taux de perte (%)', 'Prix Unitaire', 'Dernière MàJ'];
+                const ingredientsSheetData = [ingredientsHeaders.map(h => ({ v: h, s: headerStyle }))];
+                
+                baseIngredients.forEach(i => {
+                    ingredientsSheetData.push([
+                        i.name,
+                        i.provider,
+                        i.uniqueId,
+                        `${parseLocaleNumber(i.purchaseFormat)} ${i.unit}`,
+                        { t: 'n', v: Number(parseLocaleNumber(i.purchasePrice)), z: currencyFormat },
+                        { t: 'n', v: Number(parseLocaleNumber(i.lossPercentage) || 0), z: percentFormat },
+                        { t: 'n', v: Number(i.unitPrice), z: currencyFormat },
+                        i.lastUpdated
+                    ]);
+                });
+
+                const ws_ingredients = XLSX.utils.aoa_to_sheet(ingredientsSheetData);
+                ws_ingredients['!cols'] = [{wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}];
+                XLSX.utils.book_append_sheet(wb, ws_ingredients, "Ingrédients");
+
+                // --- Feuille 4: Main d'oeuvre ---
+                const laborHeaders = ["Employé", "Salaire Horaire", "Charges (%)", "Vacances (%)", "Heures", "Coût Total"];
+                const laborSheetData = [laborHeaders.map(h => ({v: h, s: headerStyle}))];
+                
+                laborDatabase.forEach(post => {
+                    laborSheetData.push([
+                        { v: post.postName, s: { font: { bold: true }, fill: { fgColor: { rgb: "E5E7EB" } } } }
+                    ]);
+                    
+                    (post.employees || []).forEach(emp => {
+                        const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
+                        laborSheetData.push([
+                            emp.employeeName,
+                            { t: 'n', v: Number(parseLocaleNumber(emp.hourlyRate)), z: currencyFormat },
+                            { t: 'n', v: Number(parseLocaleNumber(emp.socialCharges)) / 100, z: percentFormat },
+                            { t: 'n', v: Number(parseLocaleNumber(emp.vacationPercentage)) / 100, z: percentFormat },
+                            Number(parseLocaleNumber(emp.workedHours)),
+                            { t: 'n', v: Number(baseHourlyCost * parseLocaleNumber(emp.workedHours)), z: currencyFormat }
+                        ]);
+                    });
+                });
+
+                const ws_labor = XLSX.utils.aoa_to_sheet(laborSheetData);
+                
+                ws_labor['!merges'] = [];
+                let r = 1;
+                laborDatabase.forEach(post => {
+                    ws_labor['!merges'].push({ s: { r: r, c: 0 }, e: { r: r, c: 5 } });
+                    r += (post.employees || []).length + 1;
+                });
+
+                ws_labor['!cols'] = [{wch: 25}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15}];
+                XLSX.utils.book_append_sheet(wb, ws_labor, "Main d'oeuvre");
+
+                // --- Fiches de Coût Individuelles ---
+                products.forEach(product => {
+                    const costs = calculateCosts(product, calculatedGeneralInfo, baseIngredients, products, laborDatabase);
+                    const productivityFactor = (calculatedGeneralInfo.kitchenProductivity > 0 && calculatedGeneralInfo.kitchenProductivity <= 100) ? calculatedGeneralInfo.kitchenProductivity / 100 : 1;
+                    
+                    let sheetData = [
+                        [{ v: `Fiche de coût pour: ${product.platName}`, s: titleStyle }], [],
+                        [{ v: 'Informations sur la recette', s: { font: { bold: true, sz: 12 } } }],
+                        ['Nombre de portions', product.nbPortions],
+                        ['Taille par portion', `${product.portionSize || 1} ${product.portionUnit || 'unité'}`],
+                        [],
+                        [{ v: 'Méthode des Frais Indirects', s: { font: { bold: true, sz: 12 } } }],
+                    ];
+
+                    const method = product.indirectCosts.method;
+                    const methodLabel = indirectCostMethodLabels[method] || 'Non définie';
+                    let methodValueCell = { v: '' }; // Cellule vide par défaut
+
+                    if (method === 'fixed') methodValueCell = { t: 'n', v: Number(product.indirectCosts.fixedAmount), z: currencyFormat };
+                    else if (method === 'percentSales') methodValueCell = { t: 'n', v: Number(product.indirectCosts.percentSalesAmount) / 100, z: percentFormat };
+                    else if (method === 'percentDirect') methodValueCell = { t: 'n', v: Number(product.indirectCosts.percentDirectAmount) / 100, z: percentFormat };
+                    else if (method === 'portionAllocation') methodValueCell = { v: `${product.indirectCosts.portionsSold} portions` };
+
+                    sheetData.push([methodLabel, methodValueCell]);
+                    sheetData.push([], [{ v: 'Ingrédients', s: { font: { bold: true, sz: 12 } } }]);
+                    const ingHeaders = ['Nom', 'Quantité', 'Unité', 'Coût Unitaire', 'Rendement (%)', 'Coût Total'];
+                    sheetData.push(ingHeaders.map(h => ({ v: h, s: headerStyle })));
+                    
+                    (product.ingredients || []).forEach(i => {
+                        let ingredientName = i.name;
+                        let recipeUnit = i.recipeUnit;
+                        let displayedUnitPrice = 0;
+                        let totalCost = 0;
+
+                        const ingredientSource = ingredientsList.find(ing => ing.id === i.id);
+
+                        if (ingredientSource) {
+                            ingredientName = ingredientSource.name;
+                            recipeUnit = i.recipeUnit || ingredientSource.unit;
+                            const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[ingredientSource.unit]?.factor || 1);
+                            const quantityInBaseUnit = parseLocaleNumber(i.quantity) * conversionFactor;
+                            const baseCost = quantityInBaseUnit * parseLocaleNumber(ingredientSource.unitPrice);
+                            const yieldPercent = parseLocaleNumber(i.yieldPercentage);
+                            totalCost = (yieldPercent && yieldPercent > 0) ? baseCost / (yieldPercent / 100) : baseCost;
+                            displayedUnitPrice = (ingredientSource.unitPrice || 0) / (CONVERSION_FACTORS[ingredientSource.unit]?.factor || 1) * (CONVERSION_FACTORS[recipeUnit]?.factor || 1);
+                        }
+                        
+                        sheetData.push([ 
+                            ingredientName, 
+                            Number(parseLocaleNumber(i.quantity)), 
+                            recipeUnit, 
+                            { t: 'n', v: Number(displayedUnitPrice), z: currencyFormat }, 
+                            { t: 'n', v: Number(parseLocaleNumber(i.yieldPercentage)) / 100, z: percentFormat }, 
+                            { t: 'n', v: Number(totalCost), z: currencyFormat } 
+                        ]);
+                    });
+                    sheetData.push(['Total Ingrédients', '', '', '', '', { t: 'n', v: Number(costs.totalIngredientsCost), z: currencyFormat }]);
+                    
+                    sheetData.push([], [{ v: 'Processus de production', s: { font: { bold: true, sz: 12 } } }]);
+                    const laborHeaders = ['Étape', 'Personnel', 'Début', 'Durée', 'Fin', 'Coût Total ($)'];
+                    sheetData.push(laborHeaders.map(h => ({ v: h, s: headerStyle })));
+
+                    (product.productionSteps || []).forEach(step => {
+                        const personnelText = (step.personnel || []).map(p => p.postId).join(', ');
+                        const stepCost = (step.personnel || []).reduce((total, person) => {
+                            const postData = laborDatabase.find(p => p.postName === person.postId);
+                            if (!postData || !postData.employees || postData.employees.length === 0) return total;
+
+                            const totalHours = postData.employees.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
+                            const totalPostCost = postData.employees.reduce((sum, emp) => {
+                                const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
+                                return sum + (baseHourlyCost * parseLocaleNumber(emp.workedHours));
+                            }, 0);
+                            const weightedAverageCost = totalHours > 0 ? totalPostCost / totalHours : 0;
+                            const costPerPerson = (parseLocaleNumber(step.duration) / 3600) * weightedAverageCost / productivityFactor;
+                            return total + costPerPerson;
+                        }, 0);
+
+                        sheetData.push([
+                            step.stepName,
+                            personnelText,
+                            formatSecondsToTime(parseLocaleNumber(step.startTime)),
+                            formatSecondsToTime(parseLocaleNumber(step.duration)),
+                            formatSecondsToTime(parseLocaleNumber(step.startTime) + parseLocaleNumber(step.duration)),
+                            { t: 'n', v: Number(stepCost), z: currencyFormat }
+                        ]);
+                    });
+                    sheetData.push(['Total Main-d\'oeuvre', '', '', '', '', { t: 'n', v: Number(costs.totalLaborCost), z: currencyFormat }]);
+
+                    sheetData.push([], [{ v: 'Récapitulatif par portion', s: { font: { bold: true, sz: 12 } } }]);
+                    sheetData.push(['Prix de Vente', { t: 'n', v: Number(parseLocaleNumber(product.prixVente)), z: currencyFormat }]);
+                    sheetData.push(['Coût Matières (base)', { t: 'n', v: Number(costs.totalBaseIngredientsCost / product.nbPortions), z: currencyFormat }]);
+                    sheetData.push(['Coût des Pertes (stock)', { t: 'n', v: Number(costs.totalLossCost / product.nbPortions), z: currencyFormat }]);
+                    sheetData.push(['Coût Matières Total', { t: 'n', v: Number(costs.costMatierePerPortion), z: currencyFormat }]);
+                    sheetData.push(['Coût Main-d\'oeuvre', { t: 'n', v: Number(costs.costLaborPerPortion), z: currencyFormat }]);
+                    sheetData.push(['Coût Indirect', { t: 'n', v: Number(costs.costIndirectPerPortion), z: currencyFormat }]);
+                    sheetData.push(['Coût de Revient Total', { t: 'n', v: Number(costs.totalCostPerPortion), z: currencyFormat }]);
+                    sheetData.push(['Coût Matière (%)', { t: 'n', v: Number(costs.costMatierePercent), z: percentFormat }]);
+                    sheetData.push(['Coût Main-d\'oeuvre (%)', { t: 'n', v: Number(costs.costLaborPercent), z: percentFormat }]);
+                    sheetData.push(['Coût Indirects (%)', { t: 'n', v: Number(costs.costIndirectPercent), z: percentFormat }]);
+                    sheetData.push(['Marge Brute', { t: 'n', v: Number(costs.margeBruteDollar), z: currencyFormat }, { t: 'n', v: Number(costs.margeBrutePercent), z: percentFormat }]);
+                    sheetData.push(['Marge Nette', { t: 'n', v: Number(costs.margeNetteDollar), z: currencyFormat }, { t: 'n', v: Number(costs.margeNettePercent), z: percentFormat }]);
+                    
+                    const breakEvenInfo = (() => {
+                        if (costs.margeBruteDollar <= 0) return { text: "Marge brute négative.", value: "N/A" };
+                        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
+                        if (['fixed', 'percentSales', 'percentDirect'].includes(method)) return { text: `Rentable si marge nette positive.`, value: formatCurrency(costs.margeNetteDollar) };
+                        if (salesMixPercent <= 0) return { text: "Mix des ventes nul.", value: "N/A" };
+                        const allocatedIndirects = calculatedGeneralInfo.totalIndirects * salesMixPercent;
+                        return { text: "Unités à vendre pour couvrir les frais indirects.", value: `${Math.ceil(allocatedIndirects / costs.margeBruteDollar)} unités` };
+                    })();
+                    sheetData.push([], ["Point Mort du Produit"], [breakEvenInfo.text, breakEvenInfo.value]);
+
+                    const ws_product = XLSX.utils.aoa_to_sheet(sheetData, { cellStyles: true });
+                    ws_product['!cols'] = [{wch: 25}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}];
+                    const fullSheetName = `Fiche - ${product.platName || 'Sans_Nom'}`;
+                    const sanitizedSheetName = fullSheetName.substring(0, 31).replace(/[:\\/?*[\]]/g, "");
+                    XLSX.utils.book_append_sheet(wb, ws_product, sanitizedSheetName);
+                });
+            
+                XLSX.writeFile(wb, `rapport_excel_${companyName.replace(/\s/g, '_') || 'sans_nom'}.xlsx`);
+                showNotification({ message: 'Rapport Excel exporté avec succès !', type: 'success' });
+            } catch(error) {
+                console.error("Erreur Excel:", error);
+                showNotification({ message: "Une erreur est survenue lors de l'exportation Excel.", type: 'error' });
+            }
+};

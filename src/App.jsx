@@ -30,6 +30,11 @@ const SummaryTable = lazy(() => import('./features/SummaryTable.jsx').then(m => 
 const TrackingTab = lazy(() => import('./features/TrackingTab.jsx').then(m => ({ default: m.TrackingTab })));
 const PosImportWizardModal = lazy(() => import('./features/PosImportWizardModal.jsx').then(m => ({ default: m.PosImportWizardModal })));
 
+// Clé localStorage du projet de travail sauvegardé automatiquement (récupération après plantage).
+// Suffixe versionné : si le format d'un projet change de façon incompatible, incrémenter pour
+// ignorer proprement les anciens brouillons plutôt que de risquer un chargement corrompu.
+const WORKING_PROJECT_KEY = 'restocalc_working_project_v1';
+
 const App = () => {
     // --- ÉTATS ---
     const [isProjectLoaded, setIsProjectLoaded] = useState(false);
@@ -199,6 +204,51 @@ const App = () => {
             setAppLogoBase64(null); // Fallback
         };
     }, []);
+
+    // --- PERSISTANCE / RÉCUPÉRATION APRÈS PLANTAGE ---
+    // Au démarrage : restaure le projet de travail sauvegardé automatiquement lors de la session
+    // précédente (localStorage), s'il existe. Un brouillon n'existe que si un projet avait déjà été
+    // chargé, donc restaurer est le bon comportement ; en son absence, l'écran d'accueil s'affiche
+    // normalement (parcours de première utilisation préservé). dispatch et les setters useState
+    // sont stables : cet effet ne s'exécute qu'au montage.
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem(WORKING_PROJECT_KEY);
+            if (!raw) return;
+            const parsed = parseProjectData(JSON.parse(raw), getEmptyState());
+            dispatch({
+                type: 'LOAD_PROJECT',
+                payload: {
+                    companyName: parsed.companyName, logoUrl: parsed.logoUrl, generalInfo: parsed.generalInfo,
+                    baseIngredients: parsed.baseIngredients, products: parsed.products,
+                    trackingPoints: parsed.trackingPoints, laborDatabase: parsed.laborDatabase, uiSettings: parsed.uiSettings,
+                },
+            });
+            setOpenPostIds(new Set(parsed.laborDatabase.map(p => p.id)));
+            setEditingProductIndex(0);
+            setIsProjectLoaded(true);
+        } catch (e) {
+            // Brouillon corrompu ou localStorage indisponible : on repart proprement sur l'accueil.
+            console.error('Restauration du projet de travail échouée :', e);
+        }
+    }, []);
+
+    // Sauvegarde automatique (anti-plantage) : à chaque changement du projet, on persiste l'état de
+    // travail dans localStorage, débounce à 800 ms pour ne pas écrire à chaque frappe. Actif
+    // seulement une fois un projet chargé, pour ne pas écraser un brouillon avec l'état vide initial.
+    useEffect(() => {
+        if (!isProjectLoaded) return;
+        const handle = setTimeout(() => {
+            try {
+                const data = buildProjectData({ companyName, logoUrl, generalInfo, baseIngredients, products, trackingPoints, laborDatabase, uiSettings });
+                localStorage.setItem(WORKING_PROJECT_KEY, JSON.stringify(data));
+            } catch (e) {
+                // Quota dépassé ou sérialisation impossible : non bloquant (la sauvegarde manuelle reste disponible).
+                console.error('Sauvegarde automatique échouée :', e);
+            }
+        }, 800);
+        return () => clearTimeout(handle);
+    }, [isProjectLoaded, companyName, logoUrl, generalInfo, baseIngredients, products, trackingPoints, laborDatabase, uiSettings]);
 
     const autoCalculatedLaborCost = useMemo(() => {
         return laborDatabase.reduce((total, post) => {

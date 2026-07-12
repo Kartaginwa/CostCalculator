@@ -43,6 +43,19 @@ describe('projectReducer', () => {
         expect(projectReducer(state, { type: 'SET_UI_SETTINGS', payload: { infoItemsPerPage: 25 } }).uiSettings).toEqual({ infoItemsPerPage: 25 });
     });
 
+    it('LOAD_PROJECT remplace toutes les tranches fournies en un seul dispatch', () => {
+        const state = baseState();
+        const payload = {
+            companyName: 'Nouveau', logoUrl: 'n.png', generalInfo: { totalIndirects: 999 },
+            baseIngredients: [{ id: 'z' }], products: [{ id: 'q' }], trackingPoints: [{ id: 't' }],
+            laborDatabase: [{ id: 'l' }], uiSettings: { infoItemsPerPage: 50 },
+        };
+        const next = projectReducer(state, { type: 'LOAD_PROJECT', payload });
+        expect(next).toEqual(payload);
+        // L'état d'origine n'est pas muté.
+        expect(state.companyName).toBe('Acme');
+    });
+
     it('retourne l’état inchangé pour une action inconnue', () => {
         const state = baseState();
         expect(projectReducer(state, { type: 'UNKNOWN' })).toBe(state);

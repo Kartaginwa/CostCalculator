@@ -111,3 +111,34 @@ test.describe('Projet démo', () => {
         expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
     });
 });
+
+test.describe('Persistance / récupération après plantage', () => {
+    test('le projet de travail est restauré automatiquement après un rechargement de page', async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', (err) => errors.push(err.message));
+        page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
+
+        // 1) Charge le projet démo et modifie le nom de l'entreprise (donnée témoin traçable).
+        await page.goto('/');
+        await page.getByText('Explorer un projet démo').click();
+        await expect(page.getByText('Projet d\'exemple chargé avec succès')).toBeVisible();
+
+        await page.locator('button:has-text("Paramètres")').click();
+        const companyInput = page.locator('#tutorial-company-name');
+        await companyInput.fill('Témoin Récupération');
+
+        // 2) Laisse la sauvegarde automatique (débounce 800 ms) écrire dans localStorage.
+        await page.waitForTimeout(1200);
+
+        // 3) Recharge la page : simule une fermeture/plantage puis réouverture de l'app.
+        await page.reload();
+
+        // 4) L'écran d'accueil ne doit PAS réapparaître ; le projet (et la donnée témoin) est restauré.
+        await expect(page.getByText('Explorer un projet démo')).toHaveCount(0);
+        await expect(page.locator('#tab-ingredients')).toBeVisible();
+        await page.locator('button:has-text("Paramètres")').click();
+        await expect(page.locator('#tutorial-company-name')).toHaveValue('Témoin Récupération');
+
+        expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
+    });
+});

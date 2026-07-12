@@ -18,6 +18,11 @@ const resolve = (value, currentValue) => (typeof value === 'function' ? value(cu
 
 export function projectReducer(state, action) {
     switch (action.type) {
+        // Remplace en un seul dispatch toutes les tranches du projet (chargement de fichier ou
+        // restauration du brouillon persisté). Atomique : un seul rendu, pas de risque d'état
+        // partiellement mis à jour entre plusieurs setters.
+        case 'LOAD_PROJECT':
+            return { ...state, ...action.payload };
         case 'SET_COMPANY_NAME':
             return { ...state, companyName: resolve(action.payload, state.companyName) };
         case 'SET_LOGO_URL':

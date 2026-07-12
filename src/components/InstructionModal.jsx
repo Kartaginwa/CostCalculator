@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 // --- MODAL D'INSTRUCTIONS (VERSION FINALE COMPLÈTE ET EXHAUSTIVE) ---
-export const InstructionModal = ({ isOpen, onClose, onLoadExample }) => {
+export const InstructionModal = ({ isOpen, onClose }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const contentRef = useRef(null);
     const [searchResults, setSearchResults] = useState([]);

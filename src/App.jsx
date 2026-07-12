@@ -69,7 +69,6 @@ const App = () => {
     const [activeTab, setActiveTab] = useState('info');
     const [editingProductIndex, setEditingProductIndex] = useState(0);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
-    const [showLoadExampleConfirm, setShowLoadExampleConfirm] = useState(false);
     const [showInstructions, setShowInstructions] = useState(false);
     const [notification, setNotification] = useState({ message: '', type: '' });
     const fileInputRef = useRef(null);
@@ -507,11 +506,6 @@ const App = () => {
         showNotification({ message: "Le projet a été réinitialisé.", type: 'success' });
     };
 
-    const handleLoadExampleClick = () => {
-        setShowInstructions(false);
-        setShowLoadExampleConfirm(true);
-    };
-
     const handleConfirmLoadExample = () => {
         const defaultState = getDefaultState();
         setCompanyName(defaultState.companyName);
@@ -524,7 +518,6 @@ const App = () => {
         setOpenPostIds(new Set(defaultState.laborDatabase.map(p => p.id)));
         setEditingProductIndex(0);
         setActiveTab('info');
-        setShowLoadExampleConfirm(false);
         showNotification({ message: "Projet d'exemple chargé avec succès !", type: 'success' }); // Appel corrigé
         setIsProjectLoaded(true);
     };
@@ -753,15 +746,6 @@ const App = () => {
                         Êtes-vous sûr de vouloir effacer toutes les données et commencer un nouveau projet ? Cette action est irréversible.
                     </ConfirmationModal>
 
-                    <ConfirmationModal 
-                        isOpen={showLoadExampleConfirm}
-                        onClose={() => setShowLoadExampleConfirm(false)}
-                        onConfirm={handleConfirmLoadExample}
-                        title="Charger un projet d'exemple"
-                    >
-                        Le projet actuel sera remplacé par les données d'exemple. Voulez-vous continuer ?
-                    </ConfirmationModal>
-                    
                     <OnboardingModal
                         isOpen={showOnboardingModal}
                         onStart={handleStartTutorial}
@@ -776,10 +760,9 @@ const App = () => {
                         activeTab={activeTab}
                     />
 
-                    <InstructionModal 
-                        isOpen={showInstructions} 
+                    <InstructionModal
+                        isOpen={showInstructions}
                         onClose={() => setShowInstructions(false)}
-                        onLoadExample={handleLoadExampleClick}
                     />
 
                     <PdfOptionsModal

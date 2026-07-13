@@ -26,7 +26,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     currentPath.add(product.id);
 
     // Note: This function now expects generalInfo to have pre-parsed numbers
-    const { totalIndirects, operationCostPerHour, kitchenProductivity } = generalInfo;
+    const { kitchenProductivity } = generalInfo;
     const prixVente = overridePrice !== null ? parseLocaleNumber(overridePrice) : parseLocaleNumber(product.prixVente);
     const nbPortions = parseInt(product.nbPortions, 10) || 1;
     const productivityFactor = (kitchenProductivity > 0 && kitchenProductivity <= 100) ? kitchenProductivity / 100 : 1;
@@ -124,39 +124,41 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
 
     const totalLaborCost = totalDirectLaborCost / productivityFactor;
 
-    // Frais indirects
+    // Frais indirects — méthode GLOBALE (generalInfo.indirectCostMethod), appliquée à tous les
+    // plats. Deux méthodes, toutes deux normalisées pour répartir EXACTEMENT la part menu du pool
+    // de frais indirects (elles se réconcilient par construction). Les sous-recettes (isIngredient)
+    // n'absorbent aucun frais indirect : l'overhead est porté par le plat final vendu, ce qui évite
+    // le double comptage lorsqu'une sous-recette est intégrée à un plat.
     let indirectCostTotal = 0;
-    const method = product.indirectCosts.method;
+    const method = generalInfo.indirectCostMethod || 'salesAllocation';
+    const totalIndirectsParsed = parseLocaleNumber(generalInfo.totalIndirects);
+    const menuRevenuePercentage = (parseLocaleNumber(generalInfo.menuRevenuePercentage) || 100) / 100;
 
-    if (method === 'laborIntensity') {
-        // Nouvelle méthode basée sur le temps de personnel total
-        let totalLaborTimeSeconds = 0;
+    if (product.isIngredient) {
+        indirectCostTotal = 0;
+    } else if (method === 'laborTime') {
+        // Au prorata du temps de production. Taux = part menu du pool / total des heures de MO
+        // nécessaires au menu (fourni par generalInfo.totalDirectLaborHoursNeeded). Chaque plat
+        // absorbe ∝ ses propres heures de MO ; sommé sur le volume produit, le total égale
+        // exactement la part menu du pool → se réconcilie.
+        const totalDirectLaborHoursNeeded = parseLocaleNumber(generalInfo.totalDirectLaborHoursNeeded);
+        let productLaborTimeSeconds = 0;
         (product.productionSteps || []).forEach(step => {
             const durationSeconds = parseLocaleNumber(step.duration);
             const personnelCount = step.personnel?.length || 0;
-            totalLaborTimeSeconds += durationSeconds * personnelCount;
+            productLaborTimeSeconds += durationSeconds * personnelCount;
         });
-        // Convertit le temps total en secondes vers des heures pour le calcul
-        indirectCostTotal = (totalLaborTimeSeconds / 3600) * (operationCostPerHour || 0);
-    } else if (method === 'salesAllocation') {
-        // Répartit le pool total de frais indirects entre tous les produits actifs du
-        // menu au prorata de leur mix des ventes, normalisé sur la somme réelle des mix
-        // actifs (et non sur 100% implicite) afin que le total alloué corresponde
-        // exactement aux frais indirects réels même si les mix ne totalisent pas 100%.
-        // Note : le dénominateur "portions vendues" doit être une donnée indépendante du
-        // mix des ventes (saisie manuellement) — sans quoi le mix s'annule algébriquement
-        // dans le ratio $/portion et n'a alors plus aucun effet sur le résultat.
-        const totalIndirectsParsed = parseLocaleNumber(generalInfo.totalIndirects);
-        const menuRevenuePercentage = (parseLocaleNumber(generalInfo.menuRevenuePercentage) || 100) / 100;
+        if (totalDirectLaborHoursNeeded > 0 && totalIndirectsParsed > 0) {
+            const rate = (totalIndirectsParsed * menuRevenuePercentage) / totalDirectLaborHoursNeeded;
+            indirectCostTotal = (productLaborTimeSeconds / 3600) * rate;
+        }
+    } else {
+        // salesAllocation (défaut) : au prorata du mix des ventes, normalisé sur la somme des mix
+        // actifs → répartit exactement la part menu du pool, même si les mix ne totalisent pas
+        // 100 %. Dénominateur "portions vendues" : saisi si disponible, sinon estimé à partir des
+        // volumes (unités reconstruites : revenu du menu / prix moyen pondéré par le mix × part).
         const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-
-        // Si l'utilisateur n'a pas saisi de portions vendues (ex. projets existants créés
-        // avant l'ajout de ce champ), on se rabat sur une estimation à partir du revenu.
-        // Le mix étant une part de POPULARITÉ (unités), on reconstruit les volumes de façon
-        // dimensionnellement cohérente : unités totales = revenu du menu / prix moyen pondéré par
-        // le mix, puis part de ce plat. (L'ancienne formule revenu × mix / prix traitait le mix
-        // comme une part de revenu, ce qui faussait l'estimation dès que les prix différaient.)
-        const portionsSoldRaw = parseLocaleNumber(product.indirectCosts.portionsSold);
+        const portionsSoldRaw = parseLocaleNumber(product.indirectCosts?.portionsSold);
         const totalRevenueParsed = parseLocaleNumber(generalInfo.totalRevenue);
         const activeForVolume = (allProducts || []).filter(p => p.onMenu);
         const sumActiveMix = activeForVolume.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix), 0);
@@ -173,44 +175,21 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         } else {
             portionsSold = 1;
         }
-
-        const totalActiveSalesMix = (allProducts || [])
-            .filter(p => p.onMenu)
-            .reduce((sum, p) => sum + (parseLocaleNumber(p.salesMix) / 100), 0);
-
+        const totalActiveSalesMix = sumActiveMix / 100;
         if (totalIndirectsParsed > 0 && totalActiveSalesMix > 0 && salesMixPercent > 0) {
             const normalizedSharePercent = salesMixPercent / totalActiveSalesMix;
             const allocatedIndirects = totalIndirectsParsed * normalizedSharePercent * menuRevenuePercentage;
             indirectCostTotal = (allocatedIndirects / portionsSold) * nbPortions;
-        } else {
-            indirectCostTotal = 0;
         }
-    } else if (method === 'portionAllocation') {
-        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-        const allocatedIndirects = (totalIndirects || 0) * salesMixPercent;
-        const portionsSold = parseLocaleNumber(product.indirectCosts.portionsSold) || 1;
-        const indirectCostPerPortionCalc = allocatedIndirects / portionsSold;
-        indirectCostTotal = indirectCostPerPortionCalc * nbPortions;
-    } else if (method === 'fixed') {
-        indirectCostTotal = parseLocaleNumber(product.indirectCosts.fixedAmount) * nbPortions;
-    } else if (method === 'percentSales') {
-        indirectCostTotal = (prixVente * nbPortions) * (parseLocaleNumber(product.indirectCosts.percentSalesAmount) / 100);
-    } else if (method === 'percentDirect') {
-        indirectCostTotal = (totalIngredientsCost + totalLaborCost) * (parseLocaleNumber(product.indirectCosts.percentDirectAmount) / 100);
     }
 
     const totalRecipeCost = totalIngredientsCost + totalLaborCost + indirectCostTotal;
 
-    // Soupape de sécurité : ne s'applique qu'aux méthodes qui puisent réellement dans le
-    // pool "Total Frais Indirects" de l'entreprise (salesAllocation, portionAllocation).
-    // Les autres méthodes (fixed, percentSales, percentDirect, laborIntensity) sont des
-    // saisies indépendantes par produit et ne doivent pas être plafonnées par ce total —
-    // sans quoi un projet où ce champ est encore vide (0$) forcerait tous les coûts
-    // indirects à 0, quelle que soit la méthode choisie.
-    const methodsBoundedByTotalIndirects = ['salesAllocation', 'portionAllocation'];
-    if (methodsBoundedByTotalIndirects.includes(method)) {
+    // Soupape de sécurité (méthode "ventes") : sur données dégénérées (portions vendues = 1 par
+    // défaut), le total d'un plat ne peut dépasser le pool de frais indirects.
+    if (method !== 'laborTime' && !product.isIngredient) {
         const maxIndirects = parseLocaleNumber(generalInfo.totalIndirects);
-        if (indirectCostTotal > maxIndirects) {
+        if (maxIndirects > 0 && indirectCostTotal > maxIndirects) {
             indirectCostTotal = maxIndirects;
         }
     }

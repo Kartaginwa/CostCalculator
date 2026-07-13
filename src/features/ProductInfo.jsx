@@ -3,6 +3,7 @@ import { ArrowUpDown, AlertTriangle, Upload, Copy, Trash2 } from 'lucide-react';
 import { parseLocaleNumber, isValidNumber, isValidPercentage, isNotEmpty, formatCurrency } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
+import { indirectCostMethodLabels } from '../state/initialState.js';
 
 export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct, handleProductValueChange, itemsPerPage, onItemsPerPageChange, onOpenPosImport }) => {
     const { companyName, onUpdateCompanyName, logoUrl, onUpdateLogoUrl, generalInfo, onUpdateGeneralInfo, products } = useProject();
@@ -217,6 +218,19 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         </label>
                         <input type="text" inputMode="decimal" id="totalIndirects" value={generalInfo.totalIndirects || ''} onChange={(e) => onUpdateGeneralInfo('totalIndirects', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidNumber(generalInfo.totalIndirects) ? 'border-red-500' : 'border-gray-300'}`} />
                         {!isValidNumber(generalInfo.totalIndirects) && <ValidationMessage message="Veuillez entrer un nombre positif." />}
+                    </div>
+
+                    {/* Méthode d'attribution des frais indirects — GLOBALE, appliquée à tous les plats */}
+                    <div className="md:col-span-2">
+                        <label htmlFor="indirectCostMethod" className="flex items-center text-sm font-medium text-gray-700">
+                            Méthode d'attribution des frais indirects
+                            <Tooltip text="S'applique à tous les plats. Les deux méthodes répartissent l'intégralité des frais indirects (elles se réconcilient avec le pool). « Au prorata des ventes » : selon le mix des ventes. « Au prorata du temps de production » : selon les heures de main-d'œuvre de chaque plat." />
+                        </label>
+                        <select id="indirectCostMethod" value={generalInfo.indirectCostMethod || 'salesAllocation'} onChange={(e) => onUpdateGeneralInfo('indirectCostMethod', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                            {Object.entries(indirectCostMethodLabels).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Ligne Main d'oeuvre et Heures */}

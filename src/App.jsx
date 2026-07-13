@@ -329,6 +329,9 @@ const App = () => {
             kitchenProductivity: kitchenProductivity,
             showProductivityWarning: showProductivityWarning,
             productivityReport: productivityReport,
+            // Total des heures de MO nécessaires au menu : dénominateur de la méthode d'attribution
+            // « temps de production » (taux = frais indirects / ce total → réconcilie exactement).
+            totalDirectLaborHoursNeeded: totalDirectLaborHoursNeeded,
         };
     }, [generalInfo, products, laborDatabase, autoCalculatedLaborCost]);
     // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---

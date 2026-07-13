@@ -29,15 +29,17 @@ test.describe('Parcours projet vierge', () => {
         await page.locator('#tutorial-add-item').click();
         await page.locator('#tutorial-section-info-menu table input[type="text"]').first().fill('Plat Test');
         await page.locator('#tutorial-section-info-menu table input[inputmode="decimal"]').first().fill('15');
+        // Méthode d'attribution des frais indirects : réglage GLOBAL (les deux méthodes)
+        await page.locator('#indirectCostMethod').selectOption('laborTime');
+        await page.locator('#indirectCostMethod').selectOption('salesAllocation');
 
         // Ajouter un poste et un employé
         await page.locator('#tab-labor').click();
         await page.getByText('Ajouter un poste').click();
         await page.getByText('+ Ajouter un employé').first().click();
 
-        // Recette & Calcul : ajouter un ingrédient, une étape de production (repro du bug de
-        // hook order corrigé — la toute première étape doit passer sans plantage), et tester
-        // les 6 méthodes de frais indirects.
+        // Recette & Calcul : ajouter un ingrédient et une étape de production (repro du bug de
+        // hook order corrigé — la toute première étape doit passer sans plantage).
         await page.locator('#tab-recipe').click();
         await page.locator('#tutorial-add-ingredient-to-recipe').click();
         const combo = page.locator('input[placeholder="Saisir ou sélectionner..."]').first();
@@ -47,12 +49,6 @@ test.describe('Parcours projet vierge', () => {
         if (await option.count() > 0) await option.click();
 
         await page.locator('button:has-text("+ Ajouter une étape")').click();
-
-        for (const method of ['methodFixed', 'methodPercentSales', 'methodPercentDirect', 'methodLaborIntensity', 'methodPortionAllocation', 'methodSalesAllocation']) {
-            const radio = page.locator(`#${method}`);
-            await radio.scrollIntoViewIfNeeded();
-            await radio.click({ force: true });
-        }
 
         // Simulation de prix
         await page.getByText('Simuler un nouveau prix').click();

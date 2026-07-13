@@ -707,7 +707,7 @@ export const generatePdf = (options, deps) => {
                 yPos += 8;
                 
                 const indirectsBody = [[
-                    `Méthode d'attribution: ${indirectCostMethodLabels[product.indirectCosts.method] || 'N/A'}`,
+                    `Méthode d'attribution: ${indirectCostMethodLabels[calculatedGeneralInfo.indirectCostMethod] || indirectCostMethodLabels.salesAllocation}`,
                     `Montant par portion: ${formatCurrency(costs.costIndirectPerPortion)} $`
                 ]];
                 doc.autoTable({
@@ -758,7 +758,6 @@ export const generatePdf = (options, deps) => {
                 const breakEvenInfo = (() => {
                     if (costs.margeBruteDollar <= 0) return { title: "Point Mort", value: "N/A", description: "Marge brute négative." };
                     const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-                    if (['fixed', 'percentSales', 'percentDirect'].includes(product.indirectCosts.method)) return { title: "Rentabilité", value: `${formatCurrency(costs.margeNetteDollar)}`, description: `Rentable si marge nette positive.` };
                     if (salesMixPercent <= 0) return { title: "Point Mort", value: "N/A", description: "Mix des ventes nul." };
                     const allocatedIndirects = calculatedGeneralInfo.totalIndirects * salesMixPercent;
                     const breakEvenUnits = Math.ceil(allocatedIndirects / costs.margeBruteDollar);

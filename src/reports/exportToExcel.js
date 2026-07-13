@@ -153,14 +153,12 @@ export const exportToExcel = (deps) => {
                         [{ v: 'Méthode des Frais Indirects', s: { font: { bold: true, sz: 12 } } }],
                     ];
 
-                    const method = product.indirectCosts.method;
-                    const methodLabel = indirectCostMethodLabels[method] || 'Non définie';
-                    let methodValueCell = { v: '' }; // Cellule vide par défaut
-
-                    if (method === 'fixed') methodValueCell = { t: 'n', v: Number(product.indirectCosts.fixedAmount), z: currencyFormat };
-                    else if (method === 'percentSales') methodValueCell = { t: 'n', v: Number(product.indirectCosts.percentSalesAmount) / 100, z: percentFormat };
-                    else if (method === 'percentDirect') methodValueCell = { t: 'n', v: Number(product.indirectCosts.percentDirectAmount) / 100, z: percentFormat };
-                    else if (method === 'portionAllocation') methodValueCell = { v: `${product.indirectCosts.portionsSold} portions` };
+                    // Méthode d'attribution globale (paramètre général), commune à tous les plats.
+                    const method = calculatedGeneralInfo.indirectCostMethod || 'salesAllocation';
+                    const methodLabel = indirectCostMethodLabels[method] || indirectCostMethodLabels.salesAllocation;
+                    const methodValueCell = (method === 'salesAllocation' && product.indirectCosts?.portionsSold)
+                        ? { v: `${product.indirectCosts.portionsSold} portions` }
+                        : { v: '' };
 
                     sheetData.push([methodLabel, methodValueCell]);
                     sheetData.push([], [{ v: 'Ingrédients', s: { font: { bold: true, sz: 12 } } }]);

@@ -9,6 +9,7 @@ import { getCostTargetIndicator, useValueFlash } from '../ui-utils.jsx';
 import { Tooltip, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput } from '../components/common.jsx';
 import { calculateCosts } from '../engine/calculateCosts.js';
 import { useProject } from '../state/ProjectContext.jsx';
+import { indirectCostMethodLabels } from '../state/initialState.js';
 
 export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRecipeSections, setOpenRecipeSections }) => {
     const { products, baseIngredients, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, analysisData, showNotification, setNotification } = useProject();
@@ -117,15 +118,7 @@ export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRec
             return { breakEvenForProduct: null, breakEvenDescription: "La marge brute par unité est nulle ou négative. Le point mort ne peut être atteint." };
         }
 
-        const method = product.indirectCosts.method;
         const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-
-        if (['fixed', 'percentSales', 'percentDirect'].includes(method)) {
-             return {
-                breakEvenForProduct: null,
-                breakEvenDescription: `Avec cette méthode, le coût indirect est une charge variable par unité. Le produit est rentable si sa marge nette (${formatCurrency(relevantCosts.margeNetteDollar)}$) est positive.`
-            };
-        }
 
         if (salesMixPercent <= 0) {
             return { breakEvenForProduct: null, breakEvenDescription: "Le mix des ventes doit être supérieur à 0 pour calculer le point mort." };
@@ -194,10 +187,6 @@ export const RecipeCalculator = ({ editingProductIndex, onSelectProduct, openRec
                     // Vide les listes de la recette pour éviter de conserver des données erronées
                     updatedProduct.ingredients = [];
                     updatedProduct.productionSteps = [];
-                    // S'assure que la méthode des coûts indirects est compatible
-                    if (updatedProduct.indirectCosts.method === 'time') {
-                        updatedProduct.indirectCosts = { ...updatedProduct.indirectCosts, method: 'fixed' };
-                    }
                 }
 
                 return updatedProduct;
@@ -888,78 +877,21 @@ const handleIngredientUpdate = (itemIndex, selection) => {
                 {openRecipeSections.has('indirects') && (
                     <div className="mt-4">
                 <div className="space-y-4">
-                    {/* Montant fixe */}
-                    <div className="p-2 border-b">
-                        <div className="flex items-center">
-                            <input id="methodFixed" type="radio" value="fixed" checked={product.indirectCosts.method === 'fixed'} onChange={() => handleIndirectCostChange('method', 'fixed')} className="h-4 w-4 text-purple-600"/>
-                            <label htmlFor="methodFixed" className="ml-3 block text-sm font-medium">Montant fixe par plat</label>
-                        </div>
-                        <div className={`mt-2 ml-8 ${product.indirectCosts.method === 'fixed' ? '' : 'hidden'}`}>
-                            <label className="block text-sm">Montant par portion ($)</label>
-                            <input type="text" inputMode="decimal" value={product.indirectCosts.fixedAmount || ''} onChange={(e) => handleIndirectCostChange('fixedAmount', e.target.value)} className={`block w-full p-2 border rounded text-right ${!isValidNumber(product.indirectCosts.fixedAmount) ? 'border-red-500' : 'border-gray-300'}`}/>
-                            {!isValidNumber(product.indirectCosts.fixedAmount) && <ValidationMessage message="Nombre positif requis." />}
-                        </div>
+                    {/* La méthode d'attribution des frais indirects est GLOBALE (onglet Paramètres) et
+                        s'applique à tous les plats. On rappelle ici la méthode active ; si c'est
+                        « au prorata des ventes », on saisit les portions vendues de ce plat. */}
+                    <div className="p-3 bg-purple-100 rounded-md text-sm text-purple-800">
+                        Méthode d'attribution active : <strong>{indirectCostMethodLabels[generalInfo.indirectCostMethod] || indirectCostMethodLabels.salesAllocation}</strong>.
+                        <span className="block text-xs text-purple-700 mt-1">Se choisit globalement dans l'onglet Paramètres et s'applique à tous les plats.</span>
                     </div>
-                    {/* Pourcentage du prix de vente */}
-                    <div className="p-2 border-b">
-                        <div className="flex items-center">
-                            <input id="methodPercentSales" type="radio" value="percentSales" checked={product.indirectCosts.method === 'percentSales'} onChange={() => handleIndirectCostChange('method', 'percentSales')} className="h-4 w-4 text-purple-600"/>
-                            <label htmlFor="methodPercentSales" className="ml-3 block text-sm font-medium">Pourcentage du prix de vente (%)</label>
+                    {(generalInfo.indirectCostMethod || 'salesAllocation') === 'salesAllocation' && !product.isIngredient && (
+                        <div className="p-2">
+                            <label className="block text-sm font-medium">Nombre de portions vendues ou envisagées</label>
+                            <p className="text-xs text-gray-600 mb-2">Dénominateur de la répartition « au prorata des ventes » pour ce plat. Laissé vide, il est estimé automatiquement à partir du revenu et du mix des ventes.</p>
+                            <input type="text" inputMode="decimal" value={product.indirectCosts?.portionsSold || ''} onChange={(e) => handleIndirectCostChange('portionsSold', e.target.value)} className={`block w-full p-2 border rounded text-right ${product.indirectCosts?.portionsSold && !isValidPositiveInteger(product.indirectCosts.portionsSold) ? 'border-red-500' : 'border-gray-300'}`}/>
+                            {product.indirectCosts?.portionsSold && !isValidPositiveInteger(product.indirectCosts.portionsSold) && <ValidationMessage message="Doit être un entier positif." />}
                         </div>
-                        <div className={`mt-2 ml-8 ${product.indirectCosts.method === 'percentSales' ? '' : 'hidden'}`}>
-                            <label className="block text-sm">Pourcentage des frais indirects (%)</label>
-                            <input type="text" inputMode="decimal" value={product.indirectCosts.percentSalesAmount || ''} onChange={(e) => handleIndirectCostChange('percentSalesAmount', e.target.value)} className={`block w-full p-2 border rounded text-right ${!isValidPercentage(product.indirectCosts.percentSalesAmount) ? 'border-red-500' : 'border-gray-300'}`}/>
-                            {!isValidPercentage(product.indirectCosts.percentSalesAmount) && <ValidationMessage message="Doit être un %." />}
-                        </div>
-                    </div>
-                    {/* Pourcentage des coûts directs */}
-                    <div className="p-2 border-b">
-                        <div className="flex items-center">
-                            <input id="methodPercentDirect" type="radio" value="percentDirect" checked={product.indirectCosts.method === 'percentDirect'} onChange={() => handleIndirectCostChange('method', 'percentDirect')} className="h-4 w-4 text-purple-600"/>
-                            <label htmlFor="methodPercentDirect" className="ml-3 block text-sm font-medium">Pourcentage des coûts directs (%)</label>
-                        </div>
-                        <div className={`mt-2 ml-8 ${product.indirectCosts.method === 'percentDirect' ? '' : 'hidden'}`}>
-                            <label className="block text-sm">Pourcentage des frais indirects (%)</label>
-                            <input type="text" inputMode="decimal" value={product.indirectCosts.percentDirectAmount || ''} onChange={(e) => handleIndirectCostChange('percentDirectAmount', e.target.value)} className={`block w-full p-2 border rounded text-right ${!isValidPercentage(product.indirectCosts.percentDirectAmount) ? 'border-red-500' : 'border-gray-300'}`}/>
-                            {!isValidPercentage(product.indirectCosts.percentDirectAmount) && <ValidationMessage message="Doit être un %." />}
-                        </div>
-                    </div>
-                    {/* NOUVELLE MÉTHODE */}
-                    <div className="p-2 border-b">
-                        <div className="flex items-center">
-                            <input id="methodLaborIntensity" type="radio" value="laborIntensity" checked={product.indirectCosts.method === 'laborIntensity'} onChange={() => handleIndirectCostChange('method', 'laborIntensity')} className="h-4 w-4 text-purple-600" disabled={product.isResaleProduct}/>
-                            <label htmlFor="methodLaborIntensity" className="ml-3 block text-sm font-medium">Basé sur l'intensité de la main-d'œuvre</label>
-                        </div>
-                        <div className={`mt-2 ml-8 ${product.indirectCosts.method === 'laborIntensity' ? '' : 'hidden'}`}>
-                        <p className="text-sm text-gray-600">Le calcul se base sur le temps de personnel total investi. C'est la méthode la plus juste pour les recettes mobilisant plusieurs employés.</p>
-                        </div>
-                    </div>
-                    {/* Allocation par portion */}
-                    <div className="p-2 border-b">
-                         <div className="flex items-center">
-                            <input id="methodPortionAllocation" type="radio" value="portionAllocation" checked={product.indirectCosts.method === 'portionAllocation'} onChange={() => handleIndirectCostChange('method', 'portionAllocation')} className="h-4 w-4 text-purple-600"/>
-                            <label htmlFor="methodPortionAllocation" className="ml-3 block text-sm font-medium">Allocation par portion</label>
-                        </div>
-                        <div className={`mt-2 ml-8 ${product.indirectCosts.method === 'portionAllocation' ? '' : 'hidden'}`}>
-                           <p className="text-sm text-gray-600 mb-2">La part des frais indirects (basée sur le mix des ventes) est divisée par le nombre de portions que vous prévoyez vendre.</p>
-                           <label className="block text-sm">Nombre de portions vendues ou envisagées</label>
-                           <input type="text" inputMode="decimal" value={product.indirectCosts.portionsSold || ''} onChange={(e) => handleIndirectCostChange('portionsSold', e.target.value)} className={`block w-full p-2 border rounded text-right ${!isValidPositiveInteger(product.indirectCosts.portionsSold) ? 'border-red-500' : 'border-gray-300'}`}/>
-                           {!isValidPositiveInteger(product.indirectCosts.portionsSold) && <ValidationMessage message="Doit être un entier positif." />}
-                        </div>
-                    </div>
-                    {/* Allocation en fonction des ventes */}
-                    <div className="p-2">
-                         <div className="flex items-center">
-                            <input id="methodSalesAllocation" type="radio" value="salesAllocation" checked={product.indirectCosts.method === 'salesAllocation'} onChange={() => handleIndirectCostChange('method', 'salesAllocation')} className="h-4 w-4 text-purple-600"/>
-                            <label htmlFor="methodSalesAllocation" className="ml-3 block text-sm font-medium">Allocation en fonction des ventes</label>
-                        </div>
-                        <div className={`mt-2 ml-8 ${product.indirectCosts.method === 'salesAllocation' ? '' : 'hidden'}`}>
-                           <p className="text-sm text-gray-600 mb-2">Répartit les frais indirects totaux entre tous les plats actifs du menu au prorata de leur mix des ventes (défini dans l'onglet Identification), puis divise la part obtenue par le nombre de portions vendues de ce plat.</p>
-                           <label className="block text-sm">Nombre de portions vendues ou envisagées</label>
-                           <input type="text" inputMode="decimal" value={product.indirectCosts.portionsSold || ''} onChange={(e) => handleIndirectCostChange('portionsSold', e.target.value)} className={`block w-full p-2 border rounded text-right ${!isValidPositiveInteger(product.indirectCosts.portionsSold) ? 'border-red-500' : 'border-gray-300'}`}/>
-                           {!isValidPositiveInteger(product.indirectCosts.portionsSold) && <ValidationMessage message="Doit être un entier positif." />}
-                        </div>
-                    </div>
+                    )}
                 </div>
                  <div className="mt-4 p-3 bg-purple-100 rounded-md grid grid-cols-2 gap-4">
                     <p className="font-bold text-purple-800">Total Frais Indirects (recette): <span>{formatCurrency(costs.indirectCostTotal)} $</span></p>

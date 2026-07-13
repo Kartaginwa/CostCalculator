@@ -113,6 +113,7 @@ export const getDefaultState = () => {
         generalInfo: {
             period: 'monthly', totalIndirects: 18500, totalRevenue: 62000, operationHours: 240,
             foodCostTarget: 30, laborCostTarget: 35, menuRevenuePercentage: 85,
+            indirectCostMethod: 'salesAllocation',
         },
         ingredientsList: ingredients,
         products: products,
@@ -140,6 +141,7 @@ export const getEmptyState = () => ({
         foodCostTarget: '',
         laborCostTarget: '',
         menuRevenuePercentage: 100,
+        indirectCostMethod: 'salesAllocation',
     },
     ingredientsList: [],
     products: [],
@@ -152,14 +154,14 @@ export const getEmptyState = () => ({
     },
 });
 
+// Méthodes d'attribution des frais indirects retenues : une seule est choisie globalement (dans
+// les Paramètres) et s'applique à tous les plats. Les deux répartissent exactement le pool de
+// frais indirects (elles se réconcilient par construction) :
+//   - salesAllocation : au prorata du mix des ventes ;
+//   - laborTime : au prorata du temps de production (taux = frais indirects / total heures MO).
 export const indirectCostMethodLabels = {
-    time: 'Basé sur le temps de production',
-    laborIntensity: "Basé sur l'intensité de la main-d'œuvre",
-    salesAllocation: 'Allocation en fonction des ventes',
-    portionAllocation: 'Allocation par portion',
-    fixed: 'Montant fixe par plat',
-    percentSales: 'Pourcentage du prix de vente',
-    percentDirect: 'Pourcentage des coûts directs'
+    salesAllocation: 'Au prorata des ventes',
+    laborTime: 'Au prorata du temps de production',
 };
 
 export const periodTranslations = {

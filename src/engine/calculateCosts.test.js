@@ -18,7 +18,7 @@ const baseProduct = (overrides = {}) => ({
     purchaseCost: 0,
     ingredients: [],
     productionSteps: [],
-    indirectCosts: { method: 'fixed', fixedAmount: 0, percentSalesAmount: 0, percentDirectAmount: 0, portionsSold: 100 },
+    indirectCosts: { portionsSold: 100 },
     salesMix: 0,
     onMenu: true,
     isIngredient: false,
@@ -117,56 +117,34 @@ describe('calculateCosts - main-d\'œuvre', () => {
 });
 
 describe('calculateCosts - méthodes d\'allocation des frais indirects', () => {
-    it("method 'fixed' : montant fixe par portion", () => {
-        const product = baseProduct({
-            nbPortions: 2,
-            indirectCosts: { method: 'fixed', fixedAmount: 5 },
-        });
-        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], []);
-        expect(costs.indirectCostTotal).toBeCloseTo(10);
-        expect(costs.costIndirectPerPortion).toBeCloseTo(5);
-    });
-
-    it("method 'percentSales' : pourcentage du prix de vente", () => {
-        const product = baseProduct({
-            prixVente: 20,
-            indirectCosts: { method: 'percentSales', percentSalesAmount: 10 },
-        });
-        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], []);
-        expect(costs.indirectCostTotal).toBeCloseTo(2);
-    });
-
-    it("method 'percentDirect' : pourcentage des coûts directs", () => {
-        const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
-        const product = baseProduct({
-            ingredients: [{ id: 'farine', quantity: 2, recipeUnit: 'kg', yieldPercentage: 0 }],
-            indirectCosts: { method: 'percentDirect', percentDirectAmount: 10 },
-        });
-        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
-        // coût direct = 4$ matière + 0$ main-d'œuvre => 10% = 0.4
-        expect(costs.indirectCostTotal).toBeCloseTo(0.4);
-    });
-
-    it("method 'laborIntensity' : basé sur le temps de personnel total", () => {
+    it("method 'laborTime' : au prorata du temps de production", () => {
+        // Taux = frais indirects / total des heures de MO du menu (fourni via generalInfo).
+        // 1h × 2 personnes = 2 h-personne ; total menu = 2 h ; taux = 1000/2 = 500$/h ; overhead = 1000.
         const product = baseProduct({
             productionSteps: [{ duration: 3600, startTime: 0, personnel: [{ postId: 'a' }, { postId: 'b' }] }],
-            indirectCosts: { method: 'laborIntensity' },
         });
-        const generalInfo = { ...baseGeneralInfo(), operationCostPerHour: 10 };
+        const generalInfo = { ...baseGeneralInfo(), indirectCostMethod: 'laborTime', totalIndirects: 1000, totalDirectLaborHoursNeeded: 2 };
         const costs = calculateCosts(product, generalInfo, [], [product], []);
-        // 1h * 2 employés = 2h-personnel, à 10$/h = 20
-        expect(costs.indirectCostTotal).toBeCloseTo(20);
+        expect(costs.indirectCostTotal).toBeCloseTo(1000);
     });
 
-    it("method 'portionAllocation' : alloue selon le mix des ventes brut, divisé par les portions vendues", () => {
-        const product = baseProduct({
-            salesMix: 20,
-            indirectCosts: { method: 'portionAllocation', portionsSold: 100 },
-        });
-        const generalInfo = { ...baseGeneralInfo(), totalIndirects: 1000 };
-        const costs = calculateCosts(product, generalInfo, [], [product], []);
-        // 1000 * 20% = 200$ alloués, / 100 portions = 2$/portion
-        expect(costs.indirectCostTotal).toBeCloseTo(2);
+    it("method 'laborTime' : répartit exactement le pool (réconciliation) et ∝ aux heures de chaque plat", () => {
+        const generalInfo = { ...baseGeneralInfo(), indirectCostMethod: 'laborTime', totalIndirects: 1000, totalDirectLaborHoursNeeded: 3 };
+        const productA = baseProduct({ id: 'A', productionSteps: [{ duration: 3600, personnel: [{ postId: 'a' }, { postId: 'b' }] }] }); // 2 h-personne
+        const productB = baseProduct({ id: 'B', productionSteps: [{ duration: 3600, personnel: [{ postId: 'a' }] }] });                 // 1 h-personne
+        const allProducts = [productA, productB];
+        const costsA = calculateCosts(productA, generalInfo, [], allProducts, []);
+        const costsB = calculateCosts(productB, generalInfo, [], allProducts, []);
+        // taux = 1000/3 ; A = 2 × 1000/3 ≈ 666,7 ; B = 1 × 1000/3 ≈ 333,3 ; somme = 1000.
+        expect(costsA.indirectCostTotal + costsB.indirectCostTotal).toBeCloseTo(1000);
+        expect(costsA.indirectCostTotal / costsB.indirectCostTotal).toBeCloseTo(2);
+    });
+
+    it("une sous-recette (isIngredient) n'absorbe aucun frais indirect", () => {
+        const generalInfo = { ...baseGeneralInfo(), indirectCostMethod: 'salesAllocation', totalIndirects: 10000 };
+        const subRecipe = baseProduct({ id: 'sub', isIngredient: true, salesMix: 50, indirectCosts: { portionsSold: 100 } });
+        const costs = calculateCosts(subRecipe, generalInfo, [], [subRecipe], []);
+        expect(costs.indirectCostTotal).toBe(0);
     });
 
     describe("method 'salesAllocation'", () => {
@@ -294,14 +272,18 @@ describe('calculateCosts - sous-recettes récursives', () => {
 describe('calculateCosts - marges', () => {
     it("calcule les marges brute et nette à partir du prix de vente", () => {
         const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        // salesAllocation calibré pour un frais indirect de 1$/portion : pool 10$, seul plat au
+        // menu (mix 100 % => part 1), portions vendues 10 => 10$/10 = 1$/portion.
         const product = baseProduct({
-            prixVente: 20,
+            prixVente: 20, salesMix: 100,
             ingredients: [{ id: 'farine', quantity: 2, recipeUnit: 'kg', yieldPercentage: 0 }],
-            indirectCosts: { method: 'fixed', fixedAmount: 1 },
+            indirectCosts: { portionsSold: 10 },
         });
-        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        const generalInfo = { ...baseGeneralInfo(), indirectCostMethod: 'salesAllocation', totalIndirects: 10 };
+        const costs = calculateCosts(product, generalInfo, baseIngredients, [product], []);
         // coût matière 4$, main-d'œuvre 0$, indirect 1$ => coût total 5$
-        expect(costs.margeBruteDollar).toBeCloseTo(16); // 20 - 4
+        expect(costs.indirectCostTotal).toBeCloseTo(1);
+        expect(costs.margeBruteDollar).toBeCloseTo(16); // 20 - 4 (hors indirect)
         expect(costs.margeNetteDollar).toBeCloseTo(15); // 20 - 5
         expect(costs.margeNettePercent).toBeCloseTo(0.75);
     });

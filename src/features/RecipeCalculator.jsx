@@ -916,18 +916,6 @@ const handleIngredientUpdate = (itemIndex, selection) => {
                 </div>
                 {openRecipeSections.has('recap') && (
                     <div className="mt-4">
-                {/* Prix de vente en tête, centré et à la taille d'une carte : point de départ de la
-                    cascade de marges ci-dessous. */}
-                <div className="flex justify-center mb-4">
-                    <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center border-l-4 border-blue-500">
-                        <p className="text-sm text-gray-500">Prix de Vente</p>
-                        <p className="text-2xl font-bold text-blue-800">
-                            {simulatedCosts
-                                ? renderComparison(parseLocaleNumber(product.prixVente), parseLocaleNumber(simulatedPrice), formatCurrency, true, ' $')
-                                : `${formatCurrency(parseLocaleNumber(product.prixVente))} $`}
-                        </p>
-                    </div>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-4">
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
@@ -1030,6 +1018,17 @@ const handleIngredientUpdate = (itemIndex, selection) => {
                             ) : (
                                 `${formatCurrency(costs.margeNetteDollar)}$ / ${formatPercent(costs.margeNettePercent)}%`
                             )}
+                        </p>
+                    </div>
+                </div>
+                {/* Prix de vente au bas de la cascade, centré et à la taille d'une carte. */}
+                <div className="flex justify-center mt-4">
+                    <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center border-l-4 border-blue-500">
+                        <p className="text-sm text-gray-500">Prix de Vente</p>
+                        <p className="text-2xl font-bold text-blue-800">
+                            {simulatedCosts
+                                ? renderComparison(parseLocaleNumber(product.prixVente), parseLocaleNumber(simulatedPrice), formatCurrency, true, ' $')
+                                : `${formatCurrency(parseLocaleNumber(product.prixVente))} $`}
                         </p>
                     </div>
                 </div>

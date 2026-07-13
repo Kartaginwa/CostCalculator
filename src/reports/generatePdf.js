@@ -735,7 +735,8 @@ export const generatePdf = (options, deps) => {
                     ['Ratio Coût Matière', `${formatPercent(costs.costMatierePercent)} %`],
                     ['Ratio Coût Main-d\'œuvre', `${formatPercent(costs.costLaborPercent)} %`],
                     ['Coût de Revient par Portion', `${formatCurrency(costs.totalCostPerPortion)} $`],
-                    ['Marge Brute par Portion', `${formatCurrency(costs.margeBruteDollar)} $ (${formatPercent(costs.margeBrutePercent)} %)`],
+                    ['Marge de contribution par Portion', `${formatCurrency(costs.margeContributionDollar)} $ (${formatPercent(costs.margeContributionPercent)} %)`],
+                    ['Marge sur coût primaire par Portion', `${formatCurrency(costs.margeBruteDollar)} $ (${formatPercent(costs.margeBrutePercent)} %)`],
                     ['Marge Nette par Portion', `${formatCurrency(costs.margeNetteDollar)} $ (${formatPercent(costs.margeNettePercent)} %)`],
                 ];
 

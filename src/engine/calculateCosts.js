@@ -224,6 +224,12 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     const margeNetteDollar = prixVente - totalCostPerPortion;
     const margeNettePercent = prixVente > 0 ? margeNetteDollar / prixVente : 0;
 
+    // Marge de CONTRIBUTION (coût matière seul) = prix − coût matière par portion. Fournie à titre
+    // d'AFFICHAGE (les trois niveaux de marge : contribution → coût primaire → nette). La
+    // classification de menu et le point mort restent basés sur margeBrute (MO incluse).
+    const margeContributionDollar = prixVente - costMatierePerPortion;
+    const margeContributionPercent = prixVente > 0 ? margeContributionDollar / prixVente : 0;
+
     // Nouveaux pourcentages
     const costMatierePercent = prixVente > 0 ? costMatierePerPortion / prixVente : 0;
     const costLaborPercent = prixVente > 0 ? costLaborPerPortion / prixVente : 0;
@@ -245,6 +251,8 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         totalCostPerPortion,
         margeBruteDollar,
         margeBrutePercent,
+        margeContributionDollar,
+        margeContributionPercent,
         margeNetteDollar,
         margeNettePercent,
         costPerUnit,

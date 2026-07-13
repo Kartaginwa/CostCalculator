@@ -916,6 +916,15 @@ const handleIngredientUpdate = (itemIndex, selection) => {
                 </div>
                 {openRecipeSections.has('recap') && (
                     <div className="mt-4">
+                {/* Prix de vente en tête : point de départ de la cascade de marges ci-dessous. */}
+                <div className="p-3 mb-4 bg-white rounded-lg shadow text-center border-l-4 border-blue-500">
+                    <p className="text-sm text-gray-500">Prix de Vente</p>
+                    <p className="text-3xl font-bold text-blue-800">
+                        {simulatedCosts
+                            ? renderComparison(parseLocaleNumber(product.prixVente), parseLocaleNumber(simulatedPrice), formatCurrency, true, ' $')
+                            : `${formatCurrency(parseLocaleNumber(product.prixVente))} $`}
+                    </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-4">
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
@@ -972,18 +981,26 @@ const handleIngredientUpdate = (itemIndex, selection) => {
                         </p>
                     </div>
                 </div>
+                {/* Les trois niveaux de marge, en cascade : prix − matière = contribution ;
+                    − main-d'œuvre = coût primaire ; − frais indirects = nette. */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                     <div className="p-3 bg-white rounded-lg shadow">
-                        <p className="text-sm text-gray-500">Prix de Vente</p>
-                        <p className="text-2xl font-bold text-blue-800">
-                            {simulatedCosts 
-                                ? renderComparison(parseLocaleNumber(product.prixVente), parseLocaleNumber(simulatedPrice), formatCurrency, true, ' $')
-                                : `${formatCurrency(parseLocaleNumber(product.prixVente))} $`
-                            }
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge de contribution <Tooltip text="Prix de vente moins le coût matière seul. C'est ce qui reste pour couvrir la main-d'œuvre, les frais indirects et le profit." /></div>
+                        <p className={`text-xl font-bold ${getMarginTextColorClass(simulatedCosts ? simulatedCosts.margeContributionPercent : costs.margeContributionPercent)}`}>
+                            {simulatedCosts ? (
+                                <>
+                                    <span>{`${formatCurrency(simulatedCosts.margeContributionDollar)}$ / ${formatPercent(simulatedCosts.margeContributionPercent)}%`}</span>
+                                    <span className="block text-sm font-normal text-gray-500">
+                                        (diff: {simulatedCosts.margeContributionDollar - costs.margeContributionDollar >= 0 ? '+' : ''}{formatCurrency(simulatedCosts.margeContributionDollar - costs.margeContributionDollar)}$)
+                                    </span>
+                                </>
+                            ) : (
+                                `${formatCurrency(costs.margeContributionDollar)}$ / ${formatPercent(costs.margeContributionPercent)}%`
+                            )}
                         </p>
                     </div>
                     <div className="p-3 bg-white rounded-lg shadow">
-                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute <Tooltip text="La différence entre le prix de vente et les coûts directs. C'est le profit avant de déduire les frais indirects." /></div>
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge sur coût primaire <Tooltip text="Prix de vente moins les coûts directs (matière + main-d'œuvre). Profit avant de déduire les frais indirects. La MO est traitée comme un coût semi-variable." /></div>
                         <p className={`text-xl font-bold ${getMarginTextColorClass(simulatedCosts ? simulatedCosts.margeBrutePercent : costs.margeBrutePercent)}`}>
                             {simulatedCosts ? (
                                 <>

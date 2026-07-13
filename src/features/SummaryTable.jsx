@@ -221,8 +221,10 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
         { key: 'costs.costMatierePercent', label: 'Coût Matière (%)' },
         { key: 'costs.costLaborPercent', label: 'Coût M-O (%)' },
         { key: 'costs.costIndirectPercent', label: 'Coût Ind. (%)' },
-        { key: 'costs.margeBruteDollar', label: 'Marge Brute ($)' },
-        { key: 'costs.margeBrutePercent', label: 'Marge Brute (%)' },
+        { key: 'costs.margeContributionDollar', label: 'M. contrib. ($)' },
+        { key: 'costs.margeContributionPercent', label: 'M. contrib. (%)' },
+        { key: 'costs.margeBruteDollar', label: 'M. coût prim. ($)' },
+        { key: 'costs.margeBrutePercent', label: 'M. coût prim. (%)' },
         { key: 'costs.margeNetteDollar', label: 'Marge Nette ($)' },
         { key: 'costs.margeNettePercent', label: 'Marge Nette (%)' },
     ];
@@ -263,6 +265,8 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
                                 <td className="px-4 py-4 text-right" style={getCostTargetStyle(product.costs.costMatierePercent, generalInfo.foodCostTarget)}>{formatPercent(product.costs.costMatierePercent)} %</td>
                                 <td className="px-4 py-4 text-right" style={getCostTargetStyle(product.costs.costLaborPercent, generalInfo.laborCostTarget)}>{formatPercent(product.costs.costLaborPercent)} %</td>
                                 <td className="px-4 py-4 text-right">{formatPercent(product.costs.costIndirectPercent)} %</td>
+                                <td className="px-4 py-4 text-right font-bold" style={getMarginStyle(product.costs.margeContributionPercent)}>{formatCurrency(product.costs.margeContributionDollar)}</td>
+                                <td className="px-4 py-4 text-right font-bold" style={getMarginStyle(product.costs.margeContributionPercent)}>{formatPercent(product.costs.margeContributionPercent)} %</td>
                                 <td className="px-4 py-4 text-right font-bold" style={getMarginStyle(product.costs.margeBrutePercent)}>{formatCurrency(product.costs.margeBruteDollar)}</td>
                                 <td className="px-4 py-4 text-right font-bold" style={getMarginStyle(product.costs.margeBrutePercent)}>{formatPercent(product.costs.margeBrutePercent)} %</td>
                                 <td className="px-4 py-4 text-right font-bold" style={getMarginStyle(product.costs.margeNettePercent)}>{formatCurrency(product.costs.margeNetteDollar)}</td>

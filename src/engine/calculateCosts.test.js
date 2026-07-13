@@ -307,6 +307,24 @@ describe('calculateCosts - marges', () => {
         expect(costs.margeNetteDollar).toBeCloseTo(15); // 20 - 5
         expect(costs.margeNettePercent).toBeCloseTo(0.75);
     });
+
+    it("expose les trois niveaux de marge : contribution (matière) > coût primaire (MO) > nette", () => {
+        // prix 20 ; matière 4 ; MO directe 6 (0,1 h × 60 $/h) ; indirect 1 (salesAllocation).
+        const baseIngredients = [{ id: 'farine', unitPrice: 4, lossPercentage: 0, unit: 'kg' }];
+        const laborDatabase = [{ postName: 'C', employees: [{ hourlyRate: 60, socialCharges: 0, vacationPercentage: 0, workedHours: 1 }] }];
+        const product = baseProduct({
+            prixVente: 20, salesMix: 100, nbPortions: 1,
+            ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+            productionSteps: [{ stepId: 's', personnel: [{ postId: 'C' }], startTime: 0, duration: 360 }],
+            indirectCosts: { portionsSold: 10 },
+        });
+        const generalInfo = { ...baseGeneralInfo(), indirectCostMethod: 'salesAllocation', totalIndirects: 10 };
+        const costs = calculateCosts(product, generalInfo, baseIngredients, [product], laborDatabase);
+        expect(costs.margeContributionDollar).toBeCloseTo(16); // 20 − 4 (matière)
+        expect(costs.margeBruteDollar).toBeCloseTo(10);         // 20 − (4 + 6) (coût primaire)
+        expect(costs.margeNetteDollar).toBeCloseTo(9);          // 20 − (4 + 6 + 1)
+        expect(costs.margeContributionPercent).toBeCloseTo(0.80);
+    });
 });
 
 describe('calculateCosts - cache memo et prix simulé', () => {

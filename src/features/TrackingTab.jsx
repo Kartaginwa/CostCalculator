@@ -4,7 +4,7 @@ import { Camera, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency } from '../utils.js';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeIngredientVolatility } from '../engine/priceVolatility.js';
-import { Pagination } from '../components/common.jsx';
+import { Pagination, Tooltip } from '../components/common.jsx';
 
 // Libellé et style du niveau de volatilité (faible / modérée / élevée).
 const VOLATILITY_TIERS = {
@@ -204,6 +204,32 @@ export const TrackingTab = () => {
     const requestVolSort = (key) => setVolSort(prev => ({
         key, direction: prev.key === key && prev.direction === 'descending' ? 'ascending' : 'descending',
     }));
+
+    // Tri / filtre / pagination de la table de gestion des points de référence.
+    const [snapSort, setSnapSort] = useState({ key: 'timestamp', direction: 'descending' });
+    const [snapFilter, setSnapFilter] = useState('');
+    const [snapPage, setSnapPage] = useState(1);
+    const [snapPerPage, setSnapPerPage] = useState(10);
+    const filteredSnapshots = useMemo(() => {
+        let list = trackingPoints;
+        if (snapFilter.trim()) {
+            const q = snapFilter.toLowerCase();
+            list = list.filter(p => (p.name || '').toLowerCase().includes(q) || (p.note || '').toLowerCase().includes(q));
+        }
+        const dir = snapSort.direction === 'ascending' ? 1 : -1;
+        return [...list].sort((a, b) => {
+            if (snapSort.key === 'timestamp') return (new Date(a.timestamp) - new Date(b.timestamp)) * dir;
+            return String(a[snapSort.key] || '').localeCompare(String(b[snapSort.key] || '')) * dir;
+        });
+    }, [trackingPoints, snapFilter, snapSort]);
+    useEffect(() => { setSnapPage(1); }, [snapFilter, snapPerPage]);
+    const pagedSnapshots = useMemo(
+        () => filteredSnapshots.slice((snapPage - 1) * snapPerPage, (snapPage - 1) * snapPerPage + snapPerPage),
+        [filteredSnapshots, snapPage, snapPerPage]
+    );
+    const requestSnapSort = (key) => setSnapSort(prev => ({
+        key, direction: prev.key === key && prev.direction === 'ascending' ? 'descending' : 'ascending',
+    }));
     const [selectedProductId, setSelectedProductId] = useState('');
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedSnapshotIds, setSelectedSnapshotIds] = useState(new Set());
@@ -312,7 +338,7 @@ export const TrackingTab = () => {
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedSnapshotIds(new Set(trackingPoints.map(p => p.id)));
+            setSelectedSnapshotIds(new Set(filteredSnapshots.map(p => p.id)));
         } else {
             setSelectedSnapshotIds(new Set());
         }
@@ -519,15 +545,18 @@ export const TrackingTab = () => {
                                                     {[
                                                         { key: 'name', label: 'Ingrédient', align: 'left' },
                                                         { key: 'provider', label: 'Fournisseur', align: 'left' },
-                                                        { key: 'currentPrice', label: 'Prix actuel', align: 'right' },
-                                                        { key: 'trendPercent', label: 'Tendance', align: 'right' },
-                                                        { key: 'amplitudePercent', label: 'Volatilité (amplitude)', align: 'right' },
+                                                        { key: 'currentPrice', label: 'Prix actuel', align: 'right', tip: "Dernier prix unitaire connu (point de référence le plus récent)." },
+                                                        { key: 'trendPercent', label: 'Tendance', align: 'right', tip: "Variation du prix entre le premier et le dernier point de référence (hausse ▲ / baisse ▼)." },
+                                                        { key: 'amplitudePercent', label: 'Volatilité (amplitude)', align: 'right', tip: "Amplitude = écart entre le prix le plus bas et le plus haut, en % de la moyenne. Mesure l'instabilité du prix." },
                                                     ].map(col => (
                                                         <th key={col.key} className={`py-2 px-3 ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
-                                                            <button onClick={() => requestVolSort(col.key)} className={`inline-flex items-center gap-1 hover:text-gray-800 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
-                                                                {col.label}
-                                                                <ArrowUpDown className={`h-3.5 w-3.5 ${volSort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
-                                                            </button>
+                                                            <span className={`inline-flex items-center gap-1 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
+                                                                <button onClick={() => requestVolSort(col.key)} className={`inline-flex items-center gap-1 hover:text-gray-800 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
+                                                                    {col.label}
+                                                                    <ArrowUpDown className={`h-3.5 w-3.5 ${volSort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
+                                                                </button>
+                                                                {col.tip && <Tooltip text={col.tip} />}
+                                                            </span>
                                                         </th>
                                                     ))}
                                                 </tr>
@@ -572,6 +601,13 @@ export const TrackingTab = () => {
                     {/* Gestion des points de référence */}
                     <div id="tutorial-section-tracking-management" className="p-4 bg-gray-50 rounded-lg">
                         <h2 className="text-xl font-semibold mb-4 text-gray-700">Gestion des points de référence</h2>
+                        <input
+                            type="text"
+                            value={snapFilter}
+                            onChange={(e) => setSnapFilter(e.target.value)}
+                            placeholder="Filtrer par nom ou note…"
+                            className="p-2 border rounded-md text-sm w-64 mb-3"
+                        />
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-100">
@@ -579,19 +615,28 @@ export const TrackingTab = () => {
                                         <th className="px-4 py-3 w-12 text-center">
                                             <input
                                                 type="checkbox"
-                                                checked={selectedSnapshotIds.size === trackingPoints.length && trackingPoints.length > 0}
+                                                checked={filteredSnapshots.length > 0 && filteredSnapshots.every(p => selectedSnapshotIds.has(p.id))}
                                                 onChange={handleSelectAll}
                                                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                             />
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Note</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date de création</th>
+                                        {[
+                                            { key: 'name', label: 'Nom' },
+                                            { key: 'note', label: 'Note' },
+                                            { key: 'timestamp', label: 'Date de création' },
+                                        ].map(col => (
+                                            <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                                <button onClick={() => requestSnapSort(col.key)} className="inline-flex items-center gap-1 uppercase hover:text-gray-800">
+                                                    {col.label}
+                                                    <ArrowUpDown className={`h-3.5 w-3.5 ${snapSort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
+                                                </button>
+                                            </th>
+                                        ))}
                                         <th className="relative px-4 py-3"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {trackingPoints.map((point, index) => (
+                                    {pagedSnapshots.map((point, index) => (
                                         <tr key={point.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                             <td className="px-4 py-2 w-12 text-center">
                                                 <input
@@ -614,9 +659,19 @@ export const TrackingTab = () => {
                                             </td>
                                         </tr>
                                     ))}
+                                    {pagedSnapshots.length === 0 && (
+                                        <tr><td colSpan={5} className="px-4 py-4 text-center text-sm text-gray-500">Aucun point de référence ne correspond au filtre.</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination
+                            totalItems={filteredSnapshots.length}
+                            itemsPerPage={snapPerPage}
+                            currentPage={snapPage}
+                            onPageChange={setSnapPage}
+                            onItemsPerPageChange={setSnapPerPage}
+                        />
                     </div>
                 </>
             )}

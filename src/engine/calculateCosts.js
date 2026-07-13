@@ -60,7 +60,12 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                         // Appel récursif pour obtenir les coûts de la sous-recette
                         const subRecipeCosts = calculateCosts(subRecipeProduct, generalInfo, baseIngredients, allProducts, laborDatabase, null, memo, currentPath);
                         const sanitizedPortionSize = parseLocaleNumber(subRecipeProduct.portionSize) || 1;
-                        unitPrice = subRecipeCosts.totalCostPerPortion / sanitizedPortionSize;
+                        // Une sous-recette utilisée COMME INGRÉDIENT n'apporte que son coût DIRECT
+                        // (matière + main-d'œuvre) au plat parent ; ses frais indirects sont exclus
+                        // ici pour éviter le double comptage (le plat final absorbe l'overhead). Si
+                        // la sous-recette est aussi vendue seule, elle absorbe bien ses propres frais
+                        // indirects lorsqu'elle est calculée en tant que plat (affichage propre).
+                        unitPrice = subRecipeCosts.totalDirectCostPerPortion / sanitizedPortionSize;
                         ingredientUnit = subRecipeProduct.portionUnit;
                         // Note: La perte et le rendement sont gérés à l'intérieur de la sous-recette, donc lossPercentage est 0 ici.
                     }
@@ -126,17 +131,15 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
 
     // Frais indirects — méthode GLOBALE (generalInfo.indirectCostMethod), appliquée à tous les
     // plats. Deux méthodes, toutes deux normalisées pour répartir EXACTEMENT la part menu du pool
-    // de frais indirects (elles se réconcilient par construction). Les sous-recettes (isIngredient)
-    // n'absorbent aucun frais indirect : l'overhead est porté par le plat final vendu, ce qui évite
-    // le double comptage lorsqu'une sous-recette est intégrée à un plat.
+    // de frais indirects (elles se réconcilient par construction). Chaque plat (y compris une
+    // sous-recette vendue seule) absorbe ses propres frais indirects ; l'exclusion pour éviter le
+    // double comptage se fait uniquement à l'usage (coût direct de la sous-recette côté parent).
     let indirectCostTotal = 0;
     const method = generalInfo.indirectCostMethod || 'salesAllocation';
     const totalIndirectsParsed = parseLocaleNumber(generalInfo.totalIndirects);
     const menuRevenuePercentage = (parseLocaleNumber(generalInfo.menuRevenuePercentage) || 100) / 100;
 
-    if (product.isIngredient) {
-        indirectCostTotal = 0;
-    } else if (method === 'laborTime') {
+    if (method === 'laborTime') {
         // Au prorata du temps de production. Taux = part menu du pool / total des heures de MO
         // nécessaires au menu (fourni par generalInfo.totalDirectLaborHoursNeeded). Chaque plat
         // absorbe ∝ ses propres heures de MO ; sommé sur le volume produit, le total égale
@@ -187,7 +190,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
 
     // Soupape de sécurité (méthode "ventes") : sur données dégénérées (portions vendues = 1 par
     // défaut), le total d'un plat ne peut dépasser le pool de frais indirects.
-    if (method !== 'laborTime' && !product.isIngredient) {
+    if (method !== 'laborTime') {
         const maxIndirects = parseLocaleNumber(generalInfo.totalIndirects);
         if (maxIndirects > 0 && indirectCostTotal > maxIndirects) {
             indirectCostTotal = maxIndirects;

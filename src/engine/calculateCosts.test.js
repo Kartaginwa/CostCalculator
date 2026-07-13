@@ -140,11 +140,31 @@ describe('calculateCosts - méthodes d\'allocation des frais indirects', () => {
         expect(costsA.indirectCostTotal / costsB.indirectCostTotal).toBeCloseTo(2);
     });
 
-    it("une sous-recette (isIngredient) n'absorbe aucun frais indirect", () => {
+    it("une sous-recette n'apporte que son coût direct au plat parent (pas de double comptage), mais absorbe ses propres frais indirects quand elle est vendue seule", () => {
+        // La sous-recette est AUSSI vendue au menu (isIngredient + onMenu + mix). Utilisée comme
+        // ingrédient, seul son coût direct (matière + MO) remonte au parent ; calculée en tant que
+        // plat, elle absorbe bien ses propres frais indirects.
         const generalInfo = { ...baseGeneralInfo(), indirectCostMethod: 'salesAllocation', totalIndirects: 10000 };
-        const subRecipe = baseProduct({ id: 'sub', isIngredient: true, salesMix: 50, indirectCosts: { portionsSold: 100 } });
-        const costs = calculateCosts(subRecipe, generalInfo, [], [subRecipe], []);
-        expect(costs.indirectCostTotal).toBe(0);
+        const baseIngredients = [{ id: 'farine', unitPrice: 5, lossPercentage: 0, unit: 'kg' }];
+        const subRecipe = baseProduct({
+            id: 'sauce', isIngredient: true, onMenu: true, salesMix: 50, portionUnit: 'kg', portionSize: 1, nbPortions: 1,
+            ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+            indirectCosts: { portionsSold: 100 },
+        });
+        const parent = baseProduct({
+            id: 'plat', isIngredient: false, onMenu: true, salesMix: 50, nbPortions: 1,
+            ingredients: [{ id: 'sauce', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+            indirectCosts: { portionsSold: 100 },
+        });
+        const allProducts = [subRecipe, parent];
+
+        // Côté parent : coût matière = coût DIRECT de la sous-recette (5$ de farine), sans son indirect.
+        const parentCosts = calculateCosts(parent, generalInfo, baseIngredients, allProducts, []);
+        expect(parentCosts.costMatierePerPortion).toBeCloseTo(5);
+
+        // Sous-recette calculée seule (au menu) : elle absorbe bien un frais indirect.
+        const subCosts = calculateCosts(subRecipe, generalInfo, baseIngredients, allProducts, []);
+        expect(subCosts.indirectCostTotal).toBeGreaterThan(0);
     });
 
     describe("method 'salesAllocation'", () => {

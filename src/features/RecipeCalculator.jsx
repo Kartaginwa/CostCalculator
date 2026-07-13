@@ -884,10 +884,10 @@ const handleIngredientUpdate = (itemIndex, selection) => {
                         Méthode d'attribution active : <strong>{indirectCostMethodLabels[generalInfo.indirectCostMethod] || indirectCostMethodLabels.salesAllocation}</strong>.
                         <span className="block text-xs text-purple-700 mt-1">Se choisit globalement dans l'onglet Paramètres et s'applique à tous les plats.</span>
                     </div>
-                    {(generalInfo.indirectCostMethod || 'salesAllocation') === 'salesAllocation' && !product.isIngredient && (
+                    {(generalInfo.indirectCostMethod || 'salesAllocation') === 'salesAllocation' && (
                         <div className="p-2">
                             <label className="block text-sm font-medium">Nombre de portions vendues ou envisagées</label>
-                            <p className="text-xs text-gray-600 mb-2">Dénominateur de la répartition « au prorata des ventes » pour ce plat. Laissé vide, il est estimé automatiquement à partir du revenu et du mix des ventes.</p>
+                            <p className="text-xs text-gray-600 mb-2">Dénominateur de la répartition « au prorata des ventes » quand ce plat est vendu tel quel. Laissé vide, il est estimé automatiquement à partir du revenu et du mix des ventes.</p>
                             <input type="text" inputMode="decimal" value={product.indirectCosts?.portionsSold || ''} onChange={(e) => handleIndirectCostChange('portionsSold', e.target.value)} className={`block w-full p-2 border rounded text-right ${product.indirectCosts?.portionsSold && !isValidPositiveInteger(product.indirectCosts.portionsSold) ? 'border-red-500' : 'border-gray-300'}`}/>
                             {product.indirectCosts?.portionsSold && !isValidPositiveInteger(product.indirectCosts.portionsSold) && <ValidationMessage message="Doit être un entier positif." />}
                         </div>

@@ -3,12 +3,37 @@ import { ArrowUpDown, Upload, AlertCircle, Copy, Trash2 } from 'lucide-react';
 import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
+import { computeIngredientVolatility } from '../engine/priceVolatility.js';
 
 // Chargé à la demande : l'assistant d'import est volumineux et rarement ouvert.
 const ImportWizardModal = lazy(() => import('./ImportWizardModal.jsx').then(m => ({ default: m.ImportWizardModal })));
 
+// Élément de la liste ABC, avec étiquette « volatile » si le prix de l'ingrédient est jugé volatil
+// d'après les points de référence (croisement ABC × volatilité : un item de forte valeur au prix
+// volatil est une priorité d'approvisionnement).
+const AbcItem = ({ item, volatilityByName }) => {
+    const v = volatilityByName[item.name];
+    return (
+        <li className="flex justify-between items-center">
+            <span className="flex items-center">
+                {item.name}
+                {v && v.isVolatile && (
+                    <span
+                        title={`Prix volatil : amplitude ${v.amplitudePercent.toFixed(0)} % entre son plus bas et son plus haut sur les points de référence.`}
+                        className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700"
+                    >
+                        volatile
+                    </span>
+                )}
+            </span>
+            <span className="font-mono text-gray-600">{item.percent.toFixed(1)}%</span>
+        </li>
+    );
+};
+
 export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, analysisData } = useProject();
+    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, analysisData, trackingPoints } = useProject();
+    const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
 
     // --- LOGIQUE CENTRALISÉE : ON EXTRAIT LES DONNÉES DU CERVEAU ---
     // // you should modify this part : on récupère les données pré-calculées
@@ -448,12 +473,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <h3 className="font-bold text-lg text-red-800 flex items-center">Catégorie A <span className="ml-auto text-sm font-normal">({abcAnalysisData.totals.A.toFixed(1)}% des coûts)</span></h3>
                             <p className="text-xs text-gray-500 mb-2">Très importants. À contrôler de près.</p>
                             <ul className="text-sm space-y-1">
-                                {abcAnalysisData.A.map(item => (
-                                    <li key={item.name} className="flex justify-between">
-                                        <span>{item.name}</span>
-                                        <span className="font-mono text-gray-600">{item.percent.toFixed(1)}%</span>
-                                    </li>
-                                ))}
+                                {abcAnalysisData.A.map(item => <AbcItem key={item.name} item={item} volatilityByName={priceVolatility.byName} />)}
                             </ul>
                         </div>
                         {/* Catégorie B */}
@@ -461,12 +481,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <h3 className="font-bold text-lg text-yellow-800 flex items-center">Catégorie B <span className="ml-auto text-sm font-normal">({abcAnalysisData.totals.B.toFixed(1)}% des coûts)</span></h3>
                             <p className="text-xs text-gray-500 mb-2">Importance moyenne.</p>
                             <ul className="text-sm space-y-1">
-                                {abcAnalysisData.B.map(item => (
-                                    <li key={item.name} className="flex justify-between">
-                                        <span>{item.name}</span>
-                                        <span className="font-mono text-gray-600">{item.percent.toFixed(1)}%</span>
-                                    </li>
-                                ))}
+                                {abcAnalysisData.B.map(item => <AbcItem key={item.name} item={item} volatilityByName={priceVolatility.byName} />)}
                             </ul>
                         </div>
                         {/* Catégorie C */}
@@ -474,12 +489,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <h3 className="font-bold text-lg text-green-800 flex items-center">Catégorie C <span className="ml-auto text-sm font-normal">({abcAnalysisData.totals.C.toFixed(1)}% des coûts)</span></h3>
                             <p className="text-xs text-gray-500 mb-2">Faible importance. Contrôle souple.</p>
                             <ul className="text-sm space-y-1">
-                                {abcAnalysisData.C.map(item => (
-                                    <li key={item.name} className="flex justify-between">
-                                        <span>{item.name}</span>
-                                        <span className="font-mono text-gray-600">{item.percent.toFixed(1)}%</span>
-                                    </li>
-                                ))}
+                                {abcAnalysisData.C.map(item => <AbcItem key={item.name} item={item} volatilityByName={priceVolatility.byName} />)}
                             </ul>
                         </div>
                     </div>

@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { Camera, Pencil, Trash2 } from 'lucide-react';
-import { parseLocaleNumber } from '../utils.js';
+import { parseLocaleNumber, formatCurrency } from '../utils.js';
 import { useProject } from '../state/ProjectContext.jsx';
+import { computeIngredientVolatility } from '../engine/priceVolatility.js';
+
+// Libellé et style du niveau de volatilité (faible / modérée / élevée).
+const VOLATILITY_TIERS = {
+    elevee: { label: 'élevée', className: 'text-red-700 font-semibold' },
+    moderee: { label: 'modérée', className: 'text-orange-600 font-medium' },
+    faible: { label: 'faible', className: 'text-gray-500' },
+};
 
 // Doit être déclaré en dehors de SimpleLineChart : un composant recréé à chaque rendu
 // perdrait son état à chaque frappe. Recharts fournit déjà le point de donnée complet via
@@ -160,6 +168,7 @@ const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
 // --- NOUVEL ONGLET: SUIVI ---
 export const TrackingTab = () => {
     const { trackingPoints, setTrackingPoints, generalInfo, showNotification, setNotification, baseIngredients, analysisData } = useProject();
+    const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
     const [selectedProductId, setSelectedProductId] = useState('');
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedSnapshotIds, setSelectedSnapshotIds] = useState(new Set());
@@ -445,6 +454,49 @@ export const TrackingTab = () => {
                             ]}
                             yAxisLabel="Prix Unitaire ($)"
                         />
+
+                        {/* Volatilité des prix d'achat — dérivée des points de référence. */}
+                        <div className="mt-6 pt-4 border-t">
+                            <h3 className="text-lg font-semibold text-gray-700 mb-1">Volatilité des prix d'achat</h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
+                                {priceVolatility.hasEnoughData ? ` sur vos ${priceVolatility.pointCount} points de référence` : ''}.
+                                À croiser avec la classe ABC (onglet Ingrédients) : un ingrédient de forte valeur au prix volatil est une priorité d'approvisionnement.
+                            </p>
+                            {priceVolatility.hasEnoughData ? (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                        <thead>
+                                            <tr className="text-left text-gray-500 border-b">
+                                                <th className="py-2 pr-4">Ingrédient</th>
+                                                <th className="py-2 px-4 text-right">Prix actuel</th>
+                                                <th className="py-2 px-4 text-right">Tendance</th>
+                                                <th className="py-2 pl-4 text-right">Volatilité (amplitude)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {priceVolatility.list.map(v => {
+                                                const tier = VOLATILITY_TIERS[v.tier] || VOLATILITY_TIERS.faible;
+                                                return (
+                                                    <tr key={v.id} className={`border-b border-gray-100 ${v.tier === 'elevee' ? 'bg-orange-50' : ''}`}>
+                                                        <td className="py-2 pr-4">{v.name}</td>
+                                                        <td className="py-2 px-4 text-right text-gray-600">{formatCurrency(v.currentPrice)} $</td>
+                                                        <td className={`py-2 px-4 text-right ${v.trendPercent > 0.5 ? 'text-red-600' : v.trendPercent < -0.5 ? 'text-green-600' : 'text-gray-500'}`}>
+                                                            {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {Math.abs(v.trendPercent).toFixed(0)} %
+                                                        </td>
+                                                        <td className={`py-2 pl-4 text-right ${tier.className}`}>
+                                                            {v.amplitudePercent.toFixed(0)} % · {tier.label}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500">Créez au moins 2 points de référence pour analyser la volatilité des prix.</p>
+                            )}
+                        </div>
                     </div>
 
                     {/* Gestion des points de référence */}

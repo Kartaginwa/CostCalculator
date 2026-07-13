@@ -91,6 +91,14 @@ test.describe('Projet démo', () => {
             await page.locator(`#${tabId}`).click();
         }
 
+        // Volatilité des prix (dérivée des points de référence du projet démo).
+        // Onglet Suivi : le tableau de volatilité s'affiche avec des données.
+        await page.locator('#tab-tracking').click();
+        await expect(page.getByRole('heading', { name: 'Volatilité des prix d\'achat' })).toBeVisible();
+        // Onglet Ingrédients : au moins un ingrédient (le saumon, prix variable) est marqué « volatile ».
+        await page.locator('#tab-ingredients').click();
+        await expect(page.getByText('volatile').first()).toBeVisible();
+
         // Simulateur de choc (onglet Résumé) : ouvrir, ajouter un choc d'intrants +15 % et un choc
         // de main-d'œuvre +10 %. Le recalcul de l'analyse doit s'afficher sans erreur.
         await page.locator('#tab-summary').click();

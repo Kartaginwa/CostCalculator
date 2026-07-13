@@ -38,6 +38,12 @@ const WORKING_PROJECT_KEY = 'restocalc_working_project_v1';
 const App = () => {
     // --- ÉTATS ---
     const [isProjectLoaded, setIsProjectLoaded] = useState(false);
+    // Un brouillon de travail (sauvegarde auto de la session précédente) est-il disponible ? Lu une
+    // seule fois au montage pour proposer « Reprendre le projet en cours » sur l'écran d'accueil —
+    // sans court-circuiter cet écran (contrairement à une restauration automatique).
+    const [hasSavedDraft] = useState(() => {
+        try { return !!localStorage.getItem(WORKING_PROJECT_KEY); } catch { return false; }
+    });
 
     // Données du projet (produits, ingrédients, main-d'œuvre, infos générales...) : centralisées
     // dans un reducer et exposées via ProjectContext pour éviter de les faire descendre
@@ -205,12 +211,10 @@ const App = () => {
     }, []);
 
     // --- PERSISTANCE / RÉCUPÉRATION APRÈS PLANTAGE ---
-    // Au démarrage : restaure le projet de travail sauvegardé automatiquement lors de la session
-    // précédente (localStorage), s'il existe. Un brouillon n'existe que si un projet avait déjà été
-    // chargé, donc restaurer est le bon comportement ; en son absence, l'écran d'accueil s'affiche
-    // normalement (parcours de première utilisation préservé). dispatch et les setters useState
-    // sont stables : cet effet ne s'exécute qu'au montage.
-    useEffect(() => {
+    // Reprend le projet de travail sauvegardé automatiquement lors de la session précédente
+    // (localStorage). Déclenché DEPUIS l'écran d'accueil (bouton « Reprendre le projet en cours »),
+    // et non automatiquement au démarrage : l'écran d'accueil reste ainsi toujours accessible.
+    const handleResumeDraft = () => {
         try {
             const raw = localStorage.getItem(WORKING_PROJECT_KEY);
             if (!raw) return;
@@ -226,11 +230,12 @@ const App = () => {
             setOpenPostIds(new Set(parsed.laborDatabase.map(p => p.id)));
             setEditingProductIndex(0);
             setIsProjectLoaded(true);
+            showNotification({ message: 'Projet en cours restauré.', type: 'success' });
         } catch (e) {
-            // Brouillon corrompu ou localStorage indisponible : on repart proprement sur l'accueil.
             console.error('Restauration du projet de travail échouée :', e);
+            showNotification({ message: "Impossible de restaurer le projet en cours.", type: 'error' });
         }
-    }, []);
+    };
 
     // Sauvegarde automatique (anti-plantage) : à chaque changement du projet, on persiste l'état de
     // travail dans localStorage, débounce à 800 ms pour ne pas écrire à chaque frappe. Actif
@@ -802,7 +807,7 @@ const App = () => {
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept=".json" />
                     
                     {!isProjectLoaded ? (
-                        <WelcomeModal 
+                        <WelcomeModal
                             onNew={() => {
                                 handleConfirmReset();
                                 showNotification({ message: "Nouveau projet créé.", type: 'success' });
@@ -811,6 +816,8 @@ const App = () => {
                             onExample={() => {
                                 handleConfirmLoadExample();
                             }}
+                            onTour={handleStartTutorial}
+                            onResume={hasSavedDraft ? handleResumeDraft : undefined}
                         />
                     ) : (
                         <>

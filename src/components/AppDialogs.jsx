@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { CheckCircle, AlertTriangle, Info, X, FilePlus, FolderOpen, FileText } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Info, X, FilePlus, FolderOpen, FileText, RotateCcw, PlayCircle } from 'lucide-react';
 
 // Composant de notification (Version améliorée avec option Annuler)
 export const Notification = ({ message, type, onClose, onUndo }) => {
@@ -45,14 +45,22 @@ export const Notification = ({ message, type, onClose, onUndo }) => {
 };
 
 // Composant de la fenêtre de bienvenue
-export const WelcomeModal = ({ onNew, onOpen, onExample }) => {
+export const WelcomeModal = ({ onNew, onOpen, onExample, onTour, onResume }) => {
     return (
-        <div className="fixed inset-0 bg-gray-100 z-50 flex flex-col justify-center items-center p-4">
-            <img src="./Logo_RestoCalculateur3.png" alt="Resto Calculateur Logo" className="h-32 sm:h-48 w-auto mb-8" />
-            <div className="text-center mb-12">
+        <div className="fixed inset-0 bg-gray-100 z-50 flex flex-col justify-center items-center p-4 overflow-y-auto">
+            <img src="./Logo_RestoCalculateur3.png" alt="Resto Calculateur Logo" className="h-24 sm:h-40 w-auto mb-6" />
+            <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-gray-800">Bienvenue sur Resto Calculateur</h1>
                 <p className="text-lg text-gray-600 mt-2">Votre outil pour maîtriser le coût de revient de vos plats.</p>
             </div>
+
+            {/* Reprise du projet de travail sauvegardé automatiquement (récupération après plantage). */}
+            {onResume && (
+                <button onClick={onResume} className="mb-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 font-semibold">
+                    <RotateCcw className="h-5 w-5" /> Reprendre le projet en cours
+                </button>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
                 <button onClick={onNew} className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-green-50 transition-all duration-300">
                     <FilePlus className="h-12 w-12 text-green-500 group-hover:text-green-600 mb-3" />
@@ -70,6 +78,12 @@ export const WelcomeModal = ({ onNew, onOpen, onExample }) => {
                     <p className="text-sm text-gray-500 mt-1">Découvrir les fonctionnalités avec des données d'exemple.</p>
                 </button>
             </div>
+
+            {onTour && (
+                <button onClick={onTour} className="mt-8 inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium">
+                    <PlayCircle className="h-5 w-5" /> Faire le tour guidé de l'application
+                </button>
+            )}
         </div>
     );
 };

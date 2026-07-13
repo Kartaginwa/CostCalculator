@@ -1,124 +1,265 @@
+import { calculateCosts } from '../engine/calculateCosts.js';
+
+// Profils d'évolution de prix par ingrédient, utilisés pour générer l'historique des points de
+// suivi (démo). trend = inflation mensuelle ; vol = amplitude de variation ; freq = fréquence de
+// l'oscillation. À m = 0 (aujourd'hui) le facteur vaut 1 → le prix actuel est celui de l'ingrédient.
+const PRICE_PROFILES = {
+    ing_1: { trend: 0.003, vol: 0.10, freq: 0.55 },  // saumon — très volatil
+    ing_2: { trend: 0.004, vol: 0.12, freq: 0.48 },  // pétoncles — très volatil
+    ing_3: { trend: 0.005, vol: 0.09, freq: 0.62 },  // filet mignon
+    ing_4: { trend: 0.003, vol: 0.04, freq: 0.50 },  // poulet
+    ing_5: { trend: 0.004, vol: 0.07, freq: 0.44 },  // agneau
+    ing_6: { trend: 0.002, vol: 0.06, freq: 0.52 },  // pommes de terre — saisonnier
+    ing_7: { trend: 0.002, vol: 0.16, freq: 0.40 },  // tomates — très saisonnier
+    ing_8: { trend: 0.002, vol: 0.08, freq: 0.58 },  // champignons
+    ing_9: { trend: 0.002, vol: 0.05, freq: 0.60 },  // échalote
+    ing_10: { trend: 0.003, vol: 0.06, freq: 0.46 }, // ail
+    ing_11: { trend: 0.007, vol: 0.05, freq: 0.66 }, // huile d'olive — forte inflation
+    ing_12: { trend: 0.003, vol: 0.02, freq: 0.50 }, // farine
+    ing_13: { trend: 0.003, vol: 0.02, freq: 0.54 }, // crème
+    ing_14: { trend: 0.003, vol: 0.02, freq: 0.50 }, // fromage en grains
+    ing_15: { trend: 0.005, vol: 0.02, freq: 0.60 }, // parmesan — hausse régulière
+    ing_16: { trend: 0.004, vol: 0.06, freq: 0.42 }, // beurre
+    ing_17: { trend: 0.002, vol: 0.02, freq: 0.50 }, // vin de cuisine
+    ing_18: { trend: 0.003, vol: 0.03, freq: 0.56 }, // jaune d'œuf
+    ing_19: { trend: 0.003, vol: 0.02, freq: 0.50 }, // sucre
+    ing_20: { trend: 0.003, vol: 0.01, freq: 0.50 }, // pain baguette
+};
+
+const round = (value, decimals = 2) => {
+    const f = 10 ** decimals;
+    return Math.round(value * f) / f;
+};
+
+// Génère 18 mois + le point actuel de points de suivi. Pour chaque mois, on reconstruit les prix
+// d'ingrédients (dérive + oscillation) puis on calcule les coûts de chaque plat via le moteur —
+// données historiques cohérentes, sans avoir à coder les coûts à la main.
+function buildTrackingHistory(ingredients, labor, products, generalInfo) {
+    const MONTHS = 18;
+    const now = new Date();
+    // La productivité cuisine dépend des volumes réels et n'est pas recalculée ici : on fige à 100 %
+    // (pas de majoration de MO oisive) pour l'historique de démonstration.
+    const snapBase = { ...generalInfo, kitchenProductivity: 100 };
+    const notes = {
+        [MONTHS]: 'Première analyse de référence — coûts matières élevés.',
+        12: 'Renégociation des contrats avec la boucherie.',
+        6: 'Changement de fournisseur pour la fromagerie.',
+        0: 'Situation actuelle.',
+    };
+
+    const points = [];
+    for (let m = MONTHS; m >= 0; m--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - m, 15, 12, 0, 0);
+        const iso = date.toISOString();
+        const dateStr = iso.split('T')[0];
+
+        const monthIngredients = ingredients.map((ing) => {
+            const prof = PRICE_PROFILES[ing.id] || { trend: 0.003, vol: 0.02, freq: 0.5 };
+            const factor = 1 - prof.trend * m + prof.vol * Math.sin(m * prof.freq);
+            const unitPrice = round(ing.unitPrice * factor, ing.unitPrice < 1 ? 4 : 2);
+            return { ...ing, unitPrice, purchasePrice: round(unitPrice * ing.purchaseFormat, 2), lastUpdated: dateStr };
+        });
+
+        const snapGeneral = { ...snapBase, totalRevenue: round(generalInfo.totalRevenue * (1 - 0.008 * m), 0) };
+        const memo = {};
+        const productsWithCosts = products.map((p) => ({
+            ...p,
+            costs: calculateCosts(p, snapGeneral, monthIngredients, products, labor, null, memo, new Set()),
+        }));
+
+        points.push({
+            id: `tp_${m}`,
+            name: `Relevé ${date.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })}`,
+            note: notes[m] || '',
+            timestamp: iso,
+            generalInfo: { ...snapGeneral },
+            baseIngredients: monthIngredients,
+            productsWithCosts,
+        });
+    }
+    return points;
+}
+
 export const getDefaultState = () => {
-    // --- BASE DE DONNÉES ---
+    const today = new Date().toISOString().split('T')[0];
+
+    // --- INGRÉDIENTS (20 références, 7 fournisseurs) ---
     const ingredients = [
-        { id: 'ing_1', name: 'Filet de Saumon', provider: 'Poissonnerie Atlantique', purchaseFormat: 5, unit: 'kg', purchasePrice: 145.00, unitPrice: 29.00, isRecipe: false, lossPercentage: 3, lastUpdated: '2025-08-15', allergens: ['fish'] },
-        { id: 'ing_2', name: 'Sirop d\'érable', provider: 'Érablière du Nord', purchaseFormat: 4, unit: 'L', purchasePrice: 60.00, unitPrice: 15.00, isRecipe: false, lossPercentage: 0, lastUpdated: '2025-08-01', allergens: [] },
-        { id: 'ing_3', name: 'Filet Mignon de Bœuf AAA', provider: 'Boucherie Viau', purchaseFormat: 2, unit: 'kg', purchasePrice: 110.00, unitPrice: 55.00, isRecipe: false, lossPercentage: 10, lastUpdated: '2025-08-20', allergens: [] },
-        { id: 'ing_4', name: 'Jaune d\'œuf', provider: 'Ferme Lait-Poules', purchaseFormat: 12, unit: 'unité', purchasePrice: 4.50, unitPrice: 0.38, isRecipe: false, lossPercentage: 0, lastUpdated: '2025-08-28', allergens: ['eggs'] },
-        { id: 'ing_5', name: 'Câpres', provider: 'Distributeur HRI', purchaseFormat: 1, unit: 'kg', purchasePrice: 18.00, unitPrice: 18.00, isRecipe: false, lossPercentage: 0, lastUpdated: '2025-07-30', allergens: [] },
-        { id: 'ing_6', name: 'Échalote Française', provider: 'Le Jardin Local', purchaseFormat: 1, unit: 'kg', purchasePrice: 5.50, unitPrice: 5.50, isRecipe: false, lossPercentage: 15, lastUpdated: '2025-08-15', allergens: [] },
-        { id: 'ing_7', name: 'Pommes de Terre Russet', provider: 'Le Jardin Local', purchaseFormat: 20, unit: 'kg', purchasePrice: 25.00, unitPrice: 1.25, isRecipe: false, lossPercentage: 20, lastUpdated: '2025-08-25', allergens: [] },
-        { id: 'ing_8', name: 'Fromage en Grains', provider: 'Fromagerie St-Guillaume', purchaseFormat: 3, unit: 'kg', purchasePrice: 48.00, unitPrice: 16.00, isRecipe: false, lossPercentage: 0, lastUpdated: '2025-08-28', allergens: ['milk'] },
-        { id: 'ing_9', name: 'Huile de Canola', provider: 'Distributeur HRI', purchaseFormat: 16, unit: 'L', purchasePrice: 45.00, unitPrice: 2.81, isRecipe: false, lossPercentage: 0, lastUpdated: '2025-08-05', allergens: [] },
-        { id: 'ing_10', name: 'Pain Brioché', provider: 'Boulangerie du Coin', purchaseFormat: 8, unit: 'unité', purchasePrice: 12.00, unitPrice: 1.50, isRecipe: false, lossPercentage: 0, lastUpdated: '2025-08-29', allergens: ['gluten', 'milk', 'eggs'] },
+        { id: 'ing_1', name: 'Filet de saumon frais', provider: 'Poissonnerie Océan', purchaseFormat: 5, unit: 'kg', purchasePrice: 145.00, unitPrice: 29.00, isRecipe: false, lossPercentage: 3, lastUpdated: today, allergens: ['fish'] },
+        { id: 'ing_2', name: 'Pétoncles géants U10', provider: 'Poissonnerie Océan', purchaseFormat: 2, unit: 'kg', purchasePrice: 96.00, unitPrice: 48.00, isRecipe: false, lossPercentage: 5, lastUpdated: today, allergens: ['molluscs'] },
+        { id: 'ing_3', name: 'Filet mignon de bœuf AAA', provider: 'Boucherie Prime', purchaseFormat: 2, unit: 'kg', purchasePrice: 110.00, unitPrice: 55.00, isRecipe: false, lossPercentage: 10, lastUpdated: today, allergens: [] },
+        { id: 'ing_4', name: 'Poitrine de poulet', provider: 'Boucherie Prime', purchaseFormat: 4, unit: 'kg', purchasePrice: 52.00, unitPrice: 13.00, isRecipe: false, lossPercentage: 8, lastUpdated: today, allergens: [] },
+        { id: 'ing_5', name: 'Carré d\'agneau', provider: 'Boucherie Prime', purchaseFormat: 3, unit: 'kg', purchasePrice: 66.00, unitPrice: 22.00, isRecipe: false, lossPercentage: 12, lastUpdated: today, allergens: [] },
+        { id: 'ing_6', name: 'Pommes de terre Russet', provider: 'Maraîcher Bio Local', purchaseFormat: 20, unit: 'kg', purchasePrice: 25.00, unitPrice: 1.25, isRecipe: false, lossPercentage: 20, lastUpdated: today, allergens: [] },
+        { id: 'ing_7', name: 'Tomates de serre', provider: 'Maraîcher Bio Local', purchaseFormat: 5, unit: 'kg', purchasePrice: 22.00, unitPrice: 4.40, isRecipe: false, lossPercentage: 8, lastUpdated: today, allergens: [] },
+        { id: 'ing_8', name: 'Champignons café', provider: 'Maraîcher Bio Local', purchaseFormat: 2, unit: 'kg', purchasePrice: 17.00, unitPrice: 8.50, isRecipe: false, lossPercentage: 10, lastUpdated: today, allergens: [] },
+        { id: 'ing_9', name: 'Échalote française', provider: 'Maraîcher Bio Local', purchaseFormat: 1, unit: 'kg', purchasePrice: 5.50, unitPrice: 5.50, isRecipe: false, lossPercentage: 15, lastUpdated: today, allergens: [] },
+        { id: 'ing_10', name: 'Ail frais', provider: 'Maraîcher Bio Local', purchaseFormat: 1, unit: 'kg', purchasePrice: 14.00, unitPrice: 14.00, isRecipe: false, lossPercentage: 12, lastUpdated: today, allergens: [] },
+        { id: 'ing_11', name: 'Huile d\'olive extra vierge', provider: 'Épicerie Grossiste HRI', purchaseFormat: 5, unit: 'L', purchasePrice: 78.00, unitPrice: 15.60, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: [] },
+        { id: 'ing_12', name: 'Farine tout usage', provider: 'Épicerie Grossiste HRI', purchaseFormat: 20, unit: 'kg', purchasePrice: 24.00, unitPrice: 1.20, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['gluten'] },
+        { id: 'ing_13', name: 'Crème 35 %', provider: 'Fromagerie Artisanale', purchaseFormat: 4, unit: 'L', purchasePrice: 44.00, unitPrice: 11.00, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['milk'] },
+        { id: 'ing_14', name: 'Fromage en grains', provider: 'Fromagerie Artisanale', purchaseFormat: 3, unit: 'kg', purchasePrice: 48.00, unitPrice: 16.00, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['milk'] },
+        { id: 'ing_15', name: 'Parmesan Reggiano', provider: 'Fromagerie Artisanale', purchaseFormat: 1, unit: 'kg', purchasePrice: 42.00, unitPrice: 42.00, isRecipe: false, lossPercentage: 5, lastUpdated: today, allergens: ['milk'] },
+        { id: 'ing_16', name: 'Beurre non salé', provider: 'Fromagerie Artisanale', purchaseFormat: 5, unit: 'kg', purchasePrice: 55.00, unitPrice: 11.00, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['milk'] },
+        { id: 'ing_17', name: 'Vin rouge de cuisine', provider: 'Épicerie Grossiste HRI', purchaseFormat: 12, unit: 'L', purchasePrice: 96.00, unitPrice: 8.00, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['sulphites'] },
+        { id: 'ing_18', name: 'Jaune d\'œuf', provider: 'Ferme Lait-Poules', purchaseFormat: 12, unit: 'unité', purchasePrice: 4.50, unitPrice: 0.38, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['eggs'] },
+        { id: 'ing_19', name: 'Sucre blanc', provider: 'Épicerie Grossiste HRI', purchaseFormat: 10, unit: 'kg', purchasePrice: 18.00, unitPrice: 1.80, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: [] },
+        { id: 'ing_20', name: 'Pain baguette', provider: 'Boulangerie du Coin', purchaseFormat: 1, unit: 'unité', purchasePrice: 1.75, unitPrice: 1.75, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['gluten'] },
     ];
 
+    // --- MAIN-D'ŒUVRE (4 postes) ---
     const labor = [
-        { id: 'post_1', postName: 'Chef de Cuisine', employees: [{ id: 'emp_1', employeeName: 'Julie', hourlyRate: 28, socialCharges: 16, vacationPercentage: 6, productiveTimePercentage: 85, workedHours: 160 }] },
-        { id: 'post_2', postName: 'Cuisinier', employees: [{ id: 'emp_2', employeeName: 'Marc-André', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 95, workedHours: 160 }] },
-        { id: 'post_3', postName: 'Plongeur/Aide-cuisine', employees: [{ id: 'emp_3', employeeName: 'Kevin', hourlyRate: 17.50, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 100, workedHours: 120 }] },
+        { id: 'post_1', postName: 'Chef de Cuisine', employees: [{ id: 'emp_1', employeeName: 'Julie', hourlyRate: 30, socialCharges: 16, vacationPercentage: 6, productiveTimePercentage: 85, workedHours: 160 }] },
+        { id: 'post_2', postName: 'Sous-Chef', employees: [{ id: 'emp_2', employeeName: 'Marc-André', hourlyRate: 24, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 160 }] },
+        { id: 'post_3', postName: 'Cuisinier', employees: [{ id: 'emp_3', employeeName: 'Sophie', hourlyRate: 20, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 95, workedHours: 160 }] },
+        { id: 'post_4', postName: 'Plongeur/Aide-cuisine', employees: [{ id: 'emp_4', employeeName: 'Kevin', hourlyRate: 17.50, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 100, workedHours: 120 }] },
     ];
 
+    // --- PRODUITS ---
     const products = [
-        // --- PLATS CUISINÉS ---
-        { id: 'prod_1', platName: 'Saumon Glacé à l\'Érable', category: 'Plat Principal', prixVente: 32, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 35, onMenu: true, manualAllergens: [],
+        // Sous-recettes (isIngredient) --------------------------------------------------------------
+        // Sauce demi-glace : sous-recette pure (non vendue seule), intégrée à deux plats.
+        { id: 'sub_demiglace', platName: 'Sauce demi-glace maison', category: 'Sous-recette', prixVente: 0, nbPortions: 1, portionSize: 1000, portionUnit: 'ml', isIngredient: true, isResaleProduct: false, purchaseCost: 0, salesMix: 0, onMenu: false, manualAllergens: [],
             ingredients: [
-                { rowId: 'r_ing_1', id: 'ing_1', quantity: 0.18, recipeUnit: 'kg', yieldPercentage: 100 },
-                { rowId: 'r_ing_2', id: 'ing_2', quantity: 50, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_dg_1', id: 'ing_17', quantity: 500, recipeUnit: 'ml', yieldPercentage: 60 },
+                { rowId: 'r_dg_2', id: 'ing_9', quantity: 100, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_dg_3', id: 'ing_16', quantity: 60, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_dg_4', id: 'ing_10', quantity: 20, recipeUnit: 'g', yieldPercentage: 100 },
             ],
             productionSteps: [
-                { stepId: 's_1_1', stepName: 'Glacer le saumon', personnel: [{postId: 'Cuisinier'}], startTime: 0, duration: 120 },
-                { stepId: 's_1_2', stepName: 'Cuisson et service', personnel: [{postId: 'Chef de Cuisine'}], startTime: 120, duration: 480 },
-            ], indirectCosts: { method: 'salesAllocation', portionsSold: 576 }
+                { stepId: 's_dg_1', stepName: 'Suer les échalotes et l\'ail', personnel: [{ postId: 'Cuisinier' }], startTime: 0, duration: 300 },
+                { stepId: 's_dg_2', stepName: 'Déglacer et réduire', personnel: [{ postId: 'Cuisinier' }], startTime: 300, duration: 1800 },
+            ], indirectCosts: { portionsSold: 0 }
         },
-        { id: 'prod_2', platName: 'Tartare de Bœuf Classique', category: 'Entrée', prixVente: 21, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 25, onMenu: true, manualAllergens: [],
+        // Frites maison : sous-recette QUI EST AUSSI vendue seule (accompagnement) — montre qu'une
+        // sous-recette peut être un plat. Utilisée comme ingrédient dans la Poutine.
+        { id: 'sub_frites', platName: 'Frites maison', category: 'Accompagnement', prixVente: 6, nbPortions: 1, portionSize: 1, portionUnit: 'portion', isIngredient: true, isResaleProduct: false, purchaseCost: 0, salesMix: 5, onMenu: true, manualAllergens: [],
             ingredients: [
-                { rowId: 'r_ing_3', id: 'ing_3', quantity: 120, recipeUnit: 'g', yieldPercentage: 100 },
-                { rowId: 'r_ing_4', id: 'ing_4', quantity: 1, recipeUnit: 'unité', yieldPercentage: 100 },
-                { rowId: 'r_ing_5', id: 'ing_5', quantity: 10, recipeUnit: 'g', yieldPercentage: 100 },
-                { rowId: 'r_ing_6', id: 'ing_6', quantity: 15, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_fr_1', id: 'ing_6', quantity: 300, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_fr_2', id: 'ing_11', quantity: 25, recipeUnit: 'ml', yieldPercentage: 100 },
             ],
             productionSteps: [
-                { stepId: 's_2_1', stepName: 'Taillage minute du bœuf', personnel: [{postId: 'Cuisinier'}], startTime: 0, duration: 300 },
-                { stepId: 's_2_2', stepName: 'Assaisonnement et dressage', personnel: [{postId: 'Cuisinier'}], startTime: 300, duration: 180 },
-            ], indirectCosts: { method: 'salesAllocation', portionsSold: 627 }
+                { stepId: 's_fr_1', stepName: 'Blanchiment des frites', personnel: [{ postId: 'Plongeur/Aide-cuisine' }], startTime: 0, duration: 480 },
+                { stepId: 's_fr_2', stepName: 'Deuxième cuisson & assaisonnement', personnel: [{ postId: 'Cuisinier' }], startTime: 480, duration: 180 },
+            ], indirectCosts: { portionsSold: 145 }
         },
-        { id: 'prod_3', platName: 'Poutine Décadente', category: 'Plat Principal', prixVente: 19, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 20, onMenu: true, manualAllergens: [],
+
+        // Entrées ------------------------------------------------------------------------------------
+        { id: 'prod_1', platName: 'Tartare de saumon', category: 'Entrée', prixVente: 19, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 8, onMenu: true, manualAllergens: [],
             ingredients: [
-                { rowId: 'r_ing_7', id: 'ing_7', quantity: 350, recipeUnit: 'g', yieldPercentage: 100 },
-                { rowId: 'r_ing_8', id: 'ing_8', quantity: 100, recipeUnit: 'g', yieldPercentage: 100 },
-                { rowId: 'r_ing_9', id: 'ing_9', quantity: 100, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_1_1', id: 'ing_1', quantity: 120, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_1_2', id: 'ing_9', quantity: 15, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_1_3', id: 'ing_11', quantity: 10, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_1_4', id: 'ing_18', quantity: 1, recipeUnit: 'unité', yieldPercentage: 100 },
+                { rowId: 'r_1_5', id: 'ing_20', quantity: 0.5, recipeUnit: 'unité', yieldPercentage: 100 },
             ],
             productionSteps: [
-                { stepId: 's_3_1', stepName: 'Blanchiment des frites', personnel: [{postId: 'Plongeur/Aide-cuisine'}], startTime: 0, duration: 600 },
-                { stepId: 's_3_2', stepName: 'Deuxième cuisson & service', personnel: [{postId: 'Cuisinier'}], startTime: 600, duration: 240 },
-            ], indirectCosts: { method: 'salesAllocation', portionsSold: 555 }
+                { stepId: 's_1_1', stepName: 'Taillage minute du saumon', personnel: [{ postId: 'Cuisinier' }], startTime: 0, duration: 300 },
+                { stepId: 's_1_2', stepName: 'Assaisonnement et dressage', personnel: [{ postId: 'Sous-Chef' }], startTime: 300, duration: 180 },
+            ], indirectCosts: { portionsSold: 232 }
         },
-        // --- PRODUITS DE REVENTE ---
-        { id: 'prod_4', platName: 'Bière de Microbrasserie Locale', category: 'Boisson', prixVente: 9.50, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: true, purchaseCost: 3.75, salesMix: 15, onMenu: true, manualAllergens: ['gluten'], ingredients: [], productionSteps: [], indirectCosts: { method: 'fixed', fixedAmount: 0.50 }
+        { id: 'prod_2', platName: 'Pétoncles poêlés au beurre', category: 'Entrée', prixVente: 24, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 6, onMenu: true, manualAllergens: [],
+            ingredients: [
+                { rowId: 'r_2_1', id: 'ing_2', quantity: 90, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_2_2', id: 'ing_16', quantity: 20, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_2_3', id: 'ing_10', quantity: 8, recipeUnit: 'g', yieldPercentage: 100 },
+            ],
+            productionSteps: [
+                { stepId: 's_2_1', stepName: 'Saisir les pétoncles', personnel: [{ postId: 'Chef de Cuisine' }], startTime: 0, duration: 240 },
+            ], indirectCosts: { portionsSold: 174 }
         },
-        { id: 'prod_5', platName: 'Cidre Artisanal', category: 'Boisson', prixVente: 12, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: true, purchaseCost: 4.50, salesMix: 5, onMenu: true, manualAllergens: ['sulphites'], ingredients: [], productionSteps: [], indirectCosts: { method: 'fixed', fixedAmount: 0.50 }
+
+        // Plats principaux ---------------------------------------------------------------------------
+        { id: 'prod_3', platName: 'Filet mignon, sauce demi-glace', category: 'Plat Principal', prixVente: 39, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 12, onMenu: true, manualAllergens: [],
+            ingredients: [
+                { rowId: 'r_3_1', id: 'ing_3', quantity: 180, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_3_2', id: 'sub_demiglace', quantity: 80, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_3_3', id: 'ing_6', quantity: 180, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_3_4', id: 'ing_16', quantity: 15, recipeUnit: 'g', yieldPercentage: 100 },
+            ],
+            productionSteps: [
+                { stepId: 's_3_1', stepName: 'Cuisson du filet', personnel: [{ postId: 'Chef de Cuisine' }], startTime: 0, duration: 420 },
+                { stepId: 's_3_2', stepName: 'Garniture et dressage', personnel: [{ postId: 'Cuisinier' }], startTime: 420, duration: 240 },
+            ], indirectCosts: { portionsSold: 348 }
         },
+        { id: 'prod_4', platName: 'Suprême de poulet forestier', category: 'Plat Principal', prixVente: 26, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 14, onMenu: true, manualAllergens: [],
+            ingredients: [
+                { rowId: 'r_4_1', id: 'ing_4', quantity: 200, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_4_2', id: 'ing_8', quantity: 80, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_4_3', id: 'ing_13', quantity: 60, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_4_4', id: 'ing_9', quantity: 20, recipeUnit: 'g', yieldPercentage: 100 },
+            ],
+            productionSteps: [
+                { stepId: 's_4_1', stepName: 'Saisir et rôtir le suprême', personnel: [{ postId: 'Cuisinier' }], startTime: 0, duration: 480 },
+                { stepId: 's_4_2', stepName: 'Sauce forestière', personnel: [{ postId: 'Sous-Chef' }], startTime: 480, duration: 300 },
+            ], indirectCosts: { portionsSold: 406 }
+        },
+        { id: 'prod_5', platName: 'Carré d\'agneau, jus à l\'ail', category: 'Plat Principal', prixVente: 42, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 8, onMenu: true, manualAllergens: [],
+            ingredients: [
+                { rowId: 'r_5_1', id: 'ing_5', quantity: 250, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_5_2', id: 'ing_10', quantity: 12, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_5_3', id: 'ing_11', quantity: 20, recipeUnit: 'ml', yieldPercentage: 100 },
+            ],
+            productionSteps: [
+                { stepId: 's_5_1', stepName: 'Marquage et cuisson', personnel: [{ postId: 'Chef de Cuisine' }], startTime: 0, duration: 600 },
+            ], indirectCosts: { portionsSold: 232 }
+        },
+        { id: 'prod_6', platName: 'Risotto aux champignons', category: 'Plat Principal', prixVente: 23, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 9, onMenu: true, manualAllergens: [],
+            ingredients: [
+                { rowId: 'r_6_1', id: 'ing_8', quantity: 100, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_6_2', id: 'ing_15', quantity: 30, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_6_3', id: 'ing_13', quantity: 50, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_6_4', id: 'ing_17', quantity: 40, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_6_5', id: 'ing_9', quantity: 20, recipeUnit: 'g', yieldPercentage: 100 },
+            ],
+            productionSteps: [
+                { stepId: 's_6_1', stepName: 'Cuisson du risotto', personnel: [{ postId: 'Cuisinier' }], startTime: 0, duration: 1080 },
+            ], indirectCosts: { portionsSold: 261 }
+        },
+        { id: 'prod_7', platName: 'Poutine décadente', category: 'Plat Principal', prixVente: 17, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 15, onMenu: true, manualAllergens: [],
+            ingredients: [
+                { rowId: 'r_7_1', id: 'sub_frites', quantity: 1, recipeUnit: 'portion', yieldPercentage: 100 },
+                { rowId: 'r_7_2', id: 'ing_14', quantity: 100, recipeUnit: 'g', yieldPercentage: 100 },
+                { rowId: 'r_7_3', id: 'sub_demiglace', quantity: 120, recipeUnit: 'ml', yieldPercentage: 100 },
+            ],
+            productionSteps: [
+                { stepId: 's_7_1', stepName: 'Montage et service', personnel: [{ postId: 'Cuisinier' }], startTime: 0, duration: 180 },
+            ], indirectCosts: { portionsSold: 435 }
+        },
+
+        // Dessert ------------------------------------------------------------------------------------
+        { id: 'prod_8', platName: 'Crème brûlée à la vanille', category: 'Dessert', prixVente: 11, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: false, purchaseCost: 0, salesMix: 8, onMenu: true, manualAllergens: [],
+            ingredients: [
+                { rowId: 'r_8_1', id: 'ing_13', quantity: 100, recipeUnit: 'ml', yieldPercentage: 100 },
+                { rowId: 'r_8_2', id: 'ing_18', quantity: 2, recipeUnit: 'unité', yieldPercentage: 100 },
+                { rowId: 'r_8_3', id: 'ing_19', quantity: 25, recipeUnit: 'g', yieldPercentage: 100 },
+            ],
+            productionSteps: [
+                { stepId: 's_8_1', stepName: 'Appareil et cuisson', personnel: [{ postId: 'Sous-Chef' }], startTime: 0, duration: 300 },
+                { stepId: 's_8_2', stepName: 'Caramélisation minute', personnel: [{ postId: 'Cuisinier' }], startTime: 300, duration: 120 },
+            ], indirectCosts: { portionsSold: 232 }
+        },
+
+        // Boissons (revente) -------------------------------------------------------------------------
+        { id: 'prod_9', platName: 'Bière de microbrasserie', category: 'Boisson', prixVente: 9.50, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: true, purchaseCost: 3.75, salesMix: 10, onMenu: true, manualAllergens: ['gluten'], ingredients: [], productionSteps: [], indirectCosts: { portionsSold: 290 } },
+        { id: 'prod_10', platName: 'Verre de vin rouge', category: 'Boisson', prixVente: 12, nbPortions: 1, portionSize: 1, portionUnit: 'unité', isIngredient: false, isResaleProduct: true, purchaseCost: 4.00, salesMix: 5, onMenu: true, manualAllergens: ['sulphites'], ingredients: [], productionSteps: [], indirectCosts: { portionsSold: 145 } },
     ];
 
-    // --- POINTS DE SUIVI (HISTORIQUE) ---
-    // Simule une amélioration continue avec des données complètes pour chaque plat
-    const trackingPoints = [
-        // POINT 1: Situation initiale (il y a 2 mois)
-        { id: 'tp_1', name: 'Analyse Initiale - Juin 2025', note: 'Première analyse, coûts matières élevés.', timestamp: new Date('2025-06-30T12:00:00Z').toISOString(),
-            generalInfo: { totalIndirects: 18500, totalRevenue: 60000 },
-            baseIngredients: ingredients.map(i => {
-                if (i.id === 'ing_1') return {...i, unitPrice: 32.00}; // Saumon plus cher
-                if (i.id === 'ing_3') return {...i, unitPrice: 58.00}; // Boeuf plus cher
-                return i;
-            }),
-            productsWithCosts: [
-                { id: 'prod_1', platName: 'Saumon Glacé à l\'Érable', onMenu: true, salesMix: 35, costs: { costMatierePerPortion: 6.01, costLaborPerPortion: 3.80, costIndirectPerPortion: 8.57, margeNettePercent: 0.17, costMatierePercent: 0.18, costLaborPercent: 0.12, costIndirectPercent: 0.27, margeBrutePercent: 0.70 } },
-                { id: 'prod_2', platName: 'Tartare de Bœuf Classique', onMenu: true, salesMix: 25, costs: { costMatierePerPortion: 7.21, costLaborPerPortion: 3.38, costIndirectPerPortion: 6.03, margeNettePercent: 0.20, costMatierePercent: 0.34, costLaborPercent: 0.16, costIndirectPercent: 0.29, margeBrutePercent: 0.50 } },
-                { id: 'prod_3', platName: 'Poutine Décadente', onMenu: true, salesMix: 20, costs: { costMatierePerPortion: 2.29, costLaborPerPortion: 4.87, costIndirectPerPortion: 5.46, margeNettePercent: 0.33, costMatierePercent: 0.12, costLaborPercent: 0.26, costIndirectPercent: 0.29, margeBrutePercent: 0.62 } },
-                { id: 'prod_4', platName: 'Bière de Microbrasserie Locale', onMenu: true, salesMix: 15, costs: { costMatierePerPortion: 3.75, costLaborPerPortion: 0, costIndirectPerPortion: 0.50, margeNettePercent: 0.55, costMatierePercent: 0.39, costLaborPercent: 0, costIndirectPercent: 0.05, margeBrutePercent: 0.61 } },
-                { id: 'prod_5', platName: 'Cidre Artisanal', onMenu: true, salesMix: 5, costs: { costMatierePerPortion: 4.50, costLaborPerPortion: 0, costIndirectPerPortion: 0.50, margeNettePercent: 0.58, costMatierePercent: 0.38, costLaborPercent: 0, costIndirectPercent: 0.04, margeBrutePercent: 0.63 } }
-            ]
-        },
-        // POINT 2: Après négociation (il y a 1 mois)
-        { id: 'tp_2', name: 'Post-Négociation - Juillet 2025', note: 'Nouveau fournisseur pour le saumon.', timestamp: new Date('2025-07-31T12:00:00Z').toISOString(),
-            generalInfo: { totalIndirects: 18500, totalRevenue: 61000 },
-            baseIngredients: ingredients.map(i => i.id === 'ing_1' ? {...i, unitPrice: 29.00} : i), // Prix du saumon amélioré
-            productsWithCosts: [
-                { id: 'prod_1', platName: 'Saumon Glacé à l\'Érable', onMenu: true, salesMix: 38, costs: { costMatierePerPortion: 5.45, costLaborPerPortion: 3.80, costIndirectPerPortion: 8.57, margeNettePercent: 0.20, costMatierePercent: 0.17, costLaborPercent: 0.12, costIndirectPercent: 0.27, margeBrutePercent: 0.71 } },
-                { id: 'prod_2', platName: 'Tartare de Bœuf Classique', onMenu: true, salesMix: 24, costs: { costMatierePerPortion: 6.86, costLaborPerPortion: 3.38, costIndirectPerPortion: 6.03, margeNettePercent: 0.23, costMatierePercent: 0.33, costLaborPercent: 0.16, costIndirectPercent: 0.29, margeBrutePercent: 0.51 } },
-                { id: 'prod_3', platName: 'Poutine Décadente', onMenu: true, salesMix: 18, costs: { costMatierePerPortion: 2.29, costLaborPerPortion: 4.87, costIndirectPerPortion: 5.46, margeNettePercent: 0.33, costMatierePercent: 0.12, costLaborPercent: 0.26, costIndirectPercent: 0.29, margeBrutePercent: 0.62 } },
-                { id: 'prod_4', platName: 'Bière de Microbrasserie Locale', onMenu: true, salesMix: 15, costs: { costMatierePerPortion: 3.75, costLaborPerPortion: 0, costIndirectPerPortion: 0.50, margeNettePercent: 0.55, costMatierePercent: 0.39, costLaborPercent: 0, costIndirectPercent: 0.05, margeBrutePercent: 0.61 } },
-                { id: 'prod_5', platName: 'Cidre Artisanal', onMenu: true, salesMix: 5, costs: { costMatierePerPortion: 4.50, costLaborPerPortion: 0, costIndirectPerPortion: 0.50, margeNettePercent: 0.58, costMatierePercent: 0.38, costLaborPercent: 0, costIndirectPercent: 0.04, margeBrutePercent: 0.63 } }
-            ]
-        },
-        // POINT 3: Situation actuelle (aujourd'hui)
-        { id: 'tp_3', name: 'Analyse Actuelle - Août 2025', note: 'Optimisation finale après changement de fournisseur pour le fromage.', timestamp: new Date('2025-08-30T12:00:00Z').toISOString(),
-            generalInfo: { totalIndirects: 18500, totalRevenue: 62000 },
-            baseIngredients: ingredients, // Utilise les prix actuels
-            productsWithCosts: [
-                { id: 'prod_1', platName: 'Saumon Glacé à l\'Érable', onMenu: true, salesMix: 35, costs: { costMatierePerPortion: 5.45, costLaborPerPortion: 3.80, costIndirectPerPortion: 8.57, margeNettePercent: 0.20, costMatierePercent: 0.17, costLaborPercent: 0.12, costIndirectPercent: 0.27, margeBrutePercent: 0.71 } },
-                { id: 'prod_2', platName: 'Tartare de Bœuf Classique', onMenu: true, salesMix: 25, costs: { costMatierePerPortion: 6.86, costLaborPerPortion: 3.38, costIndirectPerPortion: 6.03, margeNettePercent: 0.23, costMatierePercent: 0.33, costLaborPercent: 0.16, costIndirectPercent: 0.29, margeBrutePercent: 0.51 } },
-                { id: 'prod_3', platName: 'Poutine Décadente', onMenu: true, salesMix: 20, costs: { costMatierePerPortion: 2.10, costLaborPerPortion: 4.87, costIndirectPerPortion: 5.46, margeNettePercent: 0.34, costMatierePercent: 0.11, costLaborPercent: 0.26, costIndirectPercent: 0.29, margeBrutePercent: 0.63 } }, // Coût matière amélioré
-                { id: 'prod_4', platName: 'Bière de Microbrasserie Locale', onMenu: true, salesMix: 15, costs: { costMatierePerPortion: 3.75, costLaborPerPortion: 0, costIndirectPerPortion: 0.50, margeNettePercent: 0.55, costMatierePercent: 0.39, costLaborPercent: 0, costIndirectPercent: 0.05, margeBrutePercent: 0.61 } },
-                { id: 'prod_5', platName: 'Cidre Artisanal', onMenu: true, salesMix: 5, costs: { costMatierePerPortion: 4.50, costLaborPerPortion: 0, costIndirectPerPortion: 0.50, margeNettePercent: 0.58, costMatierePercent: 0.38, costLaborPercent: 0, costIndirectPercent: 0.04, margeBrutePercent: 0.63 } }
-            ]
-        },
-    ];
+    const generalInfo = {
+        period: 'monthly', totalIndirects: 22000, totalRevenue: 78000, operationHours: 300,
+        foodCostTarget: 30, laborCostTarget: 35, menuRevenuePercentage: 88,
+        indirectCostMethod: 'salesAllocation',
+    };
 
     // --- DONNÉES FINALES ---
     return {
         companyName: "Bistro Le Local",
         logoUrl: './demo_logo.png',
-        generalInfo: {
-            period: 'monthly', totalIndirects: 18500, totalRevenue: 62000, operationHours: 240,
-            foodCostTarget: 30, laborCostTarget: 35, menuRevenuePercentage: 85,
-            indirectCostMethod: 'salesAllocation',
-        },
+        generalInfo,
         ingredientsList: ingredients,
-        products: products,
+        products,
         laborDatabase: labor,
-        trackingPoints: trackingPoints,
+        trackingPoints: buildTrackingHistory(ingredients, labor, products, generalInfo),
         uiSettings: {
             infoItemsPerPage: 10,
             ingredientsItemsPerPage: 10,

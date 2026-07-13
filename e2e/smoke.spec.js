@@ -91,13 +91,19 @@ test.describe('Projet démo', () => {
             await page.locator(`#${tabId}`).click();
         }
 
-        // Simulateur de choc d'intrants (onglet Résumé) : ouvrir, ajouter un choc global +15 %,
-        // le résultat (recalcul de l'analyse) doit s'afficher sans erreur.
+        // Simulateur de choc (onglet Résumé) : ouvrir, ajouter un choc d'intrants +15 % et un choc
+        // de main-d'œuvre +10 %. Le recalcul de l'analyse doit s'afficher sans erreur.
         await page.locator('#tab-summary').click();
         await page.getByRole('button', { name: /Simulation — choc sur les coûts/ }).click();
         await page.getByRole('button', { name: 'Ajouter un choc' }).click();
         await page.locator('input[placeholder="ex. +15"]').first().fill('15');
         await expect(page.getByText('Scénario actif :')).toBeVisible();
+        // Deuxième choc sur la main-d'œuvre.
+        await page.getByRole('button', { name: 'Ajouter un choc' }).click();
+        const secondShock = page.locator('div.bg-gray-50').nth(1);
+        await secondShock.locator('select').first().selectOption('labor');
+        await secondShock.locator('input[placeholder="ex. +15"]').fill('10');
+        await expect(page.getByText(/MO ·/)).toBeVisible();
 
         // Assistants d'import : ouverture/fermeture ne doivent pas planter
         await page.locator('button:has-text("Paramètres")').click();

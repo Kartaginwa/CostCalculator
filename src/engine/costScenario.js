@@ -1,21 +1,33 @@
 import { parseLocaleNumber } from '../utils.js';
 
-// Applique une liste de « chocs » de coût aux ingrédients de base et renvoie une nouvelle liste
-// avec les prix ajustés. Chaque choc cible soit TOUS les ingrédients ('all'), soit un FOURNISSEUR
-// ('provider'), soit une SÉLECTION d'ingrédients ('selection'), et applique une variation en %.
-// Plusieurs chocs se cumulent MULTIPLICATIVEMENT (composition des variations successives : un
-// ingrédient touché par « +15 % » puis « +10 % » subit ×1,15 × 1,10). Fonction pure, sans effet de
-// bord — les ingrédients non touchés sont renvoyés inchangés (même référence).
+// Un « choc » perturbe d'un pourcentage soit un prix d'INTRANT, soit un salaire de MAIN-D'ŒUVRE.
+// Forme : { type: 'ingredient' | 'labor', scope, target, selectedIds, percent }.
+//   - type 'ingredient' : scope 'all' | 'provider' (target = fournisseur) | 'selection' (selectedIds = ids d'ingrédients)
+//   - type 'labor'      : scope 'all' | 'post'     (target = id du poste)  | 'selection' (selectedIds = ids d'employés)
+// Plusieurs chocs qui touchent une même cible se cumulent MULTIPLICATIVEMENT (composition des
+// variations successives). Fonctions pures : les éléments non touchés sont renvoyés inchangés.
+
+// Un choc est « actif » s'il a une variation non nulle ET une portée exploitable.
+export function shockIsActive(shock) {
+    if (!shock || parseLocaleNumber(shock.percent) === 0) return false;
+    if (shock.scope === 'all') return true;
+    if (shock.scope === 'provider' || shock.scope === 'post') return !!shock.target;
+    if (shock.scope === 'selection') return Array.isArray(shock.selectedIds) && shock.selectedIds.length > 0;
+    return false;
+}
+
+// Applique les chocs d'INTRANTS aux ingrédients de base (ajuste unitPrice et purchasePrice).
 export function applyCostShocks(baseIngredients, shocks) {
-    const active = (shocks || []).filter(shockIsActive);
+    const active = (shocks || []).filter(s => (s.type ?? 'ingredient') === 'ingredient' && shockIsActive(s));
     if (active.length === 0) return baseIngredients;
 
     return baseIngredients.map(ing => {
         let multiplier = 1;
         for (const shock of active) {
-            if (shockMatchesIngredient(shock, ing)) {
-                multiplier *= (1 + parseLocaleNumber(shock.percent) / 100);
-            }
+            const matches = shock.scope === 'all'
+                || (shock.scope === 'provider' && ing.provider === shock.target)
+                || (shock.scope === 'selection' && shock.selectedIds.includes(ing.id));
+            if (matches) multiplier *= (1 + parseLocaleNumber(shock.percent) / 100);
         }
         if (multiplier === 1) return ing;
         return {
@@ -26,18 +38,27 @@ export function applyCostShocks(baseIngredients, shocks) {
     });
 }
 
-// Un choc est « actif » s'il a une variation non nulle ET une portée exploitable.
-export function shockIsActive(shock) {
-    if (!shock || parseLocaleNumber(shock.percent) === 0) return false;
-    if (shock.scope === 'all') return true;
-    if (shock.scope === 'provider') return !!shock.provider;
-    if (shock.scope === 'selection') return Array.isArray(shock.selectedIds) && shock.selectedIds.length > 0;
-    return false;
-}
+// Applique les chocs de MAIN-D'ŒUVRE à la base de MO (ajuste le taux horaire de chaque employé).
+// Les charges sociales et vacances (en %) sont conservées : elles s'appliquent au taux ajusté dans
+// le moteur de calcul. La productivité et les heures ne dépendent pas des salaires — inchangées.
+export function applyLaborShocks(laborDatabase, shocks) {
+    const active = (shocks || []).filter(s => s.type === 'labor' && shockIsActive(s));
+    if (active.length === 0) return laborDatabase;
 
-function shockMatchesIngredient(shock, ing) {
-    if (shock.scope === 'all') return true;
-    if (shock.scope === 'provider') return ing.provider === shock.provider;
-    if (shock.scope === 'selection') return shock.selectedIds.includes(ing.id);
-    return false;
+    return (laborDatabase || []).map(post => {
+        let changed = false;
+        const employees = (post.employees || []).map(emp => {
+            let multiplier = 1;
+            for (const shock of active) {
+                const matches = shock.scope === 'all'
+                    || (shock.scope === 'post' && post.id === shock.target)
+                    || (shock.scope === 'selection' && shock.selectedIds.includes(emp.id));
+                if (matches) multiplier *= (1 + parseLocaleNumber(shock.percent) / 100);
+            }
+            if (multiplier === 1) return emp;
+            changed = true;
+            return { ...emp, hourlyRate: (parseLocaleNumber(emp.hourlyRate) || 0) * multiplier };
+        });
+        return changed ? { ...post, employees } : post;
+    });
 }

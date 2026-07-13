@@ -264,12 +264,23 @@ const App = () => {
         const parsedTotalIndirects = parseLocaleNumber(generalInfo.totalIndirects);
         const operationCostPerHour = parsedOperationHours > 0 ? parsedTotalIndirects / parsedOperationHours : 0;
 
-        const totalDirectLaborHoursNeededByPost = {};
-        products.filter(p => p.onMenu).forEach(product => {
-            const prixVente = parseLocaleNumber(product.prixVente);
-            if (!prixVente || prixVente === 0) return;
+        // Volumes reconstruits de façon cohérente avec analysisData : le mix est une part de
+        // POPULARITÉ (unités), pas de revenu. Unités totales du menu = revenu du menu / prix moyen
+        // pondéré par le mix ; chaque plat en reçoit sa part. (Auparavant revenu × mix / prix, ce
+        // qui faussait les heures de MO nécessaires — donc la productivité cuisine, réinjectée dans
+        // le coût de MO de chaque plat.)
+        const activeMenuProducts = products.filter(p => p.onMenu);
+        const menuRevenue = parseLocaleNumber(generalInfo.totalRevenue) * (parseLocaleNumber(generalInfo.menuRevenuePercentage) / 100);
+        const totalActiveMix = activeMenuProducts.reduce((s, p) => s + parseLocaleNumber(p.salesMix), 0);
+        const weightedAvgPrice = totalActiveMix > 0
+            ? activeMenuProducts.reduce((s, p) => s + parseLocaleNumber(p.salesMix) * parseLocaleNumber(p.prixVente), 0) / totalActiveMix
+            : 0;
+        const totalMenuUnits = weightedAvgPrice > 0 ? menuRevenue / weightedAvgPrice : 0;
 
-            const portionsSold = (parseLocaleNumber(generalInfo.totalRevenue) * (parseLocaleNumber(product.salesMix) / 100)) / prixVente;
+        const totalDirectLaborHoursNeededByPost = {};
+        activeMenuProducts.forEach(product => {
+            const share = totalActiveMix > 0 ? parseLocaleNumber(product.salesMix) / totalActiveMix : 0;
+            const portionsSold = totalMenuUnits * share;
             const batchesNeeded = portionsSold / (parseLocaleNumber(product.nbPortions) || 1);
 
             (product.productionSteps || []).forEach(step => {

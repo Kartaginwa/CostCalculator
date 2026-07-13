@@ -18,6 +18,33 @@ function createWindow() {
     }
   });
 
+  // --- DURCISSEMENT ---
+  // L'application est une SPA locale, sans aucun lien externe. On verrouille donc deux surfaces
+  // d'attaque classiques d'Electron : l'ouverture de fenêtres et la navigation. Ainsi, même si du
+  // contenu inattendu s'exécutait dans le renderer (ex. via un fichier importé), il ne pourrait ni
+  // ouvrir une fenêtre native arbitraire, ni faire quitter l'app vers un site tiers.
+
+  // Refuse toute tentative d'ouverture de nouvelle fenêtre (window.open, target=_blank, etc.).
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+  // Bloque toute navigation vers une autre origine que celle de l'app (serveur Vite en dev,
+  // fichier local en production). L'app étant une SPA, elle ne navigue jamais légitimement.
+  win.webContents.on('will-navigate', (event, url) => {
+    const isDev = !!process.env.VITE_DEV_SERVER_URL;
+    let sameOrigin = false;
+    try {
+      const target = new URL(url);
+      sameOrigin = isDev
+        ? target.origin === new URL(process.env.VITE_DEV_SERVER_URL).origin
+        : target.protocol === 'file:';
+    } catch {
+      sameOrigin = false;
+    }
+    if (!sameOrigin) {
+      event.preventDefault();
+    }
+  });
+
   if (process.env.VITE_DEV_SERVER_URL) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {

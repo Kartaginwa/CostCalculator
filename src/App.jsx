@@ -30,20 +30,9 @@ const SummaryTable = lazy(() => import('./features/SummaryTable.jsx').then(m => 
 const TrackingTab = lazy(() => import('./features/TrackingTab.jsx').then(m => ({ default: m.TrackingTab })));
 const PosImportWizardModal = lazy(() => import('./features/PosImportWizardModal.jsx').then(m => ({ default: m.PosImportWizardModal })));
 
-// Clé localStorage du projet de travail sauvegardé automatiquement (récupération après plantage).
-// Suffixe versionné : si le format d'un projet change de façon incompatible, incrémenter pour
-// ignorer proprement les anciens brouillons plutôt que de risquer un chargement corrompu.
-const WORKING_PROJECT_KEY = 'restocalc_working_project_v1';
-
 const App = () => {
     // --- ÉTATS ---
     const [isProjectLoaded, setIsProjectLoaded] = useState(false);
-    // Un brouillon de travail (sauvegarde auto de la session précédente) est-il disponible ? Lu une
-    // seule fois au montage pour proposer « Reprendre le projet en cours » sur l'écran d'accueil —
-    // sans court-circuiter cet écran (contrairement à une restauration automatique).
-    const [hasSavedDraft] = useState(() => {
-        try { return !!localStorage.getItem(WORKING_PROJECT_KEY); } catch { return false; }
-    });
 
     // Données du projet (produits, ingrédients, main-d'œuvre, infos générales...) : centralisées
     // dans un reducer et exposées via ProjectContext pour éviter de les faire descendre
@@ -209,50 +198,6 @@ const App = () => {
             setAppLogoBase64(null); // Fallback
         };
     }, []);
-
-    // --- PERSISTANCE / RÉCUPÉRATION APRÈS PLANTAGE ---
-    // Reprend le projet de travail sauvegardé automatiquement lors de la session précédente
-    // (localStorage). Déclenché DEPUIS l'écran d'accueil (bouton « Reprendre le projet en cours »),
-    // et non automatiquement au démarrage : l'écran d'accueil reste ainsi toujours accessible.
-    const handleResumeDraft = () => {
-        try {
-            const raw = localStorage.getItem(WORKING_PROJECT_KEY);
-            if (!raw) return;
-            const parsed = parseProjectData(JSON.parse(raw), getEmptyState());
-            dispatch({
-                type: 'LOAD_PROJECT',
-                payload: {
-                    companyName: parsed.companyName, logoUrl: parsed.logoUrl, generalInfo: parsed.generalInfo,
-                    baseIngredients: parsed.baseIngredients, products: parsed.products,
-                    trackingPoints: parsed.trackingPoints, laborDatabase: parsed.laborDatabase, uiSettings: parsed.uiSettings,
-                },
-            });
-            setOpenPostIds(new Set(parsed.laborDatabase.map(p => p.id)));
-            setEditingProductIndex(0);
-            setIsProjectLoaded(true);
-            showNotification({ message: 'Projet en cours restauré.', type: 'success' });
-        } catch (e) {
-            console.error('Restauration du projet de travail échouée :', e);
-            showNotification({ message: "Impossible de restaurer le projet en cours.", type: 'error' });
-        }
-    };
-
-    // Sauvegarde automatique (anti-plantage) : à chaque changement du projet, on persiste l'état de
-    // travail dans localStorage, débounce à 800 ms pour ne pas écrire à chaque frappe. Actif
-    // seulement une fois un projet chargé, pour ne pas écraser un brouillon avec l'état vide initial.
-    useEffect(() => {
-        if (!isProjectLoaded) return;
-        const handle = setTimeout(() => {
-            try {
-                const data = buildProjectData({ companyName, logoUrl, generalInfo, baseIngredients, products, trackingPoints, laborDatabase, uiSettings });
-                localStorage.setItem(WORKING_PROJECT_KEY, JSON.stringify(data));
-            } catch (e) {
-                // Quota dépassé ou sérialisation impossible : non bloquant (la sauvegarde manuelle reste disponible).
-                console.error('Sauvegarde automatique échouée :', e);
-            }
-        }, 800);
-        return () => clearTimeout(handle);
-    }, [isProjectLoaded, companyName, logoUrl, generalInfo, baseIngredients, products, trackingPoints, laborDatabase, uiSettings]);
 
     const autoCalculatedLaborCost = useMemo(() => {
         return laborDatabase.reduce((total, post) => {
@@ -816,8 +761,6 @@ const App = () => {
                             onExample={() => {
                                 handleConfirmLoadExample();
                             }}
-                            onTour={handleStartTutorial}
-                            onResume={hasSavedDraft ? handleResumeDraft : undefined}
                         />
                     ) : (
                         <>

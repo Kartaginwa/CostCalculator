@@ -27,8 +27,9 @@ export function computeIngredientVolatility(trackingPoints) {
         for (const ing of (pt.baseIngredients || [])) {
             const price = parseLocaleNumber(ing.unitPrice);
             if (!(price > 0)) continue;
-            if (!seriesById[ing.id]) seriesById[ing.id] = { id: ing.id, name: ing.name, prices: [] };
+            if (!seriesById[ing.id]) seriesById[ing.id] = { id: ing.id, name: ing.name, provider: ing.provider, prices: [] };
             seriesById[ing.id].name = ing.name;
+            seriesById[ing.id].provider = ing.provider;
             seriesById[ing.id].prices.push(price);
         }
     }
@@ -48,7 +49,7 @@ export function computeIngredientVolatility(trackingPoints) {
             : amplitudePercent >= VOLATILE_THRESHOLD ? 'moderee'
             : 'faible';
         return {
-            id: s.id, name: s.name, count: prices.length,
+            id: s.id, name: s.name, provider: s.provider, count: prices.length,
             currentPrice: last, trendPercent, amplitudePercent, tier,
             isVolatile: enough && amplitudePercent >= VOLATILE_THRESHOLD,
         };

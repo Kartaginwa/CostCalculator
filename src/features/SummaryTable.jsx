@@ -5,6 +5,7 @@ import { parseLocaleNumber, formatCurrency, formatPercent } from '../utils.js';
 import { getCostTargetIndicator } from '../ui-utils.jsx';
 import { Tooltip, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
+import { CostShockSimulator } from './CostShockSimulator.jsx';
 
 // Doit être déclaré en dehors de StrategicAnalysis : un composant recréé à chaque rendu
 // perdrait son état et forcerait un remontage complet de ses enfants à chaque frappe.
@@ -328,6 +329,7 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
                     </ResponsiveContainer>
                 </div>
             </div>
+            <CostShockSimulator />
             <StrategicAnalysis analysisData={analysisData} generalInfo={generalInfo} />
         </div>
     );

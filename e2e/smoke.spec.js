@@ -91,6 +91,14 @@ test.describe('Projet démo', () => {
             await page.locator(`#${tabId}`).click();
         }
 
+        // Simulateur de choc d'intrants (onglet Résumé) : ouvrir, ajouter un choc global +15 %,
+        // le résultat (recalcul de l'analyse) doit s'afficher sans erreur.
+        await page.locator('#tab-summary').click();
+        await page.getByRole('button', { name: /Simulation — choc sur les coûts/ }).click();
+        await page.getByRole('button', { name: 'Ajouter un choc' }).click();
+        await page.locator('input[placeholder="ex. +15"]').first().fill('15');
+        await expect(page.getByText('Scénario actif :')).toBeVisible();
+
         // Assistants d'import : ouverture/fermeture ne doivent pas planter
         await page.locator('button:has-text("Paramètres")').click();
         await page.getByText('Importer depuis POS').click();

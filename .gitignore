@@ -5,3 +5,7 @@ release/
 .DS_Store
 playwright-report/
 test-results/
+
+# Fichiers de référence tiers (chiffriers/calculateurs réels d'autres organisations, fournis par
+# l'utilisateur comme inspiration) — jamais dans l'historique git, données sensibles/non-nôtres.
+Inspiration/

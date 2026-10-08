@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown } from 'lucide-react';
-import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS } from '../utils.js';
+import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber } from '../utils.js';
 import { useValueFlash } from '../ui-utils.jsx';
 
 // Composant pour les messages de validation
@@ -107,6 +107,10 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
     const wrapperRef = useRef(null); // Réf pour le conteneur du champ de saisie
     const dropdownRef = useRef(null); // Réf pour le menu déroulant lui-même
     const [dropdownStyle, setDropdownStyle] = useState({});
+    // Tant qu'on vient juste d'ouvrir le menu (clic/focus), on ignore le filtre : sinon, une valeur
+    // déjà sélectionnée (ex. une catégorie) filtre la liste sur elle-même dès l'ouverture et cache
+    // toutes les autres options. Dès que l'utilisateur tape, le filtre normal reprend.
+    const [justOpened, setJustOpened] = useState(false);
 
     // Met à jour le texte du champ si la valeur parente change (ex: changement de recette)
     useEffect(() => {
@@ -130,30 +134,47 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [wrapperRef, dropdownRef]); // On ajoute dropdownRef aux dépendances
 
-    // Calcule la position du menu déroulant
+    // Calcule la position du menu déroulant. Position fixe (viewport), recalculée à chaque
+    // ouverture : reste correcte quel que soit le défilement de la page, y compris quand celle-ci
+    // s'allonge avec de nouveaux champs au-dessus (ex. lignes de production, futurs modules).
+    // S'ouvre vers le haut plutôt que vers le bas si la place manque en dessous (le champ est
+    // proche du bas de la fenêtre) et qu'il y a plus de place au-dessus — comme un <select> natif.
+    const DROPDOWN_MAX_HEIGHT = 240; // correspond à la classe max-h-60
     const calculatePosition = () => {
         if (wrapperRef.current) {
             const rect = wrapperRef.current.getBoundingClientRect();
-            setDropdownStyle({
-                position: 'fixed',
-                top: rect.bottom + 2,
-                left: rect.left,
-                width: rect.width,
-            });
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            if (spaceBelow < DROPDOWN_MAX_HEIGHT && spaceAbove > spaceBelow) {
+                setDropdownStyle({
+                    position: 'fixed',
+                    bottom: window.innerHeight - rect.top + 2,
+                    left: rect.left,
+                    width: rect.width,
+                });
+            } else {
+                setDropdownStyle({
+                    position: 'fixed',
+                    top: rect.bottom + 2,
+                    left: rect.left,
+                    width: rect.width,
+                });
+            }
         }
     };
 
     const openDropdown = () => {
         calculatePosition();
+        setJustOpened(true);
         setIsOpen(true);
     };
 
     const filteredOptions = useMemo(() => {
-        if (!inputValue) return options;
+        if (!inputValue || justOpened) return options;
         return options.filter(option =>
             getOptionLabel(option).toLowerCase().includes(inputValue.toLowerCase())
         );
-    }, [options, inputValue, getOptionLabel]);
+    }, [options, inputValue, getOptionLabel, justOpened]);
 
     const handleSelect = (option) => {
         onChange(option); // Met à jour l'état du parent avec l'objet sélectionné
@@ -163,8 +184,10 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
 
     const handleInputChange = (e) => {
         const newInputValue = e.target.value;
+        setJustOpened(false);
         setInputValue(newInputValue);
-        openDropdown();
+        calculatePosition();
+        setIsOpen(true);
 
         const exactMatch = options.find(opt => getOptionLabel(opt).toLowerCase() === newInputValue.toLowerCase());
         if (exactMatch) {
@@ -550,6 +573,126 @@ export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdateP
                     </button>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// --- MODAL D'AJOUT D'UN FORMAT (SKU) DEPUIS RECETTE & CALCUL ---
+// La gestion des formats reste centrée dans Paramètres → Produits et SKUs (voir
+// 04-Conception-Modele.md), mais un raccourci de création est offert ici pour ne pas obliger
+// l'utilisateur à changer d'onglet en pleine édition d'une recette. Écrit dans le même état
+// central (onCreate délègue à onAddFormat/onDuplicateFormat déjà utilisés par Paramètres) : le
+// nouveau format apparaît donc immédiatement dans les deux écrans, sans copie ni état séparé.
+export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, onCreate }) => {
+    const [portionSize, setPortionSize] = useState('');
+    const [portionUnit, setPortionUnit] = useState('unité');
+    const [sku, setSku] = useState('');
+    const [copyFromId, setCopyFromId] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            setPortionSize('');
+            setPortionUnit('unité');
+            setSku('');
+            setCopyFromId('');
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const sizeIsValid = isValidNumber(portionSize);
+
+    const handleSubmit = () => {
+        if (!sizeIsValid) return;
+        onCreate({ sku: sku.trim(), portionSize, portionUnit, copyFromFormatId: copyFromId || null });
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1">Ajouter un format</h3>
+                <p className="text-sm text-gray-500 mb-4">Nouveau format (emballage + quantité) pour : <span className="font-medium">{productName}</span></p>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label htmlFor="newFormatSize" className="block text-sm font-medium text-gray-700">Quantité</label>
+                        <input
+                            type="text" inputMode="decimal" id="newFormatSize" value={portionSize} onChange={(e) => setPortionSize(e.target.value)}
+                            placeholder="ex. 250" autoFocus
+                            className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${portionSize && !sizeIsValid ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {portionSize && !sizeIsValid && <ValidationMessage message="Nombre positif requis." />}
+                    </div>
+                    <div>
+                        <label htmlFor="newFormatUnit" className="block text-sm font-medium text-gray-700">Unité</label>
+                        <select id="newFormatUnit" value={portionUnit} onChange={(e) => setPortionUnit(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="ml">ml</option>
+                            <option value="L">L</option>
+                            <option value="unité">unité</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label htmlFor="newFormatSku" className="block text-sm font-medium text-gray-700">SKU (optionnel — sinon déduit automatiquement de la recette et du format)</label>
+                <input
+                    type="text" id="newFormatSku" value={sku} onChange={(e) => setSku(e.target.value)}
+                    placeholder="généré automatiquement si laissé vide"
+                    className="mt-1 mb-4 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                />
+
+                <label htmlFor="newFormatCopyFrom" className="block text-sm font-medium text-gray-700">Fiche recette de départ</label>
+                <select
+                    id="newFormatCopyFrom" value={copyFromId} onChange={(e) => setCopyFromId(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                >
+                    <option value="">Vierge</option>
+                    {existingFormats.map((f, i) => (
+                        <option key={f.id} value={f.id}>Copier la fiche de « {formatQuantityLabel(f.portionSize, f.portionUnit) || `Format ${i + 1}`} » en bloc</option>
+                    ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">Une copie complète (ingrédients, étapes de production, prix...) est un point de départ pratique pour un format très semblable — le nouveau format et le SKU ci-dessus restent les vôtres, seule la fiche recette est copiée. Vous pourrez ensuite ajuster ou copier section par section depuis n'importe quel autre SKU.</p>
+
+                <div className="mt-6 flex justify-end gap-2">
+                    <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+                    <button type="button" onClick={handleSubmit} disabled={!sizeIsValid} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">Créer le format</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Contrôle réutilisable « copier depuis un autre format », posé à même chaque section de Recette &
+// Calcul (ingrédients, production, coûts additionnels...). Chaque format étant sa propre fiche
+// recette autonome, ceci permet de peupler rapidement UNE section à partir d'un format voisin sans
+// dupliquer le format en entier (ce dernier reste offert, mais seulement à la création — voir
+// AddFormatModal). Invisible s'il n'y a qu'un seul format sur ce produit (rien à copier).
+export const CopyFromFormatControl = ({ formats, currentFormatId, onCopy, label }) => {
+    const [sourceId, setSourceId] = useState('');
+    const others = (formats || []).filter(f => f.id !== currentFormatId);
+    if (others.length === 0) return null;
+
+    return (
+        <div className="flex items-center gap-2">
+            <select
+                value={sourceId}
+                onChange={(e) => setSourceId(e.target.value)}
+                className="p-1 border rounded text-xs text-gray-700 max-w-[160px]"
+            >
+                <option value="">Copier depuis un format...</option>
+                {others.map((f, i) => (
+                    <option key={f.id} value={f.id}>{formatQuantityLabel(f.portionSize, f.portionUnit) || `Format ${i + 1}`}</option>
+                ))}
+            </select>
+            <button
+                type="button"
+                disabled={!sourceId}
+                onClick={() => { if (sourceId) { onCopy(sourceId); setSourceId(''); } }}
+                className="px-2 py-1 border border-blue-300 rounded text-xs text-blue-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+                Copier {label}
+            </button>
         </div>
     );
 };

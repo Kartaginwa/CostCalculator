@@ -62,6 +62,23 @@ export const generateSlug = (name, provider, format, unit) => {
         .replace(/^-|-$/g, '');
 };
 
+// Étiquette lisible d'un format de vente (quantité + unité) — ex. "250 ml". Le format (emballage
+// + quantité) est l'attribut qu'une personne choisit ; le SKU n'est qu'une référence dérivée de la
+// recette + de ce format (voir Projet_Claude/04-Conception-Modele.md, correction du 04/10).
+export const formatQuantityLabel = (portionSize, portionUnit) => {
+    if (!portionSize) return '';
+    return `${portionSize} ${portionUnit || ''}`.trim();
+};
+
+// Étiquette d'affichage désambiguïsée d'une ligne produit×format (nom seul si ce produit n'a
+// qu'un format dans `formatsList`, nom + format sinon — ex. « Confiture de fraises (250 ml) »).
+// Partagée entre analysisData.js (temps réel) et initialState.js (historique de démo) pour que
+// les deux appliquent exactement la même règle — voir Phase 1.6, Projet_Claude/03-Feuille-de-route.md.
+export const buildRowDisplayName = (platName, formatsList, fmt, formatIndex) =>
+    formatsList.length > 1
+        ? `${platName} (${formatQuantityLabel(fmt.portionSize, fmt.portionUnit) || fmt.sku || `Format ${formatIndex + 1}`})`
+        : platName;
+
 // Formate un nombre de secondes en chaîne HH:MM:SS
 export const formatSecondsToTime = (totalSeconds) => {
     if (totalSeconds === null || isNaN(totalSeconds) || totalSeconds < 0) {
@@ -112,6 +129,10 @@ export const isValidPositiveInteger = (value) => {
     return Number.isInteger(num) && num > 0;
 };
 
+// Comme isValidPositiveInteger, mais accepte les décimales — pour une quantité produite exprimée
+// dans une unité continue (kg, L...) plutôt qu'un compte d'unités (voir isDiscreteUnit ci-dessous).
+export const isValidPositiveNumber = (value) => isValidNumber(value) && parseLocaleNumber(value) > 0;
+
 export const isValidPercentage = (value) => {
     if (!isNotEmpty(value)) return false;
     const num = parseLocaleNumber(value);
@@ -120,13 +141,22 @@ export const isValidPercentage = (value) => {
 };
 
 // --- MOTEUR DE CONVERSION D'UNITÉS ---
+// `type` distingue une unité de mesure continue (poids/volume — une quantité produite peut être
+// fractionnaire, ex. 47,3 kg) d'une unité de compte discrète (ex. « unité » — toujours un nombre
+// entier). Utilisé par isDiscreteUnit ci-dessous pour adapter la validation de « quantité
+// produite » (RecipeCalculator.jsx) à l'unité réellement choisie, plutôt que d'imposer un entier
+// partout (ce qui empêchait un producteur vendant au poids de saisir un lot manuellement).
 export const CONVERSION_FACTORS = {
-    'g': { base: 'g', factor: 1 },
-    'kg': { base: 'g', factor: 1000 },
-    'ml': { base: 'ml', factor: 1 },
-    'L': { base: 'ml', factor: 1000 },
-    'unité': { base: 'unité', factor: 1 },
+    'g': { base: 'g', factor: 1, type: 'continuous' },
+    'kg': { base: 'g', factor: 1000, type: 'continuous' },
+    'ml': { base: 'ml', factor: 1, type: 'continuous' },
+    'L': { base: 'ml', factor: 1000, type: 'continuous' },
+    'unité': { base: 'unité', factor: 1, type: 'discrete' },
 };
+
+// Une unité absente de cette table (cas rare) est traitée comme discrète par défaut — comportement
+// historique (entier obligatoire), le plus prudent tant qu'elle n'est pas explicitement classée.
+export const isDiscreteUnit = (unit) => (CONVERSION_FACTORS[unit]?.type || 'discrete') === 'discrete';
 
 export const getCompatibleUnits = (baseUnit) => {
     if (!baseUnit) return []; // Si aucune unité n'est fournie, ne retourne aucune option
@@ -144,6 +174,13 @@ export const formatUnitPrice = (value) => {
     return value.toFixed(2);
 };
 
+// Champs de format également présents "à plat" sur le produit (Phase 1.3-1.5). Tant que les
+// écrans qui ne lisent pas encore formats[] directement (Résumé, rapports, analyse — Phase 1.6)
+// existent, éditer le format PAR DÉFAUT (index 0) d'un produit met aussi à jour ces champs en
+// miroir — voir Projet_Claude/04-Conception-Modele.md. Partagé entre App.jsx et
+// RecipeCalculator.jsx pour ne pas dupliquer la liste.
+export const FORMAT_FLAT_MIRROR_FIELDS = ['prixVente', 'nbPortions', 'portionSize', 'portionUnit', 'salesMix', 'onMenu'];
+
 // --- GESTION DES ALLERGÈNES ---
 export const MAJOR_ALLERGENS = [
     { key: 'gluten', name: 'Gluten' }, { key: 'crustaceans', name: 'Crustacés' },
@@ -155,10 +192,18 @@ export const MAJOR_ALLERGENS = [
     { key: 'lupin', name: 'Lupin' }, { key: 'molluscs', name: 'Mollusques' },
 ];
 
-export const POS_APP_FIELDS = [
+// Phase 3.4 : remplace POS_APP_FIELDS — l'import vise maintenant des rapports de vente par canal
+// (distributeur, courtier...) plutôt qu'un export de caisse à point de vente unique. `channel` et
+// `format` sont nouveaux (mappent vers format × canal, voir SalesReportImportWizardModal.jsx) ;
+// mots-clés volontairement larges pour les exports comptables courants (QuickBooks « Class »,
+// Odoo « Point of Sale »/« Équipe commerciale »...) — à affiner si un format source précis pose
+// problème, sans changer le modèle de données sous-jacent.
+export const SALES_REPORT_APP_FIELDS = [
     { key: 'platName', label: "Nom du plat", required: true, keywords: ['nom', 'item', 'produit', 'plat', 'description'] },
+    { key: 'format', label: "Format (ex. 250 ml)", keywords: ['format', 'taille', 'variant', 'sku'] },
+    { key: 'channel', label: "Canal de vente", keywords: ['canal', 'channel', 'circuit', 'class', 'location', 'point of sale', 'équipe', 'distributeur'] },
     { key: 'category', label: "Catégorie", keywords: ['catégorie', 'category', 'groupe'] },
-    { key: 'prixVente', label: "Prix de vente ($)", required: true, keywords: ['prix', 'vente', 'price', 'cost', '$', 'revenue'] },
+    { key: 'prixVente', label: "Prix net ($)", required: true, keywords: ['prix', 'vente', 'price', 'cost', '$', 'revenue', 'net'] },
     { key: 'quantitySold', label: "Quantité vendue (unités)", required: true, keywords: ['quantité', 'qty', 'vendue', 'sold', 'unités', 'mix'] },
     { key: 'transactionDate', label: "Date de transaction", keywords: ['date', 'jour', 'transaction'] },
     { key: 'totalNetPrice', label: "Total Net Ligne ($)", keywords: ['total', 'net', 'montant'] }

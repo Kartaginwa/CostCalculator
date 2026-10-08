@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAnalysisData } from './analysisData.js';
+import { computeAnalysisData, computeMenuEngineeringQuadrants } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -43,6 +43,19 @@ describe('computeAnalysisData - moyennes pondérées et point mort global', () =
         // pondéré par le REVENU. Prix moyen pondéré = (70×20 + 30×10)/100 = 17 ; taux de marge sur
         // revenu = (10×0.7 + 8×0.3)/17 = 9.4/17. Point mort = 1000 / (9.4/17) ≈ 1808,5 $.
         expect(result.globalBreakEven).toBeCloseTo(1000 / (9.4 / 17));
+    });
+
+    it('pondère le coût emballage par le mix des ventes (Phase 2.3)', () => {
+        const basePackaging = [{ id: 'pot', unitPrice: 2, lossPercentage: 0, unit: 'unité' }];
+        const productA = baseProduct({ id: 'A', prixVente: 20, salesMix: 70, packagingItems: [{ id: 'pot', quantity: 1, recipeUnit: 'unité' }] });
+        const productB = baseProduct({ id: 'B', prixVente: 10, salesMix: 30, packagingItems: [{ id: 'pot', quantity: 1, recipeUnit: 'unité' }] });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([productA, productB], [], [], generalInfo, calculatedGeneralInfo, basePackaging);
+
+        // A : coût emballage 2/20 = 0.1, B : 2/10 = 0.2 -> pondéré 70/30 = 0.13
+        expect(result.weightedPackagingCost).toBeCloseTo(0.13);
     });
 
     it('exclut les produits hors menu du calcul des moyennes pondérées', () => {
@@ -201,6 +214,122 @@ describe('computeAnalysisData - règle des 70 % sur la popularité', () => {
     });
 });
 
+describe('computeAnalysisData - formats multiples (Phase 1.6)', () => {
+    const multiFormatProduct = (overrides = {}) => ({
+        id: 'prod_confiture',
+        platName: 'Confiture de fraises',
+        category: 'Confiture',
+        onMenu: true,
+        formats: [
+            {
+                id: 'fmt_250', sku: 'CONF-250ML', prixVente: 8, nbPortions: 1, portionSize: 250, portionUnit: 'ml',
+                salesMix: 60, onMenu: true, ingredients: [{ id: 'ing_fraise', quantity: 1, recipeUnit: 'kg' }], productionSteps: [],
+                isResaleProduct: false, purchaseCost: 0, indirectCosts: {},
+            },
+            {
+                id: 'fmt_500', sku: 'CONF-500ML', prixVente: 14, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
+                salesMix: 40, onMenu: true, ingredients: [{ id: 'ing_fraise', quantity: 2, recipeUnit: 'kg' }], productionSteps: [],
+                isResaleProduct: false, purchaseCost: 0, indirectCosts: {},
+            },
+        ],
+        ...overrides,
+    });
+    const baseIngredients = [{ id: 'ing_fraise', name: 'Fraises', provider: 'Fournisseur Fraises', unit: 'kg', unitPrice: 5, lossPercentage: 0 }];
+    const generalInfoFor = (overrides = {}) => baseGeneralInfo({ totalRevenue: 1000, menuRevenuePercentage: 100, ...overrides });
+    const calcGeneralInfoFor = (generalInfo) => ({ ...generalInfo, productivityReport: {} });
+
+    it('produit une ligne par format, avec un id de ligne distinct et le même productId', () => {
+        const product = multiFormatProduct();
+        const generalInfo = generalInfoFor();
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+
+        expect(result.productsWithCosts).toHaveLength(2);
+        const [row250, row500] = result.productsWithCosts;
+        expect(row250.id).toBe('fmt_250');
+        expect(row500.id).toBe('fmt_500');
+        expect(row250.productId).toBe('prod_confiture');
+        expect(row500.productId).toBe('prod_confiture');
+        expect(row250.formatIndex).toBe(0);
+        expect(row500.formatIndex).toBe(1);
+    });
+
+    it("calcule le coût de chaque format à partir de SA PROPRE fiche recette, pas d'un lot partagé", () => {
+        const product = multiFormatProduct();
+        const generalInfo = generalInfoFor();
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+
+        const row250 = result.productsWithCosts.find(r => r.id === 'fmt_250');
+        const row500 = result.productsWithCosts.find(r => r.id === 'fmt_500');
+        // 250 ml : 1 kg de fraises à 5$/kg = 5$ ; 500 ml : 2 kg = 10$ — chaque format son propre coût.
+        expect(row250.costs.totalIngredientsCost).toBeCloseTo(5);
+        expect(row500.costs.totalIngredientsCost).toBeCloseTo(10);
+    });
+
+    it('le rapport d\'achats cumule la consommation des DEUX formats, pas seulement le premier', () => {
+        const product = multiFormatProduct();
+        const generalInfo = generalInfoFor();
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+
+        // Chaque format vend ses propres unités (mix 60/40), consommant respectivement 1 kg et 2 kg
+        // de fraises par unité vendue — la quantité totale achetée doit refléter les deux, pas
+        // seulement le format par défaut (ce qui aurait ignoré la consommation du format 500 ml).
+        const totalQty = result.purchasingReportData.groupedByProvider['Fournisseur Fraises'].items.find(i => i.id === 'ing_fraise').totalQuantity;
+        expect(totalQty).toBeGreaterThan(0);
+        // Preuve directe que le format 500 ml contribue : désactiver son "onMenu" doit réduire la quantité totale.
+        const productOnlyDefaultActive = multiFormatProduct({
+            formats: [
+                { ...multiFormatProduct().formats[0] },
+                { ...multiFormatProduct().formats[1], onMenu: false, salesMix: 0 },
+            ],
+        });
+        const resultDefaultOnly = computeAnalysisData([productOnlyDefaultActive], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+        const qtyDefaultOnly = resultDefaultOnly.purchasingReportData.groupedByProvider['Fournisseur Fraises'].items.find(i => i.id === 'ing_fraise').totalQuantity;
+        expect(qtyDefaultOnly).toBeLessThan(totalQty);
+    });
+
+    it('calcule displayName sur chaque ligne de productsWithCosts (pas seulement contributionData)', () => {
+        const product = multiFormatProduct();
+        const generalInfo = generalInfoFor();
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+
+        const names = result.productsWithCosts.map(r => r.displayName).sort();
+        expect(names).toEqual(['Confiture de fraises (250 ml)', 'Confiture de fraises (500 ml)']);
+    });
+
+    it("garde le nom seul dans displayName quand un format est désactivé et qu'il n'en reste qu'un affiché dans contributionData, mais désambiguïse quand même dans productsWithCosts (le produit a bien 2 formats)", () => {
+        const product = multiFormatProduct({
+            formats: [
+                multiFormatProduct().formats[0],
+                { ...multiFormatProduct().formats[1], onMenu: false, salesMix: 0 },
+            ],
+        });
+        const generalInfo = generalInfoFor();
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+
+        // productsWithCosts inclut les deux lignes (actives ou non) : toutes deux désambiguïsées,
+        // puisque le produit a bien 2 formats au total.
+        expect(result.productsWithCosts.map(r => r.displayName).sort()).toEqual(['Confiture de fraises (250 ml)', 'Confiture de fraises (500 ml)']);
+    });
+
+    it('désambiguïse le nom dans contributionData quand plusieurs formats du même produit sont actifs', () => {
+        const product = multiFormatProduct();
+        const generalInfo = generalInfoFor();
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+
+        expect(result.contributionData).toHaveLength(2);
+        const names = result.contributionData.map(c => c.name).sort();
+        expect(names).toEqual(['Confiture de fraises (250 ml)', 'Confiture de fraises (500 ml)']);
+    });
+
+    it('un produit à un seul format ne gagne pas de suffixe dans contributionData (non-régression)', () => {
+        const product = baseProduct({ salesMix: 100, prixVente: 10 });
+        const generalInfo = generalInfoFor();
+        const result = computeAnalysisData([product], [], [], generalInfo, calcGeneralInfoFor(generalInfo));
+
+        expect(result.contributionData[0].name).toBe('Produit Test');
+    });
+});
+
 describe('computeAnalysisData - rapport d\'achats et pertes', () => {
     it('calcule le coût net et le coût de perte cohérents avec le taux de perte de l\'ingrédient', () => {
         const baseIngredients = [
@@ -220,5 +349,217 @@ describe('computeAnalysisData - rapport d\'achats et pertes', () => {
         // coût de perte = net / (1 - 20%) - net = 20/0.8 - 20 = 5
         expect(result.purchasingReportData.totalLossCost).toBeCloseTo(5);
         expect(result.purchasingReportData.groupedByProvider['Fournisseur A'].totalCost).toBeCloseTo(25);
+    });
+});
+
+describe('computeAnalysisData - rapport d\'achats et analyse ABC du Packaging (Phase 2.3)', () => {
+    it("calcule un rapport d'achats et une analyse ABC du packaging, séparés et jamais fusionnés avec ceux des ingrédients", () => {
+        const baseIngredients = [{ id: 'ing_1', name: 'Farine', provider: 'Fournisseur A', unit: 'kg', unitPrice: 2, lossPercentage: 0 }];
+        const basePackaging = [{ id: 'pkg_1', name: 'Pot de verre', provider: 'Fournisseur Verre', unit: 'unité', unitPrice: 1, lossPercentage: 20 }];
+        const product = baseProduct({
+            prixVente: 100, nbPortions: 1, salesMix: 100, onMenu: true,
+            ingredients: [{ id: 'ing_1', quantity: 1, recipeUnit: 'kg' }],
+            packagingItems: [{ id: 'pkg_1', quantity: 10, recipeUnit: 'unité' }],
+        });
+        const generalInfo = baseGeneralInfo({ totalRevenue: 100, menuRevenuePercentage: 100 });
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, basePackaging);
+
+        // Rapport d'achats du packaging : 10 pots x 1$ = 10$ net, perte = 10/0.8 - 10 = 2.5$.
+        expect(result.packagingPurchasingReportData.totalNetCost).toBeCloseTo(10);
+        expect(result.packagingPurchasingReportData.totalLossCost).toBeCloseTo(2.5);
+        expect(result.packagingPurchasingReportData.groupedByProvider['Fournisseur Verre'].totalCost).toBeCloseTo(12.5);
+        // Analyse ABC du packaging : un seul item, forcément 100% de la valeur -> catégorie A.
+        expect(result.packagingAbcAnalysisData.A.map(i => i.name)).toEqual(['Pot de verre']);
+
+        // Les rapports/ABC des ingrédients restent indépendants (pas de pot de verre mélangé).
+        expect(result.purchasingReportData.totalNetCost).toBeCloseTo(2); // 1kg x 2$
+        expect(result.abcAnalysisData.A.map(i => i.name)).toEqual(['Farine']);
+    });
+
+    it('un catalogue Packaging vide donne un rapport et une ABC vides, sans erreur', () => {
+        const product = baseProduct({ prixVente: 100, nbPortions: 1, salesMix: 100, onMenu: true });
+        const generalInfo = baseGeneralInfo({ totalRevenue: 100, menuRevenuePercentage: 100 });
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo);
+
+        expect(result.packagingPurchasingReportData.totalNetCost).toBe(0);
+        expect(result.packagingAbcAnalysisData.A).toEqual([]);
+    });
+});
+
+describe('computeAnalysisData - channelBreakdown par ligne (Phase 3.3)', () => {
+    it('ajoute une ventilation par canal à chaque ligne, à partir de channelPrices du format', () => {
+        const salesChannels = [
+            { id: 'c_direct', name: 'Vente directe', links: [] },
+            { id: 'c_distrib', name: 'Grande distribution', links: [{ type: 'margin', percent: 50 }] },
+        ];
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {}, ingredients: [],
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c_direct', netPrice: 20, volume: 10 },
+                    { id: 'cp2', channelId: 'c_distrib', netPrice: 10, volume: 40 },
+                ],
+            }],
+        });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], salesChannels);
+        const [row] = result.productsWithCosts;
+        expect(row.channelBreakdown).toHaveLength(2);
+        expect(row.channelBreakdown.map(c => c.channelName)).toEqual(['Vente directe', 'Grande distribution']);
+        expect(row.channelBreakdown[0].margeNetteDollar).toBeCloseTo(20); // aucun coût, aucun maillon
+        expect(row.channelBreakdown[1].margeNetteDollar).toBeCloseTo(10);
+    });
+
+    it("calcule un point mort par canal (06/10) à partir des frais indirects alloués à ce format", () => {
+        const salesChannels = [
+            { id: 'c_direct', name: 'Vente directe', links: [] },
+            { id: 'c_distrib', name: 'Grande distribution', links: [] },
+        ];
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {}, ingredients: [], salesMix: 50,
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c_direct', netPrice: 20, volume: 10 },   // marge brute 20$
+                    { id: 'cp2', channelId: 'c_distrib', netPrice: 10, volume: 40 },  // marge brute 10$
+                ],
+            }],
+        });
+        const generalInfo = baseGeneralInfo({ totalIndirects: 200 }); // alloué à ce format : 200 * 50% = 100$
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], salesChannels);
+        const [row] = result.productsWithCosts;
+        expect(row.channelBreakdown[0].breakEvenUnits).toBe(5);  // ceil(100 / 20)
+        expect(row.channelBreakdown[1].breakEvenUnits).toBe(10); // ceil(100 / 10)
+    });
+
+    it('tableau vide sans salesChannels (comportement par défaut, rétrocompatible)', () => {
+        const product = baseProduct({
+            formats: [{ id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {}, ingredients: [], channelPrices: [{ id: 'cp1', channelId: 'c_direct', netPrice: 20, volume: 10 }] }],
+        });
+        const generalInfo = baseGeneralInfo();
+        const result = computeAnalysisData([product], [], [], generalInfo, { ...generalInfo, productivityReport: {} });
+        expect(result.productsWithCosts[0].channelBreakdown).toEqual([]);
+    });
+});
+
+describe('computeAnalysisData - vue « tous canaux » des KPIs pondérés et de la contribution (06/10)', () => {
+    it("pondère les coûts/marges par le volume RÉEL de CHAQUE canal, pas seulement le canal principal", () => {
+        const salesChannels = [
+            { id: 'c_direct', name: 'Vente directe', links: [] },
+            { id: 'c_epi', name: 'Épiceries', links: [] },
+        ];
+        // Coût matière fixe à 10$ (ne varie jamais par canal). Canal principal (direct) : prix
+        // 20$ -> coût matière 50%. Canal secondaire (épiceries, PAS le canal principal) : prix
+        // 10$ -> coût matière 100%. Volumes égaux (50/50) -> pondéré = 75%. Avant ce correctif, un
+        // changement de prix sur le canal secondaire ne bougeait jamais ce chiffre (resté à 50%,
+        // canal principal seul) — c'est exactement le bug rapporté par l'utilisateur.
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {}, salesMix: 100, onMenu: true,
+                ingredients: [{ id: 'ing_1', quantity: 1, recipeUnit: 'kg' }],
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c_direct', netPrice: 20, volume: 50 },
+                    { id: 'cp2', channelId: 'c_epi', netPrice: 10, volume: 50 },
+                ],
+            }],
+        });
+        const baseIngredients = [{ id: 'ing_1', name: 'Ing', unit: 'kg', unitPrice: 10, lossPercentage: 0 }];
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], salesChannels);
+
+        expect(result.weightedMaterialCost).toBeCloseTo(0.75);
+    });
+
+    it("somme la contribution RÉELLE de chaque canal (volume × marge brute), pas seulement le canal principal", () => {
+        const salesChannels = [
+            { id: 'c_direct', name: 'Vente directe', links: [] },
+            { id: 'c_epi', name: 'Épiceries', links: [] },
+        ];
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {}, salesMix: 100, onMenu: true, ingredients: [],
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c_direct', netPrice: 20, volume: 10 }, // marge 20$ × 10 = 200
+                    { id: 'cp2', channelId: 'c_epi', netPrice: 10, volume: 40 },    // marge 10$ × 40 = 400
+                ],
+            }],
+        });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], salesChannels);
+
+        expect(result.contributionData[0].totalContribution).toBeCloseTo(600);
+    });
+
+    it("la popularité « tous canaux » de la matrice BCG utilise le volume RÉEL agrégé à travers les canaux, jamais salesMix (évite la dilution par un format en mode manuel — 07/10)", () => {
+        const salesChannels = [{ id: 'c1', name: 'Canal 1', links: [] }];
+        // `tracked` a un salesMix de 10 % (dilué par le 90 % fixe de `manual`), mais un volume
+        // RÉEL de 1000 unités sur son seul canal. `manual` a un salesMix de 90 % mais ZÉRO volume
+        // réel (pas de channelPrices du tout — mode manuel, jamais vraiment vendu). Avec l'ancien
+        // calcul (popularity = salesMix), `tracked` aurait 10 % de popularité (sous le seuil) ;
+        // avec le nouveau calcul (popularity = part du volume réel), `tracked` doit avoir ~100 %
+        // et `manual`, n'ayant AUCUNE performance réelle à classer, doit être exclu de la matrice
+        // plutôt que forcé à 0 % (ce qui fausserait quand même le seuil des autres — 07/10).
+        const tracked = baseProduct({
+            id: 'tracked', isResaleProduct: true, purchaseCost: 10, prixVente: 20, salesMix: 10, onMenu: true,
+            channelPrices: [{ id: 'cp1', channelId: 'c1', netPrice: 20, volume: 1000 }],
+        });
+        const manual = baseProduct({
+            id: 'manual', isResaleProduct: true, purchaseCost: 10, prixVente: 20, salesMix: 90, onMenu: true,
+        });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([tracked, manual], [], [], generalInfo, calculatedGeneralInfo, [], salesChannels);
+
+        const allRows = [...result.menuEngineeringData.stars, ...result.menuEngineeringData.cows, ...result.menuEngineeringData.questions, ...result.menuEngineeringData.dogs];
+        expect(allRows.find(r => r.id === 'tracked').popularity).toBeCloseTo(100);
+        expect(allRows.find(r => r.id === 'manual')).toBeUndefined();
+    });
+
+    it("se replie sur salesMix/unités reconstruites si AUCUN produit actif n'a de volume réel sur aucun canal (rétrocompatibilité)", () => {
+        const products = [
+            baseProduct({ id: 'A', isResaleProduct: true, purchaseCost: 10, prixVente: 20, salesMix: 40, onMenu: true }),
+            baseProduct({ id: 'B', isResaleProduct: true, purchaseCost: 18, prixVente: 20, salesMix: 60, onMenu: true }),
+        ];
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData(products, [], [], generalInfo, calculatedGeneralInfo, [], []);
+
+        const allRows = [...result.menuEngineeringData.stars, ...result.menuEngineeringData.cows, ...result.menuEngineeringData.questions, ...result.menuEngineeringData.dogs];
+        expect(allRows.find(r => r.id === 'A').popularity).toBeCloseTo(40);
+        expect(allRows.find(r => r.id === 'B').popularity).toBeCloseTo(60);
+    });
+});
+
+describe('computeMenuEngineeringQuadrants — fonction pure (réutilisée pour une analyse BCG limitée à un seul canal)', () => {
+    it('classe des lignes déjà réduites à popularité/marge/volume, indépendamment de toute autre donnée produit', () => {
+        const rows = [
+            { id: 'star', popularity: 40, margeBruteDollar: 10, volume: 40 },
+            { id: 'cow', popularity: 40, margeBruteDollar: 2, volume: 40 },
+            { id: 'question', popularity: 10, margeBruteDollar: 10, volume: 10 },
+            { id: 'dog', popularity: 10, margeBruteDollar: 2, volume: 10 },
+        ];
+        const result = computeMenuEngineeringQuadrants(rows);
+        expect(result.stars.map(r => r.id)).toEqual(['star']);
+        expect(result.cows.map(r => r.id)).toEqual(['cow']);
+        expect(result.questions.map(r => r.id)).toEqual(['question']);
+        expect(result.dogs.map(r => r.id)).toEqual(['dog']);
+    });
+
+    it('retourne des quadrants vides sans lancer d\'erreur pour une liste vide (ex. aucun SKU vendu dans le canal choisi)', () => {
+        const result = computeMenuEngineeringQuadrants([]);
+        expect(result).toEqual({ stars: [], cows: [], questions: [], dogs: [] });
     });
 });

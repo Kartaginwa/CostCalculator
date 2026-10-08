@@ -29,6 +29,12 @@ export default [
             // local sur l'ouverture d'une modale (useEffect(() => { if (isOpen) setX(...) },
             // [isOpen])) est un pattern correct et très répandu ici. Signalé mais non bloquant.
             'react-hooks/set-state-in-effect': 'warn',
+            // Même famille de règles orientées React Compiler : signale Date.now()/Math.random()
+            // dans des gestionnaires d'événements ordinaires (jamais appelés pendant le rendu) —
+            // faux positif reproduit sur un gestionnaire isolé alors que le même patron
+            // (génération d'un id via Date.now()+Math.random()) est déjà utilisé sans être
+            // signalé ailleurs dans ce fichier et dans App.jsx. Signalé mais non bloquant.
+            'react-hooks/purity': 'warn',
             'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
         },
         settings: { react: { version: 'detect' } },

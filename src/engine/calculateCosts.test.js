@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { calculateCosts } from './calculateCosts.js';
+import { calculateCosts, computeMarginsForPrice, computeChannelBreakdown } from './calculateCosts.js';
 
 const baseGeneralInfo = () => ({
     totalIndirects: 0,
@@ -247,6 +247,56 @@ describe('calculateCosts - méthodes d\'allocation des frais indirects', () => {
     });
 });
 
+describe('calculateCosts - coûts d\'emballage (Phase 2.2)', () => {
+    it("calcule le coût d'emballage sans perte, comme poste SÉPARÉ du coût matière", () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        const basePackaging = [{ id: 'pot', unitPrice: 0.75, lossPercentage: 0, unit: 'unité' }];
+        const product = baseProduct({
+            ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+            packagingItems: [{ id: 'pot', quantity: 3, recipeUnit: 'unité' }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], null, {}, new Set(), null, basePackaging);
+        expect(costs.totalPackagingCost).toBeCloseTo(2.25); // 3 x 0.75 $
+        expect(costs.costPackagingPerPortion).toBeCloseTo(2.25);
+        expect(costs.totalIngredientsCost).toBeCloseTo(2); // coût matière non affecté, poste séparé
+        expect(costs.totalDirectCostPerPortion).toBeCloseTo(4.25); // 2 + 2.25
+    });
+
+    it("gonfle le coût d'emballage selon le taux de perte du catalogue (bris, rebuts)", () => {
+        const basePackaging = [{ id: 'pot', unitPrice: 1, lossPercentage: 20, unit: 'unité' }];
+        const product = baseProduct({
+            packagingItems: [{ id: 'pot', quantity: 1, recipeUnit: 'unité' }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], [], null, {}, new Set(), null, basePackaging);
+        // baseCost = 1, costAfterLoss = 1 / (1 - 0.20) = 1.25
+        expect(costs.totalPackagingCost).toBeCloseTo(1.25);
+        // Décomposé comme les ingrédients : coût de base (avant perte) + coût de la perte seule.
+        expect(costs.totalBasePackagingCost).toBeCloseTo(1);
+        expect(costs.totalPackagingLossCost).toBeCloseTo(0.25);
+    });
+
+    it("n'applique aucun coût d'emballage à un produit de revente (pas de recette)", () => {
+        const basePackaging = [{ id: 'pot', unitPrice: 5, lossPercentage: 0, unit: 'unité' }];
+        const product = baseProduct({
+            isResaleProduct: true, purchaseCost: 3,
+            packagingItems: [{ id: 'pot', quantity: 1, recipeUnit: 'unité' }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], [], null, {}, new Set(), null, basePackaging);
+        expect(costs.totalPackagingCost).toBe(0);
+    });
+
+    it("le coût d'emballage réduit la marge nette, au même titre que les autres coûts directs", () => {
+        const basePackaging = [{ id: 'pot', unitPrice: 2, lossPercentage: 0, unit: 'unité' }];
+        const product = baseProduct({
+            prixVente: 10,
+            packagingItems: [{ id: 'pot', quantity: 1, recipeUnit: 'unité' }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], [], null, {}, new Set(), null, basePackaging);
+        expect(costs.margeNetteDollar).toBeCloseTo(8); // 10 - 2
+        expect(costs.costPackagingPercent).toBeCloseTo(0.2);
+    });
+});
+
 describe('calculateCosts - sous-recettes récursives', () => {
     it("intègre le coût par unité d'une sous-recette comme ingrédient", () => {
         const subRecipe = baseProduct({
@@ -266,6 +316,59 @@ describe('calculateCosts - sous-recettes récursives', () => {
 
         const costs = calculateCosts(parent, baseGeneralInfo(), baseIngredients, allProducts, []);
         // sous-recette : 1kg de farine à 5$/kg => 5$/kg de sauce ; parent utilise 2kg => 10$
+        expect(costs.totalIngredientsCost).toBeCloseTo(10);
+    });
+
+    it("une sous-recette à PLUSIEURS formats est résolue au format précisément référencé, pas toujours au premier (régression du 04/10 — Phase 1.6e/correctif ultérieur)", () => {
+        const baseIngredients = [
+            { id: 'farine', unitPrice: 5, lossPercentage: 0, unit: 'kg' },
+            { id: 'beurre', unitPrice: 10, lossPercentage: 0, unit: 'kg' },
+        ];
+        // Sous-recette à 2 formats, chacun avec sa PROPRE recette (voir 04-Conception-Modele.md :
+        // chaque format est une fiche recette autonome) — formats volontairement très différents
+        // en coût pour détecter sans ambiguïté lequel des deux a été utilisé.
+        const subRecipe = baseProduct({
+            id: 'sauce-base', isIngredient: true, nbPortions: 1, portionUnit: 'kg',
+            formats: [
+                { id: 'fmt_sauce_leger', portionSize: 1, portionUnit: 'kg', nbPortions: 1, prixVente: 0, salesMix: 0, onMenu: false, ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }], productionSteps: [] },
+                { id: 'fmt_sauce_riche', portionSize: 1, portionUnit: 'kg', nbPortions: 1, prixVente: 0, salesMix: 0, onMenu: false, ingredients: [{ id: 'beurre', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }], productionSteps: [] },
+            ],
+        });
+        const parentLeger = baseProduct({
+            id: 'plat-leger',
+            ingredients: [{ id: 'fmt_sauce_leger', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+        });
+        const parentRiche = baseProduct({
+            id: 'plat-riche',
+            ingredients: [{ id: 'fmt_sauce_riche', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+        });
+        const allProducts = [subRecipe, parentLeger, parentRiche];
+
+        const costsLeger = calculateCosts(parentLeger, baseGeneralInfo(), baseIngredients, allProducts, []);
+        const costsRiche = calculateCosts(parentRiche, baseGeneralInfo(), baseIngredients, allProducts, []);
+
+        // Chaque plat parent doit refléter le coût du format EXACT qu'il référence (farine 5$/kg
+        // vs beurre 10$/kg) — pas celui du premier format de la sous-recette dans les deux cas.
+        expect(costsLeger.totalIngredientsCost).toBeCloseTo(5);
+        expect(costsRiche.totalIngredientsCost).toBeCloseTo(10);
+    });
+
+    it("une référence historique par id de PRODUIT (avant ce correctif) retombe sur le premier format de la sous-recette, sans régression", () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 5, lossPercentage: 0, unit: 'kg' }];
+        const subRecipe = baseProduct({
+            id: 'sauce-base', isIngredient: true, nbPortions: 1, portionUnit: 'kg',
+            formats: [
+                { id: 'fmt_1', portionSize: 1, portionUnit: 'kg', nbPortions: 1, prixVente: 0, salesMix: 0, onMenu: false, ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }], productionSteps: [] },
+            ],
+        });
+        const parent = baseProduct({
+            id: 'plat-final',
+            // Référence l'id du PRODUIT (comportement d'avant ce correctif), pas celui du format.
+            ingredients: [{ id: 'sauce-base', quantity: 2, recipeUnit: 'kg', yieldPercentage: 0 }],
+        });
+        const allProducts = [subRecipe, parent];
+
+        const costs = calculateCosts(parent, baseGeneralInfo(), baseIngredients, allProducts, []);
         expect(costs.totalIngredientsCost).toBeCloseTo(10);
     });
 
@@ -327,6 +430,100 @@ describe('calculateCosts - marges', () => {
     });
 });
 
+describe('calculateCosts - formats (Phase 1.4)', () => {
+    it("utilise les champs du format explicite plutôt que ceux du produit quand un format est fourni", () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct({ prixVente: 999, nbPortions: 1 }); // ignorés : un format explicite est fourni
+        const format = {
+            id: 'fmt-a', prixVente: 10, nbPortions: 2, portionSize: 1, portionUnit: 'unité', salesMix: 0, indirectCosts: { portionsSold: 0 },
+            ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+        };
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], null, {}, new Set(), format);
+        expect(costs.margeNetteDollar).toBeCloseTo(9); // prix 10 - (2$ de farine / 2 portions = 1$)
+    });
+
+    it("met en cache deux formats du même produit indépendamment (pas de collision)", () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct();
+        const recipeIngredients = [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }];
+        const formatSmall = { id: 'fmt-small', prixVente: 5, nbPortions: 1, portionSize: 1, indirectCosts: {}, ingredients: recipeIngredients };
+        const formatBig = { id: 'fmt-big', prixVente: 20, nbPortions: 4, portionSize: 1, indirectCosts: {}, ingredients: recipeIngredients };
+        const sharedMemo = {};
+        const costsSmall = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], null, sharedMemo, new Set(), formatSmall);
+        const costsBig = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], null, sharedMemo, new Set(), formatBig);
+        expect(costsSmall.margeNetteDollar).toBeCloseTo(3);  // 5 - 2$ de farine (1 portion)
+        expect(costsBig.margeNetteDollar).toBeCloseTo(19.5); // 20 - (2$ / 4 portions = 0.5$)
+    });
+
+    it('sous-traitance désactivée par défaut : aucun impact sur le coût', () => {
+        const product = baseProduct({ prixVente: 20 });
+        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], []);
+        expect(costs.totalSubcontractingCost).toBe(0);
+        expect(costs.costSubcontractingPerPortion).toBe(0);
+    });
+
+    it('sous-traitance activée : son coût rejoint les coûts directs (marge brute)', () => {
+        const product = baseProduct({
+            prixVente: 20, nbPortions: 1,
+            formats: [{ id: 'fmt-1', prixVente: 20, nbPortions: 1, portionSize: 1, indirectCosts: {}, subcontracting: { enabled: true, items: [{ id: 's1', name: 'Embouteillage', cost: 3 }] } }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], []);
+        expect(costs.totalSubcontractingCost).toBeCloseTo(3);
+        expect(costs.margeBruteDollar).toBeCloseTo(17); // 20 - 3
+    });
+
+    it('vieillissement désactivé par défaut : aucun impact sur le coût', () => {
+        const product = baseProduct({ prixVente: 20 });
+        const costs = calculateCosts(product, baseGeneralInfo(), [], [product], []);
+        expect(costs.totalAgingCost).toBe(0);
+    });
+
+    it('vieillissement activé : charge un intérêt de portage sur les charges directes, hors marge brute', () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 10, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct({
+            prixVente: 50, nbPortions: 1,
+            formats: [{
+                id: 'fmt-1', prixVente: 50, nbPortions: 1, portionSize: 1, indirectCosts: {}, aging: { enabled: true, interestRate: 12, months: 6 },
+                ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+            }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        // charges directes = 10$ ; intérêt = 10 × (12%/12) × 6 = 0.6$
+        expect(costs.totalAgingCost).toBeCloseTo(0.6);
+        expect(costs.margeBruteDollar).toBeCloseTo(40); // 50 - 10, le vieillissement n'y entre pas
+        expect(costs.margeNetteDollar).toBeCloseTo(39.4); // 50 - 10 - 0.6
+    });
+
+    it("quantité produite manuelle fractionnaire (format en kg, ex. producteur vendant au poids) n'est pas tronquée", () => {
+        const baseIngredients = [{ id: 'boeuf', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct({
+            prixVente: 0,
+            formats: [{
+                id: 'fmt-1', prixVente: 0, nbPortions: '47.3', portionSize: 1, portionUnit: 'kg', indirectCosts: {},
+                ingredients: [{ id: 'boeuf', quantity: 50, recipeUnit: 'kg', yieldPercentage: 0 }],
+            }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        // coût matière total = 100$ (50kg × 2$), réparti sur 47.3 kg produits (pas 47 ni 1)
+        expect(costs.costMatierePerPortion).toBeCloseTo(100 / 47.3);
+    });
+
+    it('grille de rendement activée : calcule le nombre de portions plutôt que la valeur saisie manuellement', () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 1, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct({
+            prixVente: 10,
+            formats: [{
+                id: 'fmt-1', prixVente: 10, nbPortions: 1 /* ignoré */, portionSize: 100, indirectCosts: {},
+                yieldGrid: { enabled: true, baseQuantity: 1000, stages: [{ percentEffect: -20 }], rejectRate: 0 },
+                ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+            }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        // 1000g × 0.8 = 800g / 100g = 8 unités => coût matière 1$/8 = 0.125$
+        expect(costs.costMatierePerPortion).toBeCloseTo(0.125);
+    });
+});
+
 describe('calculateCosts - cache memo et prix simulé', () => {
     it("ne renvoie pas le résultat au prix réel lorsqu'un prix simulé est demandé avec un memo partagé", () => {
         const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
@@ -360,5 +557,92 @@ describe('calculateCosts - cache memo et prix simulé', () => {
         // Appel au prix réel ensuite : doit calculer 20, pas le 30 simulé
         const real = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], [], null, sharedMemo);
         expect(real.margeNetteDollar).toBeCloseTo(16); // 20 - 4
+    });
+});
+
+describe('computeChannelBreakdown (Phase 3.3)', () => {
+    const baseIngredients = [{ id: 'farine', unitPrice: 4, lossPercentage: 0, unit: 'kg' }];
+    const salesChannels = [
+        { id: 'c_direct', name: 'Vente directe', links: [] },
+        { id: 'c_distrib', name: 'Grande distribution', links: [{ type: 'margin', percent: 20 }] },
+    ];
+
+    it("calcule la marge pour chaque canal à partir des mêmes coûts (le coût ne varie pas par canal)", () => {
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {},
+                ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c_direct', netPrice: 10, volume: 50 },
+                    { id: 'cp2', channelId: 'c_distrib', netPrice: 8, volume: 200 },
+                ],
+            }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        const breakdown = computeChannelBreakdown(costs, product.formats[0].channelPrices, salesChannels);
+        expect(breakdown).toHaveLength(2);
+        expect(breakdown[0]).toMatchObject({ channelId: 'c_direct', channelName: 'Vente directe', netPrice: 10, volume: 50 });
+        expect(breakdown[0].margeNetteDollar).toBeCloseTo(6); // 10 - 4$ de farine
+        expect(breakdown[1]).toMatchObject({ channelId: 'c_distrib', channelName: 'Grande distribution', netPrice: 8, volume: 200 });
+        expect(breakdown[1].margeNetteDollar).toBeCloseTo(4); // 8 - 4$
+    });
+
+    it("omet un canal sans prix net saisi (pas de division par zéro forcée — voir chiffrier SymbiOse)", () => {
+        const costs = calculateCosts(baseProduct(), baseGeneralInfo(), [], [baseProduct()], []);
+        const breakdown = computeChannelBreakdown(costs, [
+            { id: 'cp1', channelId: 'c_direct', netPrice: '', volume: 0 },
+            { id: 'cp2', channelId: 'c_distrib', netPrice: 15, volume: 10 },
+        ], salesChannels);
+        expect(breakdown).toHaveLength(1);
+        expect(breakdown[0].channelId).toBe('c_distrib');
+    });
+
+    it("omet une entrée dont le canal a été supprimé depuis", () => {
+        const costs = calculateCosts(baseProduct(), baseGeneralInfo(), [], [baseProduct()], []);
+        const breakdown = computeChannelBreakdown(costs, [{ id: 'cp1', channelId: 'canal_disparu', netPrice: 15, volume: 10 }], salesChannels);
+        expect(breakdown).toEqual([]);
+    });
+
+    it('tableau vide pour un format sans aucun canal rattaché', () => {
+        const costs = calculateCosts(baseProduct(), baseGeneralInfo(), [], [baseProduct()], []);
+        expect(computeChannelBreakdown(costs, [], salesChannels)).toEqual([]);
+    });
+
+    it("calcule un point mort différent par canal (06/10) à partir des mêmes frais indirects alloués", () => {
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {},
+                ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c_direct', netPrice: 10, volume: 50 },  // marge brute 6$
+                    { id: 'cp2', channelId: 'c_distrib', netPrice: 8, volume: 200 }, // marge brute 4$
+                ],
+            }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        const breakdown = computeChannelBreakdown(costs, product.formats[0].channelPrices, salesChannels, 100 /* $ alloués */);
+        expect(breakdown[0].breakEvenUnits).toBe(17); // ceil(100 / 6)
+        expect(breakdown[1].breakEvenUnits).toBe(25); // ceil(100 / 4)
+    });
+
+    it("breakEvenUnits est null quand allocatedIndirects n'est pas fourni (comportement par défaut)", () => {
+        const costs = calculateCosts(baseProduct(), baseGeneralInfo(), baseIngredients, [baseProduct()], []);
+        const breakdown = computeChannelBreakdown(costs, [{ id: 'cp1', channelId: 'c_direct', netPrice: 15, volume: 10 }], salesChannels);
+        expect(breakdown[0].breakEvenUnits).toBeNull();
+    });
+});
+
+describe('computeMarginsForPrice', () => {
+    it('reproduit exactement les marges déjà calculées par calculateCosts pour le même prix', () => {
+        const baseIngredients = [{ id: 'farine', unitPrice: 2, lossPercentage: 0, unit: 'kg' }];
+        const product = baseProduct({
+            prixVente: 20,
+            ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        const margins = computeMarginsForPrice(20, costs);
+        expect(margins.margeNetteDollar).toBeCloseTo(costs.margeNetteDollar);
+        expect(margins.margeBrutePercent).toBeCloseTo(costs.margeBrutePercent);
+        expect(margins.costMatierePercent).toBeCloseTo(costs.costMatierePercent);
     });
 });

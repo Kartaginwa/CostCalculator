@@ -4,9 +4,12 @@ export const toProjectState = (flatState) => ({
     logoUrl: flatState.logoUrl,
     generalInfo: flatState.generalInfo,
     baseIngredients: flatState.ingredientsList,
+    basePackaging: flatState.basePackaging,
     products: flatState.products,
     trackingPoints: flatState.trackingPoints,
     laborDatabase: flatState.laborDatabase,
+    productionActivities: flatState.productionActivities,
+    salesChannels: flatState.salesChannels,
     uiSettings: flatState.uiSettings,
 });
 
@@ -31,10 +34,16 @@ export function projectReducer(state, action) {
             return { ...state, generalInfo: resolve(action.payload, state.generalInfo) };
         case 'SET_BASE_INGREDIENTS':
             return { ...state, baseIngredients: resolve(action.payload, state.baseIngredients) };
+        case 'SET_BASE_PACKAGING':
+            return { ...state, basePackaging: resolve(action.payload, state.basePackaging) };
         case 'SET_PRODUCTS':
             return { ...state, products: resolve(action.payload, state.products) };
         case 'SET_LABOR_DATABASE':
             return { ...state, laborDatabase: resolve(action.payload, state.laborDatabase) };
+        case 'SET_PRODUCTION_ACTIVITIES':
+            return { ...state, productionActivities: resolve(action.payload, state.productionActivities) };
+        case 'SET_SALES_CHANNELS':
+            return { ...state, salesChannels: resolve(action.payload, state.salesChannels) };
         case 'SET_TRACKING_POINTS':
             return { ...state, trackingPoints: resolve(action.payload, state.trackingPoints) };
         case 'SET_UI_SETTINGS':

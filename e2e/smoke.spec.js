@@ -27,8 +27,10 @@ test.describe('Parcours projet vierge', () => {
         // Ajouter un produit
         await page.locator('button:has-text("Paramètres")').click();
         await page.locator('#tutorial-add-item').click();
-        await page.locator('#tutorial-section-info-menu table input[type="text"]').first().fill('Plat Test');
-        await page.locator('#tutorial-section-info-menu table input[inputmode="decimal"]').first().fill('15');
+        // Le nouveau plat est prépendu en tête de liste (tri en pause) : sa section est la première.
+        const newProductSection = page.locator('#tutorial-section-info-menu [id^="product-section-"]').first();
+        await newProductSection.locator('input[type="text"]').first().fill('Plat Test');
+        await newProductSection.locator('table input[inputmode="decimal"]').first().fill('15');
         // Méthode d'attribution des frais indirects : réglage GLOBAL (les deux méthodes)
         await page.locator('#indirectCostMethod').selectOption('laborTime');
         await page.locator('#indirectCostMethod').selectOption('salesAllocation');
@@ -99,10 +101,12 @@ test.describe('Projet démo', () => {
         await page.locator('#tab-ingredients').click();
         await expect(page.getByText('volatile').first()).toBeVisible();
 
-        // Simulateur de choc (onglet Résumé) : ouvrir, ajouter un choc d'intrants +15 % et un choc
-        // de main-d'œuvre +10 %. Le recalcul de l'analyse doit s'afficher sans erreur.
+        // Simulateur de choc (sous-onglet « Simulation » de Résumé, 06/10 : s'affiche directement,
+        // pas de second clic pour déplier) : ajouter un choc d'intrants +15 % et un choc de
+        // main-d'œuvre +10 %. Le recalcul de l'analyse doit s'afficher sans erreur.
         await page.locator('#tab-summary').click();
-        await page.getByRole('button', { name: /Simulation — choc sur les coûts/ }).click();
+        await page.getByText('Simulation', { exact: true }).click();
+        await expect(page.getByText(/Simulation — choc sur les coûts/)).toBeVisible();
         await page.getByRole('button', { name: 'Ajouter un choc' }).click();
         await page.locator('input[placeholder="ex. +15"]').first().fill('15');
         await expect(page.getByText('Scénario actif :')).toBeVisible();
@@ -115,7 +119,7 @@ test.describe('Projet démo', () => {
 
         // Assistants d'import : ouverture/fermeture ne doivent pas planter
         await page.locator('button:has-text("Paramètres")').click();
-        await page.getByText('Importer depuis POS').click();
+        await page.getByText('Importer un rapport de ventes').click();
         await page.getByText('Annuler').first().click();
 
         await page.locator('#tab-ingredients').click();

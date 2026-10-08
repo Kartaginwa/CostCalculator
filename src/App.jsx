@@ -1,14 +1,15 @@
 import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import {
     Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
-    PlusCircle, TrendingUp, Settings,
+    PlusCircle, TrendingUp, Settings, Package,
 } from 'lucide-react';
 
-import { parseLocaleNumber } from './utils.js';
+import { parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS } from './utils.js';
 import { computeAnalysisData } from './engine/analysisData.js';
+import { computeSalesMixFromChannelPrices } from './engine/salesMixFromChannels.js';
 import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
 import { exportToExcel as exportToExcelReport } from './reports/exportToExcel.js';
-import { getDefaultState, getEmptyState } from './state/initialState.js';
+import { getDefaultState, getEmptyState, buildDefaultFormat, stripFormatOwnedFields, buildFormatSku } from './state/initialState.js';
 import { projectReducer, toProjectState } from './state/projectReducer.js';
 import { buildProjectData, parseProjectData } from './state/projectSerialization.js';
 import { ProjectContext } from './state/ProjectContext.jsx';
@@ -20,6 +21,7 @@ import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 
 import { ProductInfo } from './features/ProductInfo.jsx';
 import { IngredientsTab } from './features/IngredientsTab.jsx';
+import { PackagingTab } from './features/PackagingTab.jsx';
 import { LaborDatabaseTab } from './features/LaborDatabaseTab.jsx';
 
 // Code-splitting : ces vues/wizards sont chargés à la demande (chunks séparés). Cela sort du
@@ -28,7 +30,7 @@ import { LaborDatabaseTab } from './features/LaborDatabaseTab.jsx';
 const RecipeCalculator = lazy(() => import('./features/RecipeCalculator.jsx').then(m => ({ default: m.RecipeCalculator })));
 const SummaryTable = lazy(() => import('./features/SummaryTable.jsx').then(m => ({ default: m.SummaryTable })));
 const TrackingTab = lazy(() => import('./features/TrackingTab.jsx').then(m => ({ default: m.TrackingTab })));
-const PosImportWizardModal = lazy(() => import('./features/PosImportWizardModal.jsx').then(m => ({ default: m.PosImportWizardModal })));
+const SalesReportImportWizardModal = lazy(() => import('./features/SalesReportImportWizardModal.jsx').then(m => ({ default: m.SalesReportImportWizardModal })));
 
 const App = () => {
     // --- ÉTATS ---
@@ -38,15 +40,15 @@ const App = () => {
     // dans un reducer et exposées via ProjectContext pour éviter de les faire descendre
     // manuellement à travers chaque onglet (voir src/state/projectReducer.js).
     const [projectState, dispatch] = useReducer(projectReducer, undefined, () => toProjectState(getEmptyState()));
-    const { companyName, logoUrl, generalInfo, baseIngredients, products, trackingPoints, laborDatabase, uiSettings } = projectState;
+    const { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, uiSettings } = projectState;
 
     // Setters stables (dispatch seul en dépendance, garanti stable par React) : la résolution
     // des mises à jour fonctionnelles (value => ...) se fait dans le reducer lui-même plutôt
     // que par fermeture sur projectState ici. Nécessaire pour pouvoir mémoïser sereinement
     // projectContextValue plus bas (sinon un nouveau setter à chaque rendu invaliderait le memo).
     const {
-        setCompanyName, setLogoUrl, setGeneralInfo, setBaseIngredients,
-        setProducts, setLaborDatabase, setTrackingPoints, setUiSettings,
+        setCompanyName, setLogoUrl, setGeneralInfo, setBaseIngredients, setBasePackaging,
+        setProducts, setLaborDatabase, setTrackingPoints, setProductionActivities, setSalesChannels, setUiSettings,
     } = useMemo(() => {
         const makeSetter = (type) => (value) => dispatch({ type, payload: value });
         return {
@@ -54,15 +56,23 @@ const App = () => {
             setLogoUrl: makeSetter('SET_LOGO_URL'),
             setGeneralInfo: makeSetter('SET_GENERAL_INFO'),
             setBaseIngredients: makeSetter('SET_BASE_INGREDIENTS'),
+            setBasePackaging: makeSetter('SET_BASE_PACKAGING'),
             setProducts: makeSetter('SET_PRODUCTS'),
             setLaborDatabase: makeSetter('SET_LABOR_DATABASE'),
             setTrackingPoints: makeSetter('SET_TRACKING_POINTS'),
+            setProductionActivities: makeSetter('SET_PRODUCTION_ACTIVITIES'),
+            setSalesChannels: makeSetter('SET_SALES_CHANNELS'),
             setUiSettings: makeSetter('SET_UI_SETTINGS'),
         };
     }, [dispatch]);
 
     const [activeTab, setActiveTab] = useState('info');
     const [editingProductIndex, setEditingProductIndex] = useState(0);
+    // Format ciblé au moment de naviguer vers Recette & Calcul (Phase 1.6b) : par défaut 0, ou le
+    // format précis d'où vient la navigation (ex. clic sur une ligne du Résumé, qui représente
+    // désormais un format, pas un produit). RecipeCalculator le consomme une fois pour initialiser
+    // son onglet sélectionné, puis reprend la main sur ses propres clics d'onglet locaux.
+    const [editingFormatIndex, setEditingFormatIndex] = useState(0);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showInstructions, setShowInstructions] = useState(false);
     const [notification, setNotification] = useState({ message: '', type: '' });
@@ -75,67 +85,83 @@ const App = () => {
     const [, setUndoState] = useState(null); // Pour la logique d'annulation
 
     const [openPostIds, setOpenPostIds] = useState(new Set());
-    const [openRecipeSections, setOpenRecipeSections] = useState(new Set(['ingredients', 'labor', 'indirects', 'recap']));
+    const [openRecipeSections, setOpenRecipeSections] = useState(new Set(['ingredients', 'packaging', 'labor', 'indirects', 'recap']));
 
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
     const [pdfOptions, setPdfOptions] = useState({ title: '', subtitle: '' });
-    const [isPosWizardOpen, setIsPosWizardOpen] = useState(false);
+    const [isSalesImportWizardOpen, setIsSalesImportWizardOpen] = useState(false);
 
-    const handlePosImport = (importData) => {
-        const { itemsToImport, newTotalRevenue, newMenuRevenuePercentage, importedProductIds, newStartDate, newEndDate } = importData;
+    // Phase 3.4 : remplace handlePosImport — écrit sur `format.channelPrices` (prix net + volume
+    // par canal) plutôt que sur un `prixVente`/`salesMix` à plat. Import ADDITIF : un rapport de
+    // vente ne couvre généralement qu'UN canal/distributeur à la fois (pas tout le menu comme
+    // l'ancien export de caisse), donc on ne remet plus à zéro les produits non importés — seules
+    // les entrées channelPrices explicitement présentes dans le fichier sont créées/mises à jour.
+    // `salesMix` et `totalRevenue` sont ensuite entièrement RE-DÉRIVÉS de l'état réel des volumes
+    // (voir computeSalesMixFromChannelPrices), pas accumulés import après import.
+    const handleSalesReportImport = (importData) => {
+        const { items, newStartDate, newEndDate } = importData;
 
-        const updatedProducts = products.map(p => {
-            // Pour les plats existants non importés, le mix des ventes est mis à 0
-            if (!importedProductIds.has(p.id)) {
-                return { ...p, salesMix: 0, onMenu: false };
-            }
-            return p; // Les plats importés seront traités ci-dessous
-        });
+        let workingChannels = [...salesChannels];
+        const resolveChannelId = (resolution) => {
+            if (resolution.type === 'matched') return resolution.channelId;
+            const newChannel = { id: `channel_${Date.now()}_${Math.random()}`, name: resolution.newChannelName, links: [] };
+            workingChannels = [...workingChannels, newChannel];
+            return newChannel.id;
+        };
 
-        const existingProductsMap = new Map(updatedProducts.map(p => [p.id, p]));
+        let workingProducts = [...products];
+        items.forEach(item => {
+            const channelId = resolveChannelId(item.channelResolution);
 
-        itemsToImport.forEach(item => {
-            if (item.status === 'update') {
-                const existingProduct = existingProductsMap.get(item.existingId);
-                if (existingProduct) {
-                    // add this logic here : force explicit Number casting to prevent string issues
-                    existingProduct.prixVente = Number(item.prixVente);
-                    existingProduct.salesMix = Number(item.salesMix);
-                    existingProduct.category = item.category;
-                    existingProduct.onMenu = true;
-                }
-            } else if (item.status === 'new') {
+            if (item.productStatus === 'new') {
                 const newProduct = {
                     id: String(Date.now() + Math.random()),
                     platName: item.platName,
                     category: item.category,
-                    prixVente: parseFloat(item.prixVente.toFixed(2)),
+                    activityId: productionActivities[0]?.id || '',
+                    prixVente: Number(item.netPrice.toFixed(2)),
                     nbPortions: 1, portionSize: 1, portionUnit: 'unité',
                     isIngredient: false, isResaleProduct: false, purchaseCost: 0,
-                    salesMix: item.salesMix,
-                    onMenu: true,
+                    salesMix: 0, onMenu: true,
                     manualAllergens: [], ingredients: [], productionSteps: [],
                     indirectCosts: { method: 'salesAllocation', fixedAmount: 0, percentSalesAmount: 0, percentDirectAmount: 0, portionsSold: 100 }
                 };
-                existingProductsMap.set(newProduct.id, newProduct);
+                newProduct.formats = [buildDefaultFormat(newProduct)];
+                newProduct.formats[0].channelPrices = [{ id: `cp_${Date.now()}_${Math.random()}`, channelId, netPrice: item.netPrice, volume: item.volume }];
+                workingProducts = [stripFormatOwnedFields(newProduct), ...workingProducts];
+                return;
             }
+
+            const productIndex = workingProducts.findIndex(p => p.id === item.existingProductId);
+            if (productIndex === -1) return;
+            const product = workingProducts[productIndex];
+            const newFormats = product.formats.map(f => {
+                if (f.id !== item.formatId) return f;
+                const existingEntry = (f.channelPrices || []).find(cp => cp.channelId === channelId);
+                const newChannelPrices = existingEntry
+                    ? f.channelPrices.map(cp => cp.channelId === channelId ? { ...cp, netPrice: item.netPrice, volume: item.volume } : cp)
+                    : [...(f.channelPrices || []), { id: `cp_${Date.now()}_${Math.random()}`, channelId, netPrice: item.netPrice, volume: item.volume }];
+                // Le premier élément reste le canal "principal" (miroir prixVente) — voir
+                // handleFormatChannelPricesChange ; on ne réordonne jamais ici.
+                return { ...f, channelPrices: newChannelPrices, prixVente: parseLocaleNumber(newChannelPrices[0].netPrice), onMenu: true };
+            });
+            workingProducts[productIndex] = { ...product, formats: newFormats, category: item.category || product.category };
         });
 
-        const updatedProductsList = Array.from(existingProductsMap.values());
+        const { products: finalProducts, totalRevenue } = computeSalesMixFromChannelPrices(workingProducts);
 
-        setProducts(updatedProductsList);
-
+        setSalesChannels(workingChannels);
+        setProducts(finalProducts);
         setGeneralInfo(prev => ({
             ...prev,
-            totalRevenue: newTotalRevenue,
-            menuRevenuePercentage: newMenuRevenuePercentage,
+            totalRevenue,
             period: 'custom',
-            startDate: newStartDate, // On utilise la nouvelle date
-            endDate: newEndDate,     // On utilise la nouvelle date
+            startDate: newStartDate || prev.startDate,
+            endDate: newEndDate || prev.endDate,
         }));
 
         showNotification({
-            message: `Importation réussie ! ${itemsToImport.length} plat(s) ont été traités.`,
+            message: `Importation réussie ! ${items.length} ligne(s) traitée(s).`,
             type: 'success'
         });
     };
@@ -219,21 +245,27 @@ const App = () => {
         // pondéré par le mix ; chaque plat en reçoit sa part. (Auparavant revenu × mix / prix, ce
         // qui faussait les heures de MO nécessaires — donc la productivité cuisine, réinjectée dans
         // le coût de MO de chaque plat.)
-        const activeMenuProducts = products.filter(p => p.onMenu);
+        // Une entrée par FORMAT actif (Phase 1.6 — même aplatissement que analysisData.js), pas par
+        // produit : chaque format a son propre prix/mix/nbPortions/étapes de production.
+        const activeFormatRows = products.flatMap(product =>
+            (product.formats && product.formats.length > 0 ? product.formats : [product])
+                .filter(fmt => fmt.onMenu)
+                .map(fmt => ({ product, fmt }))
+        );
         const menuRevenue = parseLocaleNumber(generalInfo.totalRevenue) * (parseLocaleNumber(generalInfo.menuRevenuePercentage) / 100);
-        const totalActiveMix = activeMenuProducts.reduce((s, p) => s + parseLocaleNumber(p.salesMix), 0);
+        const totalActiveMix = activeFormatRows.reduce((s, { fmt }) => s + parseLocaleNumber(fmt.salesMix), 0);
         const weightedAvgPrice = totalActiveMix > 0
-            ? activeMenuProducts.reduce((s, p) => s + parseLocaleNumber(p.salesMix) * parseLocaleNumber(p.prixVente), 0) / totalActiveMix
+            ? activeFormatRows.reduce((s, { fmt }) => s + parseLocaleNumber(fmt.salesMix) * parseLocaleNumber(fmt.prixVente), 0) / totalActiveMix
             : 0;
         const totalMenuUnits = weightedAvgPrice > 0 ? menuRevenue / weightedAvgPrice : 0;
 
         const totalDirectLaborHoursNeededByPost = {};
-        activeMenuProducts.forEach(product => {
-            const share = totalActiveMix > 0 ? parseLocaleNumber(product.salesMix) / totalActiveMix : 0;
+        activeFormatRows.forEach(({ fmt }) => {
+            const share = totalActiveMix > 0 ? parseLocaleNumber(fmt.salesMix) / totalActiveMix : 0;
             const portionsSold = totalMenuUnits * share;
-            const batchesNeeded = portionsSold / (parseLocaleNumber(product.nbPortions) || 1);
+            const batchesNeeded = portionsSold / (parseLocaleNumber(fmt.nbPortions) || 1);
 
-            (product.productionSteps || []).forEach(step => {
+            (fmt.productionSteps || []).forEach(step => {
                 (step.personnel || []).forEach(person => {
                     if (!totalDirectLaborHoursNeededByPost[person.postId]) {
                         totalDirectLaborHoursNeededByPost[person.postId] = 0;
@@ -290,11 +322,19 @@ const App = () => {
     // ingredientsList, pour que ce dernier — comme les autres consommateurs (RecipeCalculator,
     // TrackingTab, rapports) — réutilise ces coûts au lieu de relancer un calcul redondant.
     const analysisData = useMemo(
-        () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo),
-        [products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo]
+        () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels),
+        [products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels]
     );
 
     const ingredientsList = useMemo(() => {
+        // Une entrée PAR FORMAT d'une sous-recette (pas une seule par produit) : chaque format a sa
+        // propre fiche recette et son propre coût (voir 04-Conception-Modele.md), donc son propre
+        // coût d'ingrédient potentiel — ex. "Sauce demi-glace maison (500 ml)" et "(1 L)" peuvent
+        // coûter différemment et doivent être choisis explicitement, pas fusionnés. `id` = l'id du
+        // FORMAT (unique, voir Phase 1.6a) ; `calculateCosts.js` sait résoudre une sous-recette par
+        // id de format (nouvelles références) ou par id de produit (anciennes données, repli sur le
+        // premier format — voir son commentaire). `name` = displayName, désambiguïsé par format
+        // pour qu'on puisse les distinguer dans le sélecteur d'ingrédient.
         const recipeIngredients = analysisData.productsWithCosts
             .filter(p => p.isIngredient && p.platName)
             .map(p => {
@@ -304,7 +344,7 @@ const App = () => {
 
                 return {
                     id: p.id,
-                    name: p.platName,
+                    name: p.displayName,
                     provider: 'Sous-recette',
                     purchaseFormat: sanitizedPortionSize,
                     unit: p.portionUnit,
@@ -322,15 +362,202 @@ const App = () => {
         setGeneralInfo(prev => ({ ...prev, [field]: value }));
     }, [setGeneralInfo]);
 
+    // Un SKU encore auto-généré peut avoir été construit avec DEUX conventions de repli
+    // différentes selon son origine : l'id du FORMAT (handleAddFormat/handleDuplicateFormat) ou
+    // l'id du PRODUIT (buildDefaultFormat, utilisé pour le format par défaut à la création d'un
+    // produit). Il peut aussi porter un suffixe "-copie" : handleDuplicateFormat sans format
+    // explicitement changé (quantité/unité identiques à l'original) en ajoute un pour éviter un
+    // SKU littéralement dupliqué, mais ce SKU reste "auto" pour autant — sinon changer la quantité
+    // du format dupliqué (le geste naturel suivant) ne régénérerait plus le SKU. (handleDuplicateProduct
+    // régénère lui directement un SKU propre sur le nouveau nom, sans ce suffixe — voir cette fonction.)
+    const isAutoGeneratedSku = (f, platName, productId) => {
+        const base = (f.sku || '').replace(/-copie$/, '');
+        return base === buildFormatSku(platName, f.portionSize, f.portionUnit, f.id) ||
+            base === buildFormatSku(platName, f.portionSize, f.portionUnit, productId);
+    };
+
     const handleProductValueChange = (index, field, value) => {
         const newProducts = [...products];
-        const updatedProduct = { ...newProducts[index], [field]: value };
+        const oldProduct = newProducts[index];
+        const updatedProduct = { ...oldProduct, [field]: value };
 
         if (field === 'onMenu' && !value) {
             updatedProduct.salesMix = 0;
         }
 
+        // Le SKU (recette + format) se déduit automatiquement tant que l'utilisateur ne l'a pas
+        // modifié lui-même — reconnu en recalculant ce que l'ancien nom aurait produit : si le SKU
+        // actuel y correspond encore, il n'a pas été touché manuellement. Sans ceci, un produit
+        // créé vierge (nom "") générerait un SKU figé sur ce nom vide, sans jamais se mettre à jour
+        // une fois le vrai nom saisi — voir Projet_Claude/03-Feuille-de-route.md.
+        if (field === 'platName' && Array.isArray(updatedProduct.formats)) {
+            updatedProduct.formats = updatedProduct.formats.map(f =>
+                isAutoGeneratedSku(f, oldProduct.platName, oldProduct.id)
+                    ? { ...f, sku: buildFormatSku(value, f.portionSize, f.portionUnit, f.id) }
+                    : f
+            );
+        }
+
         newProducts[index] = updatedProduct;
+        setProducts(newProducts);
+    };
+
+    // --- GESTION DES FORMATS DE VENTE (onglet Paramètres → Produits et SKUs) ---
+    // L'ajout/la duplication/la suppression d'un format se fait ici plutôt que dans Recette &
+    // Calcul (qui n'en garde qu'un sélecteur) — voir Projet_Claude/02-Journal-Decisions.md.
+    const handleFormatValueChange = (productIndex, formatIndex, field, value) => {
+        const product = products[productIndex];
+        const newFormats = product.formats.map((f, i) => {
+            if (i !== formatIndex) return f;
+            const updated = { ...f, [field]: value };
+            if (field === 'onMenu' && !value) {
+                updated.salesMix = 0;
+            }
+            // Même logique de SKU auto-dérivé qu'au renommage du produit (voir
+            // handleProductValueChange) : régénère le SKU si l'utilisateur ne l'a pas modifié lui-même.
+            if (field === 'portionSize' || field === 'portionUnit') {
+                if (isAutoGeneratedSku(f, product.platName, product.id)) {
+                    updated.sku = buildFormatSku(product.platName, updated.portionSize, updated.portionUnit, f.id);
+                }
+            }
+            return updated;
+        });
+        const updatedProduct = { ...product, formats: newFormats };
+        // Miroir temporaire vers les champs "à plat" — uniquement pour le format par défaut
+        // (index 0), le temps que les autres écrans lisent formats[] directement (Phase 1.6).
+        if (formatIndex === 0 && FORMAT_FLAT_MIRROR_FIELDS.includes(field)) {
+            updatedProduct[field] = value;
+            if (field === 'onMenu' && !value) updatedProduct.salesMix = 0;
+        }
+        const newProducts = [...products];
+        newProducts[productIndex] = updatedProduct;
+        setProducts(newProducts);
+    };
+
+    // Phase 3.2 : remplace tout le tableau `channelPrices` d'un format, en un seul dispatch avec le
+    // miroir `prixVente` (lu par calculateCosts.js, pas encore channel-aware — Phase 3.3). Un
+    // handler dédié plutôt que deux appels à handleFormatValueChange : ce dernier capture `products`
+    // par fermeture, donc deux appels synchrones écraseraient l'un l'autre au lieu de s'empiler.
+    // Le PREMIER élément du tableau est le canal "principal" dont le prix alimente ce miroir.
+    const handleFormatChannelPricesChange = (productIndex, formatIndex, newChannelPrices) => {
+        const product = products[productIndex];
+        const mirroredPrixVente = newChannelPrices.length > 0 ? parseLocaleNumber(newChannelPrices[0].netPrice) : 0;
+        const newFormats = product.formats.map((f, i) => i !== formatIndex ? f : { ...f, channelPrices: newChannelPrices, prixVente: mirroredPrixVente });
+        const updatedProduct = { ...product, formats: newFormats };
+        if (formatIndex === 0) {
+            updatedProduct.prixVente = mirroredPrixVente;
+        }
+        const newProducts = [...products];
+        newProducts[productIndex] = updatedProduct;
+        // Révisé 06/10 : safe à recalculer en direct maintenant que computeSalesMixFromChannelPrices
+        // ne touche QUE les formats qui ont déjà au moins une unité saisie quelque part — un format
+        // encore en % manuel (jamais d'unité saisie) garde sa valeur intacte, jamais écrasé à 0.
+        // `totalRevenue` n'est volontairement pas appliqué ici : seul l'import de vraies ventes doit
+        // recaler ce chiffre, pas une simple édition de prix dans Paramètres.
+        const { products: recomputedProducts } = computeSalesMixFromChannelPrices(newProducts);
+        setProducts(recomputedProducts);
+    };
+
+    // `overrides` (optionnel) : { sku, portionSize, portionUnit } — utilisé par la fenêtre modale
+    // d'ajout de format (Recette & Calcul), qui fixe explicitement le FORMAT (quantité/unité) du
+    // nouveau SKU dès sa création (« copier à la base » copie le contenu de la recette, mais le
+    // format reste une donnée propre et délibérée du nouveau SKU — voir 04-Conception-Modele.md).
+    // Sans override, comportement inchangé : copie intégrale avec suffixe "-copie" sur le SKU.
+    const handleDuplicateFormat = (productIndex, formatIndex, overrides = {}) => {
+        const newId = String(Date.now() + Math.random());
+        const product = products[productIndex];
+        const formatToDuplicate = product.formats[formatIndex];
+        // Clone profond : chaque format est une fiche recette autonome (ingrédients, étapes de
+        // production), donc « dupliquer » en copie l'intégralité — le point de départ « copier à
+        // la base » d'un nouveau SKU (voir 04-Conception-Modele.md). Nouveaux id pour ne jamais
+        // partager une référence avec l'original (même précédent que handleDuplicateProduct).
+        const newFormat = JSON.parse(JSON.stringify(formatToDuplicate));
+        const formatChanged = overrides.portionSize !== undefined || overrides.portionUnit !== undefined;
+        if (overrides.portionSize !== undefined) newFormat.portionSize = overrides.portionSize;
+        if (overrides.portionUnit !== undefined) newFormat.portionUnit = overrides.portionUnit;
+        // Le SKU (recette + format) se régénère automatiquement tant qu'il était encore auto sur
+        // l'original. Si la quantité/unité change (override), la régénération suffit à le
+        // distinguer de l'original. Si elle NE change PAS (duplication simple), on lui ajoute un
+        // suffixe "-copie" pour éviter un SKU littéralement dupliqué — tout en restant reconnu
+        // comme "auto" par isAutoGeneratedSku (voir sa définition), pour que changer la quantité du
+        // format dupliqué juste après, le geste naturel suivant, régénère bien le SKU. Un SKU
+        // personnalisé par l'utilisateur reste lui intact (suffixé, jamais régénéré).
+        const wasAuto = isAutoGeneratedSku(formatToDuplicate, product.platName, product.id);
+        const regeneratedSku = buildFormatSku(product.platName, newFormat.portionSize, newFormat.portionUnit, newId);
+        newFormat.sku = overrides.sku
+            ? overrides.sku
+            : !wasAuto
+                ? (formatToDuplicate.sku ? `${formatToDuplicate.sku}-copie` : '')
+                : formatChanged
+                    ? regeneratedSku
+                    : `${regeneratedSku}-copie`;
+        newFormat.id = newId;
+        newFormat.ingredients = (newFormat.ingredients || []).map(ing => ({ ...ing, rowId: `ing_${Date.now()}_${Math.random()}` }));
+        newFormat.packagingItems = (newFormat.packagingItems || []).map(item => ({ ...item, rowId: `pkgitem_${Date.now()}_${Math.random()}` }));
+        newFormat.productionSteps = (newFormat.productionSteps || []).map(step => ({ ...step, stepId: `step_${Date.now()}_${Math.random()}` }));
+        const newFormats = [...product.formats];
+        newFormats.splice(formatIndex + 1, 0, newFormat);
+        const newProducts = [...products];
+        newProducts[productIndex] = { ...product, formats: newFormats };
+        setProducts(newProducts);
+    };
+
+    const handleDeleteFormat = (productIndex, formatIndex) => {
+        const product = products[productIndex];
+        if (product.formats.length <= 1) {
+            // Dernier format du produit : supprime le produit entier (même comportement et
+            // même notification annulable que le bouton "Supprimer le plat" existant).
+            handleDeleteProduct(productIndex);
+            return;
+        }
+        if (formatIndex === 0) {
+            // Le format par défaut (index 0) alimente le miroir vers les champs à plat
+            // (FORMAT_FLAT_MIRROR_FIELDS) tant que Résumé/rapports/analyse ne lisent pas encore
+            // formats[] directement (Phase 1.6) — on ne peut pas le supprimer tant qu'il reste
+            // d'autres formats. Dupliquez-le si vous voulez en changer.
+            showNotification({ message: "Le format par défaut ne peut pas être supprimé — dupliquez-le si vous voulez en changer.", type: 'error' });
+            return;
+        }
+        const formatToDelete = product.formats[formatIndex];
+        const originalProducts = JSON.parse(JSON.stringify(products));
+        const newFormats = product.formats.filter((_, i) => i !== formatIndex);
+        const newProducts = [...products];
+        newProducts[productIndex] = { ...product, formats: newFormats };
+        setProducts(newProducts);
+
+        showNotification({
+            message: `Le format "${formatToDelete.sku || 'sans SKU'}" a été supprimé.`,
+            type: 'info',
+            onUndo: () => {
+                setProducts(originalProducts);
+                setNotification(null);
+            }
+        });
+    };
+
+    // `overrides` (optionnel) : { sku, portionSize, portionUnit } — voir handleDuplicateFormat.
+    // Le SKU se déduit automatiquement de la recette + du format (buildFormatSku) quand il n'est
+    // pas fourni explicitement, plutôt que de rester vide.
+    const handleAddFormat = (productIndex, overrides = {}) => {
+        const product = products[productIndex];
+        const newId = `fmt_${Date.now()}_${Math.random()}`;
+        const portionSize = overrides.portionSize !== undefined ? overrides.portionSize : 1;
+        const portionUnit = overrides.portionUnit !== undefined ? overrides.portionUnit : 'unité';
+        const newFormat = {
+            id: newId,
+            sku: overrides.sku || buildFormatSku(product.platName, portionSize, portionUnit, newId),
+            prixVente: 0, nbPortions: 1, portionSize, portionUnit,
+            // Un nouveau format démarre volontairement SANS canal de vente attaché (pas de
+            // "channel_default" par défaut) : un format additionnel (ex. un grand format destiné
+            // à la restauration) n'est pas forcément vendu partout où le produit l'est déjà — voir
+            // Projet_Claude/04-Conception-Modele.md, Phase 3.2.
+            channelPrices: [],
+            salesMix: 0, onMenu: true,
+            indirectCosts: { portionsSold: 100 },
+            ingredients: [], packagingItems: [], productionSteps: [], isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
+        };
+        const newProducts = [...products];
+        newProducts[productIndex] = { ...product, formats: [...product.formats, newFormat] };
         setProducts(newProducts);
     };
 
@@ -339,6 +566,7 @@ const App = () => {
             id: String(Date.now() + Math.random()),
             platName: '',
             category: '',
+            activityId: productionActivities[0]?.id || '',
             prixVente: 0,
             nbPortions: 1,
             portionSize: 1,
@@ -350,10 +578,12 @@ const App = () => {
             onMenu: true,
             manualAllergens: [],
             ingredients: [],
+            packagingItems: [],
             productionSteps: [],
             indirectCosts: { method: 'laborIntensity', fixedAmount: 0, percentSalesAmount: 0, percentDirectAmount: 0, portionsSold: 100 }
         };
-        const newProducts = [newProduct, ...products];
+        newProduct.formats = [buildDefaultFormat(newProduct)];
+        const newProducts = [stripFormatOwnedFields(newProduct), ...products];
         setProducts(newProducts);
         setEditingProductIndex(0);
     };
@@ -395,17 +625,46 @@ const App = () => {
         const newProduct = JSON.parse(JSON.stringify(productToDuplicate));
         newProduct.id = String(Date.now() + Math.random());
         newProduct.platName = `${productToDuplicate.platName} (Copie)`;
-        newProduct.ingredients = newProduct.ingredients.map(ing => ({ ...ing, rowId: `ing_${Date.now()}_${Math.random()}` }));
-        newProduct.labor = newProduct.labor.map(lab => ({ ...lab, rowId: `lab_${Date.now()}_${Math.random()}` }));
-        
+        // Nouveaux id pour chaque format dupliqué, et pour les ingrédients/étapes de production
+        // qu'il porte (chaque format est sa propre fiche recette depuis la correction du 23/09) —
+        // ne doivent jamais être partagés avec l'original (voir Phase 1.3).
+        newProduct.formats = (newProduct.formats || []).map(f => {
+            const newFormatId = `fmt_${Date.now()}_${Math.random()}`;
+            // Si le SKU de l'original était encore auto-généré, on le régénère directement sur le
+            // NOUVEAU nom ("... (Copie)") plutôt que de lui accoler un suffixe "-copie" figé : sinon,
+            // le geste naturel après une duplication (renommer la copie) ne régénérerait plus jamais
+            // le SKU, puisqu'il ne correspondrait déjà plus au nom au moment même de la duplication.
+            // Un SKU personnalisé par l'utilisateur, lui, reste intact (suffixé pour éviter un
+            // doublon exact, jamais régénéré automatiquement).
+            const wasAuto = isAutoGeneratedSku(f, productToDuplicate.platName, productToDuplicate.id);
+            return {
+                ...f,
+                id: newFormatId,
+                sku: wasAuto
+                    ? buildFormatSku(newProduct.platName, f.portionSize, f.portionUnit, newFormatId)
+                    : (f.sku ? `${f.sku}-copie` : f.sku),
+                ingredients: (f.ingredients || []).map(ing => ({ ...ing, rowId: `ing_${Date.now()}_${Math.random()}` })),
+                packagingItems: (f.packagingItems || []).map(item => ({ ...item, rowId: `pkgitem_${Date.now()}_${Math.random()}` })),
+                productionSteps: (f.productionSteps || []).map(step => ({ ...step, stepId: `step_${Date.now()}_${Math.random()}` })),
+            };
+        });
+
         const newProducts = [...products];
         newProducts.splice(indexToDuplicate + 1, 0, newProduct);
         setProducts(newProducts);
     };
 
-    const editProduct = (index) => {
+    const editProduct = (index, formatIndex = 0) => {
         setEditingProductIndex(index);
+        setEditingFormatIndex(formatIndex);
         setActiveTab('recipe');
+    };
+
+    // Utilisé par le sélecteur de plat interne à Recette & Calcul (pas par le Résumé) : remet
+    // toujours le format à 0, puisqu'on change de recette sans viser un format précis.
+    const selectProductForRecipe = (index) => {
+        setEditingProductIndex(index);
+        setEditingFormatIndex(0);
     };
 
     // --- GESTION DE PROJET (NOUVEAU / SAUVEGARDE / OUVERTURE) ---
@@ -417,9 +676,12 @@ const App = () => {
         setLogoUrl(defaultState.logoUrl);
         setGeneralInfo(defaultState.generalInfo);
         setBaseIngredients(defaultState.ingredientsList);
+        setBasePackaging(defaultState.basePackaging);
         setProducts(defaultState.products);
         setTrackingPoints(defaultState.trackingPoints);
         setLaborDatabase(defaultState.laborDatabase);
+        setProductionActivities(defaultState.productionActivities);
+        setSalesChannels(defaultState.salesChannels);
         // Démarre le tutoriel
         setTutorialStep(0);
         setActiveTab('info');
@@ -438,9 +700,12 @@ const App = () => {
         setLogoUrl(emptyState.logoUrl);
         setGeneralInfo(emptyState.generalInfo);
         setBaseIngredients(emptyState.ingredientsList);
+        setBasePackaging(emptyState.basePackaging);
         setProducts(emptyState.products);
         setTrackingPoints(emptyState.trackingPoints);
         setLaborDatabase(emptyState.laborDatabase);
+        setProductionActivities(emptyState.productionActivities);
+        setSalesChannels(emptyState.salesChannels);
         setEditingProductIndex(0);
         setActiveTab('info');
         window.scrollTo(0, 0); // Remonte en haut de la page
@@ -457,9 +722,12 @@ const App = () => {
         setLogoUrl(emptyState.logoUrl);
         setGeneralInfo(emptyState.generalInfo);
         setBaseIngredients(emptyState.ingredientsList);
+        setBasePackaging(emptyState.basePackaging);
         setProducts(emptyState.products);
         setTrackingPoints(emptyState.trackingPoints);
         setLaborDatabase(emptyState.laborDatabase);
+        setProductionActivities(emptyState.productionActivities);
+        setSalesChannels(emptyState.salesChannels);
         setOpenPostIds(new Set()); // Vide la liste pour un nouveau projet
         setEditingProductIndex(0);
         setActiveTab('info');
@@ -476,9 +744,12 @@ const App = () => {
         setLogoUrl(defaultState.logoUrl);
         setGeneralInfo(defaultState.generalInfo);
         setBaseIngredients(defaultState.ingredientsList);
+        setBasePackaging(defaultState.basePackaging);
         setProducts(defaultState.products);
         setTrackingPoints(defaultState.trackingPoints);
         setLaborDatabase(defaultState.laborDatabase); // Ajout de la ligne manquante
+        setProductionActivities(defaultState.productionActivities);
+        setSalesChannels(defaultState.salesChannels);
         setOpenPostIds(new Set(defaultState.laborDatabase.map(p => p.id)));
         setEditingProductIndex(0);
         setActiveTab('info');
@@ -489,8 +760,8 @@ const App = () => {
     const saveProject = () => {
         try {
             const projectData = buildProjectData({
-                companyName, logoUrl, generalInfo, baseIngredients,
-                products, trackingPoints, laborDatabase, uiSettings,
+                companyName, logoUrl, generalInfo, baseIngredients, basePackaging,
+                products, trackingPoints, laborDatabase, productionActivities, salesChannels, uiSettings,
             });
 
             const jsonString = JSON.stringify(projectData, null, 2);
@@ -529,8 +800,11 @@ const App = () => {
                 setUiSettings(parsed.uiSettings);
                 setTrackingPoints(parsed.trackingPoints);
                 setLaborDatabase(parsed.laborDatabase);
+                setProductionActivities(parsed.productionActivities);
+                setSalesChannels(parsed.salesChannels);
                 setOpenPostIds(new Set(parsed.laborDatabase.map(p => p.id)));
                 setBaseIngredients(parsed.baseIngredients);
+                setBasePackaging(parsed.basePackaging);
                 setProducts(parsed.products);
 
                 setEditingProductIndex(0);
@@ -553,12 +827,12 @@ const App = () => {
     const generatePdf = (options) => generatePdfReport(options, {
         showNotification, companyName, logoUrl, analysisData, appLogoBase64,
         appLogoDimensions, calculatedGeneralInfo, trackingPoints, laborDatabase, baseIngredients,
-        ingredientsList,
+        ingredientsList, basePackaging,
     });
 
     const exportToExcel = () => exportToExcelReport({
         showNotification, analysisData, generalInfo, calculatedGeneralInfo,
-        products, baseIngredients, laborDatabase, companyName, ingredientsList,
+        baseIngredients, laborDatabase, companyName, ingredientsList, basePackaging,
     });
 
     const getTabClasses = (tabName) => `flex-1 py-4 px-1 flex items-center justify-center border-b-2 font-medium text-sm focus:outline-none transition duration-300 ease-in-out ${activeTab === tabName ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`;
@@ -585,9 +859,10 @@ const App = () => {
                 <div id="tutorial-tab-bar" className="flex bg-white rounded-xl shadow-md overflow-hidden">
                     <button onClick={() => setActiveTab('info')} className={getTabClasses('info')}><Settings className="h-5 w-5 mr-2" /> Paramètres</button>
                     <button id="tab-ingredients" onClick={() => setActiveTab('ingredients')} className={getTabClasses('ingredients')}><ShoppingCart className="h-5 w-5 mr-2" /> Ingrédients</button>
+                    <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Packaging</button>
                     <button id="tab-labor" onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
                     <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Recette & Calcul</button>
-                    <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><Table className="h-5 w-5 mr-2" /> Résumé</button>
+                    <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><Table className="h-5 w-5 mr-2" /> Rapport</button>
                     <button id="tab-tracking" onClick={() => setActiveTab('tracking')} className={getTabClasses('tracking')}><TrendingUp className="h-5 w-5 mr-2" /> Suivi</button>
                 </div>
             </div>
@@ -605,22 +880,27 @@ const App = () => {
             generalInfo: calculatedGeneralInfo, onUpdateGeneralInfo: handleUpdateGeneralInfo,
             products, onUpdateProducts: setProducts,
             baseIngredients, onUpdateIngredientsList: setBaseIngredients, ingredientsList,
+            basePackaging, onUpdatePackagingList: setBasePackaging,
             laborDatabase, onUpdateLaborDatabase: setLaborDatabase,
             trackingPoints, setTrackingPoints,
+            productionActivities, onUpdateProductionActivities: setProductionActivities,
+            salesChannels, onUpdateSalesChannels: setSalesChannels,
             analysisData,
             showNotification, setNotification,
         }), [
             companyName, setCompanyName, logoUrl, setLogoUrl,
             calculatedGeneralInfo, handleUpdateGeneralInfo,
             products, setProducts, baseIngredients, setBaseIngredients, ingredientsList,
+            basePackaging, setBasePackaging,
             laborDatabase, setLaborDatabase, trackingPoints, setTrackingPoints,
+            productionActivities, setProductionActivities, salesChannels, setSalesChannels,
             analysisData, showNotification, setNotification,
         ]);
 
         const renderActiveTab = () => {
 
             switch (activeTab) {
-                case 'info': return <ProductInfo onNewProduct={handleAddNewProduct} onDeleteProduct={handleDeleteProduct} onDuplicateProduct={handleDuplicateProduct} handleProductValueChange={handleProductValueChange} itemsPerPage={uiSettings.infoItemsPerPage} onItemsPerPageChange={(value) => handleUiSettingsChange('infoItemsPerPage', value)} onOpenPosImport={() => setIsPosWizardOpen(true)} />;
+                case 'info': return <ProductInfo onNewProduct={handleAddNewProduct} onDeleteProduct={handleDeleteProduct} onDuplicateProduct={handleDuplicateProduct} handleProductValueChange={handleProductValueChange} handleFormatValueChange={handleFormatValueChange} handleFormatChannelPricesChange={handleFormatChannelPricesChange} onAddFormat={handleAddFormat} onDuplicateFormat={handleDuplicateFormat} onDeleteFormat={handleDeleteFormat} itemsPerPage={uiSettings.infoItemsPerPage} onItemsPerPageChange={(value) => handleUiSettingsChange('infoItemsPerPage', value)} onOpenSalesImport={() => setIsSalesImportWizardOpen(true)} />;
 
                 case 'ingredients':
                     return <IngredientsTab
@@ -628,8 +908,14 @@ const App = () => {
                         onItemsPerPageChange={(value) => handleUiSettingsChange('ingredientsItemsPerPage', value)}
                     />;
 
+                case 'packaging':
+                    return <PackagingTab
+                        itemsPerPage={uiSettings.packagingItemsPerPage}
+                        onItemsPerPageChange={(value) => handleUiSettingsChange('packagingItemsPerPage', value)}
+                    />;
+
                 case 'labor': return <LaborDatabaseTab openPostIds={openPostIds} setOpenPostIds={setOpenPostIds} />;
-                case 'recipe': return <RecipeCalculator editingProductIndex={editingProductIndex} onSelectProduct={setEditingProductIndex} openRecipeSections={openRecipeSections} setOpenRecipeSections={setOpenRecipeSections} />;
+                case 'recipe': return <RecipeCalculator editingProductIndex={editingProductIndex} initialFormatIndex={editingFormatIndex} onSelectProduct={selectProductForRecipe} openRecipeSections={openRecipeSections} setOpenRecipeSections={setOpenRecipeSections} onAddFormat={handleAddFormat} onDuplicateFormat={handleDuplicateFormat} />;
 
                 case 'summary':
                     return <SummaryTable
@@ -738,13 +1024,14 @@ const App = () => {
 
                     {/* Rendu seulement à l'ouverture : le chunk de l'assistant n'est chargé
                         que lorsqu'on en a besoin, pas au démarrage. */}
-                    {isPosWizardOpen && (
+                    {isSalesImportWizardOpen && (
                         <Suspense fallback={null}>
-                            <PosImportWizardModal
-                                isOpen={isPosWizardOpen}
-                                onClose={() => setIsPosWizardOpen(false)}
-                                onImportComplete={handlePosImport}
+                            <SalesReportImportWizardModal
+                                isOpen={isSalesImportWizardOpen}
+                                onClose={() => setIsSalesImportWizardOpen(false)}
+                                onImportComplete={handleSalesReportImport}
                                 products={products}
+                                salesChannels={salesChannels}
                             />
                         </Suspense>
                     )}

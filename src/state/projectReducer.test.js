@@ -7,9 +7,12 @@ const baseState = () => ({
     logoUrl: 'logo.png',
     generalInfo: { totalIndirects: 100 },
     baseIngredients: [{ id: 'a' }],
+    basePackaging: [{ id: 'pkg' }],
     products: [{ id: 'p' }],
     trackingPoints: [],
     laborDatabase: [{ id: 'post' }],
+    productionActivities: [{ id: 'act_general', name: 'Général' }],
+    salesChannels: [{ id: 'channel_default', name: 'Vente directe', links: [] }],
     uiSettings: { infoItemsPerPage: 10 },
 });
 
@@ -38,8 +41,11 @@ describe('projectReducer', () => {
         expect(projectReducer(state, { type: 'SET_LOGO_URL', payload: 'x.png' }).logoUrl).toBe('x.png');
         expect(projectReducer(state, { type: 'SET_GENERAL_INFO', payload: { totalIndirects: 5 } }).generalInfo).toEqual({ totalIndirects: 5 });
         expect(projectReducer(state, { type: 'SET_BASE_INGREDIENTS', payload: [] }).baseIngredients).toEqual([]);
+        expect(projectReducer(state, { type: 'SET_BASE_PACKAGING', payload: [] }).basePackaging).toEqual([]);
         expect(projectReducer(state, { type: 'SET_LABOR_DATABASE', payload: [] }).laborDatabase).toEqual([]);
         expect(projectReducer(state, { type: 'SET_TRACKING_POINTS', payload: [{ id: 't' }] }).trackingPoints).toEqual([{ id: 't' }]);
+        expect(projectReducer(state, { type: 'SET_PRODUCTION_ACTIVITIES', payload: [] }).productionActivities).toEqual([]);
+        expect(projectReducer(state, { type: 'SET_SALES_CHANNELS', payload: [] }).salesChannels).toEqual([]);
         expect(projectReducer(state, { type: 'SET_UI_SETTINGS', payload: { infoItemsPerPage: 25 } }).uiSettings).toEqual({ infoItemsPerPage: 25 });
     });
 
@@ -47,8 +53,10 @@ describe('projectReducer', () => {
         const state = baseState();
         const payload = {
             companyName: 'Nouveau', logoUrl: 'n.png', generalInfo: { totalIndirects: 999 },
-            baseIngredients: [{ id: 'z' }], products: [{ id: 'q' }], trackingPoints: [{ id: 't' }],
-            laborDatabase: [{ id: 'l' }], uiSettings: { infoItemsPerPage: 50 },
+            baseIngredients: [{ id: 'z' }], basePackaging: [{ id: 'pkg2' }], products: [{ id: 'q' }], trackingPoints: [{ id: 't' }],
+            laborDatabase: [{ id: 'l' }], productionActivities: [{ id: 'act_1', name: 'Ligne 1' }],
+            salesChannels: [{ id: 'channel_1', name: 'Grande distribution', links: [] }],
+            uiSettings: { infoItemsPerPage: 50 },
         };
         const next = projectReducer(state, { type: 'LOAD_PROJECT', payload });
         expect(next).toEqual(payload);
@@ -67,6 +75,7 @@ describe('toProjectState', () => {
         const flat = getEmptyState();
         const projectState = toProjectState(flat);
         expect(projectState.baseIngredients).toBe(flat.ingredientsList);
+        expect(projectState.basePackaging).toBe(flat.basePackaging);
         expect(projectState.products).toBe(flat.products);
         expect(projectState.generalInfo).toBe(flat.generalInfo);
         // La clé plate "ingredientsList" ne doit pas fuiter dans l'état du reducer
@@ -75,10 +84,12 @@ describe('toProjectState', () => {
 
     it('conserve toutes les tranches attendues depuis getDefaultState', () => {
         const projectState = toProjectState(getDefaultState());
-        for (const key of ['companyName', 'logoUrl', 'generalInfo', 'baseIngredients', 'products', 'trackingPoints', 'laborDatabase', 'uiSettings']) {
+        for (const key of ['companyName', 'logoUrl', 'generalInfo', 'baseIngredients', 'basePackaging', 'products', 'trackingPoints', 'laborDatabase', 'productionActivities', 'salesChannels', 'uiSettings']) {
             expect(projectState[key]).toBeDefined();
         }
         expect(projectState.baseIngredients.length).toBeGreaterThan(0);
+        expect(projectState.basePackaging.length).toBeGreaterThan(0);
         expect(projectState.products.length).toBeGreaterThan(0);
+        expect(projectState.salesChannels.length).toBeGreaterThan(0);
     });
 });

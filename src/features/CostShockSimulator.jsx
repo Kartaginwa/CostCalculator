@@ -52,9 +52,13 @@ const DeltaRow = ({ label, current, shocked, unit, tooltip, higherIsWorse = true
 // d'INTRANTS et/ou les salaires de MAIN-D'ŒUVRE — et recalcule l'analyse pour montrer l'impact sur
 // le food cost, le coût MO, la marge, le point mort et la marge nette par plat. Transitoire : les
 // scénarios ne sont pas sauvegardés dans le projet.
-export const CostShockSimulator = () => {
-    const { products, baseIngredients, laborDatabase, generalInfo, analysisData } = useProject();
+// `collapsible` (06/10) : repli à la Vrai dans son propre sous-onglet « Simulation » de Résumé —
+// être dans cet onglet EST déjà le geste d'ouverture, inutile de redemander un clic derrière.
+// Reste replié par défaut (`true`) pour tout autre usage futur hors d'un onglet dédié.
+export const CostShockSimulator = ({ collapsible = true }) => {
+    const { products, baseIngredients, basePackaging, salesChannels, laborDatabase, generalInfo, analysisData } = useProject();
     const [expanded, setExpanded] = useState(false);
+    const isOpen = collapsible ? expanded : true;
     const [shocks, setShocks] = useState([]);
 
     const providers = useMemo(() => [...new Set(baseIngredients.map(i => i.provider).filter(Boolean))].sort(), [baseIngredients]);
@@ -71,11 +75,12 @@ export const CostShockSimulator = () => {
     // generalInfo (contexte) = calculatedGeneralInfo : contient déjà les champs bruts + calculés. Les
     // prix d'intrants et les salaires n'affectent ni la productivité ni les heures, donc ce
     // calculatedGeneralInfo reste valide — on le passe comme les deux arguments.
+    // Pas (encore) de choc simulé sur le packaging : basePackaging passé tel quel (non choqué).
     const shockedAnalysis = useMemo(
         () => activeShocks.length > 0
-            ? computeAnalysisData(products, shockedIngredients, shockedLabor, generalInfo, generalInfo)
+            ? computeAnalysisData(products, shockedIngredients, shockedLabor, generalInfo, generalInfo, basePackaging, salesChannels)
             : null,
-        [activeShocks.length, products, shockedIngredients, shockedLabor, generalInfo]
+        [activeShocks.length, products, shockedIngredients, shockedLabor, generalInfo, basePackaging, salesChannels]
     );
 
     const foodTarget = parseLocaleNumber(generalInfo.foodCostTarget);
@@ -88,8 +93,10 @@ export const CostShockSimulator = () => {
             const after = shockedById.get(p.id);
             const currentMargin = p.costs.margeNetteDollar;
             const shockedMargin = after ? after.costs.margeNetteDollar : currentMargin;
+            const deltaAbs = Math.abs(shockedMargin - currentMargin);
+            const deltaPercent = currentMargin !== 0 ? (deltaAbs / Math.abs(currentMargin)) * 100 : null;
             return {
-                id: p.id, name: p.platName, currentMargin, shockedMargin,
+                id: p.id, name: p.displayName, currentMargin, shockedMargin, deltaPercent,
                 becomesNegative: currentMargin >= 0 && shockedMargin < 0,
                 negative: shockedMargin < 0,
             };
@@ -119,22 +126,32 @@ export const CostShockSimulator = () => {
         return `${typeLabel} · ${scope} ${sign}${pct} %`;
     };
 
-    return (
-        <div className="mt-8 bg-white rounded-xl shadow border border-indigo-100">
-            <button onClick={() => setExpanded(e => !e)} className="w-full flex justify-between items-center p-4 text-left" aria-expanded={expanded}>
-                <span className="text-lg font-bold text-indigo-800 flex items-center">
-                    Simulation — choc sur les coûts (intrants & main-d'œuvre)
-                    <Tooltip text="Applique un ou plusieurs chocs sur les prix d'achat et/ou les salaires horaires, et montre l'impact sur les marges, le food cost, le coût MO et les cibles. N'est pas sauvegardé dans le projet." />
-                    {activeShocks.length > 0 && (
-                        <span className="ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                            {activeShocks.length} choc{activeShocks.length > 1 ? 's' : ''} actif{activeShocks.length > 1 ? 's' : ''}
-                        </span>
-                    )}
+    const headerContent = (
+        <span className="text-lg font-bold text-indigo-800 flex items-center">
+            Simulation — choc sur les coûts (intrants & main-d'œuvre)
+            <Tooltip text="Applique un ou plusieurs chocs sur les prix d'achat et/ou les salaires horaires, et montre l'impact sur les marges, le food cost, le coût MO et les cibles. N'est pas sauvegardé dans le projet." />
+            {activeShocks.length > 0 && (
+                <span className="ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    {activeShocks.length} choc{activeShocks.length > 1 ? 's' : ''} actif{activeShocks.length > 1 ? 's' : ''}
                 </span>
-                <ChevronDown className={`h-6 w-6 text-indigo-700 transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
-            </button>
+            )}
+        </span>
+    );
 
-            {expanded && (
+    return (
+        <div className={collapsible ? 'mt-8 bg-white rounded-xl shadow border border-indigo-100' : 'bg-white rounded-xl shadow border border-indigo-100'}>
+            {collapsible ? (
+                <button onClick={() => setExpanded(e => !e)} className="w-full flex justify-between items-center p-4 text-left" aria-expanded={expanded}>
+                    {headerContent}
+                    <ChevronDown className={`h-6 w-6 text-indigo-700 transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                </button>
+            ) : (
+                <div className="w-full flex items-center p-4">
+                    {headerContent}
+                </div>
+            )}
+
+            {isOpen && (
                 <div className="p-4 pt-0">
                     {(baseIngredients.length === 0 && employees.length === 0) ? (
                         <p className="text-sm text-gray-500">Ajoutez des ingrédients ou des employés pour simuler un choc de coûts.</p>
@@ -241,6 +258,7 @@ export const CostShockSimulator = () => {
                                                         <td className={`py-2 px-4 text-right font-semibold ${d.negative ? 'text-red-600' : 'text-gray-800'}`}>{formatCurrency(d.shockedMargin)} $</td>
                                                         <td className={`py-2 pl-4 text-right ${d.shockedMargin < d.currentMargin ? 'text-red-600' : 'text-green-600'}`}>
                                                             {d.shockedMargin <= d.currentMargin ? '▼' : '▲'} {formatCurrency(Math.abs(d.shockedMargin - d.currentMargin))} $
+                                                            {d.deltaPercent !== null && ` (${d.deltaPercent.toFixed(1)} %)`}
                                                         </td>
                                                     </tr>
                                                 ))}

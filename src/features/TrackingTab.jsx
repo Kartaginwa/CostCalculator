@@ -4,6 +4,7 @@ import { Camera, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency } from '../utils.js';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeIngredientVolatility } from '../engine/priceVolatility.js';
+import { buildTrackableProducts } from '../engine/trackingAnalysis.js';
 import { Pagination, Tooltip } from '../components/common.jsx';
 
 // Libellé et style du niveau de volatilité (faible / modérée / élevée).
@@ -168,7 +169,7 @@ const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
 
 // --- NOUVEL ONGLET: SUIVI ---
 export const TrackingTab = () => {
-    const { trackingPoints, setTrackingPoints, generalInfo, showNotification, setNotification, baseIngredients, analysisData } = useProject();
+    const { trackingPoints, setTrackingPoints, generalInfo, showNotification, setNotification, baseIngredients, basePackaging, analysisData } = useProject();
     const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
 
     // Tri / filtre / pagination du tableau de volatilité (comme les tableaux Paramètres & Ingrédients).
@@ -235,6 +236,7 @@ export const TrackingTab = () => {
     const [selectedSnapshotIds, setSelectedSnapshotIds] = useState(new Set());
     const [editingSnapshot, setEditingSnapshot] = useState(null);
     const [selectedIngredientId, setSelectedIngredientId] = useState('');
+    const [selectedPackagingId, setSelectedPackagingId] = useState('');
 
     useEffect(() => {
         if (trackingPoints.length > 0) {
@@ -251,17 +253,7 @@ export const TrackingTab = () => {
         return trackingPoints.filter(p => selectedSnapshotIds.has(p.id))
     }, [trackingPoints, selectedSnapshotIds]);
 
-    const trackableProducts = useMemo(() => {
-        const allProducts = new Map();
-        trackingPoints.forEach(point => {
-            point.productsWithCosts.forEach(p => {
-                if (!allProducts.has(p.id)) {
-                    allProducts.set(p.id, p.platName);
-                }
-            });
-        });
-        return Array.from(allProducts, ([id, name]) => ({ id, name }));
-    }, [trackingPoints]);
+    const trackableProducts = useMemo(() => buildTrackableProducts(trackingPoints), [trackingPoints]);
 
     useEffect(() => {
         if (!selectedProductId && trackableProducts.length > 0) {
@@ -289,6 +281,7 @@ export const TrackingTab = () => {
                 generalInfo: { ...generalInfo },
                 productsWithCosts: JSON.parse(JSON.stringify(productsWithCosts)),
                 baseIngredients: JSON.parse(JSON.stringify(baseIngredients)),
+                basePackaging: JSON.parse(JSON.stringify(basePackaging)),
             };
             setTrackingPoints(prev => [...prev, newSnapshot]);
             showNotification({ message: "Point de référence créé avec succès !", type: 'success' });
@@ -388,7 +381,10 @@ export const TrackingTab = () => {
                     "Coût matière (%)": null,
                     "Coût main-d'oeuvre (%)": null,
                     "Coût frais indirects (%)": null,
-                    "Marge nette (%)": null
+                    "Marge nette (%)": null,
+                    "Coût matière ($/u.)": null,
+                    "Coût main-d'oeuvre ($/u.)": null,
+                    "Coût de revient ($/u.)": null,
                 };
             }
             return {
@@ -399,7 +395,22 @@ export const TrackingTab = () => {
                 "Coût main-d'oeuvre (%)": productData.costs.costLaborPercent * 100,
                 "Coût frais indirects (%)": productData.costs.costIndirectPercent * 100,
                 "Marge nette (%)": productData.costs.margeNettePercent * 100,
+                "Coût matière ($/u.)": productData.costs.costMatierePerPortion,
+                "Coût main-d'oeuvre ($/u.)": productData.costs.costLaborPerPortion,
+                "Coût de revient ($/u.)": productData.costs.totalCostPerPortion,
             };
+        });
+    }, [displayedTrackingPoints, selectedProductId]);
+
+    // Un format sans prix de vente (sous-recette jamais vendue seule, ex. "Sauce demi-glace
+    // maison") a tous ses ratios en % forcés à 0 par calculateCosts.js (division par un prix nul) —
+    // le graphique basculerait alors sur une ligne plate à 0 % trompeuse. On y bascule donc les
+    // coûts en $/unité, toujours significatifs, plutôt que les ratios de prix de vente qui ne le
+    // sont pas. Voir Projet_Claude/03-Feuille-de-route.md.
+    const selectedProductIsPriced = useMemo(() => {
+        return displayedTrackingPoints.some(point => {
+            const p = point.productsWithCosts.find(pp => String(pp.id) === String(selectedProductId));
+            return p && parseLocaleNumber(p.prixVente) > 0;
         });
     }, [displayedTrackingPoints, selectedProductId]);
 
@@ -434,6 +445,40 @@ export const TrackingTab = () => {
             };
         });
     }, [displayedTrackingPoints, selectedIngredientId]);
+
+    // Emballage : toujours un suivi SÉPARÉ de celui des ingrédients (jamais fusionné), par cohérence
+    // avec la Phase 2 (coût d'emballage comme poste distinct du coût matière).
+    const trackablePackaging = useMemo(() => {
+        const allPackaging = new Map();
+        trackingPoints.forEach(point => {
+            (point.basePackaging || []).forEach(pkg => {
+                if (!allPackaging.has(pkg.id)) {
+                    allPackaging.set(pkg.id, pkg.name);
+                }
+            });
+        });
+        return Array.from(allPackaging, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+    }, [trackingPoints]);
+
+    useEffect(() => {
+        if (!selectedPackagingId && trackablePackaging.length > 0) {
+            setSelectedPackagingId(trackablePackaging[0].id);
+        }
+    }, [trackablePackaging, selectedPackagingId]);
+
+    const packagingPriceData = useMemo(() => {
+        if (!selectedPackagingId) return [];
+
+        return displayedTrackingPoints.map(point => {
+            const packagingData = (point.basePackaging || []).find(pkg => String(pkg.id) === String(selectedPackagingId));
+            return {
+                name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
+                label: point.name,
+                note: point.note,
+                "Prix Unitaire": packagingData ? packagingData.unitPrice : null,
+            };
+        });
+    }, [displayedTrackingPoints, selectedPackagingId]);
     return (
         <div id="tutorial-section-recipe-header" className="container mx-auto p-6 bg-white rounded-xl shadow-2xl max-w-7xl space-y-8">
              <SnapshotDetailsModal
@@ -474,7 +519,7 @@ export const TrackingTab = () => {
                     {/* Graphique des KPIs par recette */}
                     <div id="tutorial-section-tracking-product" className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-4 mb-4">
-                             <h2 className="text-xl font-semibold text-gray-700">Analyse par recette</h2>
+                             <h2 className="text-xl font-semibold text-gray-700">Analyse par format</h2>
                              <select
                                 value={selectedProductId}
                                 onChange={(e) => setSelectedProductId(e.target.value)}
@@ -483,17 +528,33 @@ export const TrackingTab = () => {
                                 {trackableProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                              </select>
                         </div>
-                         <p className="text-sm text-gray-500 mb-4">Sélectionnez un plat pour voir comment ses coûts et sa marge nette en pourcentage ont évolué dans le temps. C'est un excellent moyen de mesurer l'impact de vos changements de prix ou d'optimisation des coûts.</p>
-                        <SimpleLineChart
-                            data={productKpiData}
-                            lines={[
-                                { dataKey: "Coût matière (%)", color: "#82ca9d", unit: '%' },
-                                { dataKey: "Coût main-d'oeuvre (%)", color: "#ffc658", unit: '%' },
-                                { dataKey: "Coût frais indirects (%)", color: "#8884d8", unit: '%' },
-                                { dataKey: "Marge nette (%)", color: "#ff7300", unit: '%' },
-                            ]}
-                            yAxisLabel="Pourcentage (%)"
-                        />
+                         <p className="text-sm text-gray-500 mb-4">
+                            {selectedProductIsPriced
+                                ? "Sélectionnez un format pour voir comment ses coûts et sa marge nette en pourcentage ont évolué dans le temps. C'est un excellent moyen de mesurer l'impact de vos changements de prix ou d'optimisation des coûts."
+                                : "Ce format n'a pas de prix de vente (sous-recette non vendue seule) : les ratios en % du prix n'ont pas de sens, les coûts sont donc affichés en $ par unité produite."}
+                         </p>
+                        {selectedProductIsPriced ? (
+                            <SimpleLineChart
+                                data={productKpiData}
+                                lines={[
+                                    { dataKey: "Coût matière (%)", color: "#82ca9d", unit: '%' },
+                                    { dataKey: "Coût main-d'oeuvre (%)", color: "#ffc658", unit: '%' },
+                                    { dataKey: "Coût frais indirects (%)", color: "#8884d8", unit: '%' },
+                                    { dataKey: "Marge nette (%)", color: "#ff7300", unit: '%' },
+                                ]}
+                                yAxisLabel="Pourcentage (%)"
+                            />
+                        ) : (
+                            <SimpleLineChart
+                                data={productKpiData}
+                                lines={[
+                                    { dataKey: "Coût matière ($/u.)", color: "#82ca9d", unit: ' $' },
+                                    { dataKey: "Coût main-d'oeuvre ($/u.)", color: "#ffc658", unit: ' $' },
+                                    { dataKey: "Coût de revient ($/u.)", color: "#ff7300", unit: ' $' },
+                                ]}
+                                yAxisLabel="Coût ($ / unité)"
+                            />
+                        )}
                     </div>
                     {/* Graphique de suivi des prix des ingrédients */}
                     <div id="tutorial-section-tracking-ingredient" className="p-4 bg-gray-50 rounded-lg">
@@ -596,6 +657,28 @@ export const TrackingTab = () => {
                                 <p className="text-sm text-gray-500">Créez au moins 2 points de référence pour analyser la volatilité des prix.</p>
                             )}
                         </div>
+                    </div>
+
+                    {/* Graphique de suivi des prix des emballages — poste SÉPARÉ des ingrédients (voir Phase 2). */}
+                    <div id="tutorial-section-tracking-packaging" className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-4 mb-4">
+                            <h2 className="text-xl font-semibold text-gray-700">Évolution du prix des emballages</h2>
+                            <select
+                                value={selectedPackagingId}
+                                onChange={(e) => setSelectedPackagingId(e.target.value)}
+                                className="p-2 border rounded-md"
+                            >
+                                {trackablePackaging.map(pkg => <option key={pkg.id} value={pkg.id}>{pkg.name}</option>)}
+                            </select>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">Sélectionnez un emballage pour voir comment son prix unitaire a évolué dans le temps.</p>
+                        <SimpleLineChart
+                            data={packagingPriceData}
+                            lines={[
+                                { dataKey: "Prix Unitaire", color: "#db2777", unit: ' $' },
+                            ]}
+                            yAxisLabel="Prix Unitaire ($)"
+                        />
                     </div>
 
                     {/* Gestion des points de référence */}

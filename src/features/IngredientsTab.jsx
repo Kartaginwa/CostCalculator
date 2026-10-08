@@ -6,7 +6,7 @@ import { useProject } from '../state/ProjectContext.jsx';
 import { computeIngredientVolatility } from '../engine/priceVolatility.js';
 
 // Chargé à la demande : l'assistant d'import est volumineux et rarement ouvert.
-const ImportWizardModal = lazy(() => import('./ImportWizardModal.jsx').then(m => ({ default: m.ImportWizardModal })));
+const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.jsx').then(m => ({ default: m.CatalogImportWizardModal })));
 
 // Élément de la liste ABC, avec étiquette « volatile » si le prix de l'ingrédient est jugé volatil
 // d'après les points de référence (croisement ABC × volatilité : un item de forte valeur au prix
@@ -603,12 +603,15 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             />
             {isImportWizardOpen && (
                 <Suspense fallback={null}>
-                    <ImportWizardModal
+                    <CatalogImportWizardModal
                         isOpen={isImportWizardOpen}
                         onClose={() => setIsImportWizardOpen(false)}
-                        baseIngredients={baseIngredients}
-                        onUpdateIngredientsList={onUpdateIngredientsList}
+                        baseItems={baseIngredients}
+                        onUpdateItemsList={onUpdateIngredientsList}
                         showNotification={showNotification}
+                        itemLabel="ingrédient"
+                        itemLabelPlural="Ingrédients"
+                        extraNewItemFields={{ isRecipe: false, allergens: [] }}
                     />
                 </Suspense>
             )}

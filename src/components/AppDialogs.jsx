@@ -182,7 +182,8 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-section-info-entreprise', content: "L'onglet 'Paramètres' est le point de départ. Cette première section vous permet de définir les informations de base de votre entreprise pour les rapports.", tab: 'info' },
     { selector: '#tutorial-section-info-frais', content: "Ensuite, entrez vos revenus et frais indirects globaux. Ces chiffres sont la base de tous les calculs de rentabilité.", tab: 'info' },
     { selector: '#tutorial-section-info-objectifs', content: "Vous pouvez définir ici des objectifs de coûts. L'application vous indiquera si vous les respectez dans l'onglet 'Résumé'.", tab: 'info' },
-    { selector: '#tutorial-section-info-menu', content: "Enfin, listez tous les plats de votre menu dans ce tableau. Pour ce tour, nous avons pré-rempli un exemple.", tab: 'info' },
+    { selector: '#tutorial-section-info-activites', content: "Définissez ici vos lignes de production (ex. Confitures, Produits séchés) — elles serviront à répartir vos frais indirects par ligne dans l'onglet Comptabilité.", tab: 'info' },
+    { selector: '#tutorial-section-info-menu', content: "Enfin, listez tous vos produits (SKU) dans ce tableau, chacun rattaché à sa ligne de production. Pour ce tour, nous avons pré-rempli un exemple.", tab: 'info' },
     // Onglet Ingrédients
     { selector: '#tab-ingredients', content: "Passons à l'onglet 'Ingrédients'.", tab: 'info' },
     { selector: '#tutorial-section-ingredients-db', content: "C'est votre base de données centrale pour toutes vos matières premières. Vous y définissez les prix d'achat et les taux de perte.", tab: 'ingredients' },

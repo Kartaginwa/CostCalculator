@@ -32,7 +32,11 @@ import { indirectCostMethodLabels, periodTranslations } from '../state/initialSt
         return trackingPoints.map(point => {
             const productData = point.productsWithCosts.find(p => String(p.id) === String(productId));
             if (!productData) {
-                return { name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note, "Coût matière (%)": null, "Coût main-d'oeuvre (%)": null, "Coût frais indirects (%)": null, "Marge nette (%)": null };
+                return {
+                    name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note,
+                    "Coût matière (%)": null, "Coût main-d'oeuvre (%)": null, "Coût frais indirects (%)": null, "Marge nette (%)": null,
+                    "Coût matière ($/u.)": null, "Coût main-d'oeuvre ($/u.)": null, "Coût de revient ($/u.)": null,
+                };
             }
             return {
                 name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
@@ -42,6 +46,9 @@ import { indirectCostMethodLabels, periodTranslations } from '../state/initialSt
                 "Coût main-d'oeuvre (%)": productData.costs.costLaborPercent * 100,
                 "Coût frais indirects (%)": productData.costs.costIndirectPercent * 100,
                 "Marge nette (%)": productData.costs.margeNettePercent * 100,
+                "Coût matière ($/u.)": productData.costs.costMatierePerPortion,
+                "Coût main-d'oeuvre ($/u.)": productData.costs.costLaborPerPortion,
+                "Coût de revient ($/u.)": productData.costs.totalCostPerPortion,
             };
         });
     };
@@ -50,7 +57,7 @@ export const generatePdf = (options, deps) => {
     const {
         showNotification, companyName, logoUrl, analysisData, appLogoBase64,
         appLogoDimensions, calculatedGeneralInfo, trackingPoints, laborDatabase, baseIngredients,
-        ingredientsList,
+        ingredientsList, basePackaging,
     } = deps;
         if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
             showNotification({ message: "La bibliothèque PDF n'a pas pu être chargée. L'exportation est impossible.", type: 'error' });
@@ -212,7 +219,7 @@ export const generatePdf = (options, deps) => {
 
             const {
                 productsWithCosts, activeProducts, totalSalesMix, weightedGrossMargin,
-                globalBreakEven, weightedMaterialCost, weightedLaborCost, contributionData,
+                globalBreakEven, weightedMaterialCost, weightedPackagingCost, weightedLaborCost, contributionData,
                 menuEngineeringData, purchasingReportData, abcAnalysisData, productivityReport
             } = analysisData;
 
@@ -315,7 +322,8 @@ export const generatePdf = (options, deps) => {
 
             const kpiBody = [
                 [ 'Coût Matière Moyen Pondéré:', `${formatPercent(weightedMaterialCost)} %`, 'Marge Brute Moyenne Pondérée:', `${formatPercent(weightedGrossMargin)} %`],
-                [ 'Coût Main-d\'œuvre Moyen Pondéré:', `${formatPercent(weightedLaborCost)} %`, 'Point Mort du Menu:', `${formatCurrency(globalBreakEven)} $`]
+                [ 'Coût Emballage Moyen Pondéré:', `${formatPercent(weightedPackagingCost)} %`, 'Point Mort du Menu:', `${formatCurrency(globalBreakEven)} $`],
+                [ 'Coût Main-d\'œuvre Moyen Pondéré:', `${formatPercent(weightedLaborCost)} %`, '', '']
             ];
             doc.autoTable({
                 startY: yPos,
@@ -372,7 +380,7 @@ export const generatePdf = (options, deps) => {
                 const descLines = doc.splitTextToSize(data.description, quadrantWidth - padding * 2);
                 contentHeight += doc.getTextDimensions(descLines).h + 2;
                 
-                const itemList = data.items.length > 0 ? data.items.map(item => `• ${item.platName}`).join('\n') : '• Aucun';
+                const itemList = data.items.length > 0 ? data.items.map(item => `• ${item.displayName}`).join('\n') : '• Aucun';
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
                 const itemLines = doc.splitTextToSize(itemList, quadrantWidth - padding * 2);
@@ -577,7 +585,7 @@ export const generatePdf = (options, deps) => {
                 
                 // --- Page A : Fiche de Coût et Indicateurs Clés ---
                 doc.addPage();
-                addPageHeader(`Fiche de Coût - ${product.platName}`);
+                addPageHeader(`Fiche de Coût - ${product.displayName}`);
                 yPos = 45;
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -585,11 +593,14 @@ export const generatePdf = (options, deps) => {
                 doc.text("Paramètres", 14, yPos);
                 yPos += 8;
 
-                // Section 0: Paramètres du Plat
+                // Section 0: Paramètres du Plat — `product.format` est le format propre à CETTE
+                // ligne (une par format depuis la Phase 1.6, voir analysisData.js) ; le repli sur
+                // formats?.[0] ne sert que pour d'anciennes fixtures sans formats[].
+                const reportFormat = product.format || product.formats?.[0] || product;
                 const recipeAllergens = (() => {
-                    if (product.isResaleProduct) return product.manualAllergens || [];
+                    if (reportFormat.isResaleProduct) return reportFormat.manualAllergens || [];
                     const allergens = new Set();
-                    (product.ingredients || []).forEach(item => {
+                    (reportFormat.ingredients || []).forEach(item => {
                         const baseIngredient = ingredientsList.find(ing => ing.id === item.id);
                         if (baseIngredient && baseIngredient.allergens) {
                             baseIngredient.allergens.forEach(allergen => allergens.add(allergen));
@@ -606,11 +617,11 @@ export const generatePdf = (options, deps) => {
                     body: [
                         [
                             `Prix de Vente: ${formatCurrency(parseLocaleNumber(product.prixVente))} $`,
-                            `Nombre de Portions: ${product.nbPortions}`,
+                            `Nombre d'Unités Produites: ${product.nbPortions}`,
                             `Format par Portion: ${product.portionSize || 1} ${product.portionUnit || 'unité'}`
                         ],
                         [
-                            `Statut: ${product.isIngredient ? 'Sous-recette' : product.isResaleProduct ? 'Produit de revente' : 'Plat principal'}`,
+                            `Statut: ${product.isIngredient ? 'Sous-recette' : reportFormat.isResaleProduct ? 'Produit de revente' : 'Plat principal'}`,
                             { content: `Allergènes: ${allergenText}`, colSpan: 2 }
                         ]
                     ]
@@ -627,7 +638,7 @@ export const generatePdf = (options, deps) => {
                 doc.autoTable({
                     startY: yPos,
                     head: [['Ingrédient', 'Qté', 'Unité', 'Coût Base ($)', 'Coût Perte ($)', 'Rendement (%)', 'Coût Total ($)']],
-                    body: (product.ingredients || []).map(i => {
+                    body: (reportFormat.ingredients || []).map(i => {
                         const baseIngredient = ingredientsList.find(ing => ing.id === i.id);
                         if (!baseIngredient) return [i.name || 'N/A', '', '', '', '', '', ''];
                         const recipeUnit = i.recipeUnit || baseIngredient.unit;
@@ -655,6 +666,46 @@ export const generatePdf = (options, deps) => {
                 });
                 yPos = doc.lastAutoTable.finalY + 10;
 
+                // Section 1bis: Détail du Coût d'Emballage (Phase 2.3) — poste SÉPARÉ du coût
+                // matière ci-dessus, jamais fusionné. Vide pour un produit de revente (pas de
+                // recette) ou un format sans emballage rattaché.
+                if ((reportFormat.packagingItems || []).length > 0) {
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(themeColors.primary);
+                    doc.text("Détail du Coût d'Emballage", 14, yPos);
+                    yPos += 8;
+
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Emballage', 'Qté', 'Unité', 'Coût Base ($)', 'Coût Perte ($)', 'Coût Total ($)']],
+                        body: (reportFormat.packagingItems || []).map(i => {
+                            const basePkg = basePackaging.find(pkg => pkg.id === i.id);
+                            if (!basePkg) return [i.name || 'N/A', '', '', '', '', ''];
+                            const recipeUnit = i.recipeUnit || basePkg.unit;
+                            const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[basePkg.unit]?.factor || 1);
+                            const quantityInBaseUnit = parseLocaleNumber(i.quantity) * conversionFactor;
+                            const baseCost = quantityInBaseUnit * parseLocaleNumber(basePkg.unitPrice);
+                            const lossPercentage = (parseLocaleNumber(basePkg.lossPercentage) || 0) / 100;
+                            const lossCost = lossPercentage > 0 && lossPercentage < 1 ? (baseCost / (1 - lossPercentage)) - baseCost : 0;
+                            return [
+                                basePkg.name, i.quantity, recipeUnit,
+                                formatCurrency(baseCost), formatCurrency(lossCost), formatCurrency(baseCost + lossCost)
+                            ];
+                        }),
+                        theme: 'grid',
+                        headStyles: { fillColor: '#DB2777', fontStyle: 'bold', fontSize: 8 }, // rose, même couleur que la section Emballage de Recette & Calcul
+                        styles: { fontSize: 8, halign: 'right' },
+                        columnStyles: { 0: { halign: 'left' }, 2: { halign: 'left' } },
+                        foot: [[
+                            { content: `Total Emballage`, colSpan: 5, styles: { halign: 'right', fontStyle: 'normal' } },
+                            { content: `${formatCurrency(costs.totalPackagingCost)} $`, styles: { fontStyle: 'bold' } }
+                        ]],
+                        footStyles: { fillColor: '#FCE7F3', textColor: themeColors.darkText }
+                    });
+                    yPos = doc.lastAutoTable.finalY + 10;
+                }
+
                 // Section 2: Détail du Coût de Main-d'œuvre
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -665,7 +716,7 @@ export const generatePdf = (options, deps) => {
                 doc.autoTable({
                     startY: yPos,
                     head: [['Étape', 'Personnel', 'Durée', 'Coût Direct ($)', 'Coût Indirect ($)', 'Coût Total ($)']],
-                    body: (product.productionSteps || []).map(step => {
+                    body: (reportFormat.productionSteps || []).map(step => {
                         let stepDirectCost = 0;
                         const personnelSummary = (step.personnel || []).reduce((acc, person) => {
                             const postData = laborDatabase.find(p => p.postName === person.postId);
@@ -719,6 +770,20 @@ export const generatePdf = (options, deps) => {
                 });
                 yPos = doc.lastAutoTable.finalY + 10;
 
+                // Sections 4 & 5 côte à côte : le tableau de gauche (autoTable, qui pagine seul en
+                // cas de dépassement) et le texte de droite (positionné à des coordonnées calculées
+                // à la main, sans awareness de page) doivent impérativement rester sur la MÊME
+                // page — sinon autoTable saute seul à la page suivante tandis que le texte de
+                // droite reste ancré à l'ancienne position, désynchronisant les deux colonnes. On
+                // force donc un saut de page À L'AVANCE s'il ne reste pas assez de place pour les
+                // deux colonnes, plutôt que de laisser autoTable gérer sa pagination seul.
+                const SECTION_45_HEIGHT_ESTIMATE = 85; // ~7 lignes de tableau + bloc point mort/classification
+                if (yPos + SECTION_45_HEIGHT_ESTIMATE > pageHeight - 20) {
+                    doc.addPage();
+                    addPageHeader(`Fiche de Coût - ${product.displayName} (suite)`);
+                    yPos = 45;
+                }
+
                 // Sections 4 & 5 côte à côte
                 doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
@@ -730,14 +795,20 @@ export const generatePdf = (options, deps) => {
 
 
                 // Section 4: Synthèse des Indicateurs Clés (KPIs)
+                // Sans prix de vente (sous-recette jamais vendue seule), tous les ratios en % sont
+                // forcés à 0 par calculateCosts.js (division par un prix nul) — on affiche "N/A"
+                // plutôt qu'un trompeur "0,00 %" ; les montants en $ restent, eux, significatifs.
+                const isPriced = parseLocaleNumber(product.prixVente) > 0;
+                const pct = (value) => isPriced ? `${formatPercent(value)} %` : 'N/A';
                 const kpiProductBody = [
                     ['Prix de Vente', `${formatCurrency(parseLocaleNumber(product.prixVente))} $`],
-                    ['Ratio Coût Matière', `${formatPercent(costs.costMatierePercent)} %`],
-                    ['Ratio Coût Main-d\'œuvre', `${formatPercent(costs.costLaborPercent)} %`],
+                    ['Ratio Coût Matière', pct(costs.costMatierePercent)],
+                    ['Ratio Coût Emballage', pct(costs.costPackagingPercent)],
+                    ['Ratio Coût Main-d\'œuvre', pct(costs.costLaborPercent)],
                     ['Coût de Revient par Portion', `${formatCurrency(costs.totalCostPerPortion)} $`],
-                    ['Marge de contribution par Portion', `${formatCurrency(costs.margeContributionDollar)} $ (${formatPercent(costs.margeContributionPercent)} %)`],
-                    ['Marge sur coût primaire par Portion', `${formatCurrency(costs.margeBruteDollar)} $ (${formatPercent(costs.margeBrutePercent)} %)`],
-                    ['Marge Nette par Portion', `${formatCurrency(costs.margeNetteDollar)} $ (${formatPercent(costs.margeNettePercent)} %)`],
+                    ['Marge de contribution par Portion', `${formatCurrency(costs.margeContributionDollar)} $ (${pct(costs.margeContributionPercent)})`],
+                    ['Marge sur coût primaire par Portion', `${formatCurrency(costs.margeBruteDollar)} $ (${pct(costs.margeBrutePercent)})`],
+                    ['Marge Nette par Portion', `${formatCurrency(costs.margeNetteDollar)} $ (${pct(costs.margeNettePercent)})`],
                 ];
 
                  doc.autoTable({
@@ -803,7 +874,7 @@ export const generatePdf = (options, deps) => {
 
                 // --- Page B : Analyse Visuelle et Opérationnelle ---
                 doc.addPage();
-                addPageHeader(`Analyse Visuelle - ${product.platName}`);
+                addPageHeader(`Analyse Visuelle - ${product.displayName}`);
                 yPos = 45;
 
                 // Section 1: Graphique "Secteur de secteur" (simulé)
@@ -936,15 +1007,20 @@ export const generatePdf = (options, deps) => {
                 if (trackingPoints && trackingPoints.length > 1) {
                     const productKpiData = getProductKpiDataForPdf(trackingPoints, product.id);
                     if(productKpiData.some(d => d["Marge nette (%)"] !== null)) {
-                        
+                        // Sans prix de vente, les ratios en % sont forcés à 0 (voir isPriced
+                        // ci-dessus) : on bascule alors sur les coûts en $/unité, seuls significatifs.
                         yPos = drawPdfLineChart(doc, {
-                            title: `Évolution des Indicateurs pour "${product.platName}"`,
+                            title: `Évolution des Indicateurs pour "${product.displayName}"`,
                             data: productKpiData,
-                            lines: [
+                            lines: isPriced ? [
                                 { dataKey: "Coût matière (%)", color: "#10B981" },
                                 { dataKey: "Coût main-d'oeuvre (%)", color: "#F59E0B" },
                                 { dataKey: "Coût frais indirects (%)", color: "#8B5CF6" },
                                 { dataKey: "Marge nette (%)", color: "#3B82F6" },
+                            ] : [
+                                { dataKey: "Coût matière ($/u.)", color: "#10B981" },
+                                { dataKey: "Coût main-d'oeuvre ($/u.)", color: "#F59E0B" },
+                                { dataKey: "Coût de revient ($/u.)", color: "#3B82F6" },
                             ],
                             x: 14,
                             y: yPos,
@@ -963,7 +1039,7 @@ export const generatePdf = (options, deps) => {
             yPos = 45;
 
             const summaryAnnexBody = productsWithCosts.map(p => [
-                p.platName,
+                p.displayName,
                 `${formatCurrency(parseLocaleNumber(p.prixVente))}`,
                 `${formatCurrency(p.costs.totalCostPerPortion)}`,
                 `${formatCurrency(p.costs.margeBruteDollar)}`,

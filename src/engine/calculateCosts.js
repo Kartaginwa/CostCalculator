@@ -1,23 +1,43 @@
 import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.js';
+import { computeYieldUnits } from './yieldCalculator.js';
 
-export const calculateCosts = (product, generalInfo, baseIngredients, allProducts, laborDatabase, overridePrice = null, memo = {}, visitedIds = new Set()) => {
+// `format` est un paramètre optionnel de fin de liste (Phase 1.4) : quand un appelant en passe un
+// explicitement (ex. l'un des `formats[]` d'une recette mère), les champs de vente (prix,
+// portions, mix, indirects) sont lus dessus plutôt que sur `product`. Repli automatique sur
+// `product.formats?.[0]`, puis sur `product` lui-même si aucun format n'existe (compatibilité
+// avec le code/les tests antérieurs à la Phase 1.3, où ces champs vivaient directement sur le
+// produit) — le comportement pour un produit à un seul format reste donc identique en tout point.
+// `basePackaging` (Phase 2.2) est ajouté en TOUT dernier paramètre, jamais inséré avant `format` :
+// plusieurs appelants passent déjà `format` positionnellement (9e argument) ; l'insérer plus tôt
+// aurait silencieusement décalé ces appels existants. Défaut `[]`, sûr pour tout appel antérieur
+// à cette phase (aucun format n'a encore de `packagingItems` tant que rien n'y est rattaché).
+export const calculateCosts = (product, generalInfo, baseIngredients, allProducts, laborDatabase, overridePrice = null, memo = {}, visitedIds = new Set(), format = null, basePackaging = []) => {
+    const fmt = format || product.formats?.[0] || product;
+
+    // Le cache est keyé par format (et non par produit) : deux formats d'une même recette mère ont
+    // des coûts par unité différents (prix, portions, emballage...) et ne doivent jamais partager
+    // une entrée de cache. Pour un produit à un seul format (ou sans format, repli ci-dessus),
+    // fmt.id vaut alors l'id du produit — comportement inchangé.
     // Le cache n'est valide que pour les appels sans prix simulé : overridePrice change le
-    // résultat (marges) mais pas la clé product.id. Les appels avec override sont donc calculés
-    // à neuf et non mis en cache, pour ne jamais renvoyer un résultat au prix réel à la place
-    // d'un prix simulé (ni l'inverse). Les sous-recettes, elles, sont toujours appelées sans
-    // override et restent pleinement cacheables via le memo partagé.
-    if (overridePrice === null && memo[product.id]) {
-        return memo[product.id];
+    // résultat (marges) mais pas la clé de cache. Les appels avec override sont donc calculés à
+    // neuf et non mis en cache, pour ne jamais renvoyer un résultat au prix réel à la place d'un
+    // prix simulé (ni l'inverse). Les sous-recettes, elles, sont toujours appelées sans override
+    // et restent pleinement cacheables via le memo partagé.
+    if (overridePrice === null && memo[fmt.id]) {
+        return memo[fmt.id];
     }
 
     if (visitedIds.has(product.id)) {
         console.error(`Boucle circulaire détectée pour le produit: ${product.platName}`);
         // On retourne un objet de coûts vides pour éviter le crash
         return {
-            totalIngredientsCost: 0, totalLaborCost: 0, totalDirectLaborCost: 0, indirectCostTotal: 0, totalRecipeCost: 0,
-            costMatierePerPortion: 0, costLaborPerPortion: 0, costIndirectPerPortion: 0, totalDirectCostPerPortion: 0,
+            totalIngredientsCost: 0, totalPackagingCost: 0, totalLaborCost: 0, totalDirectLaborCost: 0, totalSubcontractingCost: 0,
+            totalAgingCost: 0, indirectCostTotal: 0, totalRecipeCost: 0,
+            costMatierePerPortion: 0, costPackagingPerPortion: 0, costLaborPerPortion: 0, costSubcontractingPerPortion: 0, costAgingPerPortion: 0,
+            costIndirectPerPortion: 0, totalDirectCostPerPortion: 0,
             totalCostPerPortion: 0, margeBruteDollar: 0, margeBrutePercent: 0, margeNetteDollar: 0, margeNettePercent: 0,
-            costMatierePercent: 0, costLaborPercent: 0, costIndirectPercent: 0, totalBaseIngredientsCost: 0, totalLossCost: 0
+            costMatierePercent: 0, costPackagingPercent: 0, costLaborPercent: 0, costIndirectPercent: 0, totalBaseIngredientsCost: 0, totalLossCost: 0,
+            totalBasePackagingCost: 0, totalPackagingLossCost: 0
         };
     }
 
@@ -27,8 +47,24 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
 
     // Note: This function now expects generalInfo to have pre-parsed numbers
     const { kitchenProductivity } = generalInfo;
-    const prixVente = overridePrice !== null ? parseLocaleNumber(overridePrice) : parseLocaleNumber(product.prixVente);
-    const nbPortions = parseInt(product.nbPortions, 10) || 1;
+    const prixVente = overridePrice !== null ? parseLocaleNumber(overridePrice) : parseLocaleNumber(fmt.prixVente);
+
+    // Quantité produite : saisie manuellement (comportement historique), ou calculée par la
+    // grille de rendement du format quand elle est activée (Phase 1.4 — voir yieldCalculator.js).
+    // Pas de parseInt ici : une unité continue (kg, L...) peut légitimement être fractionnaire
+    // (ex. 47,3 kg) — seule une unité discrète (« unité ») est contrainte à un entier, et
+    // seulement côté validation UI (RecipeCalculator.jsx), pas ici (voir isDiscreteUnit, utils.js).
+    let nbPortions = parseLocaleNumber(fmt.nbPortions) || 1;
+    if (fmt.yieldGrid?.enabled) {
+        const computedUnits = computeYieldUnits({
+            baseQuantity: fmt.yieldGrid.baseQuantity,
+            stages: fmt.yieldGrid.stages,
+            rejectRate: fmt.yieldGrid.rejectRate,
+            unitSize: fmt.portionSize,
+        });
+        if (computedUnits > 0) nbPortions = computedUnits;
+    }
+
     const productivityFactor = (kitchenProductivity > 0 && kitchenProductivity <= 100) ? kitchenProductivity / 100 : 1;
         let totalIngredientsCost = 0;
         let totalBaseIngredientsCost = 0;
@@ -36,13 +72,15 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         let totalDirectLaborCost = 0;
         let totalProductionMinutes = 0;
 
-        if (product.isResaleProduct) {
-            const purchaseCost = parseLocaleNumber(product.purchaseCost);
+        if (fmt.isResaleProduct) {
+            const purchaseCost = parseLocaleNumber(fmt.purchaseCost);
             totalIngredientsCost = purchaseCost;
             totalBaseIngredientsCost = purchaseCost;
         } else {
-            // Coûts d'ingrédients
-            const ingredientsCosts = product.ingredients.reduce((acc, item) => {
+            // Coûts d'ingrédients — chaque format est sa propre fiche recette autonome depuis la
+            // correction du 23/09 (voir 04-Conception-Modele.md) : plus de lot partagé entre
+            // formats d'un même produit à répartir, donc pas d'allocation à faire ici.
+            const ingredientsCosts = (fmt.ingredients || []).reduce((acc, item) => {
                 let unitPrice = 0;
                 let lossPercentage = 0;
                 let ingredientUnit = 'unité';
@@ -55,18 +93,36 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                     lossPercentage = parseLocaleNumber(baseIngredient.lossPercentage) / 100;
                     ingredientUnit = baseIngredient.unit;
                 } else { // Sinon, c'est peut-être une sous-recette
-                    const subRecipeProduct = allProducts.find(p => p.id === item.id);
-                    if (subRecipeProduct && subRecipeProduct.isIngredient) {
-                        // Appel récursif pour obtenir les coûts de la sous-recette
-                        const subRecipeCosts = calculateCosts(subRecipeProduct, generalInfo, baseIngredients, allProducts, laborDatabase, null, memo, currentPath);
-                        const sanitizedPortionSize = parseLocaleNumber(subRecipeProduct.portionSize) || 1;
+                    // `item.id` référence soit un FORMAT précis (sélectionné via le sélecteur
+                    // d'ingrédient depuis la Phase 1.6, qui liste maintenant un format de
+                    // sous-recette à la fois — voir App.jsx `ingredientsList`), soit, pour une
+                    // référence antérieure à ce correctif, directement l'id du PRODUIT — auquel cas
+                    // on retombe sur son premier format, comportement historique inchangé.
+                    let subRecipeProduct = null;
+                    let subFmt = null;
+                    for (const p of allProducts) {
+                        if (!p.isIngredient) continue;
+                        const match = (p.formats || []).find(f => f.id === item.id);
+                        if (match) { subRecipeProduct = p; subFmt = match; break; }
+                    }
+                    if (!subRecipeProduct) {
+                        const byProductId = allProducts.find(p => p.id === item.id);
+                        if (byProductId && byProductId.isIngredient) {
+                            subRecipeProduct = byProductId;
+                            subFmt = byProductId.formats?.[0] || byProductId;
+                        }
+                    }
+                    if (subRecipeProduct && subFmt) {
+                        // Appel récursif pour obtenir les coûts du format précis de la sous-recette.
+                        const subRecipeCosts = calculateCosts(subRecipeProduct, generalInfo, baseIngredients, allProducts, laborDatabase, null, memo, currentPath, subFmt);
+                        const sanitizedPortionSize = parseLocaleNumber(subFmt.portionSize) || 1;
                         // Une sous-recette utilisée COMME INGRÉDIENT n'apporte que son coût DIRECT
                         // (matière + main-d'œuvre) au plat parent ; ses frais indirects sont exclus
                         // ici pour éviter le double comptage (le plat final absorbe l'overhead). Si
                         // la sous-recette est aussi vendue seule, elle absorbe bien ses propres frais
                         // indirects lorsqu'elle est calculée en tant que plat (affichage propre).
                         unitPrice = subRecipeCosts.totalDirectCostPerPortion / sanitizedPortionSize;
-                        ingredientUnit = subRecipeProduct.portionUnit;
+                        ingredientUnit = subFmt.portionUnit;
                         // Note: La perte et le rendement sont gérés à l'intérieur de la sous-recette, donc lossPercentage est 0 ici.
                     }
                 }
@@ -102,7 +158,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             totalDirectLaborCost = 0;
             totalProductionMinutes = 0;
 
-            (product.productionSteps || []).forEach(step => {
+            (fmt.productionSteps || []).forEach(step => {
                 const durationSeconds = parseLocaleNumber(step.duration);
 
                 (step.personnel || []).forEach(person => {
@@ -126,8 +182,48 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             });
         }
 
+    // Coûts d'emballage (Phase 2.2) — poste SÉPARÉ, jamais fusionné au coût matière (voir
+    // 04-Conception-Modele.md). Même logique de conversion d'unité et de perte que les
+    // ingrédients, mais sans notion de rendement : un emballage ne « rétrécit » pas pendant la
+    // production (pas d'équivalent de l'épluchage/la cuisson). Absent pour un produit de revente,
+    // comme les ingrédients et la main-d'œuvre (pas de recette du tout dans ce cas).
+    let totalPackagingCost = 0;
+    let totalBasePackagingCost = 0;
+    let totalPackagingLossCost = 0;
+    if (!fmt.isResaleProduct) {
+        const packagingCosts = (fmt.packagingItems || []).reduce((acc, item) => {
+            const basePkg = basePackaging.find(pkg => pkg.id === item.id);
+            if (!basePkg) return acc;
+            const unitPrice = parseLocaleNumber(basePkg.unitPrice);
+            const lossPercentage = (parseLocaleNumber(basePkg.lossPercentage) || 0) / 100;
+            const recipeUnit = item.recipeUnit || basePkg.unit;
+            const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[basePkg.unit]?.factor || 1);
+            const quantityInBaseUnit = parseLocaleNumber(item.quantity) * conversionFactor;
+            const baseCost = quantityInBaseUnit * unitPrice;
+            const costAfterLoss = lossPercentage > 0 && lossPercentage < 1 ? baseCost / (1 - lossPercentage) : baseCost;
+            const lossCost = costAfterLoss - baseCost;
+
+            acc.totalBaseCost += baseCost;
+            acc.totalLossCost += lossCost;
+            acc.totalFinalCost += costAfterLoss;
+            return acc;
+        }, { totalBaseCost: 0, totalLossCost: 0, totalFinalCost: 0 });
+
+        totalPackagingCost = packagingCosts.totalFinalCost;
+        totalBasePackagingCost = packagingCosts.totalBaseCost;
+        totalPackagingLossCost = packagingCosts.totalLossCost;
+    }
+
 
     const totalLaborCost = totalDirectLaborCost / productivityFactor;
+
+    // Sous-traitance (Phase 1.4) : coût d'opérations données à l'externe, propre au format (ex. un
+    // format spécifique confié à un tiers pour l'embouteillage). Masqué par défaut (`enabled`
+    // absent ou faux) — contribue alors 0 $, sans aucun changement de comportement.
+    let totalSubcontractingCost = 0;
+    if (fmt.subcontracting?.enabled) {
+        totalSubcontractingCost = (fmt.subcontracting.items || []).reduce((sum, item) => sum + parseLocaleNumber(item.cost), 0);
+    }
 
     // Frais indirects — méthode GLOBALE (generalInfo.indirectCostMethod), appliquée à tous les
     // plats. Deux méthodes, toutes deux normalisées pour répartir EXACTEMENT la part menu du pool
@@ -146,7 +242,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         // exactement la part menu du pool → se réconcilie.
         const totalDirectLaborHoursNeeded = parseLocaleNumber(generalInfo.totalDirectLaborHoursNeeded);
         let productLaborTimeSeconds = 0;
-        (product.productionSteps || []).forEach(step => {
+        (fmt.productionSteps || []).forEach(step => {
             const durationSeconds = parseLocaleNumber(step.duration);
             const personnelCount = step.personnel?.length || 0;
             productLaborTimeSeconds += durationSeconds * personnelCount;
@@ -160,8 +256,13 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         // actifs → répartit exactement la part menu du pool, même si les mix ne totalisent pas
         // 100 %. Dénominateur "portions vendues" : saisi si disponible, sinon estimé à partir des
         // volumes (unités reconstruites : revenu du menu / prix moyen pondéré par le mix × part).
-        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-        const portionsSoldRaw = parseLocaleNumber(product.indirectCosts?.portionsSold);
+        //
+        // Population agrégée (allProducts) lue depuis les champs "à plat" du produit, pas depuis
+        // formats[] : tant que chaque produit n'a qu'un seul format (Phases 1.4-1.5), ces champs
+        // sont des miroirs exacts l'un de l'autre (voir Phase 1.3), donc strictement équivalent.
+        // À revisiter en Phase 1.6, quand plusieurs formats par produit deviendront réels.
+        const salesMixPercent = parseLocaleNumber(fmt.salesMix) / 100;
+        const portionsSoldRaw = parseLocaleNumber(fmt.indirectCosts?.portionsSold);
         const totalRevenueParsed = parseLocaleNumber(generalInfo.totalRevenue);
         const activeForVolume = (allProducts || []).filter(p => p.onMenu);
         const sumActiveMix = activeForVolume.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix), 0);
@@ -173,7 +274,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             portionsSold = portionsSoldRaw;
         } else if (totalRevenueParsed > 0 && weightedAvgPrice > 0 && sumActiveMix > 0) {
             const totalUnits = (totalRevenueParsed * menuRevenuePercentage) / weightedAvgPrice;
-            portionsSold = totalUnits * (parseLocaleNumber(product.salesMix) / sumActiveMix);
+            portionsSold = totalUnits * (parseLocaleNumber(fmt.salesMix) / sumActiveMix);
             if (!(portionsSold > 0)) portionsSold = 1;
         } else {
             portionsSold = 1;
@@ -186,7 +287,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         }
     }
 
-    const totalRecipeCost = totalIngredientsCost + totalLaborCost + indirectCostTotal;
+    const totalRecipeCost = totalIngredientsCost + totalPackagingCost + totalLaborCost + totalSubcontractingCost + indirectCostTotal;
 
     // Soupape de sécurité (méthode "ventes") : sur données dégénérées (portions vendues = 1 par
     // défaut), le total d'un plat ne peut dépasser le pool de frais indirects.
@@ -201,7 +302,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     let costMatierePerPortion = 0;
     let costLaborPerPortion = 0;
 
-    if (product.isResaleProduct) {
+    if (fmt.isResaleProduct) {
         costMatierePerPortion = nbPortions > 0 ? totalIngredientsCost / nbPortions : 0;
         costLaborPerPortion = 0; // Un produit de revente n'a pas de coût de main-d'oeuvre direct
     } else {
@@ -209,63 +310,137 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         costLaborPerPortion = nbPortions > 0 ? totalLaborCost / nbPortions : 0;
     }
 
+    const costPackagingPerPortion = nbPortions > 0 ? totalPackagingCost / nbPortions : 0;
+    const costSubcontractingPerPortion = nbPortions > 0 ? totalSubcontractingCost / nbPortions : 0;
     const costIndirectPerPortion = nbPortions > 0 ? indirectCostTotal / nbPortions : 0;
 
-    const totalDirectCostPerPortion = costMatierePerPortion + costLaborPerPortion;
-    const totalCostPerPortion = totalDirectCostPerPortion + costIndirectPerPortion;
+    const totalDirectCostPerPortion = costMatierePerPortion + costPackagingPerPortion + costLaborPerPortion + costSubcontractingPerPortion;
 
-    // Marges
-    // margeBrute = prix − (coût matière + main-d'œuvre directe). La main-d'œuvre est traitée comme
-    // un coût semi-variable (on ne produit pas si le stock suffit) et est donc, par choix
-    // méthodologique de conseil, incluse dans cette marge — qui sert d'axe de rentabilité à la
-    // matrice de menu, de base au classement par contribution et de marge variable au point mort.
+    // Vieillissement (Phase 1.4) : charges d'intérêt de portage pour un format qui doit
+    // affiner/vieillir en inventaire avant la vente (ex. fermentation), calculées sur le total des
+    // charges directes du lot — comme le MAPAQ, traitées à part des charges indirectes plutôt que
+    // fondues dans le coût matière/MO. Masqué par défaut : contribue alors 0 $.
+    let totalAgingCost = 0;
+    if (fmt.aging?.enabled) {
+        const rate = parseLocaleNumber(fmt.aging.interestRate) / 100;
+        const months = parseLocaleNumber(fmt.aging.months);
+        totalAgingCost = (totalIngredientsCost + totalPackagingCost + totalLaborCost + totalSubcontractingCost) * (rate / 12) * months;
+    }
+    const costAgingPerPortion = nbPortions > 0 ? totalAgingCost / nbPortions : 0;
+
+    const totalCostPerPortion = totalDirectCostPerPortion + costIndirectPerPortion + costAgingPerPortion;
+
+    const portionSize = parseLocaleNumber(fmt.portionSize) || 1;
+    // Marges : extrait dans computeMarginsForPrice (fonction pure, exportée) parce que c'est la
+    // SEULE partie du calcul qui dépend du prix de vente — tout ce qui précède (coûts) ne varie
+    // pas par canal de vente. Phase 3.3 : computeChannelBreakdown (plus bas) réutilise cette même
+    // fonction pour chaque canal du format, sans recalculer les coûts.
+    const margins = computeMarginsForPrice(prixVente, {
+        totalDirectCostPerPortion, totalCostPerPortion, costMatierePerPortion,
+        costPackagingPerPortion, costLaborPerPortion, costIndirectPerPortion, portionSize,
+    });
+
+    const result = {
+        totalIngredientsCost,
+        totalPackagingCost,
+        totalLaborCost,
+        totalDirectLaborCost,
+        totalSubcontractingCost,
+        totalAgingCost,
+        indirectCostTotal,
+        totalRecipeCost,
+        costMatierePerPortion,
+        costPackagingPerPortion,
+        costLaborPerPortion,
+        costSubcontractingPerPortion,
+        costAgingPerPortion,
+        costIndirectPerPortion,
+        totalDirectCostPerPortion,
+        totalCostPerPortion,
+        // Exposé pour computeChannelBreakdown (Phase 3.3), appelé en dehors de calculateCosts avec
+        // ces coûts déjà calculés — sans ce champ, computeMarginsForPrice ne pourrait pas recalculer
+        // costPerUnit pour un autre prix (canal) que celui-ci.
+        portionSize,
+        ...margins,
+        totalBaseIngredientsCost,
+        totalLossCost,
+        totalBasePackagingCost,
+        totalPackagingLossCost
+    };
+
+    if (overridePrice === null) {
+        memo[fmt.id] = result;
+    }
+    return result;
+
+};
+
+// Marges pour un prix de vente donné, à partir des coûts déjà calculés (coûts = fixes, ne varient
+// pas par canal de vente ; seul le prix varie). Extrait de calculateCosts ci-dessus pour être
+// réutilisé par computeChannelBreakdown (Phase 3.3) sans dupliquer le calcul des coûts.
+// margeBrute = prix − (coût matière + main-d'œuvre directe + sous-traitance). La main-d'œuvre est
+// traitée comme un coût semi-variable et donc incluse dans cette marge — qui sert d'axe de
+// rentabilité à la matrice de menu, de base au classement par contribution et de marge variable au
+// point mort. margeContribution (coût matière seul) et margeNette (tous les coûts) sont fournies à
+// titre d'affichage (les trois niveaux : contribution → coût primaire → nette).
+export const computeMarginsForPrice = (prixVente, costs) => {
+    const {
+        totalDirectCostPerPortion, totalCostPerPortion, costMatierePerPortion,
+        costPackagingPerPortion, costLaborPerPortion, costIndirectPerPortion, portionSize,
+    } = costs;
+
     const margeBruteDollar = prixVente - totalDirectCostPerPortion;
     const margeBrutePercent = prixVente > 0 ? margeBruteDollar / prixVente : 0;
     const margeNetteDollar = prixVente - totalCostPerPortion;
     const margeNettePercent = prixVente > 0 ? margeNetteDollar / prixVente : 0;
-
-    // Marge de CONTRIBUTION (coût matière seul) = prix − coût matière par portion. Fournie à titre
-    // d'AFFICHAGE (les trois niveaux de marge : contribution → coût primaire → nette). La
-    // classification de menu et le point mort restent basés sur margeBrute (MO incluse).
     const margeContributionDollar = prixVente - costMatierePerPortion;
     const margeContributionPercent = prixVente > 0 ? margeContributionDollar / prixVente : 0;
 
-    // Nouveaux pourcentages
     const costMatierePercent = prixVente > 0 ? costMatierePerPortion / prixVente : 0;
+    const costPackagingPercent = prixVente > 0 ? costPackagingPerPortion / prixVente : 0;
     const costLaborPercent = prixVente > 0 ? costLaborPerPortion / prixVente : 0;
     const costIndirectPercent = prixVente > 0 ? costIndirectPerPortion / prixVente : 0;
 
-    const portionSize = parseLocaleNumber(product.portionSize) || 1;
-    const costPerUnit = portionSize > 0 ? totalCostPerPortion / portionSize : 0;
+    const size = parseLocaleNumber(portionSize) || 1;
+    const costPerUnit = size > 0 ? totalCostPerPortion / size : 0;
 
-    const result = {
-        totalIngredientsCost,
-        totalLaborCost,
-        totalDirectLaborCost,
-        indirectCostTotal,
-        totalRecipeCost,
-        costMatierePerPortion,
-        costLaborPerPortion,
-        costIndirectPerPortion,
-        totalDirectCostPerPortion,
-        totalCostPerPortion,
-        margeBruteDollar,
-        margeBrutePercent,
-        margeContributionDollar,
-        margeContributionPercent,
-        margeNetteDollar,
-        margeNettePercent,
+    return {
+        margeBruteDollar, margeBrutePercent, margeNetteDollar, margeNettePercent,
+        margeContributionDollar, margeContributionPercent,
+        costMatierePercent, costPackagingPercent, costLaborPercent, costIndirectPercent,
         costPerUnit,
-        costMatierePercent,
-        costLaborPercent,
-        costIndirectPercent,
-        totalBaseIngredientsCost,
-        totalLossCost
     };
+};
 
-    if (overridePrice === null) {
-        memo[product.id] = result;
-    }
-    return result;
-
+// Phase 3.3 : ventilation de la marge d'un format PAR CANAL DE VENTE, à partir des coûts déjà
+// calculés (une seule fois, indépendants du canal) et de `format.channelPrices` (Phase 3.2). Un
+// canal supprimé depuis, ou sans prix net saisi, est omis du résultat plutôt que forcé à 0 —
+// leçon tirée du chiffrier SymbiOse de l'utilisateur (voir 06-Analyse-Chiffrier-SymbiOse.md) :
+// une grille produit × canal avec des canaux non utilisés à 0 $ génère des divisions par zéro en
+// cascade ; une valeur absente (canal non vendu ici) doit rester absente, jamais un calcul forcé.
+// `allocatedIndirects` (optionnel, $ — la part des frais indirects déjà allouée à CE format,
+// peu importe le canal) : quand fourni, chaque entrée reçoit aussi `breakEvenUnits`, le point
+// mort pour CE canal (mêmes frais indirects alloués, divisés par la marge brute propre à ce
+// canal — donc un point mort différent par canal, uniquement parce que le prix diffère). Même
+// formule que l'ancien point mort de Recette & Calcul, déplacé le 06/10 vers Résumé → Par SKU.
+export const computeChannelBreakdown = (costs, channelPrices = [], salesChannels = [], allocatedIndirects = null) => {
+    return channelPrices
+        .map(cp => {
+            const channel = salesChannels.find(c => c.id === cp.channelId);
+            const netPrice = parseLocaleNumber(cp.netPrice);
+            if (!channel || !(netPrice > 0)) return null;
+            const margins = computeMarginsForPrice(netPrice, costs);
+            const breakEvenUnits = (allocatedIndirects != null && margins.margeBruteDollar > 0)
+                ? Math.ceil(allocatedIndirects / margins.margeBruteDollar)
+                : null;
+            return {
+                channelId: channel.id,
+                channelName: channel.name,
+                netPrice,
+                volume: parseLocaleNumber(cp.volume),
+                ...margins,
+                breakEvenUnits,
+            };
+        })
+        .filter(Boolean);
 };

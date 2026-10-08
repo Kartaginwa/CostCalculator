@@ -1,9 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Upload, X } from 'lucide-react';
 import { parseLocaleNumber, generateSlug, isNotEmpty, isValidNumber, isValidPercentage, APP_FIELDS, formatCurrency } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 
-export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIngredientsList, showNotification }) => {
+// Assistant d'import générique, partagé par le catalogue d'Ingrédients et celui de Packaging
+// (Phase 2.3) — même structure, mêmes champs (`APP_FIELDS`, déjà agnostique du type d'item :
+// aucune colonne spécifique aux ingrédients comme les allergènes, gérés ailleurs via
+// AllergenModal). `itemLabel`/`itemLabelPlural` paramètrent le texte affiché ; `extraNewItemFields`
+// les champs propres au type de catalogue ajoutés à un nouvel item (ex. `isRecipe`/`allergens`
+// pour les ingrédients, aucun pour le packaging).
+export const CatalogImportWizardModal = ({
+    isOpen, onClose, baseItems, onUpdateItemsList, showNotification,
+    itemLabel = 'ingrédient', itemLabelPlural = 'Ingrédients', extraNewItemFields = {},
+}) => {
     const [step, setStep] = useState(1);
     const [fileData, setFileData] = useState([]);
     const [headers, setHeaders] = useState([]);
@@ -16,21 +25,28 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
     const [defaultProvider, setDefaultProvider] = useState('');
     const [selectedItems, setSelectedItems] = useState(new Set());
 
-    const handleIngredientSelectUpdates = () => {
+    // « Nom de l'ingrédient » / « Nom de l'emballage » — seul champ dont le libellé nomme le type
+    // d'item ; le reste d'APP_FIELDS est déjà générique (Fournisseur, Format d'Achat...).
+    const appFields = useMemo(
+        () => APP_FIELDS.map(f => f.key === 'name' ? { ...f, label: `Nom de l'${itemLabel}` } : f),
+        [itemLabel]
+    );
+
+    const handleItemSelectUpdates = () => {
         const updates = processedData
             .filter(item => item.importStatus === 'update')
             .map(item => item.rowIndex);
         setSelectedItems(new Set(updates));
     };
 
-    const handleIngredientSelectNew = () => {
+    const handleItemSelectNew = () => {
         const newItems = processedData
             .filter(item => item.importStatus === 'new')
             .map(item => item.rowIndex);
         setSelectedItems(new Set(newItems));
     };
 
-    const handleIngredientDeselectAll = () => {
+    const handleItemDeselectAll = () => {
         setSelectedItems(new Set());
     };
 
@@ -50,7 +66,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
 
         fileData.forEach((row, index) => {
             const errors = {};
-            const newIngredient = {
+            const newItem = {
                 name: row[reverseMappings.name],
                 uniqueId: row[reverseMappings.uniqueId] || '',
                 provider: row[reverseMappings.provider] || defaultProvider || '',
@@ -68,36 +84,36 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                 if (match) {
                     const quantityPart = match[1];
                     const unitPart = (match[2] || 'unité').trim().toLowerCase();
-                    newIngredient.purchaseFormat = parseLocaleNumber(quantityPart);
-                    if (['g', 'gramme', 'grammes'].includes(unitPart)) newIngredient.unit = 'g';
-                    else if (['kg', 'kilo', 'kilos'].includes(unitPart)) newIngredient.unit = 'kg';
-                    else if (['ml', 'millilitre', 'millilitres'].includes(unitPart)) newIngredient.unit = 'ml';
-                    else if (['l', 'litre', 'litres'].includes(unitPart)) newIngredient.unit = 'L';
-                    else newIngredient.unit = 'unité';
+                    newItem.purchaseFormat = parseLocaleNumber(quantityPart);
+                    if (['g', 'gramme', 'grammes'].includes(unitPart)) newItem.unit = 'g';
+                    else if (['kg', 'kilo', 'kilos'].includes(unitPart)) newItem.unit = 'kg';
+                    else if (['ml', 'millilitre', 'millilitres'].includes(unitPart)) newItem.unit = 'ml';
+                    else if (['l', 'litre', 'litres'].includes(unitPart)) newItem.unit = 'L';
+                    else newItem.unit = 'unité';
                 } else {
                     errors.quantityAndUnit = `Format invalide pour '${valueStr}'.`;
-                    newIngredient.purchaseFormat = 1;
-                    newIngredient.unit = 'unité';
+                    newItem.purchaseFormat = 1;
+                    newItem.unit = 'unité';
                 }
             }
 
-            if (!isNotEmpty(newIngredient.name)) errors.name = 'Le nom ne peut pas être vide.';
-            if (!isValidNumber(newIngredient.purchasePrice)) errors.purchasePrice = 'Doit être un nombre positif.';
-            if (!isValidNumber(newIngredient.purchaseFormat)) errors.purchaseFormat = 'Doit être un nombre positif.';
-            if (!isValidPercentage(newIngredient.lossPercentage)) errors.lossPercentage = 'Doit être un pourcentage.';
+            if (!isNotEmpty(newItem.name)) errors.name = 'Le nom ne peut pas être vide.';
+            if (!isValidNumber(newItem.purchasePrice)) errors.purchasePrice = 'Doit être un nombre positif.';
+            if (!isValidNumber(newItem.purchaseFormat)) errors.purchaseFormat = 'Doit être un nombre positif.';
+            if (!isValidPercentage(newItem.lossPercentage)) errors.lossPercentage = 'Doit être un pourcentage.';
 
             let importStatus = 'new';
             let existingId = null;
 
-            const uniqueIdFromRow = String(newIngredient.uniqueId).trim();
-            const providerFromRow = newIngredient.provider;
-            const nameFromRow = newIngredient.name;
+            const uniqueIdFromRow = String(newItem.uniqueId).trim();
+            const providerFromRow = newItem.provider;
+            const nameFromRow = newItem.name;
 
             let primaryIdentifier;
             if (uniqueIdFromRow) {
                 primaryIdentifier = `${uniqueIdFromRow}::${providerFromRow}`.toLowerCase();
             } else {
-                primaryIdentifier = generateSlug(nameFromRow, providerFromRow, newIngredient.purchaseFormat, newIngredient.unit);
+                primaryIdentifier = generateSlug(nameFromRow, providerFromRow, newItem.purchaseFormat, newItem.unit);
             }
 
             // **LOGIQUE CORRIGÉE**: Si on a déjà vu cet identifiant dans le fichier, on ignore la ligne.
@@ -106,28 +122,28 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
             }
             seenIdentifiers.add(primaryIdentifier);
 
-            const existingIngredient = baseIngredients.find(ing => {
-                const ingSku = String(ing.uniqueId || '').trim();
-                const ingProvider = ing.provider || '';
-                const potentialSkuIdentifier = ingSku ? `${ingSku}::${ingProvider}`.toLowerCase() : null;
-                const potentialSlugIdentifier = generateSlug(ing.name, ingProvider, ing.purchaseFormat, ing.unit);
+            const existingItem = baseItems.find(it => {
+                const itSku = String(it.uniqueId || '').trim();
+                const itProvider = it.provider || '';
+                const potentialSkuIdentifier = itSku ? `${itSku}::${itProvider}`.toLowerCase() : null;
+                const potentialSlugIdentifier = generateSlug(it.name, itProvider, it.purchaseFormat, it.unit);
                 return primaryIdentifier && (
-                    (potentialSkuIdentifier && potentialSkuIdentifier === primaryIdentifier) || 
+                    (potentialSkuIdentifier && potentialSkuIdentifier === primaryIdentifier) ||
                     (potentialSlugIdentifier && potentialSlugIdentifier === primaryIdentifier)
                 );
             });
 
-            if (existingIngredient) {
+            if (existingItem) {
                 importStatus = 'update';
-                existingId = existingIngredient.id;
+                existingId = existingItem.id;
             }
 
             const finalStatus = Object.keys(errors).length > 0 ? 'error' : importStatus;
 
-            dataToProcess.push({ 
-                originalData: row, 
-                processed: newIngredient, 
-                errors, 
+            dataToProcess.push({
+                originalData: row,
+                processed: newItem,
+                errors,
                 existingId: finalStatus === 'error' ? null : existingId,
                 importStatus: finalStatus,
                 rowIndex: index + 2
@@ -137,7 +153,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
         setProcessedData(dataToProcess);
         setSelectedItems(new Set(dataToProcess.filter(i => i.importStatus !== 'error').map(i => i.rowIndex)));
 
-    }, [step, fileData, mappings, baseIngredients, defaultProvider]);
+    }, [step, fileData, mappings, baseItems, defaultProvider]);
 
     // Tente de deviner les correspondances initiales
     useEffect(() => {
@@ -148,7 +164,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
             headers.forEach(header => {
                 const lowerHeader = String(header).toLowerCase();
                 // Trouve la meilleure correspondance basée sur les mots-clés
-                const bestMatch = APP_FIELDS.find(field =>
+                const bestMatch = appFields.find(field =>
                     !assignedAppFields.has(field.key) && // Ne l'utilise que s'il n'est pas déjà assigné
                     field.keywords.some(keyword => lowerHeader.includes(keyword))
                 );
@@ -162,7 +178,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
             });
             setMappings(initialMappings);
         }
-    }, [step, headers]);
+    }, [step, headers, appFields]);
 
     const handleMappingChange = (header, appFieldKey) => {
         setMappings(prev => ({ ...prev, [header]: appFieldKey }));
@@ -203,7 +219,10 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                     return;
                 }
                 const data = new Uint8Array(e.target.result);
-                const wb = window.XLSX.read(data, { type: 'array' });
+                // codepage 65001 = UTF-8 : sans lui, un .csv accentué se lit en Latin-1 par défaut
+                // et corrompt les noms (ex. "Suprême" -> "SuprÃªme") — repéré en Phase 3.4, même
+                // correctif appliqué à SalesReportImportWizardModal.jsx. N'affecte pas les .xlsx.
+                const wb = window.XLSX.read(data, { type: 'array', codepage: 65001 });
 
                 const sheetNames = wb.SheetNames;
                 if (sheetNames.length > 1) {
@@ -248,7 +267,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
         let updatedCount = 0;
         let newCount = 0;
 
-        let ingredientsToUpdate = [...baseIngredients];
+        let itemsToUpdate = [...baseItems];
 
         processedData.filter(item => selectedItems.has(item.rowIndex)).forEach(item => {
             if (item.importStatus === 'error') {
@@ -260,10 +279,10 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
 
             if (item.importStatus === 'update') {
                 updatedCount++;
-                ingredientsToUpdate = ingredientsToUpdate.map(ing => {
-                    if (ing.id === item.existingId) {
+                itemsToUpdate = itemsToUpdate.map(it => {
+                    if (it.id === item.existingId) {
                         return {
-                            ...ing,
+                            ...it,
                             provider: processed.provider,
                             purchaseFormat: processed.purchaseFormat,
                             unit: processed.unit,
@@ -273,7 +292,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                             lastUpdated: new Date().toISOString().split('T')[0],
                         };
                     }
-                    return ing;
+                    return it;
                 });
             } else if (item.importStatus === 'new') {
                 newCount++;
@@ -282,7 +301,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                     ? processed.uniqueId
                     : generateSlug(processed.name, processed.provider, processed.purchaseFormat, processed.unit);
 
-                ingredientsToUpdate.push({
+                itemsToUpdate.push({
                     id: `manual_${Date.now()}_${Math.random()}`,
                     name: processed.name,
                     uniqueId: finalUniqueId, // Utilise l'identifiant du fichier ou le slug généré
@@ -292,17 +311,16 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                     purchasePrice: parseLocaleNumber(processed.purchasePrice),
                     unitPrice: unitPrice,
                     lossPercentage: processed.lossPercentage,
-                    isRecipe: false,
                     lastUpdated: new Date().toISOString().split('T')[0],
-                    allergens: [],
+                    ...extraNewItemFields,
                 });
             }
         });
 
-        onUpdateIngredientsList(ingredientsToUpdate);
+        onUpdateItemsList(itemsToUpdate);
         // Affiche une notification de succès et ferme l'assistant
         showNotification({
-            message: `Importation réussie : ${newCount} ingrédient(s) ajouté(s), ${updatedCount} mis à jour.`,
+            message: `Importation réussie : ${newCount} ${itemLabel}(s) ajouté(s), ${updatedCount} mis à jour.`,
             type: 'success'
         });
         handleClose();
@@ -333,14 +351,14 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
         }
     };
 
-    const handleManualLink = (rowIndex, linkedIngredientId) => {
+    const handleManualLink = (rowIndex, linkedItemId) => {
         setProcessedData(prevData => prevData.map(item => {
             if (item.rowIndex === rowIndex) {
-                if (linkedIngredientId === 'new') {
+                if (linkedItemId === 'new') {
                     return { ...item, importStatus: 'new', existingId: null };
                 }
-                const existingIngredient = baseIngredients.find(ing => ing.id === linkedIngredientId);
-                return { ...item, importStatus: 'update', existingId: existingIngredient.id };
+                const existingItem = baseItems.find(it => it.id === linkedItemId);
+                return { ...item, importStatus: 'update', existingId: existingItem.id };
             }
             return item;
         }));
@@ -350,7 +368,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full h-full max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b">
-                    <h2 className="text-2xl font-bold text-gray-800">Assistant d'Importation d'Ingrédients (Étape {step}/4)</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">Assistant d'Importation d'{itemLabelPlural} (Étape {step}/4)</h2>
                     <button onClick={handleClose} className="p-2 rounded-full hover:bg-gray-200">
                         <X className="h-6 w-6 text-gray-600" />
                     </button>
@@ -360,7 +378,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                     {step === 1 && (
                         <div className="text-center">
                             <h3 className="text-xl font-semibold mb-4">Étape 1: Téléverser votre fichier</h3>
-                            <p className="text-gray-600 mb-8">Sélectionnez un fichier CSV ou Excel (.csv, .xls, .xlsx) contenant votre liste d'ingrédients.</p>
+                            <p className="text-gray-600 mb-8">Sélectionnez un fichier CSV ou Excel (.csv, .xls, .xlsx) contenant votre liste d'{itemLabelPlural.toLowerCase()}.</p>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -380,7 +398,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                     {step === 1.5 && (
                         <div>
                             <h3 className="text-xl font-semibold mb-4">Étape 1.5: Choisir un onglet</h3>
-                            <p className="text-gray-600 mb-8">Votre fichier contient plusieurs onglets. Veuillez sélectionner celui qui contient la liste d'ingrédients à importer.</p>
+                            <p className="text-gray-600 mb-8">Votre fichier contient plusieurs onglets. Veuillez sélectionner celui qui contient la liste d'{itemLabelPlural.toLowerCase()} à importer.</p>
                             <div className="space-y-2">
                                 {sheetNames.map(name => (
                                     <label key={name} className="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer">
@@ -405,7 +423,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                             <div className="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg">
                                 <label htmlFor="defaultProvider" className="block text-sm font-medium text-gray-700 flex items-center">
                                     Fournisseur par défaut (Optionnel)
-                                    <Tooltip text="Si votre fichier ne contient pas de colonne pour le fournisseur, vous pouvez en spécifier un ici. Il sera appliqué à tous les nouveaux ingrédients importés." />
+                                    <Tooltip text={`Si votre fichier ne contient pas de colonne pour le fournisseur, vous pouvez en spécifier un ici. Il sera appliqué à tous les nouveaux ${itemLabel}s importés.`} />
                                 </label>
                                 <input
                                     type="text"
@@ -428,7 +446,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                                             className="p-2 border rounded-md"
                                         >
                                             <option value="ignore">-- Ignorer cette colonne --</option>
-                                            {APP_FIELDS.map(field => (
+                                            {appFields.map(field => (
                                                 <option key={field.key} value={field.key}>
                                                     {field.label}{field.required ? ' *' : ''}
                                                 </option>
@@ -442,19 +460,19 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                     {step === 3 && (
                         <div>
                             <h3 className="text-xl font-semibold mb-2">Étape 3: Prévisualisation et Validation</h3>
-                            <p className="text-gray-600 mb-6">Vérifiez les premières lignes de vos données. Les erreurs sont surlignées en rouge. Les ingrédients existants seront mis à jour.</p>
+                            <p className="text-gray-600 mb-6">Vérifiez les premières lignes de vos données. Les erreurs sont surlignées en rouge. Les {itemLabel}s existants seront mis à jour.</p>
 
                             <div className="flex items-center space-x-4 mb-4 p-2 bg-gray-50 rounded-md">
                                 <span className="text-sm font-medium text-gray-700">Sélections rapides:</span>
-                                <button onClick={handleIngredientSelectUpdates} className="text-sm text-blue-600 hover:underline">
+                                <button onClick={handleItemSelectUpdates} className="text-sm text-blue-600 hover:underline">
                                     Importer uniquement les mises à jour
                                 </button>
                                 <span className="text-gray-300">|</span>
-                                <button onClick={handleIngredientSelectNew} className="text-sm text-green-600 hover:underline">
+                                <button onClick={handleItemSelectNew} className="text-sm text-green-600 hover:underline">
                                     Importer uniquement les nouveaux
                                 </button>
                                 <span className="text-gray-300">|</span>
-                                <button onClick={handleIngredientDeselectAll} className="text-sm text-red-600 hover:underline">
+                                <button onClick={handleItemDeselectAll} className="text-sm text-red-600 hover:underline">
                                     Tout désélectionner
                                 </button>
                             </div>
@@ -472,8 +490,8 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                                                 />
                                             </th>
                                             <th className="p-2 text-left">Statut</th>
-                                            <th className="p-2 text-left">Nom de l'ingrédient (Fichier)</th>
-                                            <th className="p-2 text-left">Lier à un ingrédient existant</th>
+                                            <th className="p-2 text-left">Nom (Fichier)</th>
+                                            <th className="p-2 text-left">Lier à un {itemLabel} existant</th>
                                             <th className="p-2 text-right">Prix d'Achat</th>
                                             <th className="p-2 text-right">Format</th>
                                         </tr>
@@ -502,15 +520,15 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                                                             onChange={(e) => handleManualLink(item.rowIndex, e.target.value)}
                                                             value="new"
                                                         >
-                                                            <option value="new">-- Créer un nouvel ingrédient --</option>
-                                                            {baseIngredients.map(ing => (
-                                                                <option key={ing.id} value={ing.id}>{ing.name} ({ing.provider})</option>
+                                                            <option value="new">-- Créer un nouvel item --</option>
+                                                            {baseItems.map(it => (
+                                                                <option key={it.id} value={it.id}>{it.name} ({it.provider})</option>
                                                             ))}
                                                         </select>
                                                     )}
                                                     {item.importStatus === 'update' && (
                                                         <span className="text-xs text-gray-500 italic">
-                                                            Lié à "{baseIngredients.find(ing => ing.id === item.existingId)?.name}"
+                                                            Lié à "{baseItems.find(it => it.id === item.existingId)?.name}"
                                                         </span>
                                                     )}
                                                 </td>
@@ -526,7 +544,7 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                                 </table>
                             </div>
                             <div className="mt-4 text-right text-sm font-semibold">
-                                <p>{selectedItems.size} ingrédient(s) sélectionné(s) pour l'importation.</p>
+                                <p>{selectedItems.size} {itemLabel}(s) sélectionné(s) pour l'importation.</p>
                             </div>
                         </div>
                     )}
@@ -536,15 +554,15 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                             <div className="p-4 bg-gray-100 rounded-lg space-y-2 text-left max-w-md mx-auto">
                                 <p>Vous êtes sur le point de :</p>
                                 <ul className="list-disc list-inside">
-                                    <li><strong>Mettre à jour</strong> {processedData.filter(item => item.importStatus === 'update' && selectedItems.has(item.rowIndex)).length} ingrédient(s) existant(s).</li>
-                                    <li><strong>Ajouter</strong> {processedData.filter(item => item.importStatus === 'new' && selectedItems.has(item.rowIndex)).length} nouveau(x) ingrédient(s).</li>
+                                    <li><strong>Mettre à jour</strong> {processedData.filter(item => item.importStatus === 'update' && selectedItems.has(item.rowIndex)).length} {itemLabel}(s) existant(s).</li>
+                                    <li><strong>Ajouter</strong> {processedData.filter(item => item.importStatus === 'new' && selectedItems.has(item.rowIndex)).length} nouveau(x) {itemLabel}(s).</li>
                                 </ul>
                                 <p className="border-t pt-2 mt-2">
-                                    Les {processedData.filter(item => !selectedItems.has(item.rowIndex) && item.importStatus !== 'error').length} ingrédient(s) non sélectionné(s) et les {processedData.filter(item => item.importStatus === 'error').length} ligne(s) avec des erreurs seront ignoré(e)s.
+                                    Les {processedData.filter(item => !selectedItems.has(item.rowIndex) && item.importStatus !== 'error').length} {itemLabel}(s) non sélectionné(s) et les {processedData.filter(item => item.importStatus === 'error').length} ligne(s) avec des erreurs seront ignoré(e)s.
                                 </p>
                             </div>
                             <p className="text-gray-600 my-8">
-                                Cette action modifiera votre base de données d'ingrédients. Êtes-vous sûr de vouloir continuer ?
+                                Cette action modifiera votre base de données d'{itemLabelPlural.toLowerCase()}. Êtes-vous sûr de vouloir continuer ?
                             </p>
                         </div>
                     )}
@@ -577,13 +595,13 @@ export const ImportWizardModal = ({ isOpen, onClose, baseIngredients, onUpdateIn
                                 onClick={() => setStep(4)}
                                 disabled={selectedItems.size === 0}
                                 className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
-                                title={selectedItems.size === 0 ? "Veuillez sélectionner au moins un ingrédient." : ""}
+                                title={selectedItems.size === 0 ? "Veuillez sélectionner au moins un item." : ""}
                             >
                                 Suivant
                             </button>
                         )}
                         {step === 4 && (
-                            <button 
+                            <button
                                 onClick={handleImport}
                                 className="px-4 py-2 border rounded-md text-sm text-white bg-green-600 hover:bg-green-700"
                             >

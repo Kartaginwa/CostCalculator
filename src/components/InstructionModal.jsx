@@ -100,8 +100,10 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                         <li><a href="#guide-param-entreprise" onClick={(e) => handleLinkClick(e, '#guide-param-entreprise')} className="text-gray-600 hover:underline">Informations sur l'entreprise</a></li>
                                         <li><a href="#guide-param-frais" onClick={(e) => handleLinkClick(e, '#guide-param-frais')} className="text-gray-600 hover:underline">Frais et revenus</a></li>
                                         <li><a href="#guide-param-objectifs" onClick={(e) => handleLinkClick(e, '#guide-param-objectifs')} className="text-gray-600 hover:underline">Objectifs stratégiques</a></li>
-                                        <li><a href="#guide-param-menu" onClick={(e) => handleLinkClick(e, '#guide-param-menu')} className="text-gray-600 hover:underline">Menu et recettes</a></li>
-                                        <li><a href="#guide-param-import-pos" onClick={(e) => handleLinkClick(e, '#guide-param-import-pos')} className="text-gray-600 hover:underline">Assistant d'importation POS</a></li>
+                                        <li><a href="#guide-param-activites" onClick={(e) => handleLinkClick(e, '#guide-param-activites')} className="text-gray-600 hover:underline">Lignes de production</a></li>
+                                        <li><a href="#guide-param-channels" onClick={(e) => handleLinkClick(e, '#guide-param-channels')} className="text-gray-600 hover:underline">Canaux de vente</a></li>
+                                        <li><a href="#guide-param-menu" onClick={(e) => handleLinkClick(e, '#guide-param-menu')} className="text-gray-600 hover:underline">Produits et SKUs</a></li>
+                                        <li><a href="#guide-param-import-pos" onClick={(e) => handleLinkClick(e, '#guide-param-import-pos')} className="text-gray-600 hover:underline">Assistant d'importation d'un rapport de ventes</a></li>
                                     </ul>
                                 </li>
                                 <li>
@@ -114,25 +116,35 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                         <li><a href="#guide-ing-rapport" onClick={(e) => handleLinkClick(e, '#guide-ing-rapport')} className="text-gray-600 hover:underline">Rapport d'achats</a></li>
                                     </ul>
                                 </li>
+                                <li>
+                                    <a href="#guide-packaging" onClick={(e) => handleLinkClick(e, '#guide-packaging')} className="font-bold text-blue-700 hover:underline">Onglet 3: Packaging</a>
+                                     <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
+                                        <li><a href="#guide-pkg-db" onClick={(e) => handleLinkClick(e, '#guide-pkg-db')} className="text-gray-600 hover:underline">Base de données</a></li>
+                                        <li><a href="#guide-pkg-import" onClick={(e) => handleLinkClick(e, '#guide-pkg-import')} className="text-gray-600 hover:underline">Assistant d'importation</a></li>
+                                        <li><a href="#guide-pkg-abc" onClick={(e) => handleLinkClick(e, '#guide-pkg-abc')} className="text-gray-600 hover:underline">Analyse ABC</a></li>
+                                        <li><a href="#guide-pkg-rapport" onClick={(e) => handleLinkClick(e, '#guide-pkg-rapport')} className="text-gray-600 hover:underline">Rapport d'achats</a></li>
+                                    </ul>
+                                </li>
                                  <li>
-                                    <a href="#guide-maindoeuvre" onClick={(e) => handleLinkClick(e, '#guide-maindoeuvre')} className="font-bold text-blue-700 hover:underline">Onglet 3: Main-d'œuvre</a>
+                                    <a href="#guide-maindoeuvre" onClick={(e) => handleLinkClick(e, '#guide-maindoeuvre')} className="font-bold text-blue-700 hover:underline">Onglet 4: Main-d'œuvre</a>
                                      <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
                                         <li><a href="#guide-mo-db" onClick={(e) => handleLinkClick(e, '#guide-mo-db')} className="text-gray-600 hover:underline">Base de données</a></li>
                                         <li><a href="#guide-mo-rapport" onClick={(e) => handleLinkClick(e, '#guide-mo-rapport')} className="text-gray-600 hover:underline">Rapport de productivité</a></li>
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="#guide-recette" onClick={(e) => handleLinkClick(e, '#guide-recette')} className="font-bold text-blue-700 hover:underline">Onglet 4: Recette & Calcul</a>
+                                    <a href="#guide-recette" onClick={(e) => handleLinkClick(e, '#guide-recette')} className="font-bold text-blue-700 hover:underline">Onglet 5: Recette & Calcul</a>
                                      <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
                                         <li><a href="#guide-recette-header" onClick={(e) => handleLinkClick(e, '#guide-recette-header')} className="text-gray-600 hover:underline">En-tête de la recette</a></li>
                                         <li><a href="#guide-recette-ing" onClick={(e) => handleLinkClick(e, '#guide-recette-ing')} className="text-gray-600 hover:underline">1. Ingrédients</a></li>
-                                        <li><a href="#guide-recette-mo" onClick={(e) => handleLinkClick(e, '#guide-recette-mo')} className="text-gray-600 hover:underline">2. Processus de production</a></li>
-                                        <li><a href="#guide-recette-indirects" onClick={(e) => handleLinkClick(e, '#guide-recette-indirects')} className="text-gray-600 hover:underline">3. Frais indirects</a></li>
-                                        <li><a href="#guide-recette-recap" onClick={(e) => handleLinkClick(e, '#guide-recette-recap')} className="text-gray-600 hover:underline">4. Récapitulatif</a></li>
+                                        <li><a href="#guide-recette-packaging" onClick={(e) => handleLinkClick(e, '#guide-recette-packaging')} className="text-gray-600 hover:underline">2. Emballage</a></li>
+                                        <li><a href="#guide-recette-mo" onClick={(e) => handleLinkClick(e, '#guide-recette-mo')} className="text-gray-600 hover:underline">3. Processus de production</a></li>
+                                        <li><a href="#guide-recette-indirects" onClick={(e) => handleLinkClick(e, '#guide-recette-indirects')} className="text-gray-600 hover:underline">5. Frais indirects</a></li>
+                                        <li><a href="#guide-recette-recap" onClick={(e) => handleLinkClick(e, '#guide-recette-recap')} className="text-gray-600 hover:underline">6. Récapitulatif</a></li>
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="#guide-resume" onClick={(e) => handleLinkClick(e, '#guide-resume')} className="font-bold text-blue-700 hover:underline">Onglet 5: Résumé</a>
+                                    <a href="#guide-resume" onClick={(e) => handleLinkClick(e, '#guide-resume')} className="font-bold text-blue-700 hover:underline">Onglet 6: Rapport</a>
                                      <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
                                         <li><a href="#guide-resume-tableau" onClick={(e) => handleLinkClick(e, '#guide-resume-tableau')} className="text-gray-600 hover:underline">Tableau comparatif</a></li>
                                         <li><a href="#guide-resume-contribution" onClick={(e) => handleLinkClick(e, '#guide-resume-contribution')} className="text-gray-600 hover:underline">Classement par contribution</a></li>
@@ -141,7 +153,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="#guide-suivi" onClick={(e) => handleLinkClick(e, '#guide-suivi')} className="font-bold text-blue-700 hover:underline">Onglet 6: Suivi</a>
+                                    <a href="#guide-suivi" onClick={(e) => handleLinkClick(e, '#guide-suivi')} className="font-bold text-blue-700 hover:underline">Onglet 7: Suivi</a>
                                      <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
                                         <li><a href="#guide-suivi-points" onClick={(e) => handleLinkClick(e, '#guide-suivi-points')} className="text-gray-600 hover:underline">Points de référence</a></li>
                                         <li><a href="#guide-suivi-graphiques" onClick={(e) => handleLinkClick(e, '#guide-suivi-graphiques')} className="text-gray-600 hover:underline">Graphiques d'évolution</a></li>
@@ -189,26 +201,43 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </div>
                                      <div id="guide-param-objectifs" className="space-y-2 mt-4">
                                         <h4 className="text-lg font-semibold">{highlightText("Objectifs stratégiques", searchTerm)}</h4>
-                                        <p>{highlightText("Définissez des pourcentages cibles pour vos coûts. Dans l'onglet 'Résumé', des symboles apparaîtront à côté des coûts de chaque plat pour indiquer visuellement s'ils respectent ou non ces objectifs.", searchTerm)}</p>
+                                        <p>{highlightText("Définissez des pourcentages cibles pour vos coûts. Dans l'onglet 'Rapport', des symboles apparaîtront à côté des coûts de chaque plat pour indiquer visuellement s'ils respectent ou non ces objectifs.", searchTerm)}</p>
+                                    </div>
+                                    <div id="guide-param-activites" className="space-y-2 mt-4">
+                                        <h4 className="text-lg font-semibold">{highlightText("Lignes de production", searchTerm)}</h4>
+                                        <p>{highlightText("Une ligne de production regroupe les produits qui partagent un même procédé de fabrication (ex. Confitures, Produits séchés). Créez-les ici avant de créer vos produits, puisque chaque produit doit être rattaché à une ligne. Elles serviront à répartir vos frais indirects par ligne dans la section Frais fixes (à venir).", searchTerm)}</p>
+                                    </div>
+                                    <div id="guide-param-channels" className="space-y-2 mt-4">
+                                        <h4 className="text-lg font-semibold">{highlightText("Canaux de vente", searchTerm)}</h4>
+                                        <p>{highlightText("Un canal de vente est une chaîne de mise en marché : une liste ordonnée de maillons (ex. Producteur → Distributeur → Détaillant), chacun appliquant une marge ou un markup sur le prix du maillon précédent, jusqu'au prix de vente suggéré au consommateur. Un canal « Vente directe » existe par défaut, sans maillon — il correspond au prix de vente unique habituel.", searchTerm)}</p>
+                                        <ul className="list-disc list-inside space-y-2 pl-4">
+                                            <li><strong>{highlightText('Markup vs marge :', searchTerm)}</strong> {highlightText("Un markup est un % appliqué sur le prix précédent (le coût d'entrée de ce maillon) ; une marge est un % du prix de VENTE à ce maillon, pas du coût — les deux donnent des résultats différents pour le même pourcentage, d'où la distinction explicite à chaque maillon.", searchTerm)}</li>
+                                            <li><strong>{highlightText('Rattachement à un format :', searchTerm)}</strong> {highlightText("Cette section définit seulement la structure (nom, maillons, %) de chaque canal. Le rattachement d'un format de vente précis à un canal, avec son prix net, se fera dans Produits et SKUs (à venir).", searchTerm)}</li>
+                                        </ul>
                                     </div>
                                     <div id="guide-param-menu" className="space-y-2 mt-4">
-                                        <h4 className="text-lg font-semibold">{highlightText("Menu et recettes", searchTerm)}</h4>
-                                        <p>{highlightText("C'est la liste maîtresse de tous les plats, boissons ou produits que vous souhaitez analyser. Chaque ligne créée ici apparaîtra dans le menu déroulant de l'onglet 'Recette & Calcul'.", searchTerm)}</p>
+                                        <h4 className="text-lg font-semibold">{highlightText("Produits et SKUs", searchTerm)}</h4>
+                                        <p>{highlightText("C'est la liste maîtresse de toutes vos recettes et de leurs formats de vente, organisée en une section par recette. Un produit peut être vendu sous plusieurs formats — l'emballage et la quantité, ex. un pot de confiture de 250 ml et un pot de 500 ml — chacun avec sa propre fiche recette, son propre SKU, prix et mix des ventes ; chaque section liste donc les formats du produit concerné. Chaque produit créé ici apparaît dans le menu déroulant de l'onglet 'Recette & Calcul', où vous détaillez la recette et les coûts de chacun de ses formats.", searchTerm)}</p>
                                         <ul className="list-decimal list-inside space-y-2 pl-4 mt-2">
-                                            <li><strong>{highlightText('Prix de vente ($) :', searchTerm)}</strong> {highlightText("Le prix affiché sur votre menu pour le client, taxes en sus.", searchTerm)}</li>
-                                            <li><strong>{highlightText('Catégorie :', searchTerm)}</strong> {highlightText("Permet de regrouper vos plats (ex: Entrées, Plats principaux) pour une meilleure organisation et pour filtrer les données.", searchTerm)}</li>
-                                            <li><strong>{highlightText('Mix des ventes (%) :', searchTerm)}</strong> {highlightText("Un des chiffres les plus importants. Il représente la popularité d'un plat en pourcentage des ventes. La somme de tous les plats 'Au Menu' devrait idéalement être de 100%.", searchTerm)}</li>
-                                            <li><strong>{highlightText('Au Menu (case à cocher) :', searchTerm)}</strong> {highlightText("Détermine si un plat doit être inclus dans les calculs d'analyse (ex: analyse stratégique, rapport d'achats). Décochez cette case pour les plats saisonniers ou en développement.", searchTerm)}</li>
+                                            <li><strong>{highlightText('En-tête de section (par recette) :', searchTerm)}</strong> {highlightText("Nom du plat, ligne de fabrication et catégorie, communs à tous les formats de cette recette ; boutons pour dupliquer ou supprimer la recette en entier (tous ses formats).", searchTerm)}</li>
+                                            <li><strong>{highlightText('Format :', searchTerm)}</strong> {highlightText("La quantité et l'unité de ce format (ex. 250 ml) — c'est l'emballage que vous vendez, remplace l'ancienne 'quantité par portion'.", searchTerm)}</li>
+                                            <li><strong>{highlightText('SKU :', searchTerm)}</strong> {highlightText("Le numéro de référence de ce format — pas une donnée indépendante : il se déduit automatiquement de la recette et du format à la création (librement modifiable ensuite).", searchTerm)}</li>
+                                            <li><strong>{highlightText('Prix de vente ($) :', searchTerm)}</strong> {highlightText("Le prix affiché sur votre menu pour le client, taxes en sus, pour ce format précis.", searchTerm)}</li>
+                                            <li><strong>{highlightText('Mix des ventes (%) :', searchTerm)}</strong> {highlightText("Un des chiffres les plus importants. Il représente la popularité de ce format en pourcentage des ventes. La somme de tous les formats 'Au Menu' devrait idéalement être de 100%.", searchTerm)}</li>
+                                            <li><strong>{highlightText('Au Menu (case à cocher) :', searchTerm)}</strong> {highlightText("Détermine si ce format doit être inclus dans les calculs d'analyse (ex: analyse stratégique, rapport d'achats). Décochez cette case pour les formats saisonniers ou en développement.", searchTerm)}</li>
+                                            <li><strong>{highlightText('Actions sur un format :', searchTerm)}</strong> {highlightText("Dupliquez ou supprimez ce format ; le bouton « Ajouter un format » en bas de chaque section en crée un nouveau, vierge, pour cette recette.", searchTerm)}</li>
                                         </ul>
-                                        <p className="mt-2">{highlightText("Navigation dans les tableaux : Pour les longues listes, utilisez les contrôles de pagination situés en bas du tableau pour changer de page et choisir le nombre d'items à afficher (10, 25, 50, ou 100).", searchTerm)}</p>
+                                        <p className="mt-2">{highlightText("Vous pouvez aussi ajouter un nouveau format directement depuis l'onglet Recette & Calcul (fenêtre « Ajouter un format »), et copier une section de la fiche recette (ingrédients, étapes de production...) d'un format à un autre sans dupliquer le format en entier — voir la section suivante.", searchTerm)}</p>
+                                        <p className="mt-2">{highlightText("Navigation dans les listes : Pour un grand nombre de recettes, utilisez les contrôles de pagination en bas de la liste pour changer de page et choisir le nombre de recettes à afficher par page (10, 25, 50, ou 100).", searchTerm)}</p>
                                     </div>
                                     <div id="guide-param-import-pos" className="space-y-2 mt-4">
-                                        <h4 className="text-lg font-semibold">{highlightText("Assistant d'importation depuis POS", searchTerm)}</h4>
-                                        <p>{highlightText("Cet assistant puissant lit un rapport de ventes (Excel ou CSV) pour automatiser la saisie :", searchTerm)}</p>
+                                        <h4 className="text-lg font-semibold">{highlightText("Assistant d'importation d'un rapport de ventes", searchTerm)}</h4>
+                                        <p>{highlightText("Cet assistant lit un rapport de ventes (Excel ou CSV) — un export comptable (QuickBooks, Odoo...), un rapport par distributeur, ou tout fichier listant plat, quantité vendue et prix — et met à jour le prix net et le volume de vos formats PAR CANAL DE VENTE :", searchTerm)}</p>
                                         <ul className="list-disc list-inside space-y-2 pl-4">
-                                            <li><strong>{highlightText("Agrégation des ventes :", searchTerm)}</strong> {highlightText("Il regroupe automatiquement toutes les lignes d'un même produit pour calculer la quantité totale vendue.", searchTerm)}</li>
+                                            <li><strong>{highlightText("Agrégation des ventes :", searchTerm)}</strong> {highlightText("Il regroupe automatiquement toutes les lignes d'un même plat × format × canal pour calculer la quantité totale vendue.", searchTerm)}</li>
+                                            <li><strong>{highlightText("Résolution du format et du canal :", searchTerm)}</strong> {highlightText("Si une colonne Format ou Canal est mappée et qu'une valeur ne correspond à rien d'existant, vous choisissez pour chaque ligne : lier à un format/canal existant, créer un nouveau canal (jamais un nouveau format automatiquement), ou ignorer la ligne.", searchTerm)}</li>
                                             <li><strong>{highlightText("Détection de la période :", searchTerm)}</strong> {highlightText("Si une colonne de date est mappée, l'assistant met à jour la 'Période de référence' pour correspondre aux dates du rapport.", searchTerm)}</li>
-                                            <li><strong>{highlightText("Recalcul du mix des ventes :", searchTerm)}</strong> {highlightText("Il ajuste automatiquement le mix des ventes de tous les plats importés pour qu'il corresponde parfaitement au rapport, garantissant une précision maximale.", searchTerm)}</li>
+                                            <li><strong>{highlightText("Recalcul du mix des ventes :", searchTerm)}</strong> {highlightText("Le mix des ventes de TOUS les formats du menu se redéduit des volumes par canal déjà saisis (cet import et les précédents) — un format sans aucun volume importé apparaîtra à 0 %.", searchTerm)}</li>
                                             <li><strong>{highlightText("Liaison manuelle :", searchTerm)}</strong> {highlightText("Si un plat du rapport ne correspond pas exactement à un nom existant, vous pouvez le lier manuellement pour éviter les doublons.", searchTerm)}</li>
                                         </ul>
                                     </div>
@@ -255,8 +284,28 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                         <p>{highlightText("Cet outil puissant estime vos besoins en matières premières pour la période en se basant sur vos recettes et vos ventes. Il distingue le 'Coût Net' (la valeur de la matière utilisée dans les plats) du 'Coût Perdu' (la valeur de la perte en stock), vous donnant un 'Coût d'Achat Requis' total et réaliste.", searchTerm)}</p>
                                     </div>
                                 </section>
+                                <section id="guide-packaging">
+                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 3: Packaging", searchTerm)}</h3>
+                                    <p className="mb-4">{highlightText("Cet onglet est le catalogue de vos emballages (pots, couvercles, étiquettes, boîtes...), distinct des ingrédients et comptabilisé comme un poste de coût à part dans vos fiches recettes — jamais fusionné au coût matière.", searchTerm)}</p>
+                                    <div id="guide-pkg-db" className="space-y-2">
+                                        <h4 className="text-lg font-semibold">{highlightText("Base de données des emballages", searchTerm)}</h4>
+                                        <p>{highlightText("Même structure que la base de données des ingrédients : fournisseur, format d'achat, unité, prix d'achat, taux de perte (bris, rebuts) et prix unitaire calculé automatiquement. Utilisez les contrôles de filtre, de tri et de pagination pour naviguer dans une longue liste.", searchTerm)}</p>
+                                    </div>
+                                    <div id="guide-pkg-import" className="space-y-2 mt-4">
+                                        <h4 className="text-lg font-semibold">{highlightText("Assistant d'importation d'emballages", searchTerm)}</h4>
+                                        <p>{highlightText("Même assistant que celui des ingrédients : téléversez un fichier CSV ou Excel, associez ses colonnes aux champs de l'application, puis vérifiez et confirmez l'import. Détecte automatiquement si un emballage du fichier correspond déjà à un emballage existant (mise à jour) ou s'il doit être ajouté (nouveau).", searchTerm)}</p>
+                                    </div>
+                                    <div id="guide-pkg-abc" className="space-y-2 mt-4">
+                                        <h4 className="text-lg font-semibold">{highlightText("Analyse ABC des emballages", searchTerm)}</h4>
+                                        <p>{highlightText("Même principe que l'analyse ABC des ingrédients (Pareto 80/20) : classe vos emballages par importance financière, en fonction de ce qui est réellement consommé par vos formats de vente. N'apparaît que pour un emballage effectivement rattaché à au moins un format.", searchTerm)}</p>
+                                    </div>
+                                    <div id="guide-pkg-rapport" className="space-y-2 mt-4">
+                                        <h4 className="text-lg font-semibold">{highlightText("Rapport d'achats et pertes (emballages)", searchTerm)}</h4>
+                                        <p>{highlightText("Même outil que pour les ingrédients, mais pour vos emballages : estime vos besoins d'achat pour la période, en distinguant le coût net (emballage réellement utilisé) du coût perdu (bris, rebuts).", searchTerm)}</p>
+                                    </div>
+                                </section>
                                 <section id="guide-maindoeuvre">
-                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 3: Main-d'œuvre", searchTerm)}</h3>
+                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 4: Main-d'œuvre", searchTerm)}</h3>
                                     <p>{highlightText("Cette section vous permet de détailler et de comprendre le coût réel de votre main-d'œuvre en cuisine. C'est un élément essentiel du coût de revient, souvent sous-estimé.", searchTerm)}</p>
                                     <div id="guide-mo-db" className="space-y-4 mt-4">
                                         <h4 className="text-lg font-semibold">{highlightText("Base de données de la main-d'œuvre", searchTerm)}</h4>
@@ -281,18 +330,27 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </div>
                                 </section>
                                 <section id="guide-recette">
-                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 4: Recette & calcul", searchTerm)}</h3>
+                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 5: Recette & calcul", searchTerm)}</h3>
                                     <p>{highlightText("C'est le cœur de l'application, où vous assemblez la fiche de coût détaillée de chaque plat. Chaque modification ici met à jour les coûts en temps réel.", searchTerm)}</p>
 
                                     <div className="space-y-4 mt-4">
+                                        <div id="guide-recette-formats" className="space-y-2">
+                                            <h4 className="text-lg font-semibold">{highlightText("Sélecteur de format", searchTerm)}</h4>
+                                            <p>{highlightText("Sous le choix de la recette, le bandeau affiche les FORMATS de ce produit — l'emballage et la quantité (ex. « 250 ml », « 1 kg »), pas le SKU. Le SKU est un simple numéro de référence déduit de la recette et du format (géré dans Paramètres → Produits et SKUs) ; le format, lui, est l'attribut qui compte : chaque format a sa propre fiche recette (ingrédients, production, rendement) totalement indépendante des autres formats du même produit. Deux raccourcis pratiques :", searchTerm)}</p>
+                                            <ul className="list-disc list-inside space-y-2 pl-4">
+                                                <li><strong>{highlightText('Ajouter un format :', searchTerm)}</strong> {highlightText("Ouvre une fenêtre pour créer un nouveau format (quantité + unité) directement depuis cet écran, soit vierge, soit comme copie complète d'un format existant (point de départ pratique pour un format très semblable). Le SKU se déduit automatiquement de la recette et du format saisis, sauf si vous en précisez un. Le nouveau format apparaît aussitôt dans Paramètres → Produits et SKUs, sans étape supplémentaire.", searchTerm)}</li>
+                                                <li><strong>{highlightText('Copier depuis un format (à même chaque section) :', searchTerm)}</strong> {highlightText("Une fois plusieurs formats créés, chaque section (Ingrédients, Processus de production, Coûts additionnels, Quantité produite et rendement) affiche un petit contrôle pour copier UNIQUEMENT cette section depuis un autre format du même produit — pratique pour réutiliser une recette de base tout en ajustant ce qui diffère réellement (ex. l'étape de conditionnement). La quantité/unité de chaque format n'est jamais copiée : c'est justement ce qui les distingue, elle se modifie dans Paramètres.", searchTerm)}</li>
+                                            </ul>
+                                        </div>
+
                                         <div id="guide-recette-header" className="space-y-2">
                                             <h4 className="text-lg font-semibold">{highlightText("En-tête de la recette", searchTerm)}</h4>
-                                            <p>{highlightText("Cette première partie définit les caractéristiques de base de votre plat :", searchTerm)}</p>
+                                            <p>{highlightText("Cette première partie définit les caractéristiques de base du format sélectionné :", searchTerm)}</p>
                                             <ul className="list-decimal list-inside space-y-2 pl-4">
-                                                <li><strong>{highlightText('Nombre de portions :', searchTerm)}</strong> {highlightText("Le nombre de portions que la recette complète permet de produire.", searchTerm)}</li>
-                                                <li><strong>{highlightText('Quantité par portion et unité :', searchTerm)}</strong> {highlightText("Définit la taille d'une seule portion (ex: 250 g, 1 unité). Cette information est utilisée pour calculer le coût unitaire, par exemple le coût au gramme.", searchTerm)}</li>
+                                                <li><strong>{highlightText('Format de ce SKU :', searchTerm)}</strong> {highlightText("Rappel en lecture seule de la quantité et de l'unité de ce format (ex: 250 g, 1 unité) — modifiable dans Paramètres → Produits et SKUs, pas ici. Cette information sert à calculer le coût unitaire, par exemple le coût au gramme.", searchTerm)}</li>
+                                                <li><strong>{highlightText("Quantité produite :", searchTerm)}</strong> {highlightText("La quantité de ce format que la recette complète permet de produire, dans son unité (ex. 40 unités de 250 ml, ou 47,3 kg pour un format en kg — un entier n'est exigé que pour une unité de compte). Peut être calculée automatiquement via une grille de rendement plutôt que saisie directement.", searchTerm)}</li>
                                                 <li><strong>{highlightText('Considérer comme une sous-recette :', searchTerm)}</strong> {highlightText("Cochez cette case si cette recette est une 'mise en place' (ex: une sauce de base, une garniture) qui sera utilisée comme ingrédient dans d'autres plats. Une fois cochée, elle apparaîtra dans la liste déroulante des ingrédients.", searchTerm)}</li>
-                                                <li><strong>{highlightText('Considérer comme un produit de revente :', searchTerm)}</strong> {highlightText("Cochez cette case pour les produits achetés et revendus sans transformation (ex: boissons, croustilles). Cela simplifie la fiche de coût à un simple coût d'achat et permet une gestion distincte des allergènes.", searchTerm)}</li>
+                                                <li><strong>{highlightText('Considérer comme un produit de revente :', searchTerm)}</strong> {highlightText("Cochez cette case pour les formats achetés et revendus sans transformation (ex: boissons, croustilles). Cela simplifie la fiche de coût à un simple coût d'achat et permet une gestion distincte des allergènes.", searchTerm)}</li>
                                             </ul>
                                         </div>
 
@@ -307,8 +365,18 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                             </ul>
                                         </div>
 
+                                        <div id="guide-recette-packaging" className="space-y-2 mt-4">
+                                            <h4 className="text-lg font-semibold">{highlightText("2. Emballage", searchTerm)}</h4>
+                                            <p>{highlightText("Ajoutez les emballages de ce format (pots, couvercles, étiquettes, boîtes...), tirés du catalogue de l'onglet Packaging. C'est un poste de coût séparé du coût matière — jamais fusionné avec vos ingrédients — qui apparaît comme son propre pourcentage dans le récapitulatif.", searchTerm)}</p>
+                                            <ul className="list-disc list-inside space-y-2 pl-4 mt-2">
+                                                <li><strong>{highlightText('Emballage :', searchTerm)}</strong> {highlightText("Sélectionnez un emballage de votre catalogue (onglet Packaging).", searchTerm)}</li>
+                                                <li><strong>{highlightText('Quantité :', searchTerm)}</strong> {highlightText("La quantité nécessaire pour la recette complète (ex. 1 pot, 1 couvercle, 1 étiquette par unité produite).", searchTerm)}</li>
+                                            </ul>
+                                            <p className="mt-2">{highlightText("Absent pour un produit de revente (statut réglé dans l'en-tête ci-dessus) : son coût d'achat couvre déjà tout, y compris l'emballage dans lequel il vous est livré.", searchTerm)}</p>
+                                        </div>
+
                                         <div id="guide-recette-mo" className="space-y-2 mt-4">
-                                            <h4 className="text-lg font-semibold">{highlightText("2. Processus de production", searchTerm)}</h4>
+                                            <h4 className="text-lg font-semibold">{highlightText("3. Processus de production", searchTerm)}</h4>
                                              <p>{highlightText("Cette section est cruciale pour calculer le coût de votre main-d'œuvre directe. Voici le détail des fonctionnalités :", searchTerm)}</p>
                                             <ul className="list-disc list-inside space-y-2 pl-4 mt-2">
                                                 <li><strong>{highlightText('Tableau des étapes :', searchTerm)}</strong> {highlightText("Décrivez chaque action ('Taillage', 'Cuisson'), assignez du personnel en cliquant sur 'Modifier', puis définissez un début et une durée pour chaque étape au format HH:MM:SS.", searchTerm)}</li>
@@ -324,7 +392,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                              <ul className="list-disc list-inside space-y-2 pl-4">
                                                 <li><strong>{highlightText("Montant fixe :", searchTerm)}</strong> {highlightText("Simple et direct. Vous attribuez un montant en dollars fixe à chaque portion vendue.", searchTerm)}</li>
                                                 <li><strong>{highlightText('Pourcentage du prix de vente :', searchTerm)}</strong> {highlightText("Un pourcentage du prix de vente du plat est ajouté comme coût indirect. Utile pour les commissions ou les redevances.", searchTerm)}</li>
-                                                <li><strong>{highlightText('Pourcentage des coûts directs :', searchTerm)}</strong> {highlightText("Un pourcentage de la somme des coûts de matières et de main-d'œuvre est ajouté. Utile pour couvrir les frais administratifs liés à la production.", searchTerm)}</li>
+                                                <li><strong>{highlightText('Pourcentage des coûts directs :', searchTerm)}</strong> {highlightText("Un pourcentage de la somme des coûts de matières, d'emballage et de main-d'œuvre est ajouté. Utile pour couvrir les frais administratifs liés à la production.", searchTerm)}</li>
                                                 <li><strong>{highlightText("Basé sur l'intensité de la main-d'œuvre :", searchTerm)}</strong> {highlightText("Alloue les frais en fonction du temps de personnel total investi dans la recette. Idéal pour les plats complexes qui mobilisent beaucoup votre équipe.", searchTerm)}</li>
                                                 <li><strong>{highlightText('Allocation par portion :', searchTerm)}</strong> {highlightText("Répartit une part des frais indirects totaux (basée sur le mix des ventes) sur un nombre de portions que vous estimez vendre. Idéal pour des cas uniques ou des événements spéciaux.", searchTerm)}</li>
                                                 <li><strong>{highlightText("Allocation en fonction des ventes :", searchTerm)}</strong> {highlightText("Répartit le pool de frais indirects entre tous les plats actifs du menu au prorata de leur mix des ventes, normalisé sur la somme des mix actifs, puis divise le résultat par le nombre de portions vendues. C'est la méthode qui reflète le mieux la popularité relative de chaque plat.", searchTerm)}</li>
@@ -335,7 +403,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                             <h4 className="text-lg font-semibold">{highlightText("4. Récapitulatif", searchTerm)}</h4>
                                             <p>{highlightText("Cette section synthétise tous les coûts et calcule en temps réel vos indicateurs de performance clés (KPIs). Utilisez le mode 'Simuler un nouveau prix' pour voir instantanément l'impact d'un changement de prix.", searchTerm)}</p>
                                              <ul className="list-disc list-inside space-y-2 pl-4 mt-2">
-                                                <li><strong>{highlightText('Ratios de coûts (%) :', searchTerm)}</strong> {highlightText("Montrent la part du prix de vente que représentent vos matières, votre main-d'œuvre et vos frais indirects. Ils sont comparés à vos objectifs.", searchTerm)}</li>
+                                                <li><strong>{highlightText('Ratios de coûts (%) :', searchTerm)}</strong> {highlightText("Montrent la part du prix de vente que représentent vos matières, votre emballage, votre main-d'œuvre et vos frais indirects. Ils sont comparés à vos objectifs.", searchTerm)}</li>
                                                 <li><strong>{highlightText('Coût de revient total :', searchTerm)}</strong> {highlightText("L'indicateur le plus important. C'est la somme de TOUS les coûts. Il représente ce que vous coûte réellement une portion servie au client.", searchTerm)}</li>
                                                 <li><strong>{highlightText('Marge brute :', searchTerm)}</strong> {highlightText("Représente le profit généré avant de payer les frais généraux. C'est l'argent disponible pour payer le loyer, l'électricité, etc.", searchTerm)}</li>
                                                 <li><strong>{highlightText('Marge nette :', searchTerm)}</strong> {highlightText("Représente le profit final et réel que vous faites sur chaque portion vendue.", searchTerm)}</li>
@@ -345,12 +413,12 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </div>
                                 </section>
                                 <section id="guide-resume">
-                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 5: Résumé", searchTerm)}</h3>
+                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 6: Rapport", searchTerm)}</h3>
                                     <p>{highlightText("Cet onglet transforme vos données en intelligence d'affaires, vous donnant une vue d'ensemble stratégique de votre menu.", searchTerm)}</p>
                                      <div className="space-y-4 mt-4">
                                         <div id="guide-resume-tableau" className="space-y-2">
                                             <h4 className="text-lg font-semibold">{highlightText("Tableau comparatif", searchTerm)}</h4>
-                                            <p>{highlightText("Comparez la performance de tous vos plats d'un seul coup d'œil. Les codes de couleur pour les marges vous aident à identifier instantanément les bons et les mauvais élèves.", searchTerm)}</p>
+                                            <p>{highlightText("Comparez la performance de tous vos plats d'un seul coup d'œil. Les codes de couleur pour les marges vous aident à identifier instantanément les bons et les mauvais élèves. Un produit vendu sous plusieurs formats (ex. confiture en pot de 250 ml et de 500 ml) apparaît comme autant de lignes distinctes, chacune désambiguïsée par son format entre parenthèses (ex. « Confiture de fraises (250 ml) ») — chaque format a sa propre fiche recette et ses propres coûts, donc sa propre ligne d'analyse.", searchTerm)}</p>
                                         </div>
                                         <div id="guide-resume-contribution" className="space-y-2 mt-4">
                                             <h4 className="text-lg font-semibold">{highlightText("Classement par contribution totale", searchTerm)}</h4>
@@ -375,14 +443,14 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                             <h4 className="text-lg font-semibold">{highlightText("Exports (PDF & Excel)", searchTerm)}</h4>
                                             <p className="mb-4">{highlightText("L'application vous permet d'exporter vos données dans deux formats professionnels, accessibles depuis cet onglet. Chaque format a un usage spécifique :", searchTerm)}</p>
                                             <ul className="list-disc list-inside space-y-2 pl-4">
-                                                <li><strong>{highlightText("Générer un rapport PDF :", searchTerm)}</strong> {highlightText("Crée un rapport de plusieurs pages, visuellement soigné, idéal pour les présentations, l'archivage ou le partage avec des partenaires. Il inclut des tableaux de bord, des analyses stratégiques, des graphiques et les fiches de coût détaillées de chaque produit.", searchTerm)}</li>
-                                                <li><strong>{highlightText("Exporter vers Excel :", searchTerm)}</strong> {highlightText("Génère un fichier .xlsx contenant toutes vos données brutes (tableau de bord, listes d'ingrédients et de main-d'œuvre, fiches de coût détaillées). Ce format est parfait si vous souhaitez effectuer des analyses plus poussées, créer vos propres graphiques ou intégrer les données dans d'autres systèmes comptables.", searchTerm)}</li>
+                                                <li><strong>{highlightText("Générer un rapport PDF :", searchTerm)}</strong> {highlightText("Crée un rapport de plusieurs pages, visuellement soigné, idéal pour les présentations, l'archivage ou le partage avec des partenaires. Il inclut des tableaux de bord, des analyses stratégiques, des graphiques et une fiche de coût détaillée par FORMAT — un produit vendu en plusieurs formats génère donc une fiche distincte pour chacun, désambiguïsée dans son titre.", searchTerm)}</li>
+                                                <li><strong>{highlightText("Exporter vers Excel :", searchTerm)}</strong> {highlightText("Génère un fichier .xlsx contenant toutes vos données brutes (tableau de bord, listes d'ingrédients et de main-d'œuvre, une feuille de coût détaillée par FORMAT). Ce format est parfait si vous souhaitez effectuer des analyses plus poussées, créer vos propres graphiques ou intégrer les données dans d'autres systèmes comptables.", searchTerm)}</li>
                                             </ul>
                                         </div>
                                     </div>
                                 </section>
                                 <section id="guide-suivi">
-                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 6: Suivi", searchTerm)}</h3>
+                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 7: Suivi", searchTerm)}</h3>
                                     <p>{highlightText("Cet onglet transforme votre analyse statique en un suivi dynamique de vos performances dans le temps.", searchTerm)}</p>
                                      <div className="space-y-4 mt-4">
                                         <div id="guide-suivi-points" className="space-y-2">
@@ -391,7 +459,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                         </div>
                                         <div id="guide-suivi-graphiques" className="space-y-2 mt-4">
                                             <h4 className="text-lg font-semibold">{highlightText("Graphiques d'évolution", searchTerm)}</h4>
-                                            <p>{highlightText("L'application génère automatiquement des graphiques interactifs pour suivre l'évolution de vos indicateurs clés globaux, des coûts d'un plat spécifique, ou même du prix d'un ingrédient, vous permettant de mesurer concrètement l'impact de vos décisions.", searchTerm)}</p>
+                                            <p>{highlightText("L'application génère automatiquement des graphiques interactifs pour suivre l'évolution de vos indicateurs clés globaux, des coûts d'un FORMAT spécifique (« Analyse par format »), ou même du prix d'un ingrédient, vous permettant de mesurer concrètement l'impact de vos décisions. Si un produit a plusieurs formats, chacun apparaît séparément dans la liste déroulante, désambiguïsé par son nom (ex. « Confiture de fraises (500 ml) ») — ses points de référence antérieurs à la création de ce format n'affichent simplement aucune donnée avant cette date.", searchTerm)}</p>
                                         </div>
                                     </div>
                                 </section>
@@ -401,20 +469,23 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                         <li><strong>{highlightText("Analyse ABC :", searchTerm)}</strong> {highlightText("Une méthode de classification des stocks (ingrédients) en trois catégories (A, B, C) en fonction de leur valeur de consommation, pour prioriser les efforts de gestion.", searchTerm)}</li>
                                         <li><strong>{highlightText("Contribution totale :", searchTerm)}</strong> {highlightText("Le profit total en dollars généré par un plat sur une période (`Marge Brute Unitaire $` x `Unités Vendues`). Cet indicateur révèle les plats qui contribuent le plus à payer les frais fixes.", searchTerm)}</li>
                                         <li><strong>{highlightText("Coût d'achat requis :", searchTerm)}</strong> {highlightText("Le coût total que vous devriez budgéter pour un ingrédient, incluant le coût de la matière productive et le coût de la perte en stock.", searchTerm)}</li>
+                                        <li><strong>{highlightText("Coût d'emballage :", searchTerm)}</strong> {highlightText("Le coût des contenants, couvercles, étiquettes et autres emballages d'un format (onglet Packaging). Poste SÉPARÉ du coût matière — jamais fusionné — qui apparaît comme son propre pourcentage du prix de vente.", searchTerm)}</li>
                                         <li><strong>{highlightText("Coût de revient total :", searchTerm)}</strong> {highlightText("L'indicateur le plus important. C'est la somme de TOUS les coûts (directs et indirects). Il représente ce que vous coûte réellement une portion servie au client.", searchTerm)}</li>
                                         <li><strong>{highlightText("Coût horaire d'opération :", searchTerm)}</strong> {highlightText("Calculé (`Frais Indirects Totaux` / `Heures d'Opération`), il représente le coût de fonctionnement de votre établissement par heure, hors coûts directs.", searchTerm)}</li>
                                         <li><strong>{highlightText("Coût matière moyen pondéré :", searchTerm)}</strong> {highlightText("La moyenne du coût matière de tous vos plats, pondérée par leur popularité (mix des ventes). Cet indicateur vous donne le coût matière réel d'une vente 'typique' sur votre menu.", searchTerm)}</li>
                                         <li><strong>{highlightText("Coût main-d'œuvre moyen pondéré :", searchTerm)}</strong> {highlightText("Similaire au coût matière, il s'agit de la moyenne du coût de main-d'œuvre de vos plats, pondérée par leur popularité.", searchTerm)}</li>
                                         <li><strong>{highlightText("Coût moyen pondéré (Main-d'œuvre) :", searchTerm)}</strong> {highlightText("Le coût horaire moyen d'un poste, calculé en tenant compte du salaire et du nombre d'heures de chaque employé assigné à ce poste.", searchTerm)}</li>
+                                        <li><strong>{highlightText("Format :", searchTerm)}</strong> {highlightText("L'emballage et la quantité sous lesquels un produit est vendu (ex. un pot de 250 ml, un sac de 1 kg). Un produit peut avoir plusieurs formats, chacun avec sa propre fiche recette, son propre SKU, prix et mix des ventes — et donc sa propre ligne dans le Rapport, le Suivi et les exports. Se gère dans Paramètres → Produits et SKUs.", searchTerm)}</li>
                                         <li><strong>{highlightText("Heures productives (attendues vs. réelles) :", searchTerm)}</strong> {highlightText("Compare les heures de travail que vous payez et qui devraient être productives, avec les heures réellement nécessaires pour la production vendue. C'est un indicateur clé d'efficacité.", searchTerm)}</li>
                                         <li><strong>{highlightText("Intensité M-O (Main-d'œuvre) :", searchTerm)}</strong> {highlightText("Un ratio (`Temps Personnel` / `Durée Processus`) qui indique l'efficacité du flux de production. Un ratio supérieur à 1 signifie que plusieurs personnes travaillent en même temps.", searchTerm)}</li>
-                                        <li><strong>{highlightText("Marge brute :", searchTerm)}</strong> {highlightText("`Prix de Vente - Coûts Directs (Matières + Main d'œuvre)`. C'est l'argent généré par le plat pour payer les frais fixes.", searchTerm)}</li>
+                                        <li><strong>{highlightText("Marge brute :", searchTerm)}</strong> {highlightText("`Prix de Vente - Coûts Directs (Matières + Emballage + Main d'œuvre)`. C'est l'argent généré par le plat pour payer les frais fixes.", searchTerm)}</li>
                                         <li><strong>{highlightText("Marge brute moyenne pondérée :", searchTerm)}</strong> {highlightText("La marge brute moyenne de l'ensemble de votre menu, en tenant compte de la popularité de chaque plat. C'est un indicateur clé de la rentabilité globale de vos ventes.", searchTerm)}</li>
                                         <li><strong>{highlightText("Marge nette :", searchTerm)}</strong> {highlightText("`Prix de Vente - Coût de Revient Total`. C'est le profit réel que vous empochez après avoir payé TOUTES les charges liées à ce plat.", searchTerm)}</li>
                                         <li><strong>{highlightText("Mix des ventes (%) :", searchTerm)}</strong> {highlightText("La popularité d'un plat, exprimée en pourcentage de vos ventes totales. La somme de tous les plats 'Au Menu' devrait idéalement être de 100%.", searchTerm)}</li>
                                         <li><strong>{highlightText("Point mort du menu analysé :", searchTerm)}</strong> {highlightText("Le chiffre d'affaires que votre menu doit générer pour couvrir l'ensemble des frais indirects qui lui sont alloués. Il est calculé en divisant les frais indirects par la marge brute moyenne pondérée.", searchTerm)}</li>
                                         <li><strong>{highlightText("Point mort du produit :", searchTerm)}</strong> {highlightText("Estime le nombre d'unités d'un plat que vous devez vendre durant une période pour couvrir la part des frais indirects qui lui est allouée.", searchTerm)}</li>
                                         <li><strong>{highlightText("Prix efficace (Ingrédient) :", searchTerm)}</strong> {highlightText("Le coût réel d'un ingrédient après avoir pris en compte le coût de sa perte en stock. Il est utilisé dans l'outil de comparaison.", searchTerm)}</li>
+                                        <li><strong>{highlightText("SKU :", searchTerm)}</strong> {highlightText("Le numéro de référence d'un format précis — pas une donnée saisie indépendamment, mais déduite automatiquement de la recette (nom du produit) et du format (quantité + unité) à la création. Librement modifiable ensuite si vous avez votre propre système de codification.", searchTerm)}</li>
                                         <li><strong>{highlightText("Taux de perte vs. rendement :", searchTerm)}</strong> {highlightText("Le **Taux de Perte** (onglet Ingrédients) concerne la perte *avant* la production (ex: produits périmés). Le **Rendement** (onglet Recette) concerne la perte *pendant* la production (ex: parures de légumes).", searchTerm)}</li>
                                     </ul>
                                 </section>

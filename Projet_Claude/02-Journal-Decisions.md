@@ -208,3 +208,33 @@ des résultats comptable réel, nécessaire pour l'assistant d'import de la Phas
 
 **Impact** : conception détaillée dans `04-Conception-Modele.md`, section « Activité de
 production ».
+
+---
+
+### 2026-10-07 — Matrice BCG : popularité basée sur le volume réel agrégé, et exclusion des SKU sans volume réel
+
+Suite à un retour utilisateur (un produit apparaissait « poids mort » en tous-canaux sans jamais
+l'être dans aucun canal pris séparément — détail dans `03-Feuille-de-route.md`, correctifs du
+06/10 et 07/10).
+
+**a) Popularité « tous canaux » = part du volume réel agrégé à travers les canaux, pas `salesMix`.**
+Alternative écartée : garder `salesMix` (part du menu global, déjà utilisée pour les KPIs
+pondérés) comme axe de popularité de la matrice BCG. Justification : `salesMix` est dilué par le
+% fixe des formats en mode manuel (volume nul sur tous les canaux), alors que chaque vue limitée
+à un seul canal calcule déjà sa popularité à partir du volume réel de ce canal — les deux vues
+comparaient donc des grandeurs différentes, un SKU pouvant franchir le seuil de son propre canal
+tout en restant sous le seuil du menu global dilué (effet d'agrégation, apparenté au paradoxe de
+Simpson). Repli sur `salesMix` conservé si aucun produit actif n'a de volume réel sur aucun canal
+(projet n'utilisant pas les circuits de vente).
+
+**b) Un SKU sans AUCUN volume réel sur aucun canal est exclu de la matrice, jamais classé à 0 %.**
+Alternative écartée (mon premier correctif, révisé après retour utilisateur) : l'inclure avec 0 %
+de popularité. Justification de l'utilisateur : un produit qui n'est pas vraiment vendu (son
+exemple : un format gardé en mode manuel sans historique de vente) n'a pas de performance de
+vente à classer, et l'inclure à 0 % fausse quand même le seuil de popularité des AUTRES SKU
+(le seuil se calcule sur le nombre de lignes incluses). Même principe que `channelBreakdown`
+(une donnée absente reste absente, jamais forcée) appliqué à la matrice BCG.
+
+**Impact** : `analysisData.js` (`computeAnalysisData`, fonction `computeMenuEngineeringQuadrants`
+inchangée) et `SummaryTable.jsx` (vue par canal). Aucune régression sur les projets n'utilisant pas
+les circuits de vente (repli sur l'ancien calcul inchangé dans ce cas).

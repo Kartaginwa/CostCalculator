@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAnalysisData, computeMenuEngineeringQuadrants } from './analysisData.js';
+import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -24,15 +24,25 @@ const baseProduct = (overrides = {}) => ({
     ...overrides,
 });
 
+// Volumes RÉELS par canal (corrigé le 18/10, plus de reconstruction depuis un revenu déclaré —
+// voir Projet_Claude/03-Feuille-de-route.md) : helper pour fournir à un `baseProduct` un volume
+// réel sur un canal unique, nécessaire pour que `unitsSoldById`/`menuRevenue`/`globalBreakEven`
+// (et tout ce qui en dépend : achats, ABC, contribution) ne soient plus à 0.
+const defaultSalesChannels = [{ id: 'c1', name: 'Défaut', links: [] }];
+const channelPrice = (netPrice, volume, channelId = 'c1') => [{ id: `cp_${channelId}_${netPrice}_${volume}`, channelId, netPrice, volume }];
+
 describe('computeAnalysisData - moyennes pondérées et point mort global', () => {
     it('pondère la marge et les coûts par le mix des ventes de chaque produit actif', () => {
-        const productA = baseProduct({ id: 'A', isResaleProduct: true, purchaseCost: 10, prixVente: 20, salesMix: 70 });
-        const productB = baseProduct({ id: 'B', isResaleProduct: true, purchaseCost: 2, prixVente: 10, salesMix: 30 });
+        // weightedGrossMargin/weightedMaterialCost restent pondérés par salesMix (indépendant du
+        // volume réel) ; globalBreakEven dépend maintenant du volume RÉEL par canal (70/30 unités,
+        // mêmes proportions que l'ancien salesMix, pour un calcul attendu identique).
+        const productA = baseProduct({ id: 'A', isResaleProduct: true, purchaseCost: 10, prixVente: 20, salesMix: 70, channelPrices: channelPrice(20, 70) });
+        const productB = baseProduct({ id: 'B', isResaleProduct: true, purchaseCost: 2, prixVente: 10, salesMix: 30, channelPrices: channelPrice(10, 30) });
         const products = [productA, productB];
-        const generalInfo = baseGeneralInfo({ totalRevenue: 10000, totalIndirects: 1000 });
+        const generalInfo = baseGeneralInfo({ totalIndirects: 1000 });
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
-        const result = computeAnalysisData(products, [], [], generalInfo, calculatedGeneralInfo);
+        const result = computeAnalysisData(products, [], [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels);
 
         // A : marge 10$/20$ = 0.5, B : marge 8$/10$ = 0.8 -> pondéré 70/30 = 0.59
         expect(result.weightedGrossMargin).toBeCloseTo(0.59);
@@ -40,8 +50,9 @@ describe('computeAnalysisData - moyennes pondérées et point mort global', () =
         expect(result.weightedMaterialCost).toBeCloseTo(0.41);
         expect(result.weightedLaborCost).toBeCloseTo(0);
         // Point mort GLOBAL en chiffre d'affaires ($) = frais indirects fixes / taux de marge
-        // pondéré par le REVENU. Prix moyen pondéré = (70×20 + 30×10)/100 = 17 ; taux de marge sur
-        // revenu = (10×0.7 + 8×0.3)/17 = 9.4/17. Point mort = 1000 / (9.4/17) ≈ 1808,5 $.
+        // pondéré par le REVENU réel (prix net × volume réel de chaque canal) : revenu = 20×70 +
+        // 10×30 = 1700 ; marge $ = 10×70 + 8×30 = 940 ; taux = 940/1700 = 9.4/17. Point mort =
+        // 1000 / (9.4/17) ≈ 1808,5 $.
         expect(result.globalBreakEven).toBeCloseTo(1000 / (9.4 / 17));
     });
 
@@ -83,16 +94,17 @@ describe('computeAnalysisData - analyse ABC', () => {
         ];
         const product = baseProduct({
             prixVente: 100, nbPortions: 1, salesMix: 100, onMenu: true,
+            channelPrices: channelPrice(100, 1),
             ingredients: [
                 { id: 'ing_A', quantity: 70, recipeUnit: 'unité' },
                 { id: 'ing_B', quantity: 20, recipeUnit: 'unité' },
                 { id: 'ing_C', quantity: 10, recipeUnit: 'unité' },
             ],
         });
-        const generalInfo = baseGeneralInfo({ totalRevenue: 100, menuRevenuePercentage: 100 });
+        const generalInfo = baseGeneralInfo();
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
-        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo);
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels);
 
         expect(result.abcAnalysisData.A.map(i => i.name)).toEqual(['Ingrédient A']);
         expect(result.abcAnalysisData.B.map(i => i.name)).toEqual(['Ingrédient B']);
@@ -123,41 +135,50 @@ describe('computeAnalysisData - matrice BCG (menu engineering)', () => {
 describe('computeAnalysisData - contribution au profit', () => {
     it('trie les produits par contribution totale décroissante', () => {
         const products = [
-            baseProduct({ id: 'low', prixVente: 10, isResaleProduct: true, purchaseCost: 8, salesMix: 10, onMenu: true }),
-            baseProduct({ id: 'high', prixVente: 10, isResaleProduct: true, purchaseCost: 2, salesMix: 90, onMenu: true }),
+            baseProduct({ id: 'low', prixVente: 10, isResaleProduct: true, purchaseCost: 8, salesMix: 10, onMenu: true, channelPrices: channelPrice(10, 10) }),
+            baseProduct({ id: 'high', prixVente: 10, isResaleProduct: true, purchaseCost: 2, salesMix: 90, onMenu: true, channelPrices: channelPrice(10, 90) }),
         ];
-        const generalInfo = baseGeneralInfo({ totalRevenue: 1000, menuRevenuePercentage: 100 });
+        const generalInfo = baseGeneralInfo();
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
-        const result = computeAnalysisData(products, [], [], generalInfo, calculatedGeneralInfo);
+        const result = computeAnalysisData(products, [], [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels);
 
         expect(result.contributionData[0].name).toBe('Produit Test'); // le plus haut contributeur en premier
         expect(result.contributionData[0].totalContribution).toBeGreaterThan(result.contributionData[1].totalContribution);
     });
 });
 
-describe('computeAnalysisData - reconstruction des volumes (mix = popularité en unités)', () => {
-    it('répartit les volumes selon la part de popularité, indépendamment du prix (mix ≠ part de revenu)', () => {
-        // Deux plats à popularité égale (50/50) mais à prix très différents. Le mix étant une part
-        // d'UNITÉS, les deux doivent vendre le même nombre d'unités — donc consommer la même
-        // quantité de leur ingrédient respectif. L'ancienne formule (revenu × mix / prix) aurait
-        // donné 4× plus d'unités au plat bon marché.
+describe('computeAnalysisData - volumes (corrigé le 18/10 : volume RÉEL par canal, jamais reconstruit)', () => {
+    it('utilise directement le volume réel par canal, indépendamment du prix ou du mix de vente', () => {
+        // Deux plats au même salesMix (50/50) mais à prix très différents et volumes réels
+        // IDENTIQUES (50 chacun) : le volume réel ne dépend ni du prix ni du mix — contrairement à
+        // l'ancienne reconstruction (revenu déclaré × mix / prix moyen pondéré, retirée le 18/10).
         const baseIngredients = [
             { id: 'ingA', name: 'Ing A', provider: 'PA', unit: 'unité', unitPrice: 1, lossPercentage: 0 },
             { id: 'ingB', name: 'Ing B', provider: 'PB', unit: 'unité', unitPrice: 1, lossPercentage: 0 },
         ];
-        const p1 = baseProduct({ id: 'cher', prixVente: 40, salesMix: 50, nbPortions: 1, ingredients: [{ id: 'ingA', quantity: 1, recipeUnit: 'unité' }] });
-        const p2 = baseProduct({ id: 'bon_marche', prixVente: 10, salesMix: 50, nbPortions: 1, ingredients: [{ id: 'ingB', quantity: 1, recipeUnit: 'unité' }] });
-        // Prix moyen pondéré = (50×40 + 50×10)/100 = 25 ; unités totales = 2500/25 = 100 ; 50 chacun.
-        const generalInfo = baseGeneralInfo({ totalRevenue: 2500, menuRevenuePercentage: 100 });
+        const p1 = baseProduct({ id: 'cher', prixVente: 40, salesMix: 50, nbPortions: 1, channelPrices: channelPrice(40, 50), ingredients: [{ id: 'ingA', quantity: 1, recipeUnit: 'unité' }] });
+        const p2 = baseProduct({ id: 'bon_marche', prixVente: 10, salesMix: 50, nbPortions: 1, channelPrices: channelPrice(10, 50), ingredients: [{ id: 'ingB', quantity: 1, recipeUnit: 'unité' }] });
+        const generalInfo = baseGeneralInfo();
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
-        const result = computeAnalysisData([p1, p2], baseIngredients, [], generalInfo, calculatedGeneralInfo);
+        const result = computeAnalysisData([p1, p2], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels);
 
         const qtyA = result.purchasingReportData.groupedByProvider['PA'].items.find(i => i.id === 'ingA').totalQuantity;
         const qtyB = result.purchasingReportData.groupedByProvider['PB'].items.find(i => i.id === 'ingB').totalQuantity;
         expect(qtyA).toBeCloseTo(50);
         expect(qtyB).toBeCloseTo(50);
+    });
+
+    it('un format sans aucun volume réel saisi contribue 0, jamais une estimation reconstruite', () => {
+        const product = baseProduct({ prixVente: 100, salesMix: 100, nbPortions: 1 });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const result = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels);
+
+        expect(result.unitsSoldById[product.id]).toBe(0);
+        expect(result.menuRevenue).toBe(0);
     });
 });
 
@@ -223,12 +244,12 @@ describe('computeAnalysisData - formats multiples (Phase 1.6)', () => {
         formats: [
             {
                 id: 'fmt_250', sku: 'CONF-250ML', prixVente: 8, nbPortions: 1, portionSize: 250, portionUnit: 'ml',
-                salesMix: 60, onMenu: true, ingredients: [{ id: 'ing_fraise', quantity: 1, recipeUnit: 'kg' }], productionSteps: [],
+                salesMix: 60, onMenu: true, channelPrices: channelPrice(8, 60), ingredients: [{ id: 'ing_fraise', quantity: 1, recipeUnit: 'kg' }], productionSteps: [],
                 isResaleProduct: false, purchaseCost: 0, indirectCosts: {},
             },
             {
                 id: 'fmt_500', sku: 'CONF-500ML', prixVente: 14, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
-                salesMix: 40, onMenu: true, ingredients: [{ id: 'ing_fraise', quantity: 2, recipeUnit: 'kg' }], productionSteps: [],
+                salesMix: 40, onMenu: true, channelPrices: channelPrice(14, 40), ingredients: [{ id: 'ing_fraise', quantity: 2, recipeUnit: 'kg' }], productionSteps: [],
                 isResaleProduct: false, purchaseCost: 0, indirectCosts: {},
             },
         ],
@@ -268,10 +289,10 @@ describe('computeAnalysisData - formats multiples (Phase 1.6)', () => {
     it('le rapport d\'achats cumule la consommation des DEUX formats, pas seulement le premier', () => {
         const product = multiFormatProduct();
         const generalInfo = generalInfoFor();
-        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo), [], defaultSalesChannels);
 
-        // Chaque format vend ses propres unités (mix 60/40), consommant respectivement 1 kg et 2 kg
-        // de fraises par unité vendue — la quantité totale achetée doit refléter les deux, pas
+        // Chaque format vend ses propres unités réelles (60/40), consommant respectivement 1 kg et
+        // 2 kg de fraises par unité vendue — la quantité totale achetée doit refléter les deux, pas
         // seulement le format par défaut (ce qui aurait ignoré la consommation du format 500 ml).
         const totalQty = result.purchasingReportData.groupedByProvider['Fournisseur Fraises'].items.find(i => i.id === 'ing_fraise').totalQuantity;
         expect(totalQty).toBeGreaterThan(0);
@@ -279,10 +300,10 @@ describe('computeAnalysisData - formats multiples (Phase 1.6)', () => {
         const productOnlyDefaultActive = multiFormatProduct({
             formats: [
                 { ...multiFormatProduct().formats[0] },
-                { ...multiFormatProduct().formats[1], onMenu: false, salesMix: 0 },
+                { ...multiFormatProduct().formats[1], onMenu: false, salesMix: 0, channelPrices: [] },
             ],
         });
-        const resultDefaultOnly = computeAnalysisData([productOnlyDefaultActive], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo));
+        const resultDefaultOnly = computeAnalysisData([productOnlyDefaultActive], baseIngredients, [], generalInfo, calcGeneralInfoFor(generalInfo), [], defaultSalesChannels);
         const qtyDefaultOnly = resultDefaultOnly.purchasingReportData.groupedByProvider['Fournisseur Fraises'].items.find(i => i.id === 'ing_fraise').totalQuantity;
         expect(qtyDefaultOnly).toBeLessThan(totalQty);
     });
@@ -337,12 +358,13 @@ describe('computeAnalysisData - rapport d\'achats et pertes', () => {
         ];
         const product = baseProduct({
             prixVente: 100, nbPortions: 1, salesMix: 100, onMenu: true,
+            channelPrices: channelPrice(100, 1),
             ingredients: [{ id: 'ing_1', quantity: 10, recipeUnit: 'kg' }],
         });
-        const generalInfo = baseGeneralInfo({ totalRevenue: 100, menuRevenuePercentage: 100 });
+        const generalInfo = baseGeneralInfo();
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
-        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo);
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels);
 
         // batchesNeeded = 1 -> quantité nette = 10kg, coût net = 10 * 2$ = 20$
         expect(result.purchasingReportData.totalNetCost).toBeCloseTo(20);
@@ -358,13 +380,14 @@ describe('computeAnalysisData - rapport d\'achats et analyse ABC du Packaging (P
         const basePackaging = [{ id: 'pkg_1', name: 'Pot de verre', provider: 'Fournisseur Verre', unit: 'unité', unitPrice: 1, lossPercentage: 20 }];
         const product = baseProduct({
             prixVente: 100, nbPortions: 1, salesMix: 100, onMenu: true,
+            channelPrices: channelPrice(100, 1),
             ingredients: [{ id: 'ing_1', quantity: 1, recipeUnit: 'kg' }],
             packagingItems: [{ id: 'pkg_1', quantity: 10, recipeUnit: 'unité' }],
         });
-        const generalInfo = baseGeneralInfo({ totalRevenue: 100, menuRevenuePercentage: 100 });
+        const generalInfo = baseGeneralInfo();
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
-        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, basePackaging);
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, basePackaging, defaultSalesChannels);
 
         // Rapport d'achats du packaging : 10 pots x 1$ = 10$ net, perte = 10/0.8 - 10 = 2.5$.
         expect(result.packagingPurchasingReportData.totalNetCost).toBeCloseTo(10);
@@ -561,5 +584,280 @@ describe('computeMenuEngineeringQuadrants — fonction pure (réutilisée pour u
     it('retourne des quadrants vides sans lancer d\'erreur pour une liste vide (ex. aucun SKU vendu dans le canal choisi)', () => {
         const result = computeMenuEngineeringQuadrants([]);
         expect(result).toEqual({ stars: [], cows: [], questions: [], dogs: [] });
+    });
+});
+
+describe('computeChannelRevenueShareByActivity — ventilation indicative des revenus réels (Phase 4.2)', () => {
+    const salesChannels = [
+        { id: 'channel_direct', name: 'Vente directe' },
+        { id: 'channel_epi', name: 'Épiceries' },
+    ];
+
+    it('agrège le revenu théorique (netPrice × volume) par canal, à travers tous les formats d\'une activité', () => {
+        const productsWithCosts = [
+            { activityId: 'act_confitures', channelBreakdown: [{ channelId: 'channel_direct', netPrice: 10, volume: 100 }, { channelId: 'channel_epi', netPrice: 8, volume: 50 }] },
+            { activityId: 'act_confitures', channelBreakdown: [{ channelId: 'channel_direct', netPrice: 5, volume: 100 }] },
+            { activityId: 'act_sauces', channelBreakdown: [{ channelId: 'channel_epi', netPrice: 20, volume: 10 }] },
+        ];
+        const result = computeChannelRevenueShareByActivity(productsWithCosts, salesChannels);
+        // act_confitures : direct = 10*100 + 5*100 = 1500 ; epi = 8*50 = 400 ; total 1900
+        expect(result.act_confitures).toEqual([
+            { channelId: 'channel_direct', channelName: 'Vente directe', share: 1500 / 1900 },
+            { channelId: 'channel_epi', channelName: 'Épiceries', share: 400 / 1900 },
+        ]);
+        // act_sauces : 100 % épiceries
+        expect(result.act_sauces).toEqual([{ channelId: 'channel_epi', channelName: 'Épiceries', share: 1 }]);
+    });
+
+    it('omet une activité sans revenu théorique par canal plutôt que de forcer une part à 0', () => {
+        const productsWithCosts = [
+            { activityId: 'act_vide', channelBreakdown: [] },
+            { activityId: 'act_sans_canal', channelBreakdown: [{ channelId: 'channel_direct', netPrice: 0, volume: 50 }] },
+        ];
+        const result = computeChannelRevenueShareByActivity(productsWithCosts, salesChannels);
+        expect(result).toEqual({});
+    });
+
+    it('ignore les lignes sans activityId (compatibilité anciennes fixtures)', () => {
+        const productsWithCosts = [{ channelBreakdown: [{ channelId: 'channel_direct', netPrice: 10, volume: 10 }] }];
+        expect(computeChannelRevenueShareByActivity(productsWithCosts, salesChannels)).toEqual({});
+    });
+});
+
+describe('computeActivityImpact — simulateur de chocs de coûts par activité (Phase 6)', () => {
+    const activities = [{ id: 'act_confitures', name: 'Confitures' }, { id: 'act_sauces', name: 'Sauces' }];
+
+    it('pondère marge/coûts par le mix de vente DES SEULS FORMATS DE CETTE ACTIVITÉ', () => {
+        const activeProducts = [
+            { activityId: 'act_confitures', salesMix: 70, blended: { margeBrutePercent: 0.5, costMatierePercent: 0.3, costLaborPercent: 0.1 } },
+            { activityId: 'act_confitures', salesMix: 30, blended: { margeBrutePercent: 0.8, costMatierePercent: 0.1, costLaborPercent: 0.05 } },
+            { activityId: 'act_sauces', salesMix: 10, blended: { margeBrutePercent: 0.4, costMatierePercent: 0.4, costLaborPercent: 0.2 } },
+        ];
+        const result = computeActivityImpact(activeProducts, activities);
+        const confitures = result.find(r => r.activityId === 'act_confitures');
+        // Renormalisé à 100 au sein de l'activité (70/100, 30/100) — pas le mix global du menu.
+        expect(confitures.label).toBe('Confitures');
+        expect(confitures.margeBrutePercent).toBeCloseTo(0.5 * 0.7 + 0.8 * 0.3);
+        expect(confitures.costMatierePercent).toBeCloseTo(0.3 * 0.7 + 0.1 * 0.3);
+
+        const sauces = result.find(r => r.activityId === 'act_sauces');
+        expect(sauces.margeBrutePercent).toBeCloseTo(0.4);
+    });
+
+    it('omet une ligne sans activityId plutôt que de forcer un groupe à 0', () => {
+        const activeProducts = [{ salesMix: 100, blended: { margeBrutePercent: 0.5, costMatierePercent: 0.3, costLaborPercent: 0.1 } }];
+        expect(computeActivityImpact(activeProducts, activities)).toEqual([]);
+    });
+
+    it('utilise l\'id comme repli si l\'activité a été supprimée depuis', () => {
+        const activeProducts = [{ activityId: 'act_disparue', salesMix: 100, blended: { margeBrutePercent: 0.5, costMatierePercent: 0.3, costLaborPercent: 0.1 } }];
+        expect(computeActivityImpact(activeProducts, activities)[0].label).toBe('act_disparue');
+    });
+});
+
+describe('computeChannelImpact — simulateur de chocs de coûts par circuit de vente (Phase 6)', () => {
+    const salesChannels = [{ id: 'channel_direct', name: 'Vente directe' }, { id: 'channel_epi', name: 'Épiceries' }];
+
+    it('pondère marge/coûts PAR CANAL (pas la vue tous-canaux) selon le volume réel de ce canal', () => {
+        const activeProducts = [
+            { channelBreakdown: [
+                { channelId: 'channel_direct', volume: 100, margeBrutePercent: 0.5, costMatierePercent: 0.3, costLaborPercent: 0.1 },
+                { channelId: 'channel_epi', volume: 50, margeBrutePercent: 0.4, costMatierePercent: 0.35, costLaborPercent: 0.1 },
+            ] },
+            { channelBreakdown: [
+                { channelId: 'channel_direct', volume: 300, margeBrutePercent: 0.6, costMatierePercent: 0.2, costLaborPercent: 0.1 },
+            ] },
+        ];
+        const result = computeChannelImpact(activeProducts, salesChannels);
+        const direct = result.find(r => r.channelId === 'channel_direct');
+        // Pondéré par volume réel du canal : (0.5*100 + 0.6*300) / 400 = 0.575.
+        expect(direct.label).toBe('Vente directe');
+        expect(direct.margeBrutePercent).toBeCloseTo((0.5 * 100 + 0.6 * 300) / 400);
+
+        const epi = result.find(r => r.channelId === 'channel_epi');
+        expect(epi.margeBrutePercent).toBeCloseTo(0.4);
+    });
+
+    it('omet un canal sans aucun volume réel plutôt que de forcer une moyenne à 0', () => {
+        const activeProducts = [{ channelBreakdown: [{ channelId: 'channel_direct', volume: 0, margeBrutePercent: 0.5, costMatierePercent: 0.3, costLaborPercent: 0.1 }] }];
+        expect(computeChannelImpact(activeProducts, salesChannels)).toEqual([]);
+    });
+});
+
+describe('computeDirectCostAllocation — ventilation indicative des charges directes réelles (Phase 4.3bis)', () => {
+    it('répartit un type de coût par activité (coût théorique/portion × volume), puis par canal au sein de chaque activité', () => {
+        const productsWithCosts = [
+            {
+                activityId: 'act_confitures',
+                costs: { costMatierePerPortion: 2 },
+                channelBreakdown: [{ channelId: 'channel_direct', volume: 100 }, { channelId: 'channel_epi', volume: 50 }],
+            },
+            {
+                activityId: 'act_sauces',
+                costs: { costMatierePerPortion: 1 },
+                channelBreakdown: [{ channelId: 'channel_direct', volume: 100 }],
+            },
+        ];
+        const result = computeDirectCostAllocation(productsWithCosts, 'costMatierePerPortion');
+        // act_confitures : 2*100 + 2*50 = 300 ; act_sauces : 1*100 = 100 ; total 400
+        expect(result.activityShares).toEqual({ act_confitures: 300 / 400, act_sauces: 100 / 400 });
+        expect(result.channelSharesByActivity.act_confitures).toEqual({
+            channel_direct: 200 / 300,
+            channel_epi: 100 / 300,
+        });
+        expect(result.channelSharesByActivity.act_sauces).toEqual({ channel_direct: 1 });
+    });
+
+    it('omet une activité sans coût théorique de CE type (ex. 100 % revente, pas de main-d\'œuvre directe) plutôt que de forcer une part à 0', () => {
+        const productsWithCosts = [
+            { activityId: 'act_revente', costs: { costLaborPerPortion: 0 }, channelBreakdown: [{ channelId: 'channel_direct', volume: 100 }] },
+            { activityId: 'act_prod', costs: { costLaborPerPortion: 3 }, channelBreakdown: [{ channelId: 'channel_direct', volume: 10 }] },
+        ];
+        const result = computeDirectCostAllocation(productsWithCosts, 'costLaborPerPortion');
+        expect(Object.keys(result.activityShares)).toEqual(['act_prod']);
+    });
+
+    it("ne répartit pas avec le champ d'un AUTRE type de coût (driver apparié par type)", () => {
+        const productsWithCosts = [
+            { activityId: 'act_a', costs: { costMatierePerPortion: 5, costPackagingPerPortion: 0 }, channelBreakdown: [{ channelId: 'channel_direct', volume: 10 }] },
+        ];
+        const result = computeDirectCostAllocation(productsWithCosts, 'costPackagingPerPortion');
+        expect(result.activityShares).toEqual({});
+    });
+
+    it("retourne des parts vides quand aucune activité n'a de coût théorique de ce type (repli sur Général à la charge de l'appelant)", () => {
+        const result = computeDirectCostAllocation([{ activityId: 'act_a', costs: {}, channelBreakdown: [] }], 'costSubcontractingPerPortion');
+        expect(result).toEqual({ activityShares: {}, channelSharesByActivity: {} });
+    });
+});
+
+describe('computeRealVsTheoreticalReconciliation — réconciliation réel/théorique (Phase 4.4)', () => {
+    const activeProducts = [
+        { id: 'p1', costs: { totalDirectCostPerPortion: 4 } },
+        { id: 'p2', costs: { totalDirectCostPerPortion: 2 } },
+    ];
+    const unitsSoldById = { p1: 100, p2: 50 }; // théorique : 100 unités à 4$ + 50 à 2$ = 500$
+
+    it('compare Revenus/Charges directes/Marge réels au théorique du modèle de recettes', () => {
+        const result = computeRealVsTheoreticalReconciliation({
+            totalRevenue: 1200, totalDirectCosts: 450,
+            activeProducts, unitsSoldById, menuRevenue: 1000,
+        });
+        expect(result.rows).toEqual([
+            { label: 'Revenus', real: 1200, theoretical: 1000, diff: 200, diffPercent: 200 / 1000 },
+            { label: 'Charges directes', real: 450, theoretical: 500, diff: -50, diffPercent: -50 / 500 },
+            { label: 'Marge', real: 750, theoretical: 500, diff: 250, diffPercent: 250 / 500 },
+        ]);
+    });
+
+    it("diffPercent absent (pas 0 %) quand le théorique d'une ligne est nul — jamais une précision inventée", () => {
+        const result = computeRealVsTheoreticalReconciliation({
+            totalRevenue: 1200, totalDirectCosts: 450,
+            activeProducts: [], unitsSoldById: {}, menuRevenue: 0,
+        });
+        expect(result.rows[0]).toEqual({ label: 'Revenus', real: 1200, theoretical: 0, diff: 1200, diffPercent: null });
+        // Charges directes théoriques nulles ici (aucun produit actif) → Marge théorique = 0 aussi.
+        expect(result.rows[2].diffPercent).toBeNull();
+    });
+});
+
+describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
+    it("répartit le pool d'une activité au prorata du coût direct (driver 'directCost'), et la somme des parts égale exactement le pool", () => {
+        const baseIngredients = [{ id: 'ing1', unit: 'unité', unitPrice: 1, lossPercentage: 0 }];
+        // A : coût direct 2$/portion, B : 4$/portion — même activité, drivers différents selon le prix.
+        // Volume RÉEL (corrigé le 18/10) : 10 unités vendues chacun, saisies directement par canal.
+        const productA = baseProduct({ id: 'A', activityId: 'act1', prixVente: 10, salesMix: 50, channelPrices: channelPrice(10, 10), ingredients: [{ id: 'ing1', quantity: 2, recipeUnit: 'unité' }] });
+        const productB = baseProduct({ id: 'B', activityId: 'act1', prixVente: 20, salesMix: 50, channelPrices: channelPrice(20, 10), ingredients: [{ id: 'ing1', quantity: 4, recipeUnit: 'unité' }] });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        // Driver total (coût direct × unités) = 2×10 + 4×10 = 60 — pool choisi à 60 pour un
+        // rapprochement net.
+        const indirectPools = {
+            generalPoolAmount: 0,
+            activityPools: { act1: { amount: 60, driver: 'directCost', driverTotal: 60 } },
+            channelPools: {},
+        };
+
+        const result = computeAnalysisData([productA, productB], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels, indirectPools);
+        const rowA = result.productsWithCosts.find(r => r.id === 'A');
+        const rowB = result.productsWithCosts.find(r => r.id === 'B');
+
+        expect(result.unitsSoldById['A']).toBeCloseTo(10);
+        expect(result.unitsSoldById['B']).toBeCloseTo(10);
+        // A : 60 × (20/60) / 10 unités = 2$/portion ; B : 60 × (40/60) / 10 unités = 4$/portion.
+        expect(rowA.costs.costIndirectActivityPerPortion).toBeCloseTo(2);
+        expect(rowB.costs.costIndirectActivityPerPortion).toBeCloseTo(4);
+        // Réconciliation : la somme des parts, sur tout le volume vendu, égale exactement le pool.
+        const totalAllocated = rowA.costs.costIndirectActivityPerPortion * result.unitsSoldById['A']
+            + rowB.costs.costIndirectActivityPerPortion * result.unitsSoldById['B'];
+        expect(totalAllocated).toBeCloseTo(60);
+        // Se répercute dans le coût total et la marge nette (pas seulement dans le sous-champ).
+        expect(rowA.costs.costIndirectPerPortion).toBeCloseTo(2);
+        expect(rowA.costs.totalCostPerPortion).toBeCloseTo(rowA.costs.totalDirectCostPerPortion + 2);
+    });
+
+    it("répartit le pool d'un canal au prorata du coût de production (AUCUN driver au choix, corrigé le 14/10 — vérifié formule par formule dans l'Agro-Calculateur), par canal — une marge nette différente par canal", () => {
+        const salesChannels = [
+            { id: 'c_direct', name: 'Vente directe', links: [] },
+            { id: 'c_distrib', name: 'Grande distribution', links: [] },
+        ];
+        const baseIngredients = [{ id: 'ing1', unit: 'unité', unitPrice: 1, lossPercentage: 0 }];
+        // Coût de production = 1$/unité (un seul ingrédient à 1$). Le canal applique une MAJORATION
+        // sur ce coût déjà établi — jamais un driver indépendant (ventes, temps de MO...).
+        const product = baseProduct({
+            id: 'P', prixVente: 0, salesMix: 0,
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {},
+                ingredients: [{ id: 'ing1', quantity: 1, recipeUnit: 'unité' }],
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c_direct', netPrice: 10, volume: 10 },
+                    { id: 'cp2', channelId: 'c_distrib', netPrice: 20, volume: 5 },
+                ],
+            }],
+        });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        // Dénominateur de chaque canal = coût de production (1$) × son propre volume : 10 pour
+        // c_direct, 5 pour c_distrib (indépendant des ventes en $, contrairement à l'ancien modèle).
+        const indirectPools = {
+            generalPoolAmount: 0,
+            activityPools: {},
+            channelPools: {
+                c_direct: { amount: 30, driverTotal: 10 },
+                c_distrib: { amount: 10, driverTotal: 5 },
+            },
+        };
+
+        const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], salesChannels, indirectPools);
+        const [row] = result.productsWithCosts;
+        const direct = row.channelBreakdown.find(c => c.channelId === 'c_direct');
+        const distrib = row.channelBreakdown.find(c => c.channelId === 'c_distrib');
+
+        // c_direct : taux = 30/10 = 3 ; part = coût de production (1$) × 3 = 3$/unité.
+        expect(direct.costIndirectChannelPerPortion).toBeCloseTo(3);
+        // c_distrib : taux = 10/5 = 2 ; part = 1$ × 2 = 2$/unité — taux DIFFÉRENT du canal ci-dessus,
+        // mais calculé par le MÊME mécanisme, jamais un driver indépendant choisi par canal.
+        expect(distrib.costIndirectChannelPerPortion).toBeCloseTo(2);
+        // Marge nette différente par canal, uniquement à cause du pool de canal (même produit).
+        expect(direct.margeNetteDollar).toBeCloseTo(10 - 1 - 3);
+        expect(distrib.margeNetteDollar).toBeCloseTo(20 - 1 - 2);
+        // Réconciliation : la somme des parts, sur le volume réel de chaque canal, égale le pool.
+        expect(direct.costIndirectChannelPerPortion * direct.volume).toBeCloseTo(30);
+        expect(distrib.costIndirectChannelPerPortion * distrib.volume).toBeCloseTo(10);
+    });
+
+    it('sans indirectPools (ou avec un pool vide) : comportement strictement inchangé — aucun coût Activité/Canal ajouté', () => {
+        const product = baseProduct({ id: 'A', activityId: 'act1', prixVente: 20, salesMix: 100 });
+        const generalInfo = baseGeneralInfo({ totalIndirects: 50 });
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const withoutPools = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo);
+        const withEmptyPools = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], [], { generalPoolAmount: 50, activityPools: {}, channelPools: {} });
+
+        expect(withoutPools.productsWithCosts[0].costs.costIndirectActivityPerPortion).toBeUndefined();
+        expect(withEmptyPools.productsWithCosts[0].costs.costIndirectActivityPerPortion).toBeUndefined();
+        expect(withoutPools.productsWithCosts[0].costs.costIndirectPerPortion).toBeCloseTo(withEmptyPools.productsWithCosts[0].costs.costIndirectPerPortion);
     });
 });

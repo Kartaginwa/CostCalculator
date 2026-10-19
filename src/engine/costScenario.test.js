@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyCostShocks, applyLaborShocks, shockIsActive } from './costScenario.js';
+import { applyCostShocks, applyLaborShocks, shockIsActive, expandShockScopes } from './costScenario.js';
 
 const ingredients = () => [
     { id: 'a', name: 'Saumon', provider: 'Poisson', unitPrice: 10, purchasePrice: 100 },
@@ -96,5 +96,96 @@ describe('shockIsActive', () => {
         expect(shockIsActive({ scope: 'post', target: 'p1', percent: 5 })).toBe(true);
         expect(shockIsActive({ scope: 'selection', selectedIds: [], percent: 5 })).toBe(false);
         expect(shockIsActive({ scope: 'selection', selectedIds: ['a'], percent: 5 })).toBe(true);
+    });
+
+    it("détecte les portées 'format' et 'activity' (Phase 6, 15/10)", () => {
+        expect(shockIsActive({ scope: 'format', target: 'fmt1', percent: 5 })).toBe(true);
+        expect(shockIsActive({ scope: 'format', target: '', percent: 5 })).toBe(false);
+        expect(shockIsActive({ scope: 'activity', target: 'act1', percent: 5 })).toBe(true);
+        expect(shockIsActive({ scope: 'activity', target: '', percent: 5 })).toBe(false);
+    });
+});
+
+describe("expandShockScopes — résout 'format'/'activity' en 'selection' concret (Phase 6, 15/10)", () => {
+    // Deux formats de l'activité 'act_confitures' (fmt1, fmt2) + un de 'act_sauces' (fmt3), chacun
+    // avec ses propres ingrédients directs et étapes de production — même forme que
+    // `productsWithCosts` (Phase 1.6, une ligne par FORMAT).
+    const productsWithCosts = [
+        {
+            id: 'fmt1', activityId: 'act_confitures',
+            format: {
+                ingredients: [{ id: 'ing_fraise' }, { id: 'ing_sucre' }],
+                productionSteps: [{ personnel: [{ postId: 'Cuisinier' }] }],
+            },
+        },
+        {
+            id: 'fmt2', activityId: 'act_confitures',
+            format: {
+                ingredients: [{ id: 'ing_sucre' }, { id: 'ing_citron' }],
+                productionSteps: [{ personnel: [{ postId: 'Opérateur' }] }],
+            },
+        },
+        {
+            id: 'fmt3', activityId: 'act_sauces',
+            format: {
+                ingredients: [{ id: 'ing_tomate' }],
+                productionSteps: [{ personnel: [{ postId: 'Cuisinier' }] }],
+            },
+        },
+    ];
+    const laborDatabase = [
+        { id: 'post_cuisinier', postName: 'Cuisinier', employees: [{ id: 'e_cuisinier' }] },
+        { id: 'post_operateur', postName: 'Opérateur', employees: [{ id: 'e_operateur' }] },
+    ];
+
+    it("ingrédient, portée 'format' : ids des ingrédients directs de CE format seulement", () => {
+        const [expanded] = expandShockScopes(
+            [{ type: 'ingredient', scope: 'format', target: 'fmt1', percent: 10 }],
+            { productsWithCosts, laborDatabase }
+        );
+        expect(expanded.scope).toBe('selection');
+        expect(new Set(expanded.selectedIds)).toEqual(new Set(['ing_fraise', 'ing_sucre']));
+    });
+
+    it("ingrédient, portée 'activity' : union des ingrédients de TOUS les formats de l'activité", () => {
+        const [expanded] = expandShockScopes(
+            [{ type: 'ingredient', scope: 'activity', target: 'act_confitures', percent: 10 }],
+            { productsWithCosts, laborDatabase }
+        );
+        expect(new Set(expanded.selectedIds)).toEqual(new Set(['ing_fraise', 'ing_sucre', 'ing_citron']));
+    });
+
+    it("main-d'œuvre, portée 'format' : employés des postes utilisés dans les étapes de CE format", () => {
+        const [expanded] = expandShockScopes(
+            [{ type: 'labor', scope: 'format', target: 'fmt2', percent: 10 }],
+            { productsWithCosts, laborDatabase }
+        );
+        expect(expanded.selectedIds).toEqual(['e_operateur']);
+    });
+
+    it("main-d'œuvre, portée 'activity' : employés des postes utilisés dans TOUS les formats de l'activité", () => {
+        const [expanded] = expandShockScopes(
+            [{ type: 'labor', scope: 'activity', target: 'act_confitures', percent: 10 }],
+            { productsWithCosts, laborDatabase }
+        );
+        expect(new Set(expanded.selectedIds)).toEqual(new Set(['e_cuisinier', 'e_operateur']));
+    });
+
+    it("laisse inchangé un choc 'all'/'provider'/'post'/'selection'", () => {
+        const shocks = [
+            { type: 'ingredient', scope: 'all', percent: 10 },
+            { type: 'ingredient', scope: 'provider', target: 'Boucher', percent: 10 },
+            { type: 'labor', scope: 'post', target: 'post_cuisinier', percent: 10 },
+            { type: 'ingredient', scope: 'selection', selectedIds: ['x'], percent: 10 },
+        ];
+        expect(expandShockScopes(shocks, { productsWithCosts, laborDatabase })).toEqual(shocks);
+    });
+
+    it('cible absente (format/activité supprimé depuis) : selectedIds vide, pas une erreur', () => {
+        const [expanded] = expandShockScopes(
+            [{ type: 'ingredient', scope: 'format', target: 'fmt_disparu', percent: 10 }],
+            { productsWithCosts, laborDatabase }
+        );
+        expect(expanded.selectedIds).toEqual([]);
     });
 });

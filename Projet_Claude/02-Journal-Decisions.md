@@ -113,6 +113,17 @@ Justification : le système actuel de calcul ascendant par étape de recette est
 que celui du MAPAQ pour la main-d'œuvre de production ; seul le temps non capturé par une recette
 (supervision, admin, vente) manque, et c'est tout ce que ce module doit couvrir.
 
+**Correction du 14/10** — décision (d) abandonnée avant d'être construite. Une fois Frais fixes
+(Phase 4.1-4.6) en place, l'utilisateur a questionné la rigueur comptable de ce module : un salaire
+n'est jamais scindé par % de temps estimé dans une vraie comptabilité (livres de paie/état des
+résultats) — c'est une technique de comptabilité de gestion (allocation de coûts), pas un fait
+comptable. L'automatiser aurait cassé le principe fondateur de Frais fixes (Phase 4.1 : « l'état
+des résultats réel, tel qu'il apparaît dans la vraie comptabilité ») en risquant un double compte
+ou un écart permanent inexpliqué contre les vrais livres de l'utilisateur. Conclusion : la saisie
+manuelle d'une ligne Frais fixes (déjà disponible depuis la 4.1) est la méthode la PLUS rigoureuse
+pour couvrir ce besoin, pas un pis-aller en attendant ce module — rien à construire. Voir
+`03-Feuille-de-route.md`, section Phase 5.
+
 **Impact global sur la feuille de route** : voir `03-Feuille-de-route.md`, réordonnée en
 conséquence (formats de vente + activités de production deviennent la Phase 1).
 

@@ -10,6 +10,10 @@ export const toProjectState = (flatState) => ({
     laborDatabase: flatState.laborDatabase,
     productionActivities: flatState.productionActivities,
     salesChannels: flatState.salesChannels,
+    expenseLines: flatState.expenseLines,
+    revenueLines: flatState.revenueLines,
+    directCostLines: flatState.directCostLines,
+    repartitionKeys: flatState.repartitionKeys,
     uiSettings: flatState.uiSettings,
 });
 
@@ -44,6 +48,14 @@ export function projectReducer(state, action) {
             return { ...state, productionActivities: resolve(action.payload, state.productionActivities) };
         case 'SET_SALES_CHANNELS':
             return { ...state, salesChannels: resolve(action.payload, state.salesChannels) };
+        case 'SET_EXPENSE_LINES':
+            return { ...state, expenseLines: resolve(action.payload, state.expenseLines) };
+        case 'SET_REVENUE_LINES':
+            return { ...state, revenueLines: resolve(action.payload, state.revenueLines) };
+        case 'SET_DIRECT_COST_LINES':
+            return { ...state, directCostLines: resolve(action.payload, state.directCostLines) };
+        case 'SET_REPARTITION_KEYS':
+            return { ...state, repartitionKeys: resolve(action.payload, state.repartitionKeys) };
         case 'SET_TRACKING_POINTS':
             return { ...state, trackingPoints: resolve(action.payload, state.trackingPoints) };
         case 'SET_UI_SETTINGS':

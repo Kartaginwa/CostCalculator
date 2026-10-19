@@ -230,12 +230,15 @@ describe('calculateCosts - méthodes d\'allocation des frais indirects', () => {
             expect(costs.indirectCostTotal).toBe(0);
         });
 
-        it("se rabat sur une estimation par revenu (raisonnable) si portionsSold n'est pas saisi, au lieu d'exploser", () => {
+        it("se rabat sur le volume RÉEL par canal si portionsSold n'est pas saisi, au lieu d'exploser (corrigé le 18/10)", () => {
             // Reproduit un projet existant créé avant l'ajout du champ portionsSold :
-            // indirectCosts ne contient que la méthode, sans portionsSold.
-            const generalInfo = { ...baseGeneralInfo(), totalIndirects: 18500, totalRevenue: 62000 };
+            // indirectCosts ne contient que la méthode, sans portionsSold — repli sur le volume
+            // réel déjà saisi par canal (fmt.channelPrices), plus de reconstruction depuis un
+            // revenu déclaré (totalRevenue, retiré).
+            const generalInfo = { ...baseGeneralInfo(), totalIndirects: 18500 };
             const product = baseProduct({
                 prixVente: 32, salesMix: 35,
+                channelPrices: [{ id: 'cp1', channelId: 'c1', netPrice: 32, volume: 1000 }],
                 indirectCosts: { method: 'salesAllocation' },
             });
             const costs = calculateCosts(product, generalInfo, [], [product], []);
@@ -243,6 +246,48 @@ describe('calculateCosts - méthodes d\'allocation des frais indirects', () => {
             // de vente, pas des milliers de dollars (ancien bug : portionsSold par défaut à 1).
             expect(costs.indirectCostTotal).toBeLessThan(product.prixVente);
             expect(costs.indirectCostTotal).toBeGreaterThan(0);
+        });
+
+        it('calcule un repli exact sur la somme des volumes réels de TOUS les canaux du format (pas seulement le premier)', () => {
+            const generalInfo = { ...baseGeneralInfo(), totalIndirects: 1000 };
+            const product = baseProduct({
+                prixVente: 10, salesMix: 100,
+                channelPrices: [
+                    { id: 'cp1', channelId: 'c1', netPrice: 10, volume: 60 },
+                    { id: 'cp2', channelId: 'c2', netPrice: 9, volume: 40 },
+                ],
+                indirectCosts: { method: 'salesAllocation' },
+            });
+            // Un seul produit actif (100 % du mix) : allocatedIndirects = 1000 ; portionsSold =
+            // 60 + 40 = 100 (somme des deux canaux) ; indirectCostTotal = 1000 / 100 × 1 = 10.
+            const costs = calculateCosts(product, generalInfo, [], [product], []);
+            expect(costs.indirectCostTotal).toBeCloseTo(10);
+        });
+
+        it("sans AUCUNE donnée réelle (ni portionsSold ni volume par canal), le coût indirect 'ventes' reste absent (0 $), jamais une estimation délirante", () => {
+            // Bug trouvé le 18/10 : un repli à 1 unité (avant correction) faisait diviser tout le
+            // pool par une seule portion — un coût indirect de plusieurs centaines/milliers de $
+            // par portion, au lieu de rester simplement absent tant qu'aucune vente réelle
+            // n'existe pour ce format.
+            const generalInfo = { ...baseGeneralInfo(), totalIndirects: 18500 };
+            const product = baseProduct({
+                prixVente: 32, salesMix: 35,
+                indirectCosts: { method: 'salesAllocation' },
+            });
+            const costs = calculateCosts(product, generalInfo, [], [product], []);
+            expect(costs.indirectCostTotal).toBe(0);
+            expect(costs.portionsSold).toBeNull();
+        });
+
+        it("`fmt.indirectCosts.portionsSold` saisi explicitement garde priorité sur le volume réel par canal", () => {
+            const generalInfo = { ...baseGeneralInfo(), totalIndirects: 1000 };
+            const product = baseProduct({
+                prixVente: 10, salesMix: 100,
+                channelPrices: [{ id: 'cp1', channelId: 'c1', netPrice: 10, volume: 60 }],
+                indirectCosts: { method: 'salesAllocation', portionsSold: 500 },
+            });
+            const costs = calculateCosts(product, generalInfo, [], [product], []);
+            expect(costs.indirectCostTotal).toBeCloseTo(1000 / 500);
         });
     });
 });

@@ -34,7 +34,7 @@ test('section Emballage de Recette & Calcul : ajout d\'un emballage et coût ref
     await expect(packagingSection.getByText(/Coût Emballage \(unité\): 0\.00 \$/)).toHaveCount(0);
 
     // Le récapitulatif affiche bien un 4e poste "Coût Emballage (%)" non nul.
-    await page.locator('h2:has-text("6. Récapitulatif")').scrollIntoViewIfNeeded();
+    await page.locator('h2:has-text("5. Récapitulatif")').scrollIntoViewIfNeeded();
     await expect(page.getByText('Coût Emballage (%)')).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);

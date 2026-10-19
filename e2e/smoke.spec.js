@@ -31,7 +31,10 @@ test.describe('Parcours projet vierge', () => {
         const newProductSection = page.locator('#tutorial-section-info-menu [id^="product-section-"]').first();
         await newProductSection.locator('input[type="text"]').first().fill('Plat Test');
         await newProductSection.locator('table input[inputmode="decimal"]').first().fill('15');
-        // Méthode d'attribution des frais indirects : réglage GLOBAL (les deux méthodes)
+
+        // Méthode d'attribution des frais indirects : réglage GLOBAL (les deux méthodes) —
+        // déplacé dans État des résultats le 18/10 (section Frais fixes, ex-Paramètres).
+        await page.locator('#tab-income-statement').click();
         await page.locator('#indirectCostMethod').selectOption('laborTime');
         await page.locator('#indirectCostMethod').selectOption('salesAllocation');
 
@@ -96,7 +99,7 @@ test.describe('Projet démo', () => {
         // Volatilité des prix (dérivée des points de référence du projet démo).
         // Onglet Suivi : le tableau de volatilité s'affiche avec des données.
         await page.locator('#tab-tracking').click();
-        await expect(page.getByRole('heading', { name: 'Volatilité des prix d\'achat' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Volatilité des prix d\'achat', exact: true })).toBeVisible();
         // Onglet Ingrédients : au moins un ingrédient (le saumon, prix variable) est marqué « volatile ».
         await page.locator('#tab-ingredients').click();
         await expect(page.getByText('volatile').first()).toBeVisible();

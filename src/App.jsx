@@ -1,11 +1,15 @@
 import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import {
     Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
-    PlusCircle, TrendingUp, Settings, Package,
+    PlusCircle, TrendingUp, Settings, Package, Receipt,
 } from 'lucide-react';
 
-import { parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS } from './utils.js';
-import { computeAnalysisData } from './engine/analysisData.js';
+import { parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, sumAmountsMap } from './utils.js';
+import {
+    computeAnalysisData, buildActivityBuckets, computeBucketTotalsFromAmounts,
+    computeDirectCostLineAllocations, computeExpenseLineEffectiveAllocations,
+    computeExpensePoolTotals, computeIndirectCostDriverTotals,
+} from './engine/analysisData.js';
 import { computeSalesMixFromChannelPrices } from './engine/salesMixFromChannels.js';
 import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
 import { exportToExcel as exportToExcelReport } from './reports/exportToExcel.js';
@@ -23,6 +27,7 @@ import { ProductInfo } from './features/ProductInfo.jsx';
 import { IngredientsTab } from './features/IngredientsTab.jsx';
 import { PackagingTab } from './features/PackagingTab.jsx';
 import { LaborDatabaseTab } from './features/LaborDatabaseTab.jsx';
+import { IncomeStatementTab } from './features/IncomeStatementTab.jsx';
 
 // Code-splitting : ces vues/wizards sont chargés à la demande (chunks séparés). Cela sort du
 // bundle initial les dépendances lourdes qu'ils tirent — notamment recharts (SummaryTable,
@@ -40,7 +45,7 @@ const App = () => {
     // dans un reducer et exposées via ProjectContext pour éviter de les faire descendre
     // manuellement à travers chaque onglet (voir src/state/projectReducer.js).
     const [projectState, dispatch] = useReducer(projectReducer, undefined, () => toProjectState(getEmptyState()));
-    const { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, uiSettings } = projectState;
+    const { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings } = projectState;
 
     // Setters stables (dispatch seul en dépendance, garanti stable par React) : la résolution
     // des mises à jour fonctionnelles (value => ...) se fait dans le reducer lui-même plutôt
@@ -48,7 +53,7 @@ const App = () => {
     // projectContextValue plus bas (sinon un nouveau setter à chaque rendu invaliderait le memo).
     const {
         setCompanyName, setLogoUrl, setGeneralInfo, setBaseIngredients, setBasePackaging,
-        setProducts, setLaborDatabase, setTrackingPoints, setProductionActivities, setSalesChannels, setUiSettings,
+        setProducts, setLaborDatabase, setTrackingPoints, setProductionActivities, setSalesChannels, setExpenseLines, setRevenueLines, setDirectCostLines, setRepartitionKeys, setUiSettings,
     } = useMemo(() => {
         const makeSetter = (type) => (value) => dispatch({ type, payload: value });
         return {
@@ -62,6 +67,10 @@ const App = () => {
             setTrackingPoints: makeSetter('SET_TRACKING_POINTS'),
             setProductionActivities: makeSetter('SET_PRODUCTION_ACTIVITIES'),
             setSalesChannels: makeSetter('SET_SALES_CHANNELS'),
+            setExpenseLines: makeSetter('SET_EXPENSE_LINES'),
+            setRevenueLines: makeSetter('SET_REVENUE_LINES'),
+            setDirectCostLines: makeSetter('SET_DIRECT_COST_LINES'),
+            setRepartitionKeys: makeSetter('SET_REPARTITION_KEYS'),
             setUiSettings: makeSetter('SET_UI_SETTINGS'),
         };
     }, [dispatch]);
@@ -96,8 +105,8 @@ const App = () => {
     // vente ne couvre généralement qu'UN canal/distributeur à la fois (pas tout le menu comme
     // l'ancien export de caisse), donc on ne remet plus à zéro les produits non importés — seules
     // les entrées channelPrices explicitement présentes dans le fichier sont créées/mises à jour.
-    // `salesMix` et `totalRevenue` sont ensuite entièrement RE-DÉRIVÉS de l'état réel des volumes
-    // (voir computeSalesMixFromChannelPrices), pas accumulés import après import.
+    // `salesMix` est ensuite entièrement RE-DÉRIVÉ de l'état réel des volumes (voir
+    // computeSalesMixFromChannelPrices), pas accumulé import après import.
     const handleSalesReportImport = (importData) => {
         const { items, newStartDate, newEndDate } = importData;
 
@@ -148,13 +157,15 @@ const App = () => {
             workingProducts[productIndex] = { ...product, formats: newFormats, category: item.category || product.category };
         });
 
-        const { products: finalProducts, totalRevenue } = computeSalesMixFromChannelPrices(workingProducts);
+        // `totalRevenue` renvoyé par computeSalesMixFromChannelPrices n'est plus recalé sur
+        // generalInfo (retiré le 18/10, avec toute la section « Frais et revenus » — plus aucun
+        // calcul de coût de revient n'en dépend, voir Projet_Claude/03-Feuille-de-route.md).
+        const { products: finalProducts } = computeSalesMixFromChannelPrices(workingProducts);
 
         setSalesChannels(workingChannels);
         setProducts(finalProducts);
         setGeneralInfo(prev => ({
             ...prev,
-            totalRevenue,
             period: 'custom',
             startDate: newStartDate || prev.startDate,
             endDate: newEndDate || prev.endDate,
@@ -236,15 +247,15 @@ const App = () => {
         }, 0);
     }, [laborDatabase]);
     const calculatedGeneralInfo = useMemo(() => {
-        const parsedOperationHours = parseLocaleNumber(generalInfo.operationHours);
-        const parsedTotalIndirects = parseLocaleNumber(generalInfo.totalIndirects);
-        const operationCostPerHour = parsedOperationHours > 0 ? parsedTotalIndirects / parsedOperationHours : 0;
-
-        // Volumes reconstruits de façon cohérente avec analysisData : le mix est une part de
-        // POPULARITÉ (unités), pas de revenu. Unités totales du menu = revenu du menu / prix moyen
-        // pondéré par le mix ; chaque plat en reçoit sa part. (Auparavant revenu × mix / prix, ce
-        // qui faussait les heures de MO nécessaires — donc la productivité cuisine, réinjectée dans
-        // le coût de MO de chaque plat.)
+        // Volumes RÉELS par canal (corrigé le 18/10, confirmé le 19/10 — voir
+        // Projet_Claude/03-Feuille-de-route.md, addendum du 19/10) : plus de reconstruction à
+        // partir du revenu déclaré (`totalRevenue`, réel) — ce serait mélanger les deux jeux de
+        // données que la Réconciliation réel/théorique doit garder indépendants. Repli direct sur
+        // `fmt.channelPrices[].volume`, la même donnée réelle que `channelBreakdown` utilise déjà
+        // dans analysisData.js. Un format sans aucun volume réel saisi contribue 0 heure de MO
+        // nécessaire (jamais une estimation fabriquée) — conséquence acceptée : la productivité
+        // cuisine et le rapport de productivité restent à 0 tant qu'aucune vente réelle n'est
+        // saisie par canal pour ce format.
         // Une entrée par FORMAT actif (Phase 1.6 — même aplatissement que analysisData.js), pas par
         // produit : chaque format a son propre prix/mix/nbPortions/étapes de production.
         const activeFormatRows = products.flatMap(product =>
@@ -252,25 +263,27 @@ const App = () => {
                 .filter(fmt => fmt.onMenu)
                 .map(fmt => ({ product, fmt }))
         );
-        const menuRevenue = parseLocaleNumber(generalInfo.totalRevenue) * (parseLocaleNumber(generalInfo.menuRevenuePercentage) / 100);
-        const totalActiveMix = activeFormatRows.reduce((s, { fmt }) => s + parseLocaleNumber(fmt.salesMix), 0);
-        const weightedAvgPrice = totalActiveMix > 0
-            ? activeFormatRows.reduce((s, { fmt }) => s + parseLocaleNumber(fmt.salesMix) * parseLocaleNumber(fmt.prixVente), 0) / totalActiveMix
-            : 0;
-        const totalMenuUnits = weightedAvgPrice > 0 ? menuRevenue / weightedAvgPrice : 0;
 
         const totalDirectLaborHoursNeededByPost = {};
-        activeFormatRows.forEach(({ fmt }) => {
-            const share = totalActiveMix > 0 ? parseLocaleNumber(fmt.salesMix) / totalActiveMix : 0;
-            const portionsSold = totalMenuUnits * share;
+        // Phase 6 (15/10) : même boucle, accumulateur supplémentaire par ACTIVITÉ de production
+        // (product.activityId) plutôt qu'une 2e passe séparée — share/batchesNeeded déjà calculés
+        // une seule fois ici. Un format sans activité assignée ne contribue à aucune activité
+        // (jamais rattaché à "Général" arbitrairement).
+        const totalDirectLaborHoursNeededByActivity = {};
+        activeFormatRows.forEach(({ product, fmt }) => {
+            const portionsSold = (fmt.channelPrices || []).reduce((sum, cp) => sum + (parseLocaleNumber(cp.volume) || 0), 0);
             const batchesNeeded = portionsSold / (parseLocaleNumber(fmt.nbPortions) || 1);
 
             (fmt.productionSteps || []).forEach(step => {
                 (step.personnel || []).forEach(person => {
+                    const hours = (parseLocaleNumber(step.duration) / 3600) * batchesNeeded;
                     if (!totalDirectLaborHoursNeededByPost[person.postId]) {
                         totalDirectLaborHoursNeededByPost[person.postId] = 0;
                     }
-                    totalDirectLaborHoursNeededByPost[person.postId] += (parseLocaleNumber(step.duration) / 3600) * batchesNeeded;
+                    totalDirectLaborHoursNeededByPost[person.postId] += hours;
+                    if (product.activityId) {
+                        totalDirectLaborHoursNeededByActivity[product.activityId] = (totalDirectLaborHoursNeededByActivity[product.activityId] || 0) + hours;
+                    }
                 });
             });
         });
@@ -284,7 +297,6 @@ const App = () => {
         }, 0);
 
         const kitchenProductivity = totalLaborHoursAvailable > 0 ? (totalDirectLaborHoursNeeded / totalLaborHoursAvailable) * 100 : 100;
-        const showProductivityWarning = autoCalculatedLaborCost > 0 && totalLaborHoursAvailable > 0 && totalDirectLaborHoursNeeded * (autoCalculatedLaborCost / totalLaborHoursAvailable) > autoCalculatedLaborCost;
 
         const productivityReport = {
             rows: laborDatabase.map(post => {
@@ -304,26 +316,79 @@ const App = () => {
         productivityReport.totals.difference = productivityReport.totals.expected - productivityReport.totals.actual;
         productivityReport.totals.utilization = productivityReport.totals.expected > 0 ? (productivityReport.totals.actual / productivityReport.totals.expected) * 100 : 0;
 
+        // Phase 6 (15/10) : capacité de production PAR ACTIVITÉ (ligne de production) — pas de
+        // "expected" par activité (un poste/employé n'est pas rattaché à une seule activité, donc
+        // rien à comparer analogue au "expected" par poste) : seulement la part des heures de MO
+        // réellement nécessaires que CETTE activité consomme, du total du menu.
+        productivityReport.byActivity = productionActivities.map(activity => {
+            const actual = totalDirectLaborHoursNeededByActivity[activity.id] || 0;
+            const sharePercent = totalDirectLaborHoursNeeded > 0 ? (actual / totalDirectLaborHoursNeeded) * 100 : 0;
+            return { activityId: activity.id, activityName: activity.name, actual, sharePercent };
+        });
+
         return {
             ...generalInfo,
             totalKitchenLaborCost: autoCalculatedLaborCost,
-            operationCostPerHour: operationCostPerHour,
             kitchenProductivity: kitchenProductivity,
-            showProductivityWarning: showProductivityWarning,
             productivityReport: productivityReport,
             // Total des heures de MO nécessaires au menu : dénominateur de la méthode d'attribution
             // « temps de production » (taux = frais indirects / ce total → réconcilie exactement).
             totalDirectLaborHoursNeeded: totalDirectLaborHoursNeeded,
         };
-    }, [generalInfo, products, laborDatabase, autoCalculatedLaborCost]);
+    }, [generalInfo, products, laborDatabase, autoCalculatedLaborCost, productionActivities]);
     // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---
     // Source unique de vérité pour les coûts : computeAnalysisData calcule productsWithCosts une
     // seule fois (avec un memo partagé) puis en dérive tous les KPIs. Défini ici, avant
     // ingredientsList, pour que ce dernier — comme les autres consommateurs (RecipeCalculator,
     // TrackingTab, rapports) — réutilise ces coûts au lieu de relancer un calcul redondant.
-    const analysisData = useMemo(
+    //
+    // Phase 4.6 — Conversion des frais fixes (Général/Activité/Canal) en taux par produit : calcul
+    // en DEUX passes, nécessaire parce que les pools Activité/Canal ont besoin des coûts directs et
+    // des volumes de CHAQUE produit (eux-mêmes calculés par computeAnalysisData) pour se normaliser,
+    // avant de pouvoir répartir ces mêmes pools SUR ces produits :
+    //  1. `analysisDataDraft` : computeAnalysisData SANS pools (Général seul, comme avant la Phase
+    //     4.6) — sert uniquement à lire les coûts directs/volumes déjà fiables de chaque produit.
+    //  2. Pools construits à partir de ce brouillon (mêmes fonctions pures que l'onglet État des
+    //     résultats, voir engine/analysisData.js — aucune règle dupliquée).
+    //  3. `analysisData` (celui exposé au reste de l'app) : computeAnalysisData À NOUVEAU, cette
+    //     fois avec les pools — Général réduit à sa seule part, Activité et Canal ajoutés.
+    const activityBuckets = useMemo(() => buildActivityBuckets(productionActivities), [productionActivities]);
+
+    const analysisDataDraft = useMemo(
         () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels),
         [products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels]
+    );
+
+    const indirectPools = useMemo(() => {
+        const totalRevenueForPools = revenueLines.reduce((sum, line) => sum + sumAmountsMap(line.amounts), 0);
+        const totalDirectCostsForPools = sumLineAmounts(directCostLines);
+        const bucketTotals = computeBucketTotalsFromAmounts(revenueLines, activityBuckets);
+        const { directCostBucketTotals } = computeDirectCostLineAllocations(directCostLines, analysisDataDraft.productsWithCosts, activityBuckets, salesChannels);
+        const effectiveAllocations = computeExpenseLineEffectiveAllocations({
+            expenseLines, repartitionKeys, activityBuckets, salesChannels,
+            totalRevenue: totalRevenueForPools, totalDirectCosts: totalDirectCostsForPools,
+            bucketTotals, directCostBucketTotals,
+        });
+        const { activityPoolTotals, channelPoolTotals } = computeExpensePoolTotals(expenseLines, effectiveAllocations, activityBuckets, salesChannels);
+        const { activityDriverTotals, channelDriverTotals } = computeIndirectCostDriverTotals(analysisDataDraft.productsWithCosts, productionActivities, salesChannels);
+
+        return {
+            generalPoolAmount: activityPoolTotals.general || 0,
+            activityPools: Object.fromEntries(productionActivities.map((a) => {
+                const driver = a.indirectCostDriver || 'directCost';
+                return [a.id, { amount: activityPoolTotals[a.id] || 0, driver, driverTotal: activityDriverTotals[a.id]?.[driver] || 0 }];
+            })),
+            // Canal (corrigé le 14/10) : aucun driver au choix — toujours une majoration sur le
+            // coût de production déjà établi à l'activité (voir computeIndirectCostDriverTotals).
+            channelPools: Object.fromEntries(salesChannels.map((c) => (
+                [c.id, { amount: channelPoolTotals[c.id] || 0, driverTotal: channelDriverTotals[c.id] || 0 }]
+            ))),
+        };
+    }, [expenseLines, repartitionKeys, revenueLines, directCostLines, activityBuckets, productionActivities, salesChannels, analysisDataDraft.productsWithCosts]);
+
+    const analysisData = useMemo(
+        () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels, indirectPools),
+        [products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels, indirectPools]
     );
 
     const ingredientsList = useMemo(() => {
@@ -361,6 +426,17 @@ const App = () => {
     const handleUpdateGeneralInfo = useCallback((field, value) => {
         setGeneralInfo(prev => ({ ...prev, [field]: value }));
     }, [setGeneralInfo]);
+
+    // `generalInfo.totalIndirects` n'est plus ressaisi directement (Phase 4.1) : c'est toujours la
+    // somme exacte des lignes de dépense, recalculée ici à chaque modification pour qu'elle ne
+    // puisse jamais dériver de la liste qui la compose — seul point d'écriture de `expenseLines`.
+    // Résout la valeur AVANT de dispatcher (plutôt qu'un setter fonctionnel imbriqué dans un autre
+    // setter) : un dispatch ne doit pas être déclenché depuis l'exécution d'un reducer.
+    const handleUpdateExpenseLines = useCallback((value) => {
+        const newLines = typeof value === 'function' ? value(expenseLines) : value;
+        setExpenseLines(newLines);
+        setGeneralInfo(prev => ({ ...prev, totalIndirects: sumLineAmounts(newLines) }));
+    }, [expenseLines, setExpenseLines, setGeneralInfo]);
 
     // Un SKU encore auto-généré peut avoir été construit avec DEUX conventions de repli
     // différentes selon son origine : l'id du FORMAT (handleAddFormat/handleDuplicateFormat) ou
@@ -452,8 +528,6 @@ const App = () => {
         // Révisé 06/10 : safe à recalculer en direct maintenant que computeSalesMixFromChannelPrices
         // ne touche QUE les formats qui ont déjà au moins une unité saisie quelque part — un format
         // encore en % manuel (jamais d'unité saisie) garde sa valeur intacte, jamais écrasé à 0.
-        // `totalRevenue` n'est volontairement pas appliqué ici : seul l'import de vraies ventes doit
-        // recaler ce chiffre, pas une simple édition de prix dans Paramètres.
         const { products: recomputedProducts } = computeSalesMixFromChannelPrices(newProducts);
         setProducts(recomputedProducts);
     };
@@ -682,6 +756,10 @@ const App = () => {
         setLaborDatabase(defaultState.laborDatabase);
         setProductionActivities(defaultState.productionActivities);
         setSalesChannels(defaultState.salesChannels);
+        setExpenseLines(defaultState.expenseLines);
+        setRevenueLines(defaultState.revenueLines);
+        setDirectCostLines(defaultState.directCostLines);
+        setRepartitionKeys(defaultState.repartitionKeys);
         // Démarre le tutoriel
         setTutorialStep(0);
         setActiveTab('info');
@@ -706,6 +784,10 @@ const App = () => {
         setLaborDatabase(emptyState.laborDatabase);
         setProductionActivities(emptyState.productionActivities);
         setSalesChannels(emptyState.salesChannels);
+        setExpenseLines(emptyState.expenseLines);
+        setRevenueLines(emptyState.revenueLines);
+        setDirectCostLines(emptyState.directCostLines);
+        setRepartitionKeys(emptyState.repartitionKeys);
         setEditingProductIndex(0);
         setActiveTab('info');
         window.scrollTo(0, 0); // Remonte en haut de la page
@@ -728,6 +810,10 @@ const App = () => {
         setLaborDatabase(emptyState.laborDatabase);
         setProductionActivities(emptyState.productionActivities);
         setSalesChannels(emptyState.salesChannels);
+        setExpenseLines(emptyState.expenseLines);
+        setRevenueLines(emptyState.revenueLines);
+        setDirectCostLines(emptyState.directCostLines);
+        setRepartitionKeys(emptyState.repartitionKeys);
         setOpenPostIds(new Set()); // Vide la liste pour un nouveau projet
         setEditingProductIndex(0);
         setActiveTab('info');
@@ -750,6 +836,10 @@ const App = () => {
         setLaborDatabase(defaultState.laborDatabase); // Ajout de la ligne manquante
         setProductionActivities(defaultState.productionActivities);
         setSalesChannels(defaultState.salesChannels);
+        setExpenseLines(defaultState.expenseLines);
+        setRevenueLines(defaultState.revenueLines);
+        setDirectCostLines(defaultState.directCostLines);
+        setRepartitionKeys(defaultState.repartitionKeys);
         setOpenPostIds(new Set(defaultState.laborDatabase.map(p => p.id)));
         setEditingProductIndex(0);
         setActiveTab('info');
@@ -761,7 +851,7 @@ const App = () => {
         try {
             const projectData = buildProjectData({
                 companyName, logoUrl, generalInfo, baseIngredients, basePackaging,
-                products, trackingPoints, laborDatabase, productionActivities, salesChannels, uiSettings,
+                products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings,
             });
 
             const jsonString = JSON.stringify(projectData, null, 2);
@@ -802,6 +892,10 @@ const App = () => {
                 setLaborDatabase(parsed.laborDatabase);
                 setProductionActivities(parsed.productionActivities);
                 setSalesChannels(parsed.salesChannels);
+                setExpenseLines(parsed.expenseLines);
+                setRevenueLines(parsed.revenueLines);
+                setDirectCostLines(parsed.directCostLines);
+                setRepartitionKeys(parsed.repartitionKeys);
                 setOpenPostIds(new Set(parsed.laborDatabase.map(p => p.id)));
                 setBaseIngredients(parsed.baseIngredients);
                 setBasePackaging(parsed.basePackaging);
@@ -861,7 +955,8 @@ const App = () => {
                     <button id="tab-ingredients" onClick={() => setActiveTab('ingredients')} className={getTabClasses('ingredients')}><ShoppingCart className="h-5 w-5 mr-2" /> Ingrédients</button>
                     <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Packaging</button>
                     <button id="tab-labor" onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
-                    <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Recette & Calcul</button>
+                    <button id="tab-income-statement" onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Receipt className="h-5 w-5 mr-2" /> État des résultats</button>
+                    <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Recettes et produits</button>
                     <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><Table className="h-5 w-5 mr-2" /> Rapport</button>
                     <button id="tab-tracking" onClick={() => setActiveTab('tracking')} className={getTabClasses('tracking')}><TrendingUp className="h-5 w-5 mr-2" /> Suivi</button>
                 </div>
@@ -873,7 +968,7 @@ const App = () => {
         // (pagination, accordéons ouverts...) continue de transiter par les props ci-dessous.
         // Mémoïsé : tous les setters/handlers ici sont stables (voir plus haut), donc cet objet
         // ne change de référence que lorsque les données qu'il transporte changent réellement —
-        // sans quoi les 6 onglets se re-rendraient à chaque rendu de App, quelle qu'en soit la cause.
+        // sans quoi tous les onglets se re-rendraient à chaque rendu de App, quelle qu'en soit la cause.
         const projectContextValue = useMemo(() => ({
             companyName, onUpdateCompanyName: setCompanyName,
             logoUrl, onUpdateLogoUrl: setLogoUrl,
@@ -885,6 +980,10 @@ const App = () => {
             trackingPoints, setTrackingPoints,
             productionActivities, onUpdateProductionActivities: setProductionActivities,
             salesChannels, onUpdateSalesChannels: setSalesChannels,
+            expenseLines, onUpdateExpenseLines: handleUpdateExpenseLines,
+            revenueLines, onUpdateRevenueLines: setRevenueLines,
+            directCostLines, onUpdateDirectCostLines: setDirectCostLines,
+            repartitionKeys, onUpdateRepartitionKeys: setRepartitionKeys,
             analysisData,
             showNotification, setNotification,
         }), [
@@ -894,6 +993,8 @@ const App = () => {
             basePackaging, setBasePackaging,
             laborDatabase, setLaborDatabase, trackingPoints, setTrackingPoints,
             productionActivities, setProductionActivities, salesChannels, setSalesChannels,
+            expenseLines, handleUpdateExpenseLines, revenueLines, setRevenueLines,
+            directCostLines, setDirectCostLines, repartitionKeys, setRepartitionKeys,
             analysisData, showNotification, setNotification,
         ]);
 
@@ -915,6 +1016,7 @@ const App = () => {
                     />;
 
                 case 'labor': return <LaborDatabaseTab openPostIds={openPostIds} setOpenPostIds={setOpenPostIds} />;
+                case 'income-statement': return <IncomeStatementTab />;
                 case 'recipe': return <RecipeCalculator editingProductIndex={editingProductIndex} initialFormatIndex={editingFormatIndex} onSelectProduct={selectProductForRecipe} openRecipeSections={openRecipeSections} setOpenRecipeSections={setOpenRecipeSections} onAddFormat={handleAddFormat} onDuplicateFormat={handleDuplicateFormat} />;
 
                 case 'summary':

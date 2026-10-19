@@ -52,12 +52,13 @@ export const exportToExcel = (deps) => {
                     ["Tableau de Bord Stratégique"],
                     [],
                     ["Paramètres Généraux"],
+                    // Revenus Totaux/Heures d'opération/Coût horaire op. retirés le 18/10 avec la
+                    // section « Frais et revenus » de Paramètres — plus aucune donnée réelle
+                    // derrière ces champs (voir Projet_Claude/03-Feuille-de-route.md). Le revenu
+                    // réel figure maintenant dans l'État des résultats (section Revenus), pas ici.
                     ["Période:", `${generalInfo.period === 'custom' ? `Personnalisée (${generalInfo.startDate} au ${generalInfo.endDate})` : (periodTranslations[generalInfo.period] || 'N/A')}`],
-                    ["Revenus Totaux:", { t: 'n', v: Number(calculatedGeneralInfo.totalRevenue), z: currencyFormat }],
                     ["Frais Indirects Totaux:", { t: 'n', v: Number(calculatedGeneralInfo.totalIndirects), z: currencyFormat }],
                     ["Coût M-O Cuisine:", { t: 'n', v: Number(calculatedGeneralInfo.totalKitchenLaborCost), z: currencyFormat }],
-                    ["Heures d'opération:", `${calculatedGeneralInfo.operationHours} h`],
-                    ["Coût horaire op.:", { t: 'n', v: Number(calculatedGeneralInfo.operationCostPerHour), z: currencyFormat }],
                     [],
                     ["Indicateurs Clés de Performance (KPIs) Globaux"],
                     ["Coût Matière Moyen Pondéré:", { t: 'n', v: Number(weightedMaterialCost), z: percentFormat }],

@@ -180,10 +180,9 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-tab-bar', content: "La navigation se fait via ces onglets. Nous allons les parcourir un par un pour explorer les fonctionnalités de l'application.", tab: 'info' },
     // Onglet Paramètres
     { selector: '#tutorial-section-info-entreprise', content: "L'onglet 'Paramètres' est le point de départ. Cette première section vous permet de définir les informations de base de votre entreprise pour les rapports.", tab: 'info' },
-    { selector: '#tutorial-section-info-frais', content: "Ensuite, entrez vos revenus et frais indirects globaux. Ces chiffres sont la base de tous les calculs de rentabilité.", tab: 'info' },
     { selector: '#tutorial-section-info-objectifs', content: "Vous pouvez définir ici des objectifs de coûts. L'application vous indiquera si vous les respectez dans l'onglet 'Résumé'.", tab: 'info' },
-    { selector: '#tutorial-section-info-activites', content: "Définissez ici vos lignes de production (ex. Confitures, Produits séchés) — elles serviront à répartir vos frais indirects par ligne dans l'onglet Comptabilité.", tab: 'info' },
-    { selector: '#tutorial-section-info-menu', content: "Enfin, listez tous vos produits (SKU) dans ce tableau, chacun rattaché à sa ligne de production. Pour ce tour, nous avons pré-rempli un exemple.", tab: 'info' },
+    { selector: '#tutorial-section-info-activites', content: "Définissez ici vos activités de production (ex. Confitures, Produits séchés) — elles serviront à répartir vos frais indirects par activité dans l'onglet État des résultats.", tab: 'info' },
+    { selector: '#tutorial-section-info-menu', content: "Enfin, listez tous vos produits (SKU) dans ce tableau, chacun rattaché à son activité de production. Pour ce tour, nous avons pré-rempli un exemple.", tab: 'info' },
     // Onglet Ingrédients
     { selector: '#tab-ingredients', content: "Passons à l'onglet 'Ingrédients'.", tab: 'info' },
     { selector: '#tutorial-section-ingredients-db', content: "C'est votre base de données centrale pour toutes vos matières premières. Vous y définissez les prix d'achat et les taux de perte.", tab: 'ingredients' },
@@ -194,12 +193,11 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-section-labor-db', content: "Ici, vous pouvez définir les différents postes (Cuisinier, Commis...) et y assigner des employés avec leurs salaires et charges.", tab: 'labor' },
     { selector: '#tutorial-section-labor-rapport', content: "Ce rapport compare les heures de travail prévues à celles réellement nécessaires, vous donnant un aperçu de votre productivité.", tab: 'labor' },
     // Onglet Recette
-    { selector: '#tab-recipe', content: "Allons maintenant au cœur du calculateur : l'onglet 'Recette & Calcul'.", tab: 'labor' },
+    { selector: '#tab-recipe', content: "Allons maintenant au cœur du calculateur : l'onglet 'Recettes et produits'.", tab: 'labor' },
     { selector: '#tutorial-section-recipe-header', content: "Commencez par définir ici les informations de base de votre recette, comme le nombre de portions qu'elle produit.", tab: 'recipe' },
     { selector: '#tutorial-section-recipe-ingredients', content: "Ensuite, construisez la fiche de coût en y ajoutant les ingrédients.", tab: 'recipe' },
     { selector: '#tutorial-section-recipe-labor', content: "Détaillez les étapes de production. Le coût de la main-d'œuvre sera calculé automatiquement.", tab: 'recipe' },
-    { selector: '#tutorial-section-recipe-indirects', content: "Choisissez comment vous souhaitez répartir vos frais généraux (loyer, électricité...) sur ce plat.", tab: 'recipe' },
-    { selector: '#recap-section', content: "Et voici le résultat ! Cette section récapitule tous les coûts et calcule vos marges brute et nette en temps réel.", tab: 'recipe' },
+    { selector: '#recap-section', content: "Et voici le résultat ! Cette section récapitule votre coût de production et calcule vos marges de contribution et brute en temps réel — les frais fixes (Général/Activité/Canal) se retrouvent dans l'onglet Rapport, par SKU.", tab: 'recipe' },
     // Onglet Résumé
     { selector: '#tab-summary', content: "L'onglet 'Résumé' vous donne une vue d'ensemble de la performance de votre menu.", tab: 'recipe' },
     { selector: '#tutorial-section-summary-table', content: "Ce tableau vous permet de comparer rapidement la rentabilité de tous vos plats.", tab: 'summary' },

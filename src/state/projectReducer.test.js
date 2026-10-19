@@ -13,6 +13,9 @@ const baseState = () => ({
     laborDatabase: [{ id: 'post' }],
     productionActivities: [{ id: 'act_general', name: 'Général' }],
     salesChannels: [{ id: 'channel_default', name: 'Vente directe', links: [] }],
+    expenseLines: [{ id: 'exp_1', label: 'Loyer', category: 'Frais généraux de production', amount: 100 }],
+    revenueLines: [{ id: 'rev_1', label: 'Ventes', repartition: 'general', amounts: { general: 200 } }],
+    directCostLines: [{ id: 'dc_1', label: 'Matières premières', category: 'Matière première', amount: 300 }],
     uiSettings: { infoItemsPerPage: 10 },
 });
 
@@ -46,6 +49,9 @@ describe('projectReducer', () => {
         expect(projectReducer(state, { type: 'SET_TRACKING_POINTS', payload: [{ id: 't' }] }).trackingPoints).toEqual([{ id: 't' }]);
         expect(projectReducer(state, { type: 'SET_PRODUCTION_ACTIVITIES', payload: [] }).productionActivities).toEqual([]);
         expect(projectReducer(state, { type: 'SET_SALES_CHANNELS', payload: [] }).salesChannels).toEqual([]);
+        expect(projectReducer(state, { type: 'SET_EXPENSE_LINES', payload: [] }).expenseLines).toEqual([]);
+        expect(projectReducer(state, { type: 'SET_REVENUE_LINES', payload: [] }).revenueLines).toEqual([]);
+        expect(projectReducer(state, { type: 'SET_DIRECT_COST_LINES', payload: [] }).directCostLines).toEqual([]);
         expect(projectReducer(state, { type: 'SET_UI_SETTINGS', payload: { infoItemsPerPage: 25 } }).uiSettings).toEqual({ infoItemsPerPage: 25 });
     });
 
@@ -56,6 +62,9 @@ describe('projectReducer', () => {
             baseIngredients: [{ id: 'z' }], basePackaging: [{ id: 'pkg2' }], products: [{ id: 'q' }], trackingPoints: [{ id: 't' }],
             laborDatabase: [{ id: 'l' }], productionActivities: [{ id: 'act_1', name: 'Ligne 1' }],
             salesChannels: [{ id: 'channel_1', name: 'Grande distribution', links: [] }],
+            expenseLines: [{ id: 'exp_2', label: 'Assurances', category: "Frais d'administration", amount: 50 }],
+            revenueLines: [{ id: 'rev_2', label: 'Ventes B', repartition: 'act_1', amounts: { act_1: 300 } }],
+            directCostLines: [{ id: 'dc_2', label: 'Emballage', category: 'Emballage', amount: 75 }],
             uiSettings: { infoItemsPerPage: 50 },
         };
         const next = projectReducer(state, { type: 'LOAD_PROJECT', payload });
@@ -84,7 +93,7 @@ describe('toProjectState', () => {
 
     it('conserve toutes les tranches attendues depuis getDefaultState', () => {
         const projectState = toProjectState(getDefaultState());
-        for (const key of ['companyName', 'logoUrl', 'generalInfo', 'baseIngredients', 'basePackaging', 'products', 'trackingPoints', 'laborDatabase', 'productionActivities', 'salesChannels', 'uiSettings']) {
+        for (const key of ['companyName', 'logoUrl', 'generalInfo', 'baseIngredients', 'basePackaging', 'products', 'trackingPoints', 'laborDatabase', 'productionActivities', 'salesChannels', 'expenseLines', 'revenueLines', 'directCostLines', 'uiSettings']) {
             expect(projectState[key]).toBeDefined();
         }
         expect(projectState.baseIngredients.length).toBeGreaterThan(0);

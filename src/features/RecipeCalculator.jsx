@@ -10,7 +10,6 @@ import { Tooltip, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, A
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
 import { computeYieldUnits } from '../engine/yieldCalculator.js';
 import { useProject } from '../state/ProjectContext.jsx';
-import { indirectCostMethodLabels } from '../state/initialState.js';
 
 export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, onSelectProduct, openRecipeSections, setOpenRecipeSections, onAddFormat, onDuplicateFormat }) => {
     const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification } = useProject();
@@ -1297,38 +1296,6 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 )}
             </div>
 
-            {/* Frais indirects */}
-            <div id="tutorial-section-recipe-indirects" className="p-4 bg-purple-50 rounded-lg">
-                <div
-                    onClick={() => toggleSection('indirects')}
-                    role="button"
-                    tabIndex="0"
-                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSection('indirects')}
-                    className="w-full flex justify-between items-center cursor-pointer"
-                    aria-expanded={openRecipeSections.has('indirects')}
-                >
-                    <h2 className="text-xl font-semibold text-purple-700">5. Frais indirects</h2>
-                    <ChevronDown className={`h-6 w-6 text-purple-700 transform transition-transform duration-200 ${openRecipeSections.has('indirects') ? 'rotate-180' : ''}`} />
-                </div>
-                {openRecipeSections.has('indirects') && (
-                    <div className="mt-4">
-                <div className="space-y-4">
-                    {/* La méthode d'attribution des frais indirects est GLOBALE (onglet Paramètres) et
-                        s'applique à tous les plats. On rappelle ici la méthode active ; si c'est
-                        « au prorata des ventes », on saisit les portions vendues de ce plat. */}
-                    <div className="p-3 bg-purple-100 rounded-md text-sm text-purple-800">
-                        Méthode d'attribution active : <strong>{indirectCostMethodLabels[generalInfo.indirectCostMethod] || indirectCostMethodLabels.salesAllocation}</strong>.
-                        <span className="block text-xs text-purple-700 mt-1">Se choisit globalement dans l'onglet Paramètres et s'applique à tous les plats.</span>
-                    </div>
-                </div>
-                 <div className="mt-4 p-3 bg-purple-100 rounded-md grid grid-cols-2 gap-4">
-                    <p className="font-bold text-purple-800">Total Frais Indirects (recette): <span>{formatCurrency(costs.indirectCostTotal)} $</span></p>
-                    <p className="font-bold text-purple-800">Coût Indirect (unité): <span>{formatCurrency(costs.costIndirectPerPortion)} $</span></p>
-                </div>
-                </div>
-            )}
-            </div>
-
             {/* Rapport */}
             <div id="recap-section" className="p-4 bg-blue-50 rounded-lg">
                 <div
@@ -1339,7 +1306,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     className="w-full flex justify-between items-center cursor-pointer"
                     aria-expanded={openRecipeSections.has('recap')}
                 >
-                    <h2 className="text-xl font-semibold text-blue-700">6. Récapitulatif</h2>
+                    <h2 className="text-xl font-semibold text-blue-700">5. Récapitulatif</h2>
                     <ChevronDown className={`h-6 w-6 text-blue-700 transform transition-transform duration-200 ${openRecipeSections.has('recap') ? 'rotate-180' : ''}`} />
                 </div>
                 {openRecipeSections.has('recap') && (

@@ -5,10 +5,18 @@
 // effets de bord (Blob/download, FileReader, setters d'état).
 
 import { buildDefaultFormat, stripFormatOwnedFields } from './initialState.js';
+import { EXPENSE_CATEGORIES, sumLineAmounts, parseLocaleNumber } from '../utils.js';
+
+// Un contenant ('general' ou l'id d'une activité) revalidé contre les activités réellement
+// présentes : une activité supprimée depuis la sauvegarde ne doit jamais laisser une référence
+// orpheline — repli sur 'general', jamais un montant perdu en silence (voir `revenueLines`
+// ci-dessous, qui refond les montants plutôt que de les jeter).
+const reconcileBucket = (bucketKey, productionActivities) =>
+    (bucketKey === 'general' || productionActivities.some(a => a.id === bucketKey)) ? bucketKey : 'general';
 
 // Construit l'objet exporté vers le fichier .json à partir de l'état courant.
-export function buildProjectData({ companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, uiSettings }) {
-    return { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, uiSettings };
+export function buildProjectData({ companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings }) {
+    return { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings };
 }
 
 // Reconstruit les tranches d'état à partir des données JSON chargées, en appliquant migrations et
@@ -23,6 +31,19 @@ export function parseProjectData(data, emptyState) {
     if (data.generalInfo && data.generalInfo.menuRevenuePercentage === undefined) {
         generalInfo.menuRevenuePercentage = 100;
     }
+
+    // Migration (Phase 4.1) : l'ancien `generalInfo.totalIndirects` saisi à plat devient une liste
+    // de lignes de dépense catégorisées. Un projet antérieur reçoit une seule ligne migrée (son
+    // montant exact, catégorisée par défaut en "Frais généraux de production" — modifiable
+    // ensuite) ; un projet déjà sur `expenseLines` est préservé tel quel, jamais régénéré. Dans
+    // les deux cas, `totalIndirects` est recalculé comme la somme exacte des lignes juste après
+    // (jamais ressaisi indépendamment) pour qu'il ne puisse pas dériver de la liste qui le compose.
+    const expenseLinesRaw = (data.expenseLines && data.expenseLines.length > 0)
+        ? data.expenseLines
+        : (data.generalInfo?.totalIndirects > 0
+            ? [{ id: 'exp_migre', label: 'Frais indirects (migré)', category: EXPENSE_CATEGORIES[0], amount: data.generalInfo.totalIndirects }]
+            : []);
+    generalInfo.totalIndirects = sumLineAmounts(expenseLinesRaw);
 
     const uiSettings = { ...emptyState.uiSettings, ...data.uiSettings };
 
@@ -50,18 +71,104 @@ export function parseProjectData(data, emptyState) {
     // Migration : projets antérieurs à l'ajout des activités de production (ligne de fabrication).
     // Toujours au moins une activité par défaut ("Général"), pour que l'étape suivante (rattacher
     // chaque produit à une activité) ait toujours une valeur de repli.
+    // `indirectCostDriver` (Phase 4.6) : une activité antérieure à cette phase retombe sur
+    // « directCost » (coût direct combiné — le driver par défaut le plus défendable, voir
+    // 04-Conception-Modele.md section Phase 4.6), jamais une valeur absente qui romprait le calcul.
     const productionActivities = (data.productionActivities && data.productionActivities.length > 0)
-        ? data.productionActivities
+        ? data.productionActivities.map(a => ({ ...a, indirectCostDriver: a.indirectCostDriver || 'directCost' }))
         : emptyState.productionActivities;
 
     // Migration : projets antérieurs à l'ajout des Circuits de vente (Phase 3) — un seul circuit
     // par défaut (« Vente directe », sans maillon), qui collapse au comportement historique à prix
-    // unique (voir `initialState.js`).
+    // unique (voir `initialState.js`). Pas de driver à migrer ici (Phase 4.6) : un canal n'en a
+    // jamais eu — son pool se convertit toujours en majoration sur le coût de production.
     const salesChannels = (data.salesChannels && data.salesChannels.length > 0)
         ? data.salesChannels
         : emptyState.salesChannels;
 
-    const baseIngredients = (data.baseIngredients || data.ingredientsList || emptyState.ingredientsList).map(ing => ({
+    // Clés de répartition personnalisées (Phase 4.5bis, 14/10) : gabarits % réutilisables, un axe
+    // Activités et un axe Canaux par clé, chacun optionnel. Comme pour `activityAllocations`, une
+    // part d'activité orpheline (activité supprimée depuis la sauvegarde) refond dans Général plutôt
+    // que d'être perdue ; une part de canal orpheline est conservée telle quelle (même asymétrie que
+    // channelAllocations — aucun contenant neutre équivalent côté canal).
+    const repartitionKeys = (data.repartitionKeys || []).map((k) => {
+        const rawActivityShares = k.activityShares || {};
+        const activityShares = {};
+        for (const [key, pct] of Object.entries(rawActivityShares)) {
+            const reconciled = reconcileBucket(key, productionActivities);
+            activityShares[reconciled] = (activityShares[reconciled] || 0) + parseLocaleNumber(pct);
+        }
+        return { id: k.id, name: k.name || '', activityShares, channelShares: k.channelShares || {} };
+    });
+    const repartitionKeyIds = new Set(repartitionKeys.map((k) => k.id));
+
+    // Clé de répartition (par ligne de frais fixes) revalidée : une sélection directe d'activité
+    // (`activity:<id>`) refond sur une activité supprimée vers `activity:general`, comme pour
+    // `activityAllocations` ; une sélection de canal (`channel:<id>`) ou une clé personnalisée
+    // (`custom:<id>`) devenue orpheline retombe sur `manual` — pas d'équivalent neutre côté canal,
+    // et une clé personnalisée supprimée n'a plus de définition à appliquer.
+    const reconcileRepartitionKey = (key) => {
+        if (!key || key === 'manual' || key === 'sales' || key === 'directCosts') return key || 'manual';
+        if (key.startsWith('activity:')) return `activity:${reconcileBucket(key.slice('activity:'.length), productionActivities)}`;
+        if (key.startsWith('channel:')) return salesChannels.some((c) => c.id === key.slice('channel:'.length)) ? key : 'manual';
+        if (key.startsWith('custom:')) return repartitionKeyIds.has(key.slice('custom:'.length)) ? key : 'manual';
+        return 'manual';
+    };
+
+    // Frais fixes (Phase 4.5) : allocation à trois contenants sur deux axes indépendants —
+    // `activityAllocations` (Général + activités, même espace de contenants que revenueLines) et
+    // `channelAllocations` (axe séparé, pas de contenant « Général » équivalent — voir
+    // 04-Conception-Modele.md, section 1 : Général est une allocation directe à une seule étape,
+    // pas symétrique à Activité/Canal). Une ligne antérieure à la 4.5 reçoit simplement des objets
+    // vides (rien à répartir pour l'instant, pas une erreur). Un id d'activité orphelin (activité
+    // supprimée depuis la sauvegarde) refond son montant dans Général, comme pour revenueLines —
+    // jamais perdu. Un id de canal orphelin est conservé tel quel : aucun contenant neutre
+    // équivalent côté canal, mais le montant reste compté dans la vérification de la ligne, juste
+    // sans colonne visible pour ce canal disparu.
+    const expenseLines = expenseLinesRaw.map(line => {
+        const rawActivityAllocations = line.activityAllocations || {};
+        const activityAllocations = {};
+        for (const [key, amount] of Object.entries(rawActivityAllocations)) {
+            const reconciled = reconcileBucket(key, productionActivities);
+            activityAllocations[reconciled] = (activityAllocations[reconciled] || 0) + parseLocaleNumber(amount);
+        }
+        return {
+            ...line,
+            repartitionKey: reconcileRepartitionKey(line.repartitionKey),
+            activityAllocations,
+            channelAllocations: line.channelAllocations || {},
+        };
+    });
+
+    // Revenus réels (Phase 4.2, révisé le 13/10 — « Saisie manuelle ») : une liste absente devient
+    // simplement vide. Deux générations à couvrir :
+    //  1. Phase 4.2 initiale : `{ bucket, amount }` à plat, un seul contenant par ligne.
+    //  2. Depuis le 13/10 : `{ repartition, amounts }` — `repartition` = contenant choisi (Général,
+    //     une activité précise, ou 'manual' pour une ventilation libre) ; `amounts` porte le ou les
+    //     montants réels par contenant (plusieurs clés seulement en mode manuel).
+    // Chaque contenant est revalidé contre les activités réellement présentes ; un contenant
+    // orphelin (activité supprimée depuis la sauvegarde) refond son montant dans Général plutôt que
+    // de le perdre.
+    const revenueLines = (data.revenueLines || []).map(line => {
+        const hasNewShape = line.amounts !== undefined;
+        const rawAmounts = hasNewShape ? line.amounts : { [line.bucket || 'general']: line.amount };
+        const rawRepartition = hasNewShape ? line.repartition : (line.bucket || 'general');
+
+        const amounts = {};
+        for (const [bucketKey, amount] of Object.entries(rawAmounts || {})) {
+            const reconciled = reconcileBucket(bucketKey, productionActivities);
+            amounts[reconciled] = (amounts[reconciled] || 0) + parseLocaleNumber(amount);
+        }
+        const repartition = rawRepartition === 'manual' ? 'manual' : reconcileBucket(rawRepartition, productionActivities);
+
+        return { id: line.id, label: line.label || '', repartition, amounts };
+    });
+    // Charges directes réelles (Phase 4.3) : même patron que `expenseLines`, catégorisées par type
+    // de coût (voir utils.js, DIRECT_COST_TYPES) — champ entièrement nouveau, pas de migration à
+    // écrire, une liste absente devient simplement vide.
+    const directCostLines = data.directCostLines || [];
+
+    const baseIngredients =(data.baseIngredients || data.ingredientsList || emptyState.ingredientsList).map(ing => ({
         ...ing,
         uniqueId: ing.uniqueId || '',
         isRecipe: ing.isRecipe || false,
@@ -142,5 +249,5 @@ export function parseProjectData(data, emptyState) {
         return stripFormatOwnedFields(normalized);
     });
 
-    return { companyName, logoUrl, generalInfo, uiSettings, trackingPoints, laborDatabase, productionActivities, salesChannels, baseIngredients, basePackaging, products };
+    return { companyName, logoUrl, generalInfo, uiSettings, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, baseIngredients, basePackaging, products };
 }

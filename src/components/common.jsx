@@ -136,7 +136,7 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
 
     // Calcule la position du menu déroulant. Position fixe (viewport), recalculée à chaque
     // ouverture : reste correcte quel que soit le défilement de la page, y compris quand celle-ci
-    // s'allonge avec de nouveaux champs au-dessus (ex. lignes de production, futurs modules).
+    // s'allonge avec de nouveaux champs au-dessus (ex. activités de production, futurs modules).
     // S'ouvre vers le haut plutôt que vers le bas si la place manque en dessous (le champ est
     // proche du bas de la fenêtre) et qu'il y a plus de place au-dessus — comme un <select> natif.
     const DROPDOWN_MAX_HEIGHT = 240; // correspond à la classe max-h-60

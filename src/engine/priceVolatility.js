@@ -1,17 +1,20 @@
 import { parseLocaleNumber } from '../utils.js';
 
-// Dérive la volatilité du prix d'achat de chaque ingrédient à partir des points de référence
-// (snapshots) — sans journal de transactions. Chaque snapshot contient une copie des ingrédients
-// (avec leur unitPrice) à sa date. Sur ≥ 2 points, on reconstitue une série de prix par ingrédient
-// et on calcule :
+// Dérive la volatilité d'un prix/coût à partir des points de référence (snapshots) — sans journal
+// de transactions. Sur ≥ 2 points, on reconstitue une série dans le temps par item et on calcule :
 //   - tendance = (dernier − premier) / premier (%) ;
 //   - volatilité = AMPLITUDE = (max − min) / moyenne (%).
-// Un ingrédient est « volatil » au-delà d'un seuil d'amplitude (croisé ensuite avec la classe ABC).
+// Un item est « volatil » au-delà d'un seuil d'amplitude (croisé ensuite avec la classe ABC pour
+// les ingrédients/l'emballage).
 
 export const VOLATILE_THRESHOLD = 10; // % d'amplitude à partir duquel le prix est jugé volatil (modéré+)
 export const HIGH_THRESHOLD = 20;     // % d'amplitude pour la volatilité « élevée »
 
-export function computeIngredientVolatility(trackingPoints) {
+// Fonction pure commune aux 3 dimensions suivies (ingrédients, emballage, coût direct par format)
+// — seule la façon d'extraire {id, name, provider, price} d'un point de référence change entre
+// elles (Phase 6, 15/10 : généralisée depuis l'ancienne computeIngredientVolatility, qui ne lisait
+// que `pt.baseIngredients`, pour éviter de dupliquer cette logique trois fois).
+function computeCatalogVolatility(trackingPoints, extractItems) {
     const points = [...(trackingPoints || [])]
         .filter(p => p && p.timestamp)
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
@@ -20,17 +23,16 @@ export function computeIngredientVolatility(trackingPoints) {
         return { hasEnoughData: false, pointCount: points.length, list: [], byId: {}, byName: {} };
     }
 
-    // Série de prix (unitPrice) par ingrédient, dans l'ordre chronologique. Les prix nuls/absents
-    // (ingrédient pas encore présent à cette date) sont ignorés.
+    // Série de prix/coûts par item, dans l'ordre chronologique. Les valeurs nulles/absentes (item
+    // pas encore présent à cette date, ou sans prix de vente pour un format) sont ignorées.
     const seriesById = {};
     for (const pt of points) {
-        for (const ing of (pt.baseIngredients || [])) {
-            const price = parseLocaleNumber(ing.unitPrice);
-            if (!(price > 0)) continue;
-            if (!seriesById[ing.id]) seriesById[ing.id] = { id: ing.id, name: ing.name, provider: ing.provider, prices: [] };
-            seriesById[ing.id].name = ing.name;
-            seriesById[ing.id].provider = ing.provider;
-            seriesById[ing.id].prices.push(price);
+        for (const item of extractItems(pt)) {
+            if (!(item.price > 0)) continue;
+            if (!seriesById[item.id]) seriesById[item.id] = { id: item.id, name: item.name, provider: item.provider, prices: [] };
+            seriesById[item.id].name = item.name;
+            seriesById[item.id].provider = item.provider;
+            seriesById[item.id].prices.push(item.price);
         }
     }
 
@@ -62,4 +64,31 @@ export function computeIngredientVolatility(trackingPoints) {
         byId: Object.fromEntries(list.map(x => [x.id, x])),
         byName: Object.fromEntries(list.map(x => [x.name, x])),
     };
+}
+
+export function computeIngredientVolatility(trackingPoints) {
+    return computeCatalogVolatility(trackingPoints, pt => (pt.baseIngredients || []).map(ing => ({
+        id: ing.id, name: ing.name, provider: ing.provider, price: parseLocaleNumber(ing.unitPrice),
+    })));
+}
+
+// Emballage : toujours un suivi SÉPARÉ de celui des ingrédients (voir TrackingTab.jsx), même
+// principe que la Phase 2 (coût d'emballage comme poste distinct du coût matière).
+export function computePackagingVolatility(trackingPoints) {
+    return computeCatalogVolatility(trackingPoints, pt => (pt.basePackaging || []).map(pkg => ({
+        id: pkg.id, name: pkg.name, provider: pkg.provider, price: parseLocaleNumber(pkg.unitPrice),
+    })));
+}
+
+// Coût direct par FORMAT (Phase 6, 15/10) : pas un prix d'achat comme les deux précédentes, mais le
+// `totalDirectCostPerPortion` déjà calculé et figé dans chaque snapshot (`pt.productsWithCosts`,
+// une ligne par format) — matière + emballage + main-d'œuvre + sous-traitance, l'ensemble des coûts
+// variables de CE format. Révèle si un format est devenu sensible aux variations de prix de ses
+// intrants, sans recalculer quoi que ce soit (chaque snapshot a déjà figé son propre coût à sa
+// date). `provider` n'a pas de sens ici — toujours absent (jamais une valeur inventée).
+export function computeFormatCostVolatility(trackingPoints) {
+    return computeCatalogVolatility(trackingPoints, pt => (pt.productsWithCosts || []).map(row => ({
+        id: row.id, name: row.displayName || row.platName, provider: undefined,
+        price: parseLocaleNumber(row.costs?.totalDirectCostPerPortion),
+    })));
 }

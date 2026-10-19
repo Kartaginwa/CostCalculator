@@ -1,11 +1,11 @@
 import { calculateCosts } from '../engine/calculateCosts.js';
-import { generateSlug, buildRowDisplayName } from '../utils.js';
+import { generateSlug, buildRowDisplayName, sumLineAmounts, sumAmountsMap } from '../utils.js';
 
 // Construit le format de vente par défaut d'un produit à partir de ses champs "à plat"
 // (prixVente, nbPortions, etc.) ET de sa fiche recette (ingrédients, étapes de production, statut
 // revente). Depuis la correction du 23/09 (voir Projet_Claude/04-Conception-Modele.md), chaque
 // format est une fiche recette autonome et complète : la recette mère n'est plus qu'un
-// regroupement organisationnel (nom, catégorie, ligne de production) qui n'héberge plus lui-même
+// regroupement organisationnel (nom, catégorie, activité de production) qui n'héberge plus lui-même
 // d'ingrédients ni d'étapes — voir `stripFormatOwnedFields` ci-dessous, appelé par tous les points
 // de création/migration d'un produit juste après avoir construit son premier format.
 // Le SKU est une référence dérivée de la recette (nom du produit) + du format (quantité/unité) —
@@ -100,7 +100,7 @@ function buildTrackingHistory(ingredients, labor, products, generalInfo, packagi
     // (pas de majoration de MO oisive) pour l'historique de démonstration.
     const snapBase = { ...generalInfo, kitchenProductivity: 100 };
     const notes = {
-        [MONTHS]: 'Première analyse de référence — ouverture de la ligne de production.',
+        [MONTHS]: 'Première analyse de référence — ouverture de l\'activité de production.',
         12: 'Renégociation des contrats avec le boucher et le maraîcher.',
         6: 'Hausse du coût du bœuf et du saumon (approvisionnement hivernal).',
         0: 'Situation actuelle.',
@@ -163,6 +163,14 @@ function buildTrackingHistory(ingredients, labor, products, generalInfo, packagi
 // sens inverse à partir du prix consommateur) : cohérence interne entre les % affichés sur chaque
 // canal (voir `demoSalesChannels` ci-dessous) et les prix nets saisis par format.
 //   - markup : prix_avant = prix_après / (1 + %)   — marge : prix_avant = prix_après * (1 - %)
+// Épiceries/grandes surfaces reproduisent EXACTEMENT ce que `computeNetPriceFromPds`
+// (ProductInfo.jsx) calculerait pour ces deux canaux à partir de ce même `retailPrice` comme PDS —
+// vérifié formule par formule contre salesChannelCascade.js. Vente directe (sans maillon) fait
+// exception : le vrai PDS donnerait prix net = PDS (aucun maillon à redescendre), mais la démo
+// applique volontairement un rabais de 10 % (`directRatio`) pour ce canal — modélise un prix de
+// vente en ligne plus bas que le prix tablette, une décision antérieure à l'ajout du PDS (15/10).
+// Cliquer sur « Générer » pour ce canal précis écraserait donc ce rabais par le PDS plein — comme
+// pour tout format existant, un geste volontaire de l'utilisateur, jamais appliqué automatiquement.
 let demoChannelPriceCounter = 0;
 const demoChannelPriceSet = (retailPrice, { volumeDirect = 0, volumeEpi = 0, volumeGs = 0, directRatio = 0.90 } = {}) => {
     const direct = round(retailPrice * directRatio, 2);
@@ -176,10 +184,23 @@ const demoChannelPriceSet = (retailPrice, { volumeDirect = 0, volumeEpi = 0, vol
     ];
 };
 
+// PDS (Prix de Détail Suggéré, Phase 3.2bis, 15/10) : une donnée du FORMAT (voir ProductInfo.jsx),
+// saisie manuellement dans l'app réelle — jamais déduite. `retailPrice` ci-dessus EST ce PDS (le
+// prix tablette cible qui sert déjà à dériver les 3 prix nets), donc l'exposer ici n'invente aucune
+// donnée : regroupe simplement les deux dans un seul objet à spreader sur le format, pour que
+// chaque SKU démo affiche un PDS cohérent avec ses prix nets déjà saisis, au lieu de rester vide.
+const demoFormatPricing = (retailPrice, opts) => ({
+    pds: retailPrice,
+    channelPrices: demoChannelPriceSet(retailPrice, opts),
+});
+
 export const getDefaultState = () => {
     const today = new Date().toISOString().split('T')[0];
 
     // --- CANAUX DE VENTE (3, avec cascade de maillons réaliste) ---
+    // Phase 4.6 : un canal n'a PAS de driver au choix (contrairement à une activité) — son pool de
+    // frais fixes se convertit toujours en une majoration % sur le coût de production déjà établi
+    // à l'activité, jamais un mécanisme indépendant (voir 04-Conception-Modele.md, section 4.6).
     const demoSalesChannels = [
         { id: 'channel_direct', name: 'Vente directe (boutique en ligne)', links: [] },
         { id: 'channel_epiceries', name: 'Épiceries indépendantes', links: [
@@ -192,10 +213,89 @@ export const getDefaultState = () => {
     ];
 
     // --- LIGNES DE PRODUCTION (3) ---
+    // `indirectCostDriver` (Phase 4.6) : driver choisi pour convertir le pool de frais fixes de
+    // CETTE activité en taux par produit — « directCost » (par défaut, au prorata du coût direct —
+    // matière+emballage+MO+sous-traitance combinés — le driver le plus défendable par défaut, voir
+    // Projet_Claude/04-Conception-Modele.md section Phase 4.6) ou « laborTime » (préférable quand le
+    // frais indirect suit surtout la cadence/le temps machine plutôt que la valeur des intrants).
     const demoProductionActivities = [
-        { id: 'act_plats', name: 'Plats principaux surgelés' },
-        { id: 'act_soupes', name: 'Soupes et potages' },
-        { id: 'act_sauces', name: 'Sauces et accompagnements' },
+        { id: 'act_plats', name: 'Plats principaux surgelés', indirectCostDriver: 'directCost' },
+        { id: 'act_soupes', name: 'Soupes et potages', indirectCostDriver: 'directCost' },
+        { id: 'act_sauces', name: 'Sauces et accompagnements', indirectCostDriver: 'directCost' },
+    ];
+
+    // --- REVENUS RÉELS (Phase 4.2) : une ligne par activité + une ligne "Général" pour le revenu
+    // non rattachable à une activité modélisée. `repartition` = contenant choisi (Général, une
+    // activité précise, ou 'manual' pour une ventilation libre sur plusieurs contenants à la fois —
+    // voir 04-Conception-Modele.md section 1bis) ; `amounts` porte le ou les montants réels, une
+    // seule clé non nulle hors du mode manuel. Consommé par la clé de répartition « Selon les
+    // ventes » (Phase 4.5bis) et par le côté réel de la Réconciliation réel/théorique (Phase 4.4) —
+    // `generalInfo.totalRevenue` ci-dessous en reste la somme exacte, pour rester cohérent si cette
+    // liste change, mais n'est lui-même lu par aucun calcul de coût (voir addendum du 19/10 de
+    // Projet_Claude/03-Feuille-de-route.md : le moteur théorique ne doit jamais lire ce total réel).
+    const demoRevenueLines = [
+        { id: 'rev_plats', label: 'Ventes — Plats principaux surgelés', repartition: 'act_plats', amounts: { act_plats: 90000 } },
+        { id: 'rev_soupes', label: 'Ventes — Soupes et potages', repartition: 'act_soupes', amounts: { act_soupes: 40000 } },
+        { id: 'rev_sauces', label: 'Ventes — Sauces et accompagnements', repartition: 'act_sauces', amounts: { act_sauces: 25000 } },
+        { id: 'rev_divers', label: 'Revenus divers (non rattachés à une activité)', repartition: 'general', amounts: { general: 5000 } },
+    ];
+
+    // --- FRAIS FIXES (Phase 4.1, allocation Phase 4.5) : état de résultats catégorisé, remplace
+    // l'ancien generalInfo.totalIndirects saisi à plat. Somme intacte (28 000 $, voir plus bas) pour
+    // ne pas faire dériver les montants de frais indirects déjà affichés ailleurs dans la démo.
+    //
+    // Répartition (Phase 4.5/4.5bis, complétée le 14/10) : CHAQUE ligne porte désormais une clé de
+    // répartition déterminée selon le tableau « Contenant suggéré par défaut » de
+    // 04-Conception-Modele.md (section 1), pour que la section État des résultats serve de données
+    // de test réalistes et complètes pour la Phase 4.6 (conversion en taux par produit) :
+    //  - Frais généraux de production → Général ou Activité. Loyer : répartition MANUELLE par
+    //    surface de production réellement occupée (donnée qu'aucune clé automatique ne peut
+    //    déduire, donc le choix le plus défendable reste une saisie manuelle réfléchie). Électricité
+    //    : clé « Selon les charges directes » (la consommation énergétique suit l'intensité de
+    //    production, mieux approximée par le coût direct que par les ventes).
+    //  - Frais de vente/mise en marché → Général ou Canal. Marketing : répartition MANUELLE par
+    //    canal (dépenses publicitaires réellement engagées par circuit, traçables telles quelles en
+    //    comptabilité). Commissions : clé personnalisée « Ventes par canal (hors Général) », au
+    //    prorata des ventes réelles par canal (les commissions de distribution sont par nature un
+    //    coût de canal, jamais d'activité).
+    //  - Frais d'administration → Général. Salaire de direction/Assurances/Comptabilité : sélection
+    //    directe de l'activité « Général » (coûts de structure, non rattachables à une activité ou
+    //    un canal précis).
+    //  - Frais financiers → Général. Frais bancaires : sélection directe de l'activité « Général »
+    //    (coûts de financement, jamais rattachables à une activité ou un canal).
+    const demoExpenseLines = [
+        { id: 'exp_loyer_prod', label: 'Loyer (espace de production)', category: 'Frais généraux de production', amount: 9000, repartitionKey: 'manual', activityAllocations: { act_plats: 5000, act_soupes: 2500, act_sauces: 1500 }, channelAllocations: {} },
+        { id: 'exp_elec', label: 'Électricité et chauffage', category: 'Frais généraux de production', amount: 3000, repartitionKey: 'directCosts', activityAllocations: {}, channelAllocations: {} },
+        { id: 'exp_marketing', label: 'Marketing et promotion', category: 'Frais de vente / mise en marché', amount: 4000, repartitionKey: 'manual', activityAllocations: {}, channelAllocations: { channel_direct: 1000, channel_epiceries: 1500, channel_gs: 1500 } },
+        { id: 'exp_commissions', label: 'Commissions et frais de distribution', category: 'Frais de vente / mise en marché', amount: 3500, repartitionKey: 'custom:rk_ventes_canal', activityAllocations: {}, channelAllocations: {} },
+        { id: 'exp_salaire_admin', label: 'Salaire de direction', category: "Frais d'administration", amount: 3000, repartitionKey: 'activity:general', activityAllocations: {}, channelAllocations: {} },
+        { id: 'exp_assurances', label: 'Assurances', category: "Frais d'administration", amount: 2500, repartitionKey: 'activity:general', activityAllocations: {}, channelAllocations: {} },
+        { id: 'exp_comptabilite', label: 'Comptabilité et services professionnels', category: "Frais d'administration", amount: 2000, repartitionKey: 'activity:general', activityAllocations: {}, channelAllocations: {} },
+        { id: 'exp_bancaire', label: 'Frais bancaires et intérêts', category: 'Frais financiers', amount: 1000, repartitionKey: 'activity:general', activityAllocations: {}, channelAllocations: {} },
+    ];
+
+    // Clé de répartition personnalisée de démonstration (Phase 4.5bis, 14/10) : part réelle de
+    // chaque canal dans les ventes totalisables par canal (155 000 $ sur 160 000 $ — exclut les
+    // 5 000 $ de « Revenus divers » saisis en Général, qui n'ont par construction aucune
+    // information de canal). Pourcentages figés ici (valeurs exactes calculées une fois, pas une
+    // formule — une clé personnalisée est un gabarit réutilisable, pas une valeur recalculée à
+    // chaque usage, contrairement à « Selon les ventes »/« Selon les charges directes »).
+    const demoRepartitionKeys = [
+        { id: 'rk_ventes_canal', name: 'Ventes par canal (hors Général)', activityShares: {}, channelShares: { channel_direct: 16.01, channel_epiceries: 25.52, channel_gs: 58.47 } },
+    ];
+
+    // --- CHARGES DIRECTES RÉELLES (Phase 4.3) : même patron que les frais fixes, mais catégorisées
+    // par TYPE DE COÛT (voir utils.js, DIRECT_COST_TYPES) plutôt que par fonction d'entreprise —
+    // vocabulaire de calculateCosts.js. Données plausibles pour un chiffre d'affaires de 160 000 $
+    // (demoRevenueLines). Consommées par la clé de répartition « Selon les charges directes »
+    // (Phase 4.5bis, voir exp_elec ci-dessous) et par le côté réel de la Réconciliation
+    // réel/théorique (Phase 4.4) — jamais par le calcul de coût de revient lui-même (ces montants
+    // réels catégorisés n'ont pas vocation à remplacer le modèle de recette).
+    const demoDirectCostLines = [
+        { id: 'dc_matiere', label: 'Achats de matières premières', category: 'Matière première', amount: 54000 },
+        { id: 'dc_mo_prod', label: "Main-d'œuvre de production (plancher)", category: "Main-d'œuvre directe", amount: 32000 },
+        { id: 'dc_emballage', label: "Achats d'emballage", category: 'Emballage', amount: 9500 },
+        { id: 'dc_soustraitance', label: 'Sous-traitance — surgélation', category: 'Sous-traitance', amount: 4500 },
     ];
 
     // --- INGRÉDIENTS (18 références, 5 fournisseurs) ---
@@ -286,7 +386,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_sub_puree', sku: 'ACC-PUREE-250G', prixVente: 4.94, nbPortions: 1, portionSize: 250, portionUnit: 'g',
                 salesMix: 5.36, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                channelPrices: demoChannelPriceSet(5.49, { volumeDirect: 90, volumeEpi: 160, volumeGs: 420 }),
+                ...demoFormatPricing(5.49, { volumeDirect: 90, volumeEpi: 160, volumeGs: 420 }),
                 ingredients: [
                     { rowId: 'r_pu_1', id: 'ing_pdt_flocons', quantity: 200, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_pu_2', id: 'ing_beurre', quantity: 15, recipeUnit: 'g', yieldPercentage: 100 },
@@ -313,7 +413,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_pate_s', sku: 'PP-PATECHINOIS-340G', prixVente: 8.09, nbPortions: 1, portionSize: 340, portionUnit: 'g',
                     salesMix: 11.21, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                    channelPrices: demoChannelPriceSet(8.99, { volumeDirect: 180, volumeEpi: 320, volumeGs: 900 }),
+                    ...demoFormatPricing(8.99, { volumeDirect: 180, volumeEpi: 320, volumeGs: 900 }),
                     ingredients: [
                         { rowId: 'r_pa_1', id: 'ing_boeuf', quantity: 150, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_pa_2', id: 'ing_mais', quantity: 90, recipeUnit: 'g', yieldPercentage: 100 },
@@ -334,7 +434,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_pate_f', sku: 'PP-PATECHINOIS-900G', prixVente: 19.79, nbPortions: 1, portionSize: 900, portionUnit: 'g',
                     salesMix: 4.96, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                    channelPrices: demoChannelPriceSet(21.99, { volumeDirect: 60, volumeEpi: 140, volumeGs: 420 }),
+                    ...demoFormatPricing(21.99, { volumeDirect: 60, volumeEpi: 140, volumeGs: 420 }),
                     aging: { enabled: true, interestRate: 7, months: 1.5 },
                     ingredients: [
                         { rowId: 'r_paf_1', id: 'ing_boeuf', quantity: 400, recipeUnit: 'g', yieldPercentage: 100 },
@@ -365,7 +465,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_tao', sku: 'PP-GENERALTAO-400G', prixVente: 8.54, nbPortions: 1, portionSize: 400, portionUnit: 'g',
                 salesMix: 11.21, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
-                channelPrices: demoChannelPriceSet(9.49, { volumeDirect: 150, volumeEpi: 300, volumeGs: 950 }),
+                ...demoFormatPricing(9.49, { volumeDirect: 150, volumeEpi: 300, volumeGs: 950 }),
                 ingredients: [
                     { rowId: 'r_tao_1', id: 'ing_poulet', quantity: 180, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_tao_2', id: 'ing_riz', quantity: 120, recipeUnit: 'g', yieldPercentage: 100 },
@@ -397,7 +497,7 @@ export const getDefaultState = () => {
                 // App.jsx).
                 id: 'fmt_saumon', sku: buildFormatSku('Saumon teriyaki, riz et légumes', 380, 'g', 'fmt_saumon'), prixVente: 12.59, nbPortions: 1, portionSize: 380, portionUnit: 'g',
                 salesMix: 7.93, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['fish', 'soy'],
-                channelPrices: demoChannelPriceSet(13.99, { volumeDirect: 140, volumeEpi: 250, volumeGs: 600 }),
+                ...demoFormatPricing(13.99, { volumeDirect: 140, volumeEpi: 250, volumeGs: 600 }),
                 ingredients: [
                     { rowId: 'r_sa_1', id: 'ing_saumon', quantity: 180, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_sa_2', id: 'ing_riz', quantity: 110, recipeUnit: 'g', yieldPercentage: 100 },
@@ -426,7 +526,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_thai_s', sku: 'PP-POULETTHAI-350G', prixVente: 8.36, nbPortions: 1, portionSize: 350, portionUnit: 'g',
                     salesMix: 8.73, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
-                    channelPrices: demoChannelPriceSet(9.29, { volumeDirect: 130, volumeEpi: 260, volumeGs: 700 }),
+                    ...demoFormatPricing(9.29, { volumeDirect: 130, volumeEpi: 260, volumeGs: 700 }),
                     ingredients: [
                         { rowId: 'r_th_1', id: 'ing_poulet', quantity: 170, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_th_2', id: 'ing_riz', quantity: 110, recipeUnit: 'g', yieldPercentage: 100 },
@@ -446,7 +546,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_thai_f', sku: 'PP-POULETTHAI-900G', prixVente: 20.69, nbPortions: 1, portionSize: 900, portionUnit: 'g',
                     salesMix: 4.4, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
-                    channelPrices: demoChannelPriceSet(22.99, { volumeDirect: 50, volumeEpi: 120, volumeGs: 380 }),
+                    ...demoFormatPricing(22.99, { volumeDirect: 50, volumeEpi: 120, volumeGs: 380 }),
                     subcontracting: { enabled: true, items: [{ id: 'sub_thai_item_1', name: 'Cuisine Sous-Vide Boréal', operation: 'Cuisson sous vide du poulet et des légumes (lot familial)', cost: 2.60 }] },
                     aging: { enabled: true, interestRate: 8, months: 1 },
                     ingredients: [
@@ -476,7 +576,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_chili', sku: 'PP-CHILICONCARNE-400G', prixVente: 7.64, nbPortions: 1, portionSize: 400, portionUnit: 'g',
                 salesMix: 13.13, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
-                channelPrices: demoChannelPriceSet(8.49, { volumeDirect: 160, volumeEpi: 380, volumeGs: 1100 }),
+                ...demoFormatPricing(8.49, { volumeDirect: 160, volumeEpi: 380, volumeGs: 1100 }),
                 ingredients: [
                     { rowId: 'r_ch_1', id: 'ing_boeuf', quantity: 160, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_ch_2', id: 'ing_haricots', quantity: 120, recipeUnit: 'g', yieldPercentage: 100 },
@@ -503,7 +603,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_soupe', sku: 'SO-LEGUMESPOULET-750ML', prixVente: 6.74, nbPortions: 46.65, portionSize: 0.75, portionUnit: 'L',
                 salesMix: 10.01, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
-                channelPrices: demoChannelPriceSet(7.49, { volumeDirect: 150, volumeEpi: 320, volumeGs: 780 }),
+                ...demoFormatPricing(7.49, { volumeDirect: 150, volumeEpi: 320, volumeGs: 780 }),
                 yieldGrid: {
                     enabled: true, baseQuantity: 40, baseUnit: 'L',
                     stages: [
@@ -539,7 +639,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_potage', sku: 'SO-COURGEMUSQUEE-750ML', prixVente: 6.74, nbPortions: 1, portionSize: 0.75, portionUnit: 'L',
                 salesMix: 5.53, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                channelPrices: demoChannelPriceSet(7.49, { volumeDirect: 90, volumeEpi: 180, volumeGs: 420 }),
+                ...demoFormatPricing(7.49, { volumeDirect: 90, volumeEpi: 180, volumeGs: 420 }),
                 ingredients: [
                     { rowId: 'r_po_1', id: 'ing_courge', quantity: 350, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_po_2', id: 'ing_creme', quantity: 150, recipeUnit: 'ml', yieldPercentage: 100 },
@@ -570,7 +670,7 @@ export const getDefaultState = () => {
                 // du mix des ventes, pour illustrer la coexistence avec les formats « unités »
                 // (tous les autres) — voir salesMixFromChannels.js.
                 salesMix: 12, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
-                channelPrices: demoChannelPriceSet(7.99, { volumeDirect: 0, volumeEpi: 0, volumeGs: 0 }),
+                ...demoFormatPricing(7.99, { volumeDirect: 0, volumeEpi: 0, volumeGs: 0 }),
                 ingredients: [
                     { rowId: 'r_ss_1', id: 'ing_tomates', quantity: 350, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_ss_2', id: 'ing_boeuf', quantity: 100, recipeUnit: 'g', yieldPercentage: 100 },
@@ -596,14 +696,18 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_sauce_terroir', sku: 'SA-TERROIR-REVENTE-500ML', prixVente: 7.19, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
                 salesMix: 5.53, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: true, purchaseCost: 5.20, manualAllergens: [],
-                channelPrices: demoChannelPriceSet(7.99, { volumeDirect: 90, volumeEpi: 180, volumeGs: 420 }),
+                ...demoFormatPricing(7.99, { volumeDirect: 90, volumeEpi: 180, volumeGs: 420 }),
                 ingredients: [], packagingItems: [], productionSteps: [],
             }],
         },
     ];
 
     const generalInfo = {
-        period: 'monthly', totalIndirects: 28000, totalRevenue: 160000, operationHours: 320,
+        period: 'monthly', totalIndirects: sumLineAmounts(demoExpenseLines),
+        // `totalRevenue` : jamais lu par le moteur de coût (voir addendum du 19/10 ci-dessus) —
+        // gardé ici comme simple total d'affichage, dérivé de `demoRevenueLines` pour rester
+        // cohérent si cette liste change, plutôt qu'un chiffre recopié à la main.
+        totalRevenue: demoRevenueLines.reduce((sum, line) => sum + sumAmountsMap(line.amounts), 0),
         foodCostTarget: 32, packagingCostTarget: 8, laborCostTarget: 22, menuRevenuePercentage: 100,
         indirectCostMethod: 'salesAllocation',
     };
@@ -635,6 +739,10 @@ export const getDefaultState = () => {
         trackingPoints: buildTrackingHistory(ingredients, labor, rawProducts, generalInfo, packaging),
         productionActivities: demoProductionActivities,
         salesChannels: demoSalesChannels,
+        expenseLines: demoExpenseLines,
+        revenueLines: demoRevenueLines,
+        directCostLines: demoDirectCostLines,
+        repartitionKeys: demoRepartitionKeys,
         uiSettings: {
             infoItemsPerPage: 10,
             ingredientsItemsPerPage: 10,
@@ -647,13 +755,16 @@ export const getDefaultState = () => {
 export const getEmptyState = () => ({
     companyName: "",
     logoUrl: '',
-    productionActivities: [{ id: 'act_general', name: 'Général' }],
+    productionActivities: [{ id: 'act_general', name: 'Général', indirectCostDriver: 'directCost' }],
     salesChannels: [{ id: 'channel_default', name: 'Vente directe', links: [] }],
+    expenseLines: [],
+    revenueLines: [],
+    directCostLines: [],
+    repartitionKeys: [],
     generalInfo: {
         period: 'monthly',
         totalIndirects: 0,
         totalRevenue: 0,
-        operationHours: 0,
         totalKitchenLaborCost: 0,
         startDate: '',
         endDate: '',

@@ -81,3 +81,43 @@ test('Rapport : Vue d\'ensemble (matrice de marges nettes par canal), Par SKU (c
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
+
+test("Rapport : Par SKU détaille les frais fixes par Général/Activité/Canal (Phase 4.6), Général et Activité identiques quel que soit le canal", async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
+
+    await page.goto('/');
+    await page.getByText('Explorer un projet démo').click();
+    await page.locator('#tab-summary').click();
+    await page.getByText('Par SKU').click();
+
+    // "Chili con carne mijoté" a un volume RÉEL saisi sur ses 3 canaux (contrairement à un SKU
+    // encore en % manuel, dont Général/Activité/Canal resteraient absents à 0 $ — corrigé le
+    // 18/10, voir calculateCosts.js : plus de repli à 1 unité, qui aurait produit un coût par
+    // portion délirant au lieu de rester honnêtement absent).
+    const bySku = page.locator('#tutorial-section-summary-bysku');
+    await bySku.locator('#summarySkuSelect').selectOption({ label: 'Chili con carne mijoté' });
+
+    await expect(bySku.getByText('Frais fixes — Général', { exact: true })).toBeVisible();
+    // Nom de l'activité affiché entre parenthèses — pas une étiquette générique.
+    await expect(bySku.getByText('Frais fixes — Activité (Plats principaux surgelés)', { exact: true })).toBeVisible();
+    await expect(bySku.getByText('Frais fixes — Canal', { exact: true })).toBeVisible();
+
+    // Général et Activité ne varient JAMAIS par canal (même ligne de frais fixes, peu importe où le
+    // produit est vendu) — 3 colonnes de canal dans la démo, donc 3 occurrences de chaque valeur.
+    await expect(bySku.getByText('0.75 $', { exact: true })).toHaveCount(3);
+    await expect(bySku.getByText('0.78 $', { exact: true })).toHaveCount(3);
+    // Canal, lui, varie réellement selon le canal (volume réel différent par canal).
+    await expect(bySku.getByText('1.11 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0.83 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0.45 $', { exact: true })).toHaveCount(1);
+    // Total par unité = Général + Activité + Canal — varie donc avec le canal, contrairement à
+    // Général/Activité pris séparément.
+    const totalRow = bySku.locator('tr', { hasText: 'Frais fixes totaux par unité' });
+    await expect(totalRow.getByText('2.63 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('2.36 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('1.98 $', { exact: true })).toHaveCount(1);
+
+    expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
+});

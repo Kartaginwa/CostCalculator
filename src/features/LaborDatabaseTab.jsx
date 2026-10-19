@@ -323,6 +323,39 @@ useEffect(() => {
                     </table>
                 </div>
             </div>
+
+            {/* Capacité de production par activité (Phase 6, 15/10) : pas de "heures attendues" par
+                activité — un poste/employé n'est pas rattaché à une seule activité, rien d'analogue
+                à comparer. Seulement la part des heures de MO réellement nécessaires que CHAQUE
+                activité consomme, du total du menu. */}
+            {productivityReport.byActivity && productivityReport.byActivity.length > 0 && (
+                <div className="mt-8 pt-6 border-t">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        Capacité de production par activité
+                        <Tooltip text="Part des heures de main-d'œuvre réellement nécessaires (recettes × ventes estimées) que chaque activité de production consomme, du total du menu — révèle quelle ligne de production est la plus exigeante en temps." />
+                    </h2>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activité</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Heures Productives Réelles</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part du total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {productivityReport.byActivity.map(row => (
+                                    <tr key={row.activityId}>
+                                        <td className="px-4 py-2 font-medium">{row.activityName}</td>
+                                        <td className="px-4 py-2">{row.actual.toFixed(2)} h</td>
+                                        <td className="px-4 py-2">{row.sharePercent.toFixed(2)} %</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

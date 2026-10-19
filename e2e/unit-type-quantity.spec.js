@@ -29,7 +29,7 @@ test('Quantité produite : décimales permises pour un format en kg, entier touj
     await page.waitForTimeout(300);
 
     // Édite le format par défaut (400 g, continu) dans Recette & Calcul.
-    await page.locator('button:has-text("Recette & Calcul")').first().click();
+    await page.locator('button:has-text("Recettes et produits")').first().click();
     await page.waitForTimeout(300);
     await page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').selectOption({ label: 'Chili con carne mijoté' });
     await page.waitForTimeout(300);

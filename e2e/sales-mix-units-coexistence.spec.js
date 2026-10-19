@@ -23,7 +23,8 @@ test('mix des ventes : un format passé aux unités ne touche pas au % manuel de
     // Note le % manuel actuel d'un autre plat du menu démo (seul format du projet démo resté sans
     // aucune unité saisie — voir initialState.js), avant toute manipulation.
     const otherSection = allSections.nth(sectionNames.indexOf('Sauce à spaghetti maison'));
-    const otherSalesMixInput = otherSection.locator('tbody tr').first().locator('input[inputmode="decimal"]').nth(1);
+    // .nth(2) : portionSize (0), PDS (1, ajouté le 15/10), Mix des ventes (2).
+    const otherSalesMixInput = otherSection.locator('tbody tr').first().locator('input[inputmode="decimal"]').nth(2);
     const otherSalesMixBefore = await otherSalesMixInput.inputValue();
     await expect(otherSalesMixInput).toBeEnabled();
 
@@ -43,7 +44,7 @@ test('mix des ventes : un format passé aux unités ne touche pas au % manuel de
     await expect(otherSalesMixInput).toHaveValue(otherSalesMixBefore);
 
     // Le champ % du format qui vient de recevoir une unité devient désactivé (mode automatique).
-    const targetSalesMixInput = formatRow.locator('input[inputmode="decimal"]').nth(1);
+    const targetSalesMixInput = formatRow.locator('input[inputmode="decimal"]').nth(2);
     await expect(targetSalesMixInput).toBeDisabled();
 
     // Retirer les unités (sur tous les canaux) redonne la main sur le % (repasse en manuel, réactivé).

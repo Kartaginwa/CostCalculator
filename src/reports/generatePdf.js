@@ -289,18 +289,18 @@ export const generatePdf = (options, deps) => {
 
             // Corps du tableau mis à jour avec toutes les informations
             
+            // Revenus Totaux/Heures d'opération/Coût horaire op. retirés le 18/10 avec la section
+            // « Frais et revenus » de Paramètres — plus aucune donnée réelle derrière ces champs
+            // (voir Projet_Claude/03-Feuille-de-route.md). Le revenu réel figure maintenant dans
+            // l'État des résultats (section Revenus), pas ici.
             const paramsBody = [
                 [
                     'Période:', `${periodTranslations[calculatedGeneralInfo.period] || 'N/A'} ${calculatedGeneralInfo.period === 'custom' ? `(${calculatedGeneralInfo.startDate} au ${calculatedGeneralInfo.endDate})` : ''}`,
                     'Frais Indirects:', `${formatCurrency(calculatedGeneralInfo.totalIndirects)} $`
                 ],
-                [ 
-                    'Revenus Totaux:', `${formatCurrency(calculatedGeneralInfo.totalRevenue)} $`,
-                    'Heures d\'opération:', `${calculatedGeneralInfo.operationHours} h`
-                ],
                 [
                     'Coût M-O Cuisine:', `${formatCurrency(calculatedGeneralInfo.totalKitchenLaborCost)} $`,
-                    'Coût horaire op.:', `${formatCurrency(calculatedGeneralInfo.operationCostPerHour)} $/h`
+                    '', ''
                 ]
             ];
             doc.autoTable({

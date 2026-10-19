@@ -31,18 +31,19 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
     </div>
 );
 
-// --- RÉSUMÉ PAR SKU (06/10) ---
+// --- RÉSUMÉ PAR SKU (06/10, ventilation Général/Activité/Canal ajoutée en Phase 4.6) ---
 // Un seul SKU à la fois, vu à travers chacun de ses canaux (canaux en COLONNES, jamais en
 // sections) — reproduit la structure par groupes de lignes du rapport « Coût de revient unit. »
 // du chiffrier SymbiOse de l'utilisateur (Revenu et marge brute / Répartition des charges fixes /
 // Coût net et marge nette / Seuil de rentabilité), avec la mise en forme du reste de l'app
-// (couleurs de marge, info-bulles, mise en évidence du point mort). Deux groupes du chiffrier
-// original ne sont pas encore repris : « Frais de mise en marché » et la ventilation des charges
-// fixes par ligne de production/canal — ces deux axes de répartition n'existent pas encore dans le
-// moteur (prévus en Phase 4, voir 03-Feuille-de-route.md) ; les frais d'expédition, eux, sont
-// absorbés dans les frais fixes plutôt que traités à part. Le coût de production ne varie jamais
-// par canal — affiché une seule fois, au-dessus de la grille, plutôt que répété colonne par
-// colonne.
+// (couleurs de marge, info-bulles, mise en évidence du point mort). La ventilation des charges
+// fixes par activité de production ET par canal (Général/Activité/Canal, chacun avec son propre
+// driver choisi dans Paramètres) vient de la Phase 4.6 — voir calculateCosts.js/analysisData.js.
+// Un groupe du chiffrier original n'est toujours pas repris : « Frais de mise en marché » (frais de
+// courtage/distribution/facturation, traités à part des charges fixes chez SymbiOse) ; les frais
+// d'expédition, eux, restent absorbés dans les frais fixes plutôt que traités à part. Le coût de
+// production ne varie jamais par canal — affiché une seule fois, au-dessus de la grille, plutôt
+// que répété colonne par colonne.
 const BySkuRow = ({ label, tooltip, render, emphasis }) => (
     <tr className={emphasis ? 'bg-indigo-50' : ''}>
         <th className="px-4 py-2.5 text-left text-sm font-medium text-gray-600 sticky left-0 bg-inherit whitespace-nowrap">
@@ -60,9 +61,12 @@ const BySkuSectionHeader = ({ label, colSpan }) => (
     </tr>
 );
 
-const BySkuWaterfall = ({ row }) => {
+const BySkuWaterfall = ({ row, productionActivities = [] }) => {
     const costs = row.costs;
     const channelBreakdown = row.channelBreakdown || [];
+    // Phase 4.6 : nom de l'activité de ce SKU, pour une infobulle lisible sur la ligne « Activité »
+    // ci-dessous (le produit n'a pas de contenant « Général » propre — absent, jamais inventé).
+    const activityName = productionActivities.find(a => a.id === row.activityId)?.name;
     // La tuile « Coûts additionnels » (ex-« S-T », sous-traitance) ne s'affiche que si ce format en
     // a — et affiche le nom de l'opération/du sous-traitant plutôt qu'un intitulé générique, pour
     // rester lisible même avec plusieurs opérations.
@@ -126,8 +130,17 @@ const BySkuWaterfall = ({ row }) => {
                             ))} />
 
                             <BySkuSectionHeader label="Répartition des charges fixes" colSpan={channelBreakdown.length + 1} />
-                            <BySkuRow label="Frais fixes totaux par unité" tooltip="La part des frais fixes totaux allouée à ce SKU (au prorata de son mix des ventes) — le même montant quel que soit le canal, seul le prix change. Pas encore ventilé par ligne de production ou par canal de vente : cette répartition plus fine arrive en Phase 4 (Frais fixes)." render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.margeBruteDollar - cb.margeNetteDollar)} $</td>
+                            <BySkuRow label="Frais fixes — Général" tooltip="Part du pool « Général » (frais de structure, non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) allouée à ce SKU, au driver choisi pour Général dans Paramètres (ventes ou temps de main-d'œuvre). Le même montant quel que soit le canal — seul le prix change." render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costIndirectGeneralPerPortion || 0)} $</td>
+                            ))} />
+                            <BySkuRow label={`Frais fixes — Activité${activityName ? ` (${activityName})` : ''}`} tooltip="Part du pool de l'activité de production de ce SKU, au driver choisi pour cette activité dans Paramètres (charges directes ou temps de main-d'œuvre) — voir l'infobulle du sélecteur de driver pour le guide de décision. Le même montant quel que soit le canal." render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costIndirectActivityPerPortion || 0)} $</td>
+                            ))} />
+                            <BySkuRow label="Frais fixes — Canal" tooltip="Part du pool du CANAL de cette colonne — varie par canal, contrairement à Général/Activité ci-dessus. Aucun driver au choix ici : toujours une majoration % sur le coût de production de ce SKU (pool du canal ÷ valeur totale, au coût de production, de tout ce qui transite par ce canal) — le même mécanisme pour tous les canaux, cascadé depuis le coût déjà établi à l'activité." render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.costIndirectChannelPerPortion || 0)} $</td>
+                            ))} />
+                            <BySkuRow label="Frais fixes totaux par unité" tooltip="Général + Activité + Canal ci-dessus — la part des frais fixes totaux allouée à ce SKU sur ce canal." emphasis render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cb.margeBruteDollar - cb.margeNetteDollar)} $</td>
                             ))} />
 
                             <BySkuSectionHeader label="Coût net et marge nette" colSpan={channelBreakdown.length + 1} />
@@ -313,7 +326,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels }) => {
 
 // Onglet 4: Résumé
 export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, itemsPerPage, onItemsPerPageChange }) => {
-    const { products, generalInfo, laborDatabase, analysisData, salesChannels } = useProject();
+    const { products, generalInfo, laborDatabase, analysisData, salesChannels, productionActivities } = useProject();
     const [sortConfig, setSortConfig] = useState({ key: 'costs.margeNettePercent', direction: 'descending' });
     const [showAllContributions, setShowAllContributions] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -462,7 +475,7 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
                     {selectedSkuRow && (
                         <button
                             onClick={() => onEditProduct(products.findIndex(p => p.id === selectedSkuRow.productId), selectedSkuRow.formatIndex || 0)}
-                            title="Éditer ce SKU dans Recette & Calcul"
+                            title="Éditer ce SKU dans Recettes et produits"
                             className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 flex-shrink-0"
                         >
                             <Pencil size={18} />
@@ -470,7 +483,7 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
                     )}
                 </div>
                 {selectedSkuRow
-                    ? <BySkuWaterfall row={selectedSkuRow} />
+                    ? <BySkuWaterfall row={selectedSkuRow} productionActivities={productionActivities} />
                     : <p className="text-center text-gray-500 py-8">Aucun SKU dans le menu pour l'instant.</p>}
             </div>
             )}

@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { Camera, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency } from '../utils.js';
 import { useProject } from '../state/ProjectContext.jsx';
-import { computeIngredientVolatility } from '../engine/priceVolatility.js';
+import { computeIngredientVolatility, computePackagingVolatility, computeFormatCostVolatility } from '../engine/priceVolatility.js';
 import { buildTrackableProducts } from '../engine/trackingAnalysis.js';
 import { Pagination, Tooltip } from '../components/common.jsx';
 
@@ -12,6 +12,121 @@ const VOLATILITY_TIERS = {
     elevee: { label: 'élevée', className: 'text-red-700 font-semibold' },
     moderee: { label: 'modérée', className: 'text-orange-600 font-medium' },
     faible: { label: 'faible', className: 'text-gray-500' },
+};
+
+// Tableau de volatilité générique (Phase 6, 15/10) : extrait de l'ancien bloc « Volatilité des
+// prix d'achat » (ingrédients seulement) pour le réutiliser tel quel sur l'emballage et le coût
+// direct par format — même tri/filtre/pagination, même visuel (badge de palier). `showProvider`
+// désactivé pour les formats (un format n'a pas de fournisseur). `priceColumnLabel` distingue un
+// PRIX d'achat (ingrédient/emballage) d'un COÛT calculé (format).
+const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceholder, showProvider = true, priceColumnLabel = 'Prix actuel' }) => {
+    const [sort, setSort] = useState({ key: 'amplitudePercent', direction: 'descending' });
+    const [filterName, setFilterName] = useState('');
+    const [filterProvider, setFilterProvider] = useState('all');
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
+
+    const providers = useMemo(
+        () => ['all', ...[...new Set(volatility.list.map(v => v.provider).filter(Boolean))].sort()],
+        [volatility]
+    );
+    const filtered = useMemo(() => {
+        let list = volatility.list;
+        if (filterName.trim()) {
+            const q = filterName.toLowerCase();
+            list = list.filter(v => (v.name || '').toLowerCase().includes(q));
+        }
+        if (showProvider && filterProvider !== 'all') list = list.filter(v => v.provider === filterProvider);
+        const dir = sort.direction === 'ascending' ? 1 : -1;
+        return [...list].sort((a, b) => {
+            const av = a[sort.key], bv = b[sort.key];
+            if (typeof av === 'string' || typeof bv === 'string') return String(av).localeCompare(String(bv)) * dir;
+            return ((av || 0) - (bv || 0)) * dir;
+        });
+    }, [volatility, filterName, filterProvider, sort, showProvider]);
+    useEffect(() => { setPage(1); }, [filterName, filterProvider, perPage]);
+    const paged = useMemo(() => filtered.slice((page - 1) * perPage, (page - 1) * perPage + perPage), [filtered, page, perPage]);
+    const requestSort = (key) => setSort(prev => ({
+        key, direction: prev.key === key && prev.direction === 'descending' ? 'ascending' : 'descending',
+    }));
+
+    if (!volatility.hasEnoughData) {
+        return <p className="text-sm text-gray-500">Créez au moins 2 points de référence pour analyser la volatilité {itemLabel}.</p>;
+    }
+
+    const columns = [
+        { key: 'name', label: nameColumnLabel, align: 'left' },
+        ...(showProvider ? [{ key: 'provider', label: 'Fournisseur', align: 'left' }] : []),
+        { key: 'currentPrice', label: priceColumnLabel, align: 'right', tip: showProvider ? "Dernier prix unitaire connu (point de référence le plus récent)." : "Dernier coût direct par portion connu (point de référence le plus récent)." },
+        { key: 'trendPercent', label: 'Tendance', align: 'right', tip: "Variation entre le premier et le dernier point de référence (hausse ▲ / baisse ▼)." },
+        { key: 'amplitudePercent', label: 'Volatilité (amplitude)', align: 'right', tip: "Amplitude = écart entre la valeur la plus basse et la plus haute, en % de la moyenne. Mesure l'instabilité." },
+    ];
+
+    return (
+        <>
+            <div className="flex flex-wrap gap-3 mb-3">
+                <input
+                    type="text"
+                    value={filterName}
+                    onChange={(e) => setFilterName(e.target.value)}
+                    placeholder={filterPlaceholder}
+                    className="p-2 border rounded-md text-sm w-56"
+                />
+                {showProvider && (
+                    <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)} className="p-2 border rounded-md text-sm">
+                        {providers.map(p => <option key={p} value={p}>{p === 'all' ? 'Tous les fournisseurs' : p}</option>)}
+                    </select>
+                )}
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                    <thead>
+                        <tr className="text-gray-500 border-b">
+                            {columns.map(col => (
+                                <th key={col.key} className={`py-2 px-3 ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
+                                    <span className={`inline-flex items-center gap-1 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
+                                        <button onClick={() => requestSort(col.key)} className={`inline-flex items-center gap-1 hover:text-gray-800 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
+                                            {col.label}
+                                            <ArrowUpDown className={`h-3.5 w-3.5 ${sort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
+                                        </button>
+                                        {col.tip && <Tooltip text={col.tip} />}
+                                    </span>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {paged.map(v => {
+                            const tier = VOLATILITY_TIERS[v.tier] || VOLATILITY_TIERS.faible;
+                            return (
+                                <tr key={v.id} className={`border-b border-gray-100 ${v.tier === 'elevee' ? 'bg-orange-50' : ''}`}>
+                                    <td className="py-2 px-3">{v.name}</td>
+                                    {showProvider && <td className="py-2 px-3 text-gray-500">{v.provider || '—'}</td>}
+                                    <td className="py-2 px-3 text-right text-gray-600">{formatCurrency(v.currentPrice)} $</td>
+                                    <td className={`py-2 px-3 text-right ${v.trendPercent > 0.5 ? 'text-red-600' : v.trendPercent < -0.5 ? 'text-green-600' : 'text-gray-500'}`}>
+                                        {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {Math.abs(v.trendPercent).toFixed(0)} %
+                                    </td>
+                                    <td className={`py-2 px-3 text-right ${tier.className}`}>
+                                        {v.amplitudePercent.toFixed(0)} % · {tier.label}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {paged.length === 0 && (
+                            <tr><td colSpan={columns.length} className="py-4 text-center text-gray-500">Aucun élément ne correspond au filtre.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+            <Pagination
+                totalItems={filtered.length}
+                itemsPerPage={perPage}
+                currentPage={page}
+                onPageChange={setPage}
+                onItemsPerPageChange={setPerPage}
+            />
+        </>
+    );
 };
 
 // Doit être déclaré en dehors de SimpleLineChart : un composant recréé à chaque rendu
@@ -171,40 +286,12 @@ const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
 export const TrackingTab = () => {
     const { trackingPoints, setTrackingPoints, generalInfo, showNotification, setNotification, baseIngredients, basePackaging, analysisData } = useProject();
     const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
-
-    // Tri / filtre / pagination du tableau de volatilité (comme les tableaux Paramètres & Ingrédients).
-    const [volSort, setVolSort] = useState({ key: 'amplitudePercent', direction: 'descending' });
-    const [volFilterName, setVolFilterName] = useState('');
-    const [volFilterProvider, setVolFilterProvider] = useState('all');
-    const [volPage, setVolPage] = useState(1);
-    const [volPerPage, setVolPerPage] = useState(10);
-
-    const volProviders = useMemo(
-        () => ['all', ...[...new Set(priceVolatility.list.map(v => v.provider).filter(Boolean))].sort()],
-        [priceVolatility]
-    );
-    const filteredVolatility = useMemo(() => {
-        let list = priceVolatility.list;
-        if (volFilterName.trim()) {
-            const q = volFilterName.toLowerCase();
-            list = list.filter(v => (v.name || '').toLowerCase().includes(q));
-        }
-        if (volFilterProvider !== 'all') list = list.filter(v => v.provider === volFilterProvider);
-        const dir = volSort.direction === 'ascending' ? 1 : -1;
-        return [...list].sort((a, b) => {
-            const av = a[volSort.key], bv = b[volSort.key];
-            if (typeof av === 'string' || typeof bv === 'string') return String(av).localeCompare(String(bv)) * dir;
-            return ((av || 0) - (bv || 0)) * dir;
-        });
-    }, [priceVolatility, volFilterName, volFilterProvider, volSort]);
-    useEffect(() => { setVolPage(1); }, [volFilterName, volFilterProvider, volPerPage]);
-    const pagedVolatility = useMemo(
-        () => filteredVolatility.slice((volPage - 1) * volPerPage, (volPage - 1) * volPerPage + volPerPage),
-        [filteredVolatility, volPage, volPerPage]
-    );
-    const requestVolSort = (key) => setVolSort(prev => ({
-        key, direction: prev.key === key && prev.direction === 'descending' ? 'ascending' : 'descending',
-    }));
+    // Phase 6 (15/10) : même analyse sur l'emballage (prix d'achat) et sur le coût direct par
+    // format (matière + emballage + MO + sous-traitance déjà figés dans chaque snapshot) — voir
+    // VolatilityTable, qui porte désormais tout le tri/filtre/pagination (auparavant dupliqué ici
+    // pour les ingrédients seulement).
+    const packagingVolatility = useMemo(() => computePackagingVolatility(trackingPoints), [trackingPoints]);
+    const formatVolatility = useMemo(() => computeFormatCostVolatility(trackingPoints), [trackingPoints]);
 
     // Tri / filtre / pagination de la table de gestion des points de référence.
     const [snapSort, setSnapSort] = useState({ key: 'timestamp', direction: 'descending' });
@@ -555,6 +642,27 @@ export const TrackingTab = () => {
                                 yAxisLabel="Coût ($ / unité)"
                             />
                         )}
+
+                        {/* Volatilité du coût direct par format (Phase 6, 15/10) : matière + emballage +
+                            MO + sous-traitance déjà figés dans chaque point de référence — révèle si un
+                            format est devenu sensible aux variations de prix de ses intrants, tous
+                            combinés (pas seulement les ingrédients ou l'emballage pris séparément). */}
+                        <div className="mt-6 pt-4 border-t">
+                            <h3 className="text-lg font-semibold text-gray-700 mb-1">Volatilité du coût direct par format</h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Amplitude du coût direct par portion (matière + emballage + main-d'œuvre + sous-traitance)
+                                {formatVolatility.hasEnoughData ? ` sur vos ${formatVolatility.pointCount} points de référence` : ''}.
+                                Un format très volatil mérite une attention particulière sur son prix de vente ou ses marges.
+                            </p>
+                            <VolatilityTable
+                                volatility={formatVolatility}
+                                itemLabel="du coût direct par format"
+                                nameColumnLabel="Format"
+                                filterPlaceholder="Filtrer par format…"
+                                showProvider={false}
+                                priceColumnLabel="Coût direct actuel"
+                            />
+                        </div>
                     </div>
                     {/* Graphique de suivi des prix des ingrédients */}
                     <div id="tutorial-section-tracking-ingredient" className="p-4 bg-gray-50 rounded-lg">
@@ -585,77 +693,12 @@ export const TrackingTab = () => {
                                 {priceVolatility.hasEnoughData ? ` sur vos ${priceVolatility.pointCount} points de référence` : ''}.
                                 À croiser avec la classe ABC (onglet Ingrédients) : un ingrédient de forte valeur au prix volatil est une priorité d'approvisionnement.
                             </p>
-                            {priceVolatility.hasEnoughData ? (
-                                <>
-                                    <div className="flex flex-wrap gap-3 mb-3">
-                                        <input
-                                            type="text"
-                                            value={volFilterName}
-                                            onChange={(e) => setVolFilterName(e.target.value)}
-                                            placeholder="Filtrer par ingrédient…"
-                                            className="p-2 border rounded-md text-sm w-56"
-                                        />
-                                        <select value={volFilterProvider} onChange={(e) => setVolFilterProvider(e.target.value)} className="p-2 border rounded-md text-sm">
-                                            {volProviders.map(p => <option key={p} value={p}>{p === 'all' ? 'Tous les fournisseurs' : p}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full text-sm">
-                                            <thead>
-                                                <tr className="text-gray-500 border-b">
-                                                    {[
-                                                        { key: 'name', label: 'Ingrédient', align: 'left' },
-                                                        { key: 'provider', label: 'Fournisseur', align: 'left' },
-                                                        { key: 'currentPrice', label: 'Prix actuel', align: 'right', tip: "Dernier prix unitaire connu (point de référence le plus récent)." },
-                                                        { key: 'trendPercent', label: 'Tendance', align: 'right', tip: "Variation du prix entre le premier et le dernier point de référence (hausse ▲ / baisse ▼)." },
-                                                        { key: 'amplitudePercent', label: 'Volatilité (amplitude)', align: 'right', tip: "Amplitude = écart entre le prix le plus bas et le plus haut, en % de la moyenne. Mesure l'instabilité du prix." },
-                                                    ].map(col => (
-                                                        <th key={col.key} className={`py-2 px-3 ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
-                                                            <span className={`inline-flex items-center gap-1 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
-                                                                <button onClick={() => requestVolSort(col.key)} className={`inline-flex items-center gap-1 hover:text-gray-800 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
-                                                                    {col.label}
-                                                                    <ArrowUpDown className={`h-3.5 w-3.5 ${volSort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
-                                                                </button>
-                                                                {col.tip && <Tooltip text={col.tip} />}
-                                                            </span>
-                                                        </th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {pagedVolatility.map(v => {
-                                                    const tier = VOLATILITY_TIERS[v.tier] || VOLATILITY_TIERS.faible;
-                                                    return (
-                                                        <tr key={v.id} className={`border-b border-gray-100 ${v.tier === 'elevee' ? 'bg-orange-50' : ''}`}>
-                                                            <td className="py-2 px-3">{v.name}</td>
-                                                            <td className="py-2 px-3 text-gray-500">{v.provider || '—'}</td>
-                                                            <td className="py-2 px-3 text-right text-gray-600">{formatCurrency(v.currentPrice)} $</td>
-                                                            <td className={`py-2 px-3 text-right ${v.trendPercent > 0.5 ? 'text-red-600' : v.trendPercent < -0.5 ? 'text-green-600' : 'text-gray-500'}`}>
-                                                                {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {Math.abs(v.trendPercent).toFixed(0)} %
-                                                            </td>
-                                                            <td className={`py-2 px-3 text-right ${tier.className}`}>
-                                                                {v.amplitudePercent.toFixed(0)} % · {tier.label}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                                {pagedVolatility.length === 0 && (
-                                                    <tr><td colSpan={5} className="py-4 text-center text-gray-500">Aucun ingrédient ne correspond au filtre.</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <Pagination
-                                        totalItems={filteredVolatility.length}
-                                        itemsPerPage={volPerPage}
-                                        currentPage={volPage}
-                                        onPageChange={setVolPage}
-                                        onItemsPerPageChange={setVolPerPage}
-                                    />
-                                </>
-                            ) : (
-                                <p className="text-sm text-gray-500">Créez au moins 2 points de référence pour analyser la volatilité des prix.</p>
-                            )}
+                            <VolatilityTable
+                                volatility={priceVolatility}
+                                itemLabel="des ingrédients"
+                                nameColumnLabel="Ingrédient"
+                                filterPlaceholder="Filtrer par ingrédient…"
+                            />
                         </div>
                     </div>
 
@@ -679,6 +722,23 @@ export const TrackingTab = () => {
                             ]}
                             yAxisLabel="Prix Unitaire ($)"
                         />
+
+                        {/* Volatilité des prix d'achat — Emballage (Phase 6, 15/10) : même analyse que les
+                            ingrédients, poste SÉPARÉ (voir Phase 2). */}
+                        <div className="mt-6 pt-4 border-t">
+                            <h3 className="text-lg font-semibold text-gray-700 mb-1">Volatilité des prix d'achat — Emballage</h3>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
+                                {packagingVolatility.hasEnoughData ? ` sur vos ${packagingVolatility.pointCount} points de référence` : ''}.
+                                À croiser avec la classe ABC (onglet Packaging) : un emballage de forte valeur au prix volatil est une priorité d'approvisionnement.
+                            </p>
+                            <VolatilityTable
+                                volatility={packagingVolatility}
+                                itemLabel="de l'emballage"
+                                nameColumnLabel="Emballage"
+                                filterPlaceholder="Filtrer par emballage…"
+                            />
+                        </div>
                     </div>
 
                     {/* Gestion des points de référence */}

@@ -1,23 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, ChevronDown, AlertTriangle } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency } from '../utils.js';
-import { computeAnalysisData } from '../engine/analysisData.js';
-import { applyCostShocks, applyLaborShocks, shockIsActive } from '../engine/costScenario.js';
+import { computeAnalysisData, computeActivityImpact, computeChannelImpact } from '../engine/analysisData.js';
+import { applyCostShocks, applyLaborShocks, shockIsActive, expandShockScopes } from '../engine/costScenario.js';
 import { useProject } from '../state/ProjectContext.jsx';
 import { Tooltip } from '../components/common.jsx';
 
 let nextShockId = 1;
 const makeShock = () => ({ id: nextShockId++, type: 'ingredient', scope: 'all', target: '', selectedIds: [], percent: '' });
 
+// Portées 'format'/'activity' (Phase 6, 15/10) : ciblent un format de vente ou une activité de
+// production précise — résolues en une sélection concrète d'ingrédients/employés par
+// `expandShockScopes` (engine/costScenario.js) avant application, à partir de ce que CE
+// format/CETTE activité consomme réellement (ingrédients directs, postes utilisés dans les étapes
+// de production) plutôt que de dupliquer cette résolution ici.
 const scopeOptionsByType = {
     ingredient: [
         { value: 'all', label: 'Tous les ingrédients' },
         { value: 'provider', label: 'Par fournisseur' },
+        { value: 'format', label: 'Par format' },
+        { value: 'activity', label: "Par activité de production" },
         { value: 'selection', label: "Sélection d'ingrédients" },
     ],
     labor: [
         { value: 'all', label: "Toute la main-d'œuvre" },
         { value: 'post', label: 'Par poste' },
+        { value: 'format', label: 'Par format' },
+        { value: 'activity', label: "Par activité de production" },
         { value: 'selection', label: "Sélection d'employés" },
     ],
 };
@@ -48,6 +57,51 @@ const DeltaRow = ({ label, current, shocked, unit, tooltip, higherIsWorse = true
     );
 };
 
+// Cellule compacte "actuel → scénario" pour un % au sein d'ImpactGroupTable — même logique de
+// couleur que DeltaRow (rouge = coût qui augmente/marge qui baisse) mais condensée en une seule
+// cellule de tableau plutôt qu'une ligne pleine largeur.
+const ImpactPctCell = ({ current, shocked, higherIsWorse = true }) => {
+    const delta = shocked - current;
+    const negligible = Math.abs(delta) < 1e-9;
+    const isWorse = higherIsWorse ? delta > 0 : delta < 0;
+    return (
+        <span className="whitespace-nowrap">
+            <span className="text-gray-500">{(current * 100).toFixed(1)}%</span>
+            <span className="text-gray-400"> → </span>
+            <span className={`font-semibold ${negligible ? 'text-gray-800' : isWorse ? 'text-red-600' : 'text-green-600'}`}>{(shocked * 100).toFixed(1)}%</span>
+        </span>
+    );
+};
+
+// Tableau d'impact groupé (Phase 6, 15/10) : réutilisé pour « par activité » et « par circuit de
+// vente » — chaque `row` vient de computeActivityImpact/computeChannelImpact (analysisData.js),
+// enrichi d'un champ `after` (même forme, calculé sur shockedAnalysis plutôt que analysisData).
+const ImpactGroupTable = ({ title, tooltip, rows }) => (
+    <div className="overflow-x-auto">
+        <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center">{title}{tooltip && <Tooltip text={tooltip} />}</p>
+        <table className="min-w-full text-sm">
+            <thead>
+                <tr className="text-left text-gray-500 border-b">
+                    <th className="py-1.5 pr-3">Nom</th>
+                    <th className="py-1.5 px-3 text-right">Marge brute</th>
+                    <th className="py-1.5 px-3 text-right">Food cost</th>
+                    <th className="py-1.5 pl-3 text-right">Coût MO</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows.map(row => (
+                    <tr key={row.activityId || row.channelId} className="border-b border-gray-100">
+                        <td className="py-1.5 pr-3">{row.label}</td>
+                        <td className="py-1.5 px-3 text-right"><ImpactPctCell current={row.margeBrutePercent} shocked={row.after.margeBrutePercent} higherIsWorse={false} /></td>
+                        <td className="py-1.5 px-3 text-right"><ImpactPctCell current={row.costMatierePercent} shocked={row.after.costMatierePercent} /></td>
+                        <td className="py-1.5 pl-3 text-right"><ImpactPctCell current={row.costLaborPercent} shocked={row.after.costLaborPercent} /></td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+);
+
 // Simulateur de choc sur les coûts (onglet Résumé). Applique un ou plusieurs chocs — sur les prix
 // d'INTRANTS et/ou les salaires de MAIN-D'ŒUVRE — et recalcule l'analyse pour montrer l'impact sur
 // le food cost, le coût MO, la marge, le point mort et la marge nette par plat. Transitoire : les
@@ -56,7 +110,7 @@ const DeltaRow = ({ label, current, shocked, unit, tooltip, higherIsWorse = true
 // être dans cet onglet EST déjà le geste d'ouverture, inutile de redemander un clic derrière.
 // Reste replié par défaut (`true`) pour tout autre usage futur hors d'un onglet dédié.
 export const CostShockSimulator = ({ collapsible = true }) => {
-    const { products, baseIngredients, basePackaging, salesChannels, laborDatabase, generalInfo, analysisData } = useProject();
+    const { products, baseIngredients, basePackaging, salesChannels, laborDatabase, productionActivities, generalInfo, analysisData } = useProject();
     const [expanded, setExpanded] = useState(false);
     const isOpen = collapsible ? expanded : true;
     const [shocks, setShocks] = useState([]);
@@ -68,10 +122,24 @@ export const CostShockSimulator = ({ collapsible = true }) => {
         () => (laborDatabase || []).flatMap(p => (p.employees || []).map(e => ({ id: e.id, name: e.employeeName || 'Employé', post: p.postName }))),
         [laborDatabase]
     );
+    // Cibles des portées 'format'/'activity' (Phase 6, 15/10) — formats actifs du menu (une entrée
+    // par format, via `displayName` déjà désambiguïsé entre les formats d'un même produit).
+    const formatOptions = useMemo(
+        () => (analysisData.activeProducts || []).map(p => ({ id: p.id, name: p.displayName })),
+        [analysisData.activeProducts]
+    );
+    const activitiesById = useMemo(() => Object.fromEntries((productionActivities || []).map(a => [a.id, a.name])), [productionActivities]);
 
     const activeShocks = useMemo(() => shocks.filter(shockIsActive), [shocks]);
-    const shockedIngredients = useMemo(() => applyCostShocks(baseIngredients, activeShocks), [baseIngredients, activeShocks]);
-    const shockedLabor = useMemo(() => applyLaborShocks(laborDatabase, activeShocks), [laborDatabase, activeShocks]);
+    // Les portées 'format'/'activity' sont résolues en 'selection' concrète AVANT d'être appliquées
+    // (expandShockScopes) — applyCostShocks/applyLaborShocks n'ont besoin de connaître que 'all' /
+    // 'provider' ou 'post' / 'selection', jamais dupliquer cette résolution.
+    const expandedShocks = useMemo(
+        () => expandShockScopes(activeShocks, { productsWithCosts: analysisData.productsWithCosts, laborDatabase }),
+        [activeShocks, analysisData.productsWithCosts, laborDatabase]
+    );
+    const shockedIngredients = useMemo(() => applyCostShocks(baseIngredients, expandedShocks), [baseIngredients, expandedShocks]);
+    const shockedLabor = useMemo(() => applyLaborShocks(laborDatabase, expandedShocks), [laborDatabase, expandedShocks]);
     // generalInfo (contexte) = calculatedGeneralInfo : contient déjà les champs bruts + calculés. Les
     // prix d'intrants et les salaires n'affectent ni la productivité ni les heures, donc ce
     // calculatedGeneralInfo reste valide — on le passe comme les deux arguments.
@@ -82,6 +150,25 @@ export const CostShockSimulator = ({ collapsible = true }) => {
             : null,
         [activeShocks.length, products, shockedIngredients, shockedLabor, generalInfo, basePackaging, salesChannels]
     );
+
+    // Impact par activité / par circuit de vente (Phase 6, 15/10) : les mêmes % pondérés que les
+    // DeltaRow globales ci-dessous, mais recentrés sur un sous-ensemble du menu — zippe les deux
+    // listes (actuel/scénario) par clé plutôt que de les afficher séparément, une activité/un canal
+    // peut apparaître dans l'une et pas l'autre si le choc fait disparaître tout son volume.
+    const activityImpact = useMemo(() => {
+        if (!shockedAnalysis) return [];
+        const current = computeActivityImpact(analysisData.activeProducts, productionActivities);
+        const shocked = computeActivityImpact(shockedAnalysis.activeProducts, productionActivities);
+        const shockedById = new Map(shocked.map(a => [a.activityId, a]));
+        return current.map(a => ({ ...a, after: shockedById.get(a.activityId) || a }));
+    }, [shockedAnalysis, analysisData.activeProducts, productionActivities]);
+    const channelImpact = useMemo(() => {
+        if (!shockedAnalysis) return [];
+        const current = computeChannelImpact(analysisData.activeProducts, salesChannels);
+        const shocked = computeChannelImpact(shockedAnalysis.activeProducts, salesChannels);
+        const shockedById = new Map(shocked.map(c => [c.channelId, c]));
+        return current.map(c => ({ ...c, after: shockedById.get(c.channelId) || c }));
+    }, [shockedAnalysis, analysisData.activeProducts, salesChannels]);
 
     const foodTarget = parseLocaleNumber(generalInfo.foodCostTarget);
     const laborTarget = parseLocaleNumber(generalInfo.laborCostTarget);
@@ -122,6 +209,8 @@ export const CostShockSimulator = ({ collapsible = true }) => {
         if (s.scope === 'all') scope = s.type === 'labor' ? "toute la MO" : 'tous les ingrédients';
         else if (s.scope === 'provider') scope = s.target;
         else if (s.scope === 'post') scope = postsById[s.target] || 'poste';
+        else if (s.scope === 'format') scope = formatOptions.find(f => f.id === s.target)?.name || 'format';
+        else if (s.scope === 'activity') scope = activitiesById[s.target] || 'activité';
         else scope = `${s.selectedIds.length} sélectionné(s)`;
         return `${typeLabel} · ${scope} ${sign}${pct} %`;
     };
@@ -182,6 +271,18 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                                     {posts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                                 </select>
                                             )}
+                                            {s.scope === 'format' && (
+                                                <select value={s.target} onChange={(e) => updateShock(s.id, { target: e.target.value })} className="rounded-md border-gray-300 shadow-sm p-2 border text-sm">
+                                                    <option value="">— Choisir un format —</option>
+                                                    {formatOptions.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                                </select>
+                                            )}
+                                            {s.scope === 'activity' && (
+                                                <select value={s.target} onChange={(e) => updateShock(s.id, { target: e.target.value })} className="rounded-md border-gray-300 shadow-sm p-2 border text-sm">
+                                                    <option value="">— Choisir une activité —</option>
+                                                    {(productionActivities || []).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                </select>
+                                            )}
 
                                             <div className="flex items-center gap-1">
                                                 <input type="text" inputMode="decimal" value={s.percent} onChange={(e) => updateShock(s.id, { percent: e.target.value })} placeholder="ex. +15" className="w-24 rounded-md border-gray-300 shadow-sm p-2 border text-sm text-right" />
@@ -235,6 +336,25 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                         <DeltaRow label="Marge brute moyenne pondérée" current={analysisData.weightedGrossMargin} shocked={shockedAnalysis.weightedGrossMargin} unit="%pt" higherIsWorse={false} />
                                         <DeltaRow label="Point mort du menu ($)" current={analysisData.globalBreakEven} shocked={shockedAnalysis.globalBreakEven} unit="$" />
                                     </div>
+
+                                    {(activityImpact.length > 0 || channelImpact.length > 0) && (
+                                        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                                            {activityImpact.length > 0 && (
+                                                <ImpactGroupTable
+                                                    title="Impact par activité de production"
+                                                    tooltip="Marge brute et coûts moyens pondérés par le mix de vente DES SEULS formats de cette activité — isole son impact propre plutôt que de le diluer dans la moyenne globale du menu."
+                                                    rows={activityImpact}
+                                                />
+                                            )}
+                                            {channelImpact.length > 0 && (
+                                                <ImpactGroupTable
+                                                    title="Impact par circuit de vente"
+                                                    tooltip="Marge brute et coûts moyens pondérés par le volume RÉEL de ce canal (pas la vue tous-canaux) — un canal sans aucun volume saisi n'apparaît pas ici."
+                                                    rows={channelImpact}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
 
                                     <div className="mt-4 overflow-x-auto">
                                         <p className="text-sm font-semibold text-gray-700 mb-1">Marge nette par portion — impact par plat</p>

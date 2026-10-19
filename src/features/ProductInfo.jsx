@@ -1,31 +1,34 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ArrowUpDown, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
-import { parseLocaleNumber, isValidNumber, isValidPercentage, isNotEmpty, formatCurrency } from '../utils.js';
+import { parseLocaleNumber, isValidNumber, isValidPositiveNumber, isValidPercentage, isNotEmpty } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
-import { indirectCostMethodLabels } from '../state/initialState.js';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 
-// Prix de détail suggéré (PDS) : remonte la cascade de maillons du canal (markup/marge, voir
-// salesChannelCascade.js) à partir du prix net producteur, ancrée au premier maillon — un canal
-// sans maillon (ex. vente directe) donne PDS = prix net. Repli vide si le prix net n'est pas un
-// nombre valide, pour ne jamais afficher un « 0,00 $ » avant la première saisie.
-const computeSuggestedRetailPrice = (netPrice, channel) => {
-    const parsedNet = parseLocaleNumber(netPrice);
-    if (!(parsedNet > 0)) return '';
+// Prix de détail suggéré (PDS, retour utilisateur du 15/10) : maintenant une donnée du FORMAT
+// (saisie manuelle, une seule valeur pour tous ses canaux — le prix tablette visé au consommateur
+// ne varie typiquement pas par canal, contrairement au prix net producteur), pas une valeur
+// déduite par canal comme avant. Descend la cascade de maillons du canal (markup/marge, voir
+// salesChannelCascade.js) à partir de ce PDS, ancrée au DERNIER maillon (le prix consommateur),
+// pour en déduire le prix net producteur de ce canal — direction inverse de l'ancienne
+// implémentation. Un canal sans maillon (ex. vente directe) donne prix net = PDS. Repli null si le
+// PDS n'est pas un nombre valide, pour ne jamais écraser un prix net existant par une valeur
+// fausse.
+const computeNetPriceFromPds = (pds, channel) => {
+    const parsedPds = parseLocaleNumber(pds);
+    if (!(parsedPds > 0)) return null;
     const links = channel?.links || [];
-    if (links.length === 0) return parsedNet;
-    const prices = computeSalesChannelCascade({ links, anchorIndex: 0, anchorValue: parsedNet });
-    const suggested = prices[prices.length - 1];
-    return suggested != null ? Math.round(suggested * 100) / 100 : parsedNet;
+    const prices = computeSalesChannelCascade({ links, anchorIndex: links.length, anchorValue: parsedPds });
+    const net = prices[0];
+    return net != null ? Math.round(net * 100) / 100 : null;
 };
 
 export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct, handleProductValueChange, handleFormatValueChange, handleFormatChannelPricesChange, onAddFormat, onDuplicateFormat, onDeleteFormat, itemsPerPage, onItemsPerPageChange, onOpenSalesImport }) => {
     const {
         companyName, onUpdateCompanyName, logoUrl, onUpdateLogoUrl, generalInfo, onUpdateGeneralInfo, products,
-        productionActivities, onUpdateProductionActivities, salesChannels, onUpdateSalesChannels, showNotification, setNotification,
+        productionActivities, onUpdateProductionActivities, salesChannels, onUpdateSalesChannels,
+        showNotification, setNotification,
     } = useProject();
-    const { period, operationCostPerHour, showProductivityWarning } = generalInfo;
 
     const [filterName, setFilterName] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
@@ -170,7 +173,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     const totalSalesMix = useMemo(() => allRows.filter(r => r.format?.onMenu).reduce((sum, r) => sum + parseLocaleNumber(r.format?.salesMix || 0), 0), [allRows]);
 
     const handleAddActivity = () => {
-        const newActivity = { id: `act_${Date.now()}_${Math.random()}`, name: '' };
+        const newActivity = { id: `act_${Date.now()}_${Math.random()}`, name: '', indirectCostDriver: 'directCost' };
         onUpdateProductionActivities([...productionActivities, newActivity]);
     };
 
@@ -178,9 +181,17 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         onUpdateProductionActivities(productionActivities.map(a => a.id === id ? { ...a, name } : a));
     };
 
+    // Phase 4.6 — driver choisi pour convertir le pool de frais fixes de CETTE activité en taux par
+    // produit (voir l'infobulle ci-dessous pour le guide de décision). Propre à chaque activité :
+    // deux activités peuvent choisir des drivers différents sans que la réconciliation en souffre
+    // (chaque pool se normalise contre ses propres produits — voir 04-Conception-Modele.md).
+    const handleActivityDriverChange = (id, indirectCostDriver) => {
+        onUpdateProductionActivities(productionActivities.map(a => a.id === id ? { ...a, indirectCostDriver } : a));
+    };
+
     const handleRemoveActivity = (id) => {
         if (productionActivities.length <= 1) {
-            showNotification({ message: "Vous devez conserver au moins une ligne de production.", type: 'error' });
+            showNotification({ message: "Vous devez conserver au moins une activité de production.", type: 'error' });
             return;
         }
         const activityToDelete = productionActivities.find(a => a.id === id);
@@ -188,7 +199,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         const newList = productionActivities.filter(a => a.id !== id);
         onUpdateProductionActivities(newList);
         showNotification({
-            message: `La ligne de production "${activityToDelete.name || 'Sans nom'}" a été supprimée.`,
+            message: `L'activité de production "${activityToDelete.name || 'Sans nom'}" a été supprimée.`,
             type: 'info',
             onUndo: () => {
                 onUpdateProductionActivities(originalList);
@@ -264,20 +275,22 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             showNotification({ message: "Ce format est déjà rattaché à tous les canaux de vente existants.", type: 'info' });
             return;
         }
-        const newEntry = { id: `cp_${Date.now()}_${Math.random()}`, channelId: nextChannel.id, netPrice: '', volume: '', pds: '', pdsManual: false };
+        const newEntry = { id: `cp_${Date.now()}_${Math.random()}`, channelId: nextChannel.id, netPrice: '', volume: '' };
         handleFormatChannelPricesChange(productIndex, formatIndex, [...(format.channelPrices || []), newEntry]);
     };
 
-    // Le PDS (prix de détail suggéré) se propose automatiquement tant que l'utilisateur ne l'a
-    // jamais modifié lui-même (`pdsManual`) — une fois modifié à la main, il reste figé, même si le
-    // prix net change ensuite (demande explicite du 06/10).
     const handleChannelPriceFieldChange = (productIndex, formatIndex, format, channelPriceId, field, value) => {
-        const newList = (format.channelPrices || []).map(cp => {
-            if (cp.id !== channelPriceId) return cp;
-            if (field === 'pds') return { ...cp, pds: value, pdsManual: true };
-            return { ...cp, [field]: value };
-        });
+        const newList = (format.channelPrices || []).map(cp => cp.id === channelPriceId ? { ...cp, [field]: value } : cp);
         handleFormatChannelPricesChange(productIndex, formatIndex, newList);
+    };
+
+    // Bouton "Générer" (retour utilisateur du 15/10) : remplit le prix net de CE canal à partir du
+    // PDS du format (saisi manuellement, voir computeNetPriceFromPds) — n'écrase rien si le PDS
+    // est absent/invalide, et le prix net reste ensuite librement modifiable à la main comme avant.
+    const handleGenerateNetPriceFromPds = (productIndex, formatIndex, format, channelPriceId, channel) => {
+        const netPrice = computeNetPriceFromPds(format.pds, channel);
+        if (netPrice === null) return;
+        handleChannelPriceFieldChange(productIndex, formatIndex, format, channelPriceId, 'netPrice', netPrice);
     };
 
     const handleRemoveChannelPrice = (productIndex, formatIndex, format, channelPriceId) => {
@@ -318,114 +331,6 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 )}
             </div>
 
-            <div id="tutorial-section-info-frais" className="p-4 bg-gray-100 rounded-lg">
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800">Frais et revenus</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
-                    {/* Ligne Période de référence */}
-                    <div className="md:col-span-2">
-                        <label htmlFor="period" className="flex items-center text-sm font-medium text-gray-700">
-                            Période de référence
-                            <Tooltip text="La période sur laquelle vos revenus et frais indirects sont basés (semaine, mois, etc.)." />
-                        </label>
-                        <select id="period" value={period} onChange={(e) => onUpdateGeneralInfo('period', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                            <option value="weekly">Hebdomadaire</option>
-                            <option value="monthly">Mensuelle</option>
-                            <option value="quarterly">Trimestrielle</option>
-                            <option value="yearly">Annuelle</option>
-                            <option value="custom">Personnalisée</option>
-                        </select>
-                    </div>
-                    {period === 'custom' && (
-                        <div className="md:col-span-2 grid grid-cols-2 gap-4 -mt-2">
-                            <div>
-                                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Date de début</label>
-                                <input type="date" id="startDate" value={generalInfo.startDate || ''} onChange={(e) => onUpdateGeneralInfo('startDate', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
-                            </div>
-                            <div>
-                                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">Date de fin</label>
-                                <input type="date" id="endDate" value={generalInfo.endDate || ''} onChange={(e) => onUpdateGeneralInfo('endDate', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Ligne Revenus */}
-                    <div>
-                        <label htmlFor="totalRevenue" className="flex items-center text-sm font-medium text-gray-700">
-                            Revenus totaux ($)
-                            <Tooltip text="Votre chiffre d'affaires total pour la période de référence sélectionnée." />
-                        </label>
-                        <input type="text" inputMode="decimal" id="tutorial-total-revenue" value={generalInfo.totalRevenue || ''} onChange={(e) => onUpdateGeneralInfo('totalRevenue', e.target.value)} onBlur={(e) => onUpdateGeneralInfo('totalRevenue', parseLocaleNumber(e.target.value))} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidNumber(generalInfo.totalRevenue) ? 'border-red-500' : 'border-gray-300'}`} />
-                        {!isValidNumber(generalInfo.totalRevenue) && <ValidationMessage message="Veuillez entrer un nombre positif." />}
-                    </div>
-                    <div>
-                        <label htmlFor="menuRevenuePercentage" className="flex items-center text-sm font-medium text-gray-700">
-                            Portion des revenus du menu analysé (%)
-                            <Tooltip text="Indiquez ici quel pourcentage de vos revenus totaux est représenté par les items listés dans ce calculateur. Par exemple, si les boissons représentent 30% de vos ventes, vous pourriez indiquer 70%." />
-                        </label>
-                        <input type="text" inputMode="decimal" id="menuRevenuePercentage" value={generalInfo.menuRevenuePercentage || ''} onChange={(e) => onUpdateGeneralInfo('menuRevenuePercentage', e.target.value)} onBlur={(e) => onUpdateGeneralInfo('menuRevenuePercentage', parseLocaleNumber(e.target.value))} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.menuRevenuePercentage) ? 'border-red-500' : 'border-gray-300'}`} />
-                        {!isValidPercentage(generalInfo.menuRevenuePercentage) && <ValidationMessage message="Doit être un % entre 0 et 100." />}
-                        <p className="mt-1 text-sm text-gray-600">
-                            Revenus du menu analysé: <span className="font-semibold">{formatCurrency(parseLocaleNumber(generalInfo.totalRevenue) * (parseLocaleNumber(generalInfo.menuRevenuePercentage) / 100))} $</span>
-                        </p>
-                    </div>
-
-                    {/* Ligne Frais indirects */}
-                    <div className="md:col-span-2">
-                        <label htmlFor="totalIndirects" className="flex items-center text-sm font-medium text-gray-700">
-                            Frais indirects totaux ($)
-                            <Tooltip text="Tous les coûts qui ne sont pas directement liés à la production d'un plat spécifique (loyer, électricité, salaires administratifs, etc.)." />
-                        </label>
-                        <input type="text" inputMode="decimal" id="totalIndirects" value={generalInfo.totalIndirects || ''} onChange={(e) => onUpdateGeneralInfo('totalIndirects', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidNumber(generalInfo.totalIndirects) ? 'border-red-500' : 'border-gray-300'}`} />
-                        {!isValidNumber(generalInfo.totalIndirects) && <ValidationMessage message="Veuillez entrer un nombre positif." />}
-                    </div>
-
-                    {/* Méthode d'attribution des frais indirects — GLOBALE, appliquée à tous les plats */}
-                    <div className="md:col-span-2">
-                        <label htmlFor="indirectCostMethod" className="flex items-center text-sm font-medium text-gray-700">
-                            Méthode d'attribution des frais indirects
-                            <Tooltip text="S'applique à tous les plats. Les deux méthodes répartissent l'intégralité des frais indirects (elles se réconcilient avec le pool). « Au prorata des ventes » : selon le mix des ventes. « Au prorata du temps de production » : selon les heures de main-d'œuvre de chaque plat." />
-                        </label>
-                        <select id="indirectCostMethod" value={generalInfo.indirectCostMethod || 'salesAllocation'} onChange={(e) => onUpdateGeneralInfo('indirectCostMethod', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                            {Object.entries(indirectCostMethodLabels).map(([value, label]) => (
-                                <option key={value} value={value}>{label}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Ligne Main d'oeuvre et Heures */}
-                    <div className="md:col-span-2">
-                        <label htmlFor="totalKitchenLaborCost" className="flex items-center text-sm font-medium text-gray-700">
-                            Coût main-d'œuvre cuisine total ($)
-                            <Tooltip text="Ce coût est maintenant calculé automatiquement à partir des données de l'onglet Main-d'œuvre." />
-                        </label>
-                        <input type="text" value={formatCurrency(generalInfo.totalKitchenLaborCost)} readOnly disabled className="mt-1 block w-full rounded-md bg-gray-50 p-1 border-0 text-right" />
-                    </div>
-                    <div>
-                        <label htmlFor="operationHours" className="flex items-center text-sm font-medium text-gray-700">
-                            Heures totales d'opération
-                            <Tooltip text="Le nombre total d'heures d'ouverture de votre établissement pendant la période de référence." />
-                        </label>
-                        <input type="text" inputMode="decimal" id="operationHours" value={generalInfo.operationHours || ''} onChange={(e) => onUpdateGeneralInfo('operationHours', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidNumber(generalInfo.operationHours) ? 'border-red-500' : 'border-gray-300'}`} />
-                        {!isValidNumber(generalInfo.operationHours) && <ValidationMessage message="Veuillez entrer un nombre positif." />}
-                    </div>
-
-                    <div>
-                        <label className="flex items-center text-sm font-medium text-gray-700">
-                            Coût horaire d'opération ($/h)
-                            <Tooltip text="Calculé automatiquement (Frais indirects totaux / Heures d'opération). Représente le coût de fonctionnement de votre établissement par heure." />
-                        </label>
-                        <input type="text" value={formatCurrency(operationCostPerHour)} readOnly disabled className="mt-1 block w-full rounded-md bg-gray-50 p-1 border-0 text-right" />
-                    </div>
-
-                    {/* Ligne Avertissement */}
-                    {showProductivityWarning && (
-                        <div className="md:col-span-2 p-3 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm flex items-center justify-center">
-                            <AlertTriangle className="inline h-4 w-4 mr-2"/>
-                            <span>Attention : Le coût de main-d'œuvre direct calculé est supérieur au coût total entré. Veuillez vérifier vos données.</span>
-                        </div>
-                    )}
-                </div>
-            </div>
 
             <div id="tutorial-section-info-objectifs" className="p-4 bg-gray-100 rounded-lg">
                 <h2 className="text-2xl font-semibold mb-4 text-gray-800">Objectifs stratégiques</h2>
@@ -460,11 +365,11 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             <div id="tutorial-section-info-activites" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-                        Lignes de production
-                        <Tooltip text="Une ligne de production regroupe les produits qui partagent un même procédé de fabrication (ex. Confitures, Produits séchés). Elle servira à répartir vos frais indirects par ligne dans la section Frais fixes (à venir)." />
+                        Activités de production
+                        <Tooltip text="Une activité de production regroupe les produits qui partagent un même procédé de fabrication (ex. Confitures, Produits séchés). Elle servira à répartir vos frais indirects par activité dans l'onglet État des résultats." />
                     </h2>
                     <button onClick={handleAddActivity} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                        <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une ligne
+                        <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une activité
                     </button>
                 </div>
                 <div className="space-y-2">
@@ -474,10 +379,20 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 type="text"
                                 value={activity.name}
                                 onChange={(e) => handleActivityNameChange(activity.id, e.target.value)}
-                                placeholder="Nom de la ligne de production"
+                                placeholder="Nom de l'activité de production"
                                 className={`flex-1 p-1 border rounded ${!isNotEmpty(activity.name) ? 'border-red-500' : 'border-gray-300'}`}
                             />
-                            <button onClick={() => handleRemoveActivity(activity.id)} title="Supprimer la ligne de production" className="text-red-500 hover:text-red-700 p-1 rounded-full">
+                            <select
+                                value={activity.indirectCostDriver || 'directCost'}
+                                onChange={(e) => handleActivityDriverChange(activity.id, e.target.value)}
+                                className="p-1 border rounded text-sm border-gray-300"
+                                title="Driver de conversion des frais fixes de cette activité en taux par produit"
+                            >
+                                <option value="directCost">Selon les charges directes</option>
+                                <option value="laborTime">Selon le temps de main-d'œuvre</option>
+                            </select>
+                            <Tooltip text="Driver utilisé pour convertir les frais fixes rattachés à CETTE activité (onglet État des résultats) en un taux $ par produit — propre à chaque activité, sans effet sur les autres. « Selon les charges directes » (matière + emballage + main-d'œuvre + sous-traitance combinés) : choix par défaut, approprié quand le coût indirect suit globalement la valeur des intrants consommés (supervision, gestion des stocks) — capture à la fois le volume et la complexité d'un produit. « Selon le temps de main-d'œuvre » : plus précis si le coût indirect suit plutôt la CADENCE/le temps machine (supervision horaire, chauffage pendant les heures de production) qu'une pure valeur d'intrants — utile si deux produits de cette activité ont un coût matière très différent mais un temps de production similaire, sinon le produit à ingrédient cher absorberait injustement plus de frais fixes." />
+                            <button onClick={() => handleRemoveActivity(activity.id)} title="Supprimer l'activité de production" className="text-red-500 hover:text-red-700 p-1 rounded-full">
                                 <Trash2 size={20} />
                             </button>
                         </div>
@@ -573,14 +488,14 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         />
                     </div>
                     <div>
-                        <label htmlFor="filterActivity" className="block text-sm font-medium text-gray-700">Filtrer par ligne de production</label>
+                        <label htmlFor="filterActivity" className="block text-sm font-medium text-gray-700">Filtrer par activité de production</label>
                         <select
                             id="filterActivity"
                             value={filterActivity}
                             onChange={e => setFilterActivity(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                         >
-                            <option value="all">Toutes les lignes</option>
+                            <option value="all">Toutes les activités</option>
                             {productionActivities.map(activity => (
                                 <option key={activity.id} value={activity.id}>{activity.name || 'Sans nom'}</option>
                             ))}
@@ -626,8 +541,8 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 </div>
                                 <div className="w-48">
                                     <label className="flex items-center text-xs font-medium text-gray-500 uppercase">
-                                        Ligne de production
-                                        <Tooltip text="Le procédé de fabrication auquel ce produit appartient (ex. Confitures, Produits séchés) — servira à répartir vos frais indirects par ligne dans l'onglet Comptabilité (à venir)." />
+                                        Activité de production
+                                        <Tooltip text="Le procédé de fabrication auquel ce produit appartient (ex. Confitures, Produits séchés) — servira à répartir vos frais indirects par activité dans l'onglet État des résultats." />
                                     </label>
                                     <select value={product.activityId || ''} onChange={(e) => handleProductValueChange(productIndex, 'activityId', e.target.value)} className="mt-1 w-full p-1.5 border rounded border-gray-300">
                                         {productionActivities.map(activity => (
@@ -668,6 +583,12 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                             <div className="flex items-center">
                                                 SKU
                                                 <Tooltip text="Numéro de référence de ce format, déduit automatiquement de la recette et du format (librement modifiable)." />
+                                            </div>
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <div className="flex items-center">
+                                                PDS ($)
+                                                <Tooltip text="Prix de détail suggéré au consommateur pour ce format — saisi manuellement, une seule valeur pour tous les canaux (le prix tablette visé ne varie généralement pas par canal, contrairement au prix net producteur). Sert à générer le prix net de chaque canal via le bouton « Générer » (section Canaux de vente ci-dessous), qui redescend la cascade de maillons de ce canal à partir de ce prix." />
                                             </div>
                                         </th>
                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
@@ -713,6 +634,9 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                 <input type="text" value={format.sku || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'sku', e.target.value)} placeholder="ex. CONF-250ML" className="w-40 p-1 border rounded border-gray-300" />
                                             </td>
                                             <td className="px-4 py-2">
+                                                <input type="text" inputMode="decimal" value={format.pds ?? ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', e.target.value)} onBlur={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', parseLocaleNumber(e.target.value) || '')} placeholder="PDS $" title="Prix de détail suggéré au consommateur, saisi manuellement — sert à générer le prix net de chaque canal (bouton « Générer », section Canaux de vente)." className="w-24 p-1 border rounded text-right border-gray-300" />
+                                            </td>
+                                            <td className="px-4 py-2">
                                                 <button onClick={() => toggleFormatExpanded(format.id)} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-sm ${channelPrices.length === 0 ? 'text-orange-700 bg-orange-50' : 'text-gray-700 bg-gray-100'} hover:bg-gray-200`}>
                                                     {channelPrices.length === 0 ? 'Aucun canal' : `${channelPrices.length} ${channelPrices.length > 1 ? 'canaux' : 'canal'}`}
                                                     <ChevronDown className={`h-4 w-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -737,7 +661,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                         </tr>
                                         {isExpanded && (
                                             <tr>
-                                                <td colSpan={6} className="px-4 py-3 bg-gray-50">
+                                                <td colSpan={7} className="px-4 py-3 bg-gray-50">
                                                     <div className="max-w-3xl">
                                                     {channelPrices.length === 0 && (
                                                         <p className="text-sm text-gray-500">Ce format n'est rattaché à aucun canal de vente — il n'apparaîtra dans aucune analyse de marge tant qu'aucun canal n'est ajouté.</p>
@@ -747,7 +671,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                             <span className="w-4"></span>
                                                             <span className="flex-1 text-xs font-medium text-gray-500 uppercase">Canal</span>
                                                             <span className="w-24 text-xs font-medium text-gray-500 uppercase text-right">Prix net ($)</span>
-                                                            <span className="w-24 text-xs font-medium text-gray-500 uppercase text-right">PDS ($)</span>
+                                                            <span className="w-24 text-xs font-medium text-gray-500 uppercase text-right"></span>
                                                             <span className="w-28 text-xs font-medium text-gray-500 uppercase text-right">Volume (u.)</span>
                                                             <span className="w-4"></span>
                                                             <span className="w-6"></span>
@@ -757,7 +681,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                         {channelPrices.map((cp, cpIndex) => {
                                                             const channel = salesChannels.find(c => c.id === cp.channelId);
                                                             const isPrimary = cpIndex === 0;
-                                                            const pdsValue = cp.pdsManual ? cp.pds : computeSuggestedRetailPrice(cp.netPrice, channel);
+                                                            const canGenerate = isValidPositiveNumber(format.pds);
                                                             return (
                                                                 <div key={cp.id} className="flex items-center gap-2 bg-white p-2 rounded-md shadow-sm">
                                                                     <button
@@ -784,16 +708,17 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                             className={`w-24 p-1 border rounded text-right text-sm ${!isValidNumber(cp.netPrice) ? 'border-red-500' : 'border-gray-300'}`}
                                                                         />
                                                                     </div>
-                                                                    <div>
-                                                                        <label className="sr-only">Prix de détail suggéré ($)</label>
-                                                                        <input
-                                                                            type="text" inputMode="decimal"
-                                                                            value={pdsValue}
-                                                                            onChange={(e) => handleChannelPriceFieldChange(productIndex, formatIndex, format, cp.id, 'pds', e.target.value)}
-                                                                            placeholder="PDS $"
-                                                                            title={cp.pdsManual ? "Prix de détail suggéré saisi manuellement — ne se recalcule plus automatiquement." : "Prix de détail suggéré, calculé automatiquement à partir du prix net et de la cascade de maillons du canal. Modifiable à la main."}
-                                                                            className={`w-24 p-1 border rounded text-right text-sm border-gray-300 ${cp.pdsManual ? 'bg-white' : 'bg-gray-50 text-gray-600'}`}
-                                                                        />
+                                                                    <div className="w-24 flex justify-end">
+                                                                        <button
+                                                                            onClick={() => handleGenerateNetPriceFromPds(productIndex, formatIndex, format, cp.id, channel)}
+                                                                            disabled={!canGenerate}
+                                                                            title={canGenerate
+                                                                                ? "Générer le prix net de ce canal à partir du PDS du format, en redescendant la cascade de maillons de ce canal. Remplace le prix net ci-dessus (reste modifiable à la main ensuite)."
+                                                                                : "Saisissez d'abord un PDS valide pour ce format (colonne PDS ($), à droite du SKU)."}
+                                                                            className={`px-2 py-1 text-xs rounded border ${canGenerate ? 'text-blue-600 border-blue-300 hover:bg-blue-50' : 'text-gray-400 border-gray-200 cursor-not-allowed'}`}
+                                                                        >
+                                                                            Générer
+                                                                        </button>
                                                                     </div>
                                                                     <div>
                                                                         <label className="sr-only">Volume (unités)</label>

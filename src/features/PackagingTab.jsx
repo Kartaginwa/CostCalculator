@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { ArrowUpDown, Copy, Trash2, Upload } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.js';
+import { parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
@@ -24,8 +24,26 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     const [newlyAddedId, setNewlyAddedId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [isSortDisabled, setIsSortDisabled] = useState(false);
+    const [comparisonPackaging, setComparisonPackaging] = useState('');
 
     const uniqueProviders = useMemo(() => ['all', ...new Set(basePackaging.map(p => p.provider).filter(Boolean))], [basePackaging]);
+    const uniquePackagingNames = useMemo(() => [...new Set(basePackaging.map(p => p.name).filter(Boolean))], [basePackaging]);
+
+    // « Comparer un emballage » (même outil que IngredientsTab.jsx, dupliqué ici le 15/10) : un
+    // même emballage peut venir de plusieurs fournisseurs à des prix et taux de perte différents —
+    // le « prix efficace » (prix unitaire corrigé du taux de perte) révèle le coût réel une fois
+    // utilisable, pas seulement le prix affiché au catalogue.
+    const comparisonResults = useMemo(() => {
+        if (!comparisonPackaging) return [];
+        return basePackaging
+            .filter(p => p.name.toLowerCase() === comparisonPackaging.toLowerCase())
+            .map(p => {
+                const lossP = (parseLocaleNumber(p.lossPercentage) || 0) / 100;
+                const effectiveUnitPrice = lossP > 0 && lossP < 1 ? p.unitPrice / (1 - lossP) : p.unitPrice;
+                return { ...p, effectiveUnitPrice, lossCostPerUnit: effectiveUnitPrice - p.unitPrice };
+            })
+            .sort((a, b) => a.effectiveUnitPrice - b.effectiveUnitPrice);
+    }, [basePackaging, comparisonPackaging]);
 
     const thirtyDaysAgo = useMemo(() => {
         const d = new Date();
@@ -196,7 +214,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                     <label htmlFor="filterPackagingName" className="block text-sm font-medium text-gray-700">Filtrer par emballage</label>
                     <input
@@ -221,7 +239,58 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                         ))}
                     </select>
                 </div>
+                <div>
+                    <label htmlFor="comparisonPackaging" className="block text-sm font-medium text-gray-700">Comparer un emballage</label>
+                    <input
+                        type="text"
+                        id="comparisonPackaging"
+                        value={comparisonPackaging}
+                        onChange={e => setComparisonPackaging(e.target.value)}
+                        list="packaging-name-list"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                        placeholder="Nom de l'emballage..."
+                    />
+                </div>
             </div>
+
+            <datalist id="packaging-name-list">
+                {uniquePackagingNames.map(name => <option key={name} value={name} />)}
+            </datalist>
+
+            {/* --- Section de comparaison des prix (même outil que IngredientsTab.jsx) --- */}
+            {comparisonResults.length > 0 && (
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2">Comparaison des prix pour "{comparisonPackaging}"</h3>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-blue-100">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Fournisseur</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Prix Unitaire</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Perte Estimée</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Prix Efficace ($/{comparisonResults[0]?.unit})</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {comparisonResults.map((item, index) => (
+                                    <tr key={item.id} className={index === 0 ? 'bg-green-100' : ''}>
+                                        <td className="px-4 py-2 font-medium">{item.provider}</td>
+                                        <td className="px-4 py-2">{formatUnitPrice(item.unitPrice)} $</td>
+                                        <td className="px-4 py-2 text-red-600">
+                                            {formatUnitPrice(item.lossCostPerUnit)} $
+                                            <span className="text-xs text-gray-500 ml-1">({item.lossPercentage || 0}%)</span>
+                                        </td>
+                                        <td className="px-4 py-2 font-bold">
+                                            {formatUnitPrice(item.effectiveUnitPrice)} $
+                                            {index === 0 && <span className="ml-2 text-xs font-bold text-green-800 bg-green-200 px-2 py-0.5 rounded-full">Meilleur prix</span>}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             <datalist id="packaging-provider-list">
                 {uniqueProviders.map(provider => provider !== 'all' && <option key={provider} value={provider} />)}

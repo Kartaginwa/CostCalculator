@@ -16,6 +16,10 @@ const demoState = () => {
         laborDatabase: s.laborDatabase,
         productionActivities: s.productionActivities,
         salesChannels: s.salesChannels,
+        expenseLines: s.expenseLines,
+        revenueLines: s.revenueLines,
+        directCostLines: s.directCostLines,
+        repartitionKeys: s.repartitionKeys,
         uiSettings: s.uiSettings,
     };
 };
@@ -24,7 +28,7 @@ describe('buildProjectData', () => {
     it("n'exporte que les tranches attendues (pas de bruit)", () => {
         const data = buildProjectData(demoState());
         expect(Object.keys(data).sort()).toEqual(
-            ['baseIngredients', 'basePackaging', 'companyName', 'generalInfo', 'laborDatabase', 'logoUrl', 'productionActivities', 'salesChannels', 'products', 'trackingPoints', 'uiSettings'].sort()
+            ['baseIngredients', 'basePackaging', 'companyName', 'generalInfo', 'laborDatabase', 'logoUrl', 'productionActivities', 'salesChannels', 'expenseLines', 'revenueLines', 'directCostLines', 'repartitionKeys', 'products', 'trackingPoints', 'uiSettings'].sort()
         );
     });
 });
@@ -45,6 +49,12 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(parsed.laborDatabase).toEqual(state.laborDatabase);
         expect(parsed.productionActivities).toEqual(state.productionActivities);
         expect(parsed.salesChannels).toEqual(state.salesChannels);
+        // Chaque ligne démo porte désormais sa propre clé de répartition explicite (Phase 4.5bis,
+        // méthodologie comptable complétée le 14/10) — round-trip à l'identique, sans complément.
+        expect(parsed.expenseLines).toEqual(state.expenseLines);
+        expect(parsed.revenueLines).toEqual(state.revenueLines);
+        expect(parsed.directCostLines).toEqual(state.directCostLines);
+        expect(parsed.repartitionKeys).toEqual(state.repartitionKeys);
         // Les ids étant déjà présents, aucune régénération : égalité stricte des ids.
         expect(parsed.products.map(p => p.id)).toEqual(state.products.map(p => String(p.id)));
         expect(parsed.baseIngredients.map(i => i.id)).toEqual(state.baseIngredients.map(i => String(i.id)));
@@ -109,7 +119,7 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(pkg.uniqueId).toBe('');
     });
 
-    it('crée une ligne de production "Général" par défaut pour un projet antérieur à cette notion', () => {
+    it('crée une activité de production "Général" par défaut pour un projet antérieur à cette notion', () => {
         const legacy = { generalInfo: { totalIndirects: 1000 } }; // pas de productionActivities
         const parsed = parseProjectData(legacy, getEmptyState());
         expect(parsed.productionActivities).toHaveLength(1);
@@ -128,6 +138,169 @@ describe('round-trip sauvegarde -> chargement', () => {
         const legacy = { salesChannels: [{ id: 'c1', name: 'Grande distribution', links: [{ id: 'l1', name: 'Distributeur', type: 'margin', percent: 20 }] }] };
         const parsed = parseProjectData(legacy, getEmptyState());
         expect(parsed.salesChannels).toEqual(legacy.salesChannels);
+    });
+
+    it("migre l'ancien generalInfo.totalIndirects à plat vers une ligne de dépense unique (Phase 4.1)", () => {
+        const legacy = { generalInfo: { totalIndirects: 1000 } }; // pas d'expenseLines
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.expenseLines).toHaveLength(1);
+        expect(parsed.expenseLines[0].amount).toBe(1000);
+        expect(parsed.expenseLines[0].category).toBe('Frais généraux de production');
+        // totalIndirects reste exactement la somme de la liste migrée.
+        expect(parsed.generalInfo.totalIndirects).toBe(1000);
+    });
+
+    it("ne migre rien quand il n'y a ni expenseLines ni totalIndirects à plat", () => {
+        const legacy = {};
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.expenseLines).toEqual([]);
+        expect(parsed.generalInfo.totalIndirects).toBe(0);
+    });
+
+    it('préserve les lignes de dépense déjà présentes sur un projet, sans les régénérer', () => {
+        const legacy = {
+            expenseLines: [
+                { id: 'exp_1', label: 'Loyer', category: 'Frais généraux de production', amount: 600 },
+                { id: 'exp_2', label: 'Assurances', category: "Frais d'administration", amount: 400 },
+            ],
+            generalInfo: { totalIndirects: 1 }, // valeur volontairement incohérente : doit être ignorée
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        // Lignes antérieures à la 4.5 : activityAllocations/channelAllocations ajoutées vides
+        // (rien à répartir pour l'instant), repartitionKey normalisé à 'manual' (Phase 4.5bis).
+        expect(parsed.expenseLines).toEqual([
+            { id: 'exp_1', label: 'Loyer', category: 'Frais généraux de production', amount: 600, repartitionKey: 'manual', activityAllocations: {}, channelAllocations: {} },
+            { id: 'exp_2', label: 'Assurances', category: "Frais d'administration", amount: 400, repartitionKey: 'manual', activityAllocations: {}, channelAllocations: {} },
+        ]);
+        // totalIndirects est toujours recalculé comme la somme exacte des lignes, jamais repris
+        // tel quel du fichier — aucune dérive possible entre les deux après un chargement.
+        expect(parsed.generalInfo.totalIndirects).toBe(1000);
+    });
+
+    it('préserve activityAllocations/channelAllocations déjà présents (Phase 4.5)', () => {
+        const legacy = {
+            productionActivities: [{ id: 'act_1', name: 'Confitures' }],
+            expenseLines: [
+                { id: 'exp_1', label: 'Loyer', category: 'Frais généraux de production', amount: 1000, activityAllocations: { general: 400, act_1: 600 }, channelAllocations: { channel_1: 1000 } },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.expenseLines[0].activityAllocations).toEqual({ general: 400, act_1: 600 });
+        expect(parsed.expenseLines[0].channelAllocations).toEqual({ channel_1: 1000 });
+    });
+
+    it("refond le montant d'un contenant d'activité orphelin (activité supprimée) dans Général, sans y toucher côté canal", () => {
+        const legacy = {
+            productionActivities: [{ id: 'act_1', name: 'Confitures' }],
+            expenseLines: [
+                { id: 'exp_1', label: 'Loyer', category: 'Frais généraux de production', amount: 1000, activityAllocations: { general: 100, act_disparue: 400, act_1: 500 }, channelAllocations: { channel_disparu: 1000 } },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        // Le montant de l'activité disparue (400) rejoint le Général déjà présent (100) : 500 $.
+        expect(parsed.expenseLines[0].activityAllocations).toEqual({ general: 500, act_1: 500 });
+        // Un canal disparu n'a pas de contenant neutre équivalent : conservé tel quel, pas perdu.
+        expect(parsed.expenseLines[0].channelAllocations).toEqual({ channel_disparu: 1000 });
+    });
+
+    it("repartitionKeys absent devient une liste vide ; une clé personnalisée est préservée et ses parts d'activité orphelines refondent dans Général", () => {
+        const legacy = {
+            productionActivities: [{ id: 'act_1', name: 'Confitures' }],
+            repartitionKeys: [
+                { id: 'rk_1', name: 'Équipe de vente', activityShares: { general: 20, act_disparue: 30, act_1: 50 }, channelShares: { channel_1: 100 } },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.repartitionKeys).toEqual([
+            { id: 'rk_1', name: 'Équipe de vente', activityShares: { general: 50, act_1: 50 }, channelShares: { channel_1: 100 } },
+        ]);
+        expect(parseProjectData({}, getEmptyState()).repartitionKeys).toEqual([]);
+    });
+
+    it("revalide la clé de répartition d'une ligne de frais fixes : activité orpheline refond vers 'activity:general', canal/clé personnalisée orphelins retombent sur 'manual'", () => {
+        const legacy = {
+            productionActivities: [{ id: 'act_1', name: 'Confitures' }],
+            repartitionKeys: [{ id: 'rk_1', name: 'Clé encore valide', activityShares: {}, channelShares: {} }],
+            expenseLines: [
+                { id: 'exp_1', label: 'Loyer', category: 'Frais généraux de production', amount: 100, repartitionKey: 'activity:act_disparue' },
+                { id: 'exp_2', label: 'Commissions', category: 'Frais de vente / mise en marché', amount: 200, repartitionKey: 'channel:channel_disparu' },
+                { id: 'exp_3', label: 'Marketing', category: 'Frais de vente / mise en marché', amount: 300, repartitionKey: 'custom:rk_disparue' },
+                { id: 'exp_4', label: 'Assurances', category: "Frais d'administration", amount: 400, repartitionKey: 'custom:rk_1' },
+                { id: 'exp_5', label: 'Électricité', category: 'Frais généraux de production', amount: 500, repartitionKey: 'activity:act_1' },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.expenseLines.map(l => l.repartitionKey)).toEqual([
+            'activity:general', // activité supprimée -> refond vers Général
+            'manual',           // canal supprimé -> pas d'équivalent neutre
+            'manual',           // clé personnalisée supprimée -> plus de définition à appliquer
+            'custom:rk_1',      // clé personnalisée toujours présente -> conservée telle quelle
+            'activity:act_1',   // activité toujours présente -> conservée telle quelle
+        ]);
+    });
+
+    it("revenueLines absent devient une liste vide (concept entièrement nouveau, Phase 4.2)", () => {
+        const parsed = parseProjectData({}, getEmptyState());
+        expect(parsed.revenueLines).toEqual([]);
+    });
+
+    it('préserve les lignes de revenu déjà présentes (nouvelle forme repartition/amounts), y compris en Saisie manuelle multi-contenants', () => {
+        const legacy = {
+            productionActivities: [{ id: 'act_1', name: 'Confitures' }, { id: 'act_2', name: 'Sauces' }],
+            revenueLines: [
+                { id: 'rev_1', label: 'Ventes générales', repartition: 'general', amounts: { general: 1000 } },
+                { id: 'rev_2', label: 'Ventes confitures', repartition: 'act_1', amounts: { act_1: 500 } },
+                { id: 'rev_3', label: 'Ventes mixtes', repartition: 'manual', amounts: { general: 100, act_1: 200, act_2: 300 } },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.revenueLines).toEqual(legacy.revenueLines);
+    });
+
+    it("migre l'ancienne forme à plat (bucket + amount, avant la Saisie manuelle du 13/10) vers { repartition, amounts }", () => {
+        const legacy = {
+            productionActivities: [{ id: 'act_1', name: 'Confitures' }],
+            revenueLines: [
+                { id: 'rev_1', label: 'Ventes générales', bucket: 'general', amount: 1000 },
+                { id: 'rev_2', label: 'Ventes confitures', bucket: 'act_1', amount: 500 },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.revenueLines).toEqual([
+            { id: 'rev_1', label: 'Ventes générales', repartition: 'general', amounts: { general: 1000 } },
+            { id: 'rev_2', label: 'Ventes confitures', repartition: 'act_1', amounts: { act_1: 500 } },
+        ]);
+    });
+
+    it("refond le montant d'un contenant orphelin (activité supprimée depuis la sauvegarde) dans Général plutôt que de le perdre", () => {
+        const legacy = {
+            productionActivities: [{ id: 'act_1', name: 'Confitures' }],
+            revenueLines: [
+                { id: 'rev_1', label: 'Ventes', repartition: 'act_disparue', amounts: { act_disparue: 1000 } },
+                { id: 'rev_2', label: 'Mixte', repartition: 'manual', amounts: { general: 100, act_disparue: 400, act_1: 200 } },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.revenueLines[0]).toEqual({ id: 'rev_1', label: 'Ventes', repartition: 'general', amounts: { general: 1000 } });
+        // Le montant de l'activité disparue (400) rejoint le Général déjà présent (100) : 500 $,
+        // sans perte — l'activité encore valide (act_1) reste intacte.
+        expect(parsed.revenueLines[1]).toEqual({ id: 'rev_2', label: 'Mixte', repartition: 'manual', amounts: { general: 500, act_1: 200 } });
+    });
+
+    it("directCostLines absent devient une liste vide (concept entièrement nouveau, Phase 4.3)", () => {
+        const parsed = parseProjectData({}, getEmptyState());
+        expect(parsed.directCostLines).toEqual([]);
+    });
+
+    it('préserve les charges directes déjà présentes telles quelles (pas de migration à faire)', () => {
+        const legacy = {
+            directCostLines: [
+                { id: 'dc_1', label: 'Matières premières', category: 'Matière première', amount: 1000 },
+                { id: 'dc_2', label: 'Emballage', category: 'Emballage', amount: 200 },
+            ],
+        };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.directCostLines).toEqual(legacy.directCostLines);
     });
 
     it('remplit les valeurs par défaut des produits partiels', () => {

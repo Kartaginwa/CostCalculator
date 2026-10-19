@@ -3,7 +3,9 @@
 // par le moteur de calcul (src/engine/) sans y traîner la couche de présentation. Les
 // utilitaires qui rendent du JSX ou reposent sur des hooks React vivent dans ui-utils.jsx.
 
-// Formate un nombre en devise (version sécurisée)
+// Formate un nombre en devise (version sécurisée) — espace comme séparateur de milliers (ex.
+// « 160 000.00 »), point comme séparateur décimal conservé tel quel (pas la virgule du fr-CA
+// complet, pour rester cohérent avec le reste de l'UI qui utilise déjà le point en affichage).
 export const formatCurrency = (value) => {
     // Tente de convertir la valeur en nombre, peu importe son type initial
     const num = parseFloat(String(value).replace(',', '.'));
@@ -11,7 +13,11 @@ export const formatCurrency = (value) => {
     if (isNaN(num)) {
         return '0.00'; // Retourne une valeur par défaut sécuritaire au lieu de planter
     }
-    return num.toFixed(2);
+    const [intPart, decPart] = num.toFixed(2).split('.');
+    const sign = intPart.startsWith('-') ? '-' : '';
+    const digits = sign ? intPart.slice(1) : intPart;
+    const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return `${sign}${grouped}.${decPart}`;
 };
 // Formate un nombre en pourcentage
 export const formatPercent = (value) => (value * 100 || 0).toFixed(2);
@@ -32,6 +38,10 @@ export const parseLocaleNumber = (stringValue) => {
     // 4. Tente de convertir la chaîne nettoyée en nombre
     return parseFloat(standardized) || 0;
 };
+
+// Arrondit à 2 décimales (montants en argent) — évite les décimales résiduelles d'un calcul
+// proportionnel (ex. 62.499999999999993) ou d'une saisie utilisateur trop précise.
+export const round2 = (value) => Math.round(parseLocaleNumber(value) * 100) / 100;
 
 export const generateSlug = (name, provider, format, unit) => {
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -181,6 +191,49 @@ export const formatUnitPrice = (value) => {
 // RecipeCalculator.jsx pour ne pas dupliquer la liste.
 export const FORMAT_FLAT_MIRROR_FIELDS = ['prixVente', 'nbPortions', 'portionSize', 'portionUnit', 'salesMix', 'onMenu'];
 
+// --- FRAIS FIXES (Phase 4) ---
+// Quatre catégories retenues (classification comptable par fonction — voir
+// Projet_Claude/04-Conception-Modele.md) : chacune suggère un contenant d'allocation par défaut
+// (Général/Activité/Canal, Phase 4.2) sans l'imposer. Pas les 6 catégories du MAPAQ ni les 3 blocs
+// de SymbiOse tels quels — ni l'un ni l'autre n'est reproduit littéralement (principe du projet).
+export const EXPENSE_CATEGORIES = [
+    'Frais généraux de production',
+    'Frais de vente / mise en marché',
+    "Frais d'administration",
+    'Frais financiers',
+];
+
+// --- CHARGES DIRECTES RÉELLES (Phase 4.3) ---
+// Ventilées par TYPE DE COÛT (nature de la dépense de production), pas par les 4 catégories de
+// frais fixes ci-dessus (qui décrivent une fonction d'entreprise) — vocabulaire repris tel quel de
+// calculateCosts.js (totalIngredientsCost/totalLaborCost/totalPackagingCost/
+// totalSubcontractingCost) pour que la ventilation réelle parle le même langage que le théorique
+// qu'elle sera comparée à terme (réconciliation, Phase 4.4). Purement diagnostic à ce stade :
+// jamais un intrant de calcul en aval (voir Projet_Claude/04-Conception-Modele.md, section 1bis).
+export const DIRECT_COST_TYPES = [
+    'Matière première',
+    "Main-d'œuvre directe",
+    'Emballage',
+    'Sous-traitance',
+];
+
+// Pool total d'une liste de lignes { amount }  — réutilisé pour `expenseLines` (Phase 4.1) ET
+// `revenueLines` (Phase 4.2). Dérivé à chaque endroit où la liste change (jamais ressaisi
+// indépendamment) pour que le total affiché reste toujours l'image exacte de ses lignes — zéro
+// risque de dérive entre les deux.
+export const sumLineAmounts = (lines) =>
+    (lines || []).reduce((sum, line) => sum + parseLocaleNumber(line.amount), 0);
+
+// Revenus réels (Phase 4.2, révisé le 13/10) : chaque ligne répartit son montant entre un ou
+// plusieurs contenants (Général/activités) via `amounts` (`{ [bucketKey]: montant }`), pas un seul
+// champ `amount` — nécessaire pour la « Saisie manuelle » (une ligne peut être ventilée sur
+// plusieurs contenants à la fois, comme dans le chiffrier SymbiOse), alors que les autres modes de
+// répartition (Général ou une activité précise) n'ont jamais qu'une seule clé non nulle. Additionne
+// les valeurs d'un seul objet `amounts` ; le total d'une liste `revenueLines` se fait avec
+// `lines.reduce((s, l) => s + sumAmountsMap(l.amounts), 0)`.
+export const sumAmountsMap = (amounts) =>
+    Object.values(amounts || {}).reduce((sum, v) => sum + parseLocaleNumber(v), 0);
+
 // --- GESTION DES ALLERGÈNES ---
 export const MAJOR_ALLERGENS = [
     { key: 'gluten', name: 'Gluten' }, { key: 'crustaceans', name: 'Crustacés' },
@@ -208,6 +261,72 @@ export const SALES_REPORT_APP_FIELDS = [
     { key: 'transactionDate', label: "Date de transaction", keywords: ['date', 'jour', 'transaction'] },
     { key: 'totalNetPrice', label: "Total Net Ligne ($)", keywords: ['total', 'net', 'montant'] }
 ];
+
+// Phase 4.7 : assistant d'import de l'état des résultats (Revenus + Frais fixes), voir
+// Projet_Claude/05-Imports-Integrations.md. Un état des résultats réel liste déjà un poste par
+// ligne avec son montant — pas d'agrégation multi-lignes à faire comme pour un rapport de ventes
+// (SALES_REPORT_APP_FIELDS). `type` distingue Revenu/Dépense quand la source le précise
+// explicitement (ex. export QuickBooks avec une colonne Type/Compte) ; sinon déduit par ligne à
+// l'étape de résolution (signe du montant, ou choix manuel). `sku` est optionnel — permet une
+// ventilation par activité quand la source détaille le produit visé par un revenu (voir
+// `guessExpenseCategory` plus bas pour les dépenses ; côté revenu, la correspondance se fait sur
+// `productsWithCosts[].platName` → `.activityId` directement dans le composant, pas ici).
+// `date` (ajouté le 18/10) : optionnelle, sert uniquement à détecter automatiquement la Période de
+// référence (min/max des dates du fichier) — même patron que SALES_REPORT_APP_FIELDS.
+// `transactionDate` ci-dessous (excelSerialDateToJSDate). Fichier structuré (CSV/Excel) seulement :
+// un PDF textuel n'a pas de colonne par ligne, voir IncomeStatementImportWizardModal.jsx.
+export const INCOME_STATEMENT_APP_FIELDS = [
+    { key: 'label', label: 'Poste (description)', required: true, keywords: ['poste', 'compte', 'description', 'nom', 'libellé', 'account'] },
+    { key: 'amount', label: 'Montant ($)', required: true, keywords: ['montant', 'solde', 'amount', 'total', 'net', '$'] },
+    { key: 'type', label: 'Type (Revenu / Dépense)', keywords: ['type', 'nature', 'sens'] },
+    { key: 'category', label: 'Catégorie comptable', keywords: ['catégorie', 'category', 'classe', 'class'] },
+    { key: 'sku', label: 'Produit/SKU visé (revenu seulement)', keywords: ['produit', 'sku', 'plat', 'item'] },
+    { key: 'date', label: 'Date (période de référence)', keywords: ['date', 'jour', 'période', 'period'] },
+];
+
+// Devine la catégorie de Frais fixes (EXPENSE_CATEGORIES) la plus plausible à partir du texte
+// d'une ligne importée (poste + catégorie source, si mappée) — mots-clés volontairement larges
+// pour les exports comptables courants, affinable sans changer le modèle sous-jacent (même
+// principe que SALES_REPORT_APP_FIELDS). Retombe sur "Frais d'administration", la catégorie la
+// plus générique/catch-all en comptabilité réelle, quand rien ne correspond — jamais "Frais
+// généraux de production" par défaut, qui impliquerait à tort un lien avec la production.
+const EXPENSE_CATEGORY_KEYWORDS = [
+    { category: 'Frais généraux de production', keywords: ['loyer', 'électricité', 'chauffage', 'entretien', 'réparation', 'atelier', 'usine', 'production', 'eau', 'gaz'] },
+    { category: 'Frais de vente / mise en marché', keywords: ['marketing', 'publicité', 'promotion', 'commission', 'distribution', 'vente', 'livraison', 'transport'] },
+    { category: 'Frais financiers', keywords: ['banque', 'bancaire', 'intérêt', 'financement', 'financier'] },
+    { category: "Frais d'administration", keywords: ['administration', 'bureau', 'comptabilité', 'direction', 'salaire', 'assurance', 'légal', 'informatique', 'fourniture'] },
+];
+export const guessExpenseCategory = (...texts) => {
+    const haystack = texts.filter(Boolean).join(' ').toLowerCase();
+    const match = EXPENSE_CATEGORY_KEYWORDS.find(({ keywords }) => keywords.some((kw) => haystack.includes(kw)));
+    return match ? match.category : "Frais d'administration";
+};
+
+// Un état des résultats est le plus souvent reçu en PDF (export natif du comptable), pas en
+// CSV/Excel — contrairement à SALES_REPORT_APP_FIELDS (un rapport de ventes détaillé, lui,
+// provient typiquement d'un système qui exporte nativement en tableau). Un PDF textuel n'a pas de
+// vraies colonnes : chaque ligne reconstruite (voir IncomeStatementImportWizardModal.jsx, qui
+// regroupe les éléments de texte par position Y) ressemble à « Loyer .......... 9 000,00 $ » — le
+// poste suivi de son montant, les deux séparés par de l'espace ou des points de suite. Cette
+// fonction pure isole le dernier nombre plausible de la ligne (gère $ optionnel, séparateur de
+// milliers espace/virgule, décimale point/virgule, parenthèses pour un montant négatif) ; retourne
+// null pour une ligne sans montant reconnaissable (en-tête de section, date de page, ligne vide...)
+// — jamais une valeur devinée à l'aveugle, l'utilisateur reste la seule source de vérité pour
+// corriger ou rejeter chaque ligne à l'étape de résolution du wizard.
+const TRAILING_AMOUNT_PATTERN = /\(?-?\$?\s?\d[\d\s.,]*\)?\s*\$?\s*$/;
+export const parsePdfStatementLine = (rawLine) => {
+    const line = String(rawLine || '').trim();
+    if (!line) return null;
+    const match = line.match(TRAILING_AMOUNT_PATTERN);
+    if (!match) return null;
+    const amountText = match[0].trim();
+    const label = line.slice(0, line.length - match[0].length).trim();
+    if (!label) return null;
+    const isNegative = amountText.includes('(');
+    const numeric = parseLocaleNumber(amountText.replace(/[()$]/g, '').trim());
+    if (isNaN(numeric) || numeric === 0) return null;
+    return { label, amount: isNegative ? -Math.abs(numeric) : Math.abs(numeric) };
+};
 
 export const APP_FIELDS = [
     { key: 'name', label: "Nom de l'ingrédient", required: true, keywords: ['nom', 'item', 'produit', 'ingrédient', 'description'] },

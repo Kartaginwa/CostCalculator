@@ -385,7 +385,10 @@ consommateurs, plusieurs avec un risque de rétrocompatibilité réel — voir 1
   toutes deux aplaties par format désormais, même patron que le moteur d'analyse.
 - **PosImportWizardModal.jsx confirmé hors-portée** par la reconnaissance : ne lit ni n'écrit
   `analysisData`, cible déjà explicitement le format 0 par conception — refonte prévue en Phase 5,
-  aucune action requise ici.
+  aucune action requise ici. *(Note du 14/10 : ce « Phase 5 » date d'avant le réordonnancement du
+  05/10 — ce n'est pas l'ancienne Phase 5 « Main-d'œuvre hors-recette » abandonnée ce jour, voir
+  plus bas. La refonte multi-formats de PosImportWizardModal reste donc non assignée à une phase
+  précise ; à re-planifier le jour où elle devient nécessaire.)*
 - Tests : 5 nouveaux cas dédiés aux formats multiples dans `analysisData.test.js` (une ligne par
   format avec id/productId/formatIndex distincts, coût calculé à partir de SA PROPRE fiche recette,
   rapport d'achats qui cumule la consommation des deux formats au lieu d'ignorer le second,
@@ -1413,42 +1416,847 @@ nul).
 
 ---
 
-## Phase 4 — Frais fixes (ex-« Comptabilité », renommé le 05/10)
+## Phase 4 — État des résultats (ex-« Frais fixes » 05/10, ex-« Comptabilité »)
 
-Renommé à la demande de l'utilisateur : cette section catégorise et répartit les frais fixes/
-indirects de l'entreprise, ce n'est pas une comptabilité complète (pas d'AR/AP, pas de taxes) —
-« Frais fixes » décrit mieux son contenu réel et évite d'en laisser croire plus que ce qu'elle fait.
+Renommée une 2e fois le 12/10 (ex-« Frais fixes ») : la portée s'élargit des frais fixes seuls à un
+état de résultats réel complet (revenus, charges directes, frais fixes) avec réconciliation contre
+le modèle théorique de recettes — voir ci-dessous. Toujours pas une comptabilité complète (pas
+d'AR/AP, pas de taxes), mais plus large qu'une simple catégorisation de dépenses.
 
-### 4.1 — État de résultats catégorisé
-- Nouvelle tranche d'état (dépenses par ligne, chacune avec catégorie — généraux de production /
-  vente-mise en marché / administration / financiers — et montant total), remplace
-  `generalInfo.totalIndirects`.
-- Migration des projets existants (ancien `totalIndirects` à plat → à convertir ou redemander).
+**Méthodologie revalidée le 12/10** avant de démarrer l'implémentation : relecture directe des
+formules de l'Agro-Calculateur MAPAQ (onglet `Rev-Dep`) et du chiffrier SymbiOse (`6 - Rep. charges
+fixes`, `Rapport - Coût Revient unit.`), confrontées aux règles de comptabilité de gestion. Détail
+complet et justification dans `04-Conception-Modele.md` (section Activité de production) ; résumé
+des décisions qui en découlent :
+- **Montant $ manuel = méthode principale** de répartition par poste de dépense (vérifiée en temps
+  réel, comme la colonne VÉRIFICATION de SymbiOse), une clé prédéfinie/personnalisée n'étant qu'un
+  raccourci optionnel de pré-remplissage — pas l'inverse.
+- **« Général » n'est pas un 3e axe symétrique à Activité/Canal** : c'est une allocation directe au
+  produit à une seule étape (pas de regroupement intermédiaire), justifiée comptablement comme un
+  coût « facility-sustaining » (ABC) — contrairement à Activité/Canal, qui exigent un pool
+  intermédiaire reconverti en taux. Le MAPAQ n'a pas besoin de cette catégorie (une seule dimension
+  de regroupement, sa clé « ventes » jouant déjà ce rôle neutre).
+- **Conversion du pool canal en taux par unité, mécanisme ajouté** (absent du plan précédent) :
+  taux plat = pool du canal ÷ volume total vendu dans ce canal, avec moyenne pondérée via
+  `blendAcrossChannels` (Phase 3) pour un format vendu par plusieurs canaux.
 
-### 4.2 — Allocation à deux axes
-- Par ligne de dépense : choix entre clé de répartition prédéfinie (ventes, temps de MO, charges
-  directes), clé personnalisée créée par l'utilisateur, ou montant manuel — répartition sur les
-  deux axes (activité de production, canal de vente — disponible depuis la Phase 3), avec
-  vérification en temps réel du total.
-- Axe suggéré par défaut selon la catégorie (voir `04-Conception-Modele.md`), jamais imposé.
+**2e revalidation le 12/10**, après la 4.1 : pourquoi se limiter aux frais fixes ? Détail complet
+dans `04-Conception-Modele.md` (section 1bis) ; résumé :
+- **Revenus réels, nouvelle section** — même patron que les frais fixes, mais seulement
+  Général/Activité (pas de canal éditable : un revenu vient toujours d'une activité précise, ou de
+  Général pour un revenu non rattachable à un produit modélisé — remplace
+  `menuRevenuePercentage`). Le canal reste affiché, mais **dérivé automatiquement** (indicatif
+  seulement, jamais dans un calcul) à partir du `channelBreakdown` théorique de l'activité.
+- **Charges directes réelles, nouvelle section** — ventilées par type (Matière première,
+  Main-d'œuvre directe, Emballage, Sous-traitance — vocabulaire déjà utilisé par
+  `calculateCosts.js`), pas par les 4 catégories de frais fixes. Toute clé de répartition qui s'en
+  servirait utilise le total agrégé, jamais la ventilation par type (diagnostic seulement).
+- **Tableau de réconciliation réel/théorique** — compare, au niveau de l'entreprise, le réel saisi
+  au théorique implicite du modèle de recettes. Rigoureux au niveau entreprise ; au niveau activité,
+  partiellement circulaire (la répartition utilise déjà le mix théorique) donc présenté comme
+  indicatif.
+- **`generalInfo.menuRevenuePercentage` disparaît** — remplacé par une ligne de revenu « Général ».
+  Touche 9 fichiers, retrait à faire proprement (pas en silence).
+- **Onglet renommé « État des résultats »** (ex-« Frais fixes », qui en devient une sous-section).
 
-### 4.3 — Conversion en taux par produit
-- Méthode de conversion du pool d'indirects de chaque activité en taux par produit/format (au
-  prorata des ventes / du temps de MO / du coût direct), choisie par activité — dans
-  `calculateCosts.js`. Réconciliation exacte du pool conservée (principe RestoCalculateur).
+### 4.1 — État de résultats catégorisé — ✅ terminée le 12/10
+- Nouveau tableau `expenseLines` (racine de l'état, même patron que `productionActivities`/
+  `salesChannels`) : une ligne = `{ id, label, category, amount }`, catégorie parmi les 4 retenues
+  (`EXPENSE_CATEGORIES`, `utils.js`). Remplace l'ancien champ unique `generalInfo.totalIndirects`
+  comme donnée saisie — ce champ reste présent mais devient **entièrement dérivé** (`sumExpenseLines`),
+  jamais ressaisi directement : un seul point d'écriture (`handleUpdateExpenseLines`, `App.jsx`)
+  recalcule le total à chaque ajout/édition/suppression de ligne, pour qu'il ne puisse jamais
+  dériver de la liste qui le compose.
+- `src/state/initialState.js` : `expenseLines: []` dans `getEmptyState()` ; démo migrée en 8 lignes
+  catégorisées (`demoExpenseLines`) sommant exactement 28 000 $ — même total qu'avant, aucune
+  dérive des chiffres déjà affichés ailleurs dans la démo.
+- `src/state/projectSerialization.js` : migration — un projet antérieur (pas d'`expenseLines`, mais
+  un `totalIndirects` à plat) reçoit une ligne unique migrée (« Frais indirects (migré) »,
+  catégorie Frais généraux de production, montant exact) ; un projet déjà sur `expenseLines` est
+  préservé tel quel. Dans tous les cas, `generalInfo.totalIndirects` est recalculé comme la somme
+  exacte des lignes au chargement (défensif : élimine toute possibilité de dérive même si un
+  fichier sauvegardé était incohérent).
+- `src/engine/calculateCosts.js`/`analysisData.js`/`exportToExcel.js`/`generatePdf.js` : **aucune
+  modification** — ces modules continuent de lire `generalInfo.totalIndirects` comme avant ; comme
+  ce champ est maintenant toujours synchronisé avec `expenseLines`, ils restent corrects sans
+  changement. Conforme au découpage prévu : 4.1 est strictement données + UI, la logique
+  d'allocation à trois contenants (Général/Activité/Canal) et sa conversion en taux restent pour
+  4.2/4.3.
+- UI : **nouvel onglet dédié « Frais fixes »** (`src/features/ExpensesTab.jsx`, 8e onglet de
+  l'application, entre Main-d'œuvre et Recette & Calcul) — pas une section dans Paramètres comme
+  livré dans une première passe, corrigé suite au retour utilisateur : `01-Analyse-Besoins.md`
+  (ligne 51) prévoyait dès le départ un « nouvel onglet Comptabilité » pour cet état de résultats,
+  le même traitement que Packaging (« nouvel onglet Packaging », ligne 52) — un module de cette
+  ampleur n'est pas une sous-section de Paramètres. Ajout/édition/suppression de ligne avec
+  annulation (même patron que « Lignes de production »). Paramètres garde un champ « Frais
+  indirects totaux ($) » en lecture seule (même patron que « Coût main-d'œuvre cuisine total »,
+  dont le détail vit aussi dans un autre onglet). Info-bulles incluses, guide d'utilisation
+  (`InstructionModal.jsx`) mis à jour : nouvelle section de premier niveau « Onglet 5 : Frais
+  fixes » (Recette & Calcul/Rapport/Suivi renumérotés 6/7/8 en conséquence), ancre retirée de
+  Paramètres.
+- Tests : 2 nouveaux cas unitaires (`sumExpenseLines`), 3 nouveaux cas de migration/préservation
+  (`projectSerialization.test.js`), reducer mis à jour (`SET_EXPENSE_LINES`), nouveau test e2e
+  **permanent** `e2e/expense-lines-params.spec.js` (ajout/édition/suppression avec annulation, total
+  dérivé, re-testé après le passage à l'onglet dédié). **151/151 tests unitaires** (146 + 5),
+  **25/25 tests e2e** (24 + 1), lint propre (0
+  erreur), `dist/` reconstruit. Non-régression confirmée par capture d'écran Playwright (onglet
+  Frais fixes du projet démo : mêmes 28 000 $ qu'avant, répartis sur 8 lignes lisibles).
 
-### 4.4 — Assistant d'import de l'état des résultats
-- Voir `05-Imports-Integrations.md` : import des lignes de dépenses catégorisées, support des
-  revenus agrégés (cas courant) et ventilation par SKU en option quand la source le permet.
-- Info-bulles + mise à jour du guide pour l'ensemble de la section.
+### 4.2 — Onglet renommé « État des résultats » + Revenus réels — ✅ terminée le 12/10
+- `src/features/ExpensesTab.jsx` renommé en `src/features/IncomeStatementTab.jsx` (fichier +
+  composant) pour accueillir plusieurs sections ; bandeau d'onglets (`App.jsx`) mis à jour : id
+  `tab-income-statement`, libellé « État des résultats ». « Frais fixes » devient une sous-section
+  de cet onglet (déplacée telle quelle, aucun changement de logique) plutôt qu'un onglet à lui seul.
+- Nouveau tableau `revenueLines` (même patron que `expenseLines` — reducer `SET_REVENUE_LINES`,
+  `getEmptyState`/`getDefaultState`, migration dans `projectSerialization.js`, wiring `App.jsx`) :
+  une ligne = `{ id, label, bucket, amount }`, `bucket` = `'general'` ou l'id d'une activité de
+  production — pas de canal éditable (voir `04-Conception-Modele.md`, section 1bis). Démo migrée en
+  4 lignes (une par activité + une « Général ») sommant exactement 160 000 $ (= `totalRevenue`).
+- **Ventilation par canal indicative** : nouvelle fonction pure `computeChannelRevenueShareByActivity`
+  (`analysisData.js`) — agrège le revenu théorique (`channelBreakdown[].netPrice × volume`) de tous
+  les formats d'une activité, par canal, normalisé en parts (%). Appliquée côté UI au montant réel
+  saisi. Jamais un intrant de calcul, uniquement informatif.
+- **Migration de `sumExpenseLines` vers `sumLineAmounts`** (`utils.js`) : fonction déjà générique
+  (somme `.amount`), renommée pour refléter qu'elle sert maintenant aux deux listes plutôt que de
+  dupliquer le même calcul sous un nom trompeur.
+- **`generalInfo.menuRevenuePercentage` n'a pas été retiré à cette étape** : `revenueLines` a été
+  ajouté en parallèle, comme `expenseLines` en 4.1 — données + UI seulement, le moteur
+  (`calculateCosts.js`/`analysisData.js`) continue de lire `totalRevenue`/`menuRevenuePercentage`
+  sans changement jusqu'à ce qu'il consomme réellement `revenueLines` (4.5/4.6) — même principe de
+  risque minimal que la 4.1.
+- Tests : 3 nouveaux cas unitaires (`computeChannelRevenueShareByActivity`), reducer/sérialisation
+  mis à jour pour `revenueLines` (préservation, repli `'general'` si l'activité référencée a été
+  supprimée — jamais une référence orpheline), 2 nouveaux tests e2e **permanents**
+  (`e2e/income-statement-params.spec.js`, renommé depuis `expense-lines-params.spec.js`) couvrant
+  Frais fixes (re-testé dans le nouvel onglet) et Revenus (ajout/suppression avec annulation,
+  présence de la ventilation indicative). **157/157 tests unitaires** (151 + 6 : 3 pour
+  `computeChannelRevenueShareByActivity`, 3 pour la migration/préservation de `revenueLines`),
+  **26/26 tests e2e** (24 + 2), lint propre (0 erreur), `dist/` reconstruit.
+
+**Correctifs du 12/10 (suite au retour utilisateur sur la première livraison de 4.2)** :
+1. **Sous-totaux par groupe, tentative initiale** — Revenus et Frais fixes groupés (par contenant /
+   par catégorie) avec une rangée de sous-total après chaque groupe.
+2. **Ventilation par canal en colonnes, pas en note** — les deux tableaux (Revenus, Frais fixes)
+   sont passés d'une mise en page en lignes flex à un vrai `<table>`. Pour les Revenus, chaque canal
+   de vente devient sa propre colonne à droite de Poste/Activité/Montant (montant indicatif par
+   canal, « — » si non applicable — ex. une ligne Général). Les Frais fixes n'ont pas encore ces
+   colonnes (pas de contenant Activité/Canal avant la 4.5) — comportement attendu, pas un oubli,
+   confirmé avec l'utilisateur.
+
+**Correctif du 12/10 (2e retour, sur la tentative #1)** : malentendu sur le point 1 — l'utilisateur
+voulait dire le **total** (existant) affiché selon le patron visuel de « Coût Moyen Pondéré du
+Poste » (libellé gris au-dessus, valeur en gras en dessous), pas de nouveaux sous-totaux par
+groupe. Les rangées de sous-total par groupe (et le regroupement/tri des lignes qui allait avec)
+ont été **retirées** — Revenus et Frais fixes sont redevenus de simples listes à plat (même ordre
+de saisie, aucun tri par contenant/catégorie), pour que le tableau des revenus garde « presque la
+même forme » que celui des frais fixes, comme demandé. Seul le total de fin de section est
+désormais affiché en bloc à deux lignes (`text-sm text-gray-600` / `text-xl font-bold
+text-gray-800`), identique au patron de l'onglet Main-d'œuvre. Colonnes par canal (point 2)
+inchangées, acceptées telles quelles.
+- Non-régression confirmée par capture d'écran Playwright du projet démo (totaux 160 000 $ et
+  28 000 $ inchangés, affichés dans le nouveau style). **157/157 tests unitaires, 26/26 tests e2e**
+  (assertions de texte ajustées : `getByRole('heading', ...)` pour éviter la collision avec le
+  nouveau libellé « Total des revenus »/« Total des frais fixes »), lint propre, `dist/` reconstruit.
+
+**Correctifs du 13/10 (3e retour)** :
+1. **Renommage « Lignes de production » → « Activités de production »**, partout dans l'app (titres
+   de section, boutons, placeholders, notifications, filtres, tour guidé, guide d'utilisation,
+   commentaires) — tranche la question ouverte laissée le 12/10, pour rester cohérent avec la
+   colonne « Activité » du tableau Revenus. `productionActivities`/`activityId` (code) inchangés,
+   seul le texte visible change. `e2e/production-activities.spec.js` mis à jour en conséquence.
+2. **Colonnes de contenant (Général + une par activité) ajoutées avant les colonnes de canal dans
+   Revenus**, avec un mécanisme de répartition révisé en profondeur — voir
+   `04-Conception-Modele.md` section 1bis pour la justification complète. Résumé : la colonne
+   « Activité » (menu déroulant à une seule valeur) devient **« Répartition »**, avec une nouvelle
+   option **« Saisie manuelle »** inspirée de la colonne « Répartition » de l'Agro-Calculateur MAPAQ
+   (onglet `Rev-Dep`) — hors saisie manuelle, le comportement est inchangé (un seul contenant actif,
+   affiché dans sa colonne, Montant reste l'unique champ éditable) ; en saisie manuelle, les
+   colonnes de contenant deviennent directement éditables (une ligne peut alors se ventiler sur
+   plusieurs activités à la fois, comme dans SymbiOse) et Montant devient un total calculé.
+   - **Changement de schéma** : `revenueLines[i].{bucket, amount}` → `{repartition, amounts}`
+     (`amounts` = `{ [contenant]: montant }`, une seule clé non nulle hors mode manuel). Migration
+     dans `projectSerialization.js` (deux générations couvertes) ; un contenant orphelin (activité
+     supprimée depuis la sauvegarde) refond son montant dans Général plutôt que de le perdre.
+     `sumLineAmounts` (générique sur `{amount}`) ne s'applique plus à `revenueLines` — nouveau
+     `sumAmountsMap` (`utils.js`) pour les objets `amounts`.
+   - Ventilation par canal (indicative) généralisée : somme pondérée de tous les contenants
+     non-Général de la ligne (couvre nativement le cas multi-contenants de la saisie manuelle).
+   - Tests : 3 nouveaux cas unitaires (`sumAmountsMap`), 2 cas de sérialisation remplacés par 4 (3
+     générations : forme actuelle avec saisie manuelle, migration depuis l'ancienne forme à plat,
+     refonte d'un contenant orphelin en mode manuel sans perte). Nouveau test e2e **permanent**
+     (colonnes de contenant avant canal, bascule en Saisie manuelle, ventilation sur 2 contenants à
+     la fois, total recalculé). **161/161 tests unitaires, 27/27 tests e2e**, lint propre, `dist/`
+     reconstruit. Non-régression et nouveau comportement confirmés par capture d'écran Playwright.
+
+**Correctifs du 13/10 (4e retour, polish UI/UX)** :
+1. **« Contenant » renommé « Activités de production »** (en-tête de groupe de colonnes, Revenus).
+2. **Tableaux compactés** pour éliminer le défilement horizontal : paddings et polices réduits
+   (`text-sm` sur toutes les cellules, `px-3 py-2` → `px-1`/`px-2 py-1`), largeurs minimales
+   resserrées par colonne, conteneur de l'onglet élargi (`max-w-7xl` → `max-w-[1600px]`). À 1440 px
+   de large (résolution laptop courante), le tableau Revenus au complet (4 lignes démo, 3 activités,
+   3 canaux) tient sans défilement horizontal. Libellés de poste tronqués visuellement acceptés en
+   échange (valeur complète toujours au survol via `title`).
+3. **Séparateur de milliers (espace) dans `formatCurrency`** (`utils.js`) — ex. « 160 000.00 $ » au
+   lieu de « 160000.00 $ ». Fonction partagée par 15 fichiers (tout affichage monétaire de l'app),
+   changement global et rétrocompatible (même valeur numérique, juste le groupement visuel).
+   4 nouveaux cas unitaires dédiés. Toute la suite e2e repassée pour confirmer qu'aucun autre écran
+   (Rapport, exports, Packaging...) n'en dépendait avec une assertion de texte exacte incompatible —
+   confirmé, seules les assertions internes à `income-statement-params.spec.js` à ajuster.
+4. **Trois zones de colonnes visuellement distinctes** (Revenus) : « Paramètres généraux » (gris),
+   « Activités de production » (fond bleu clair), « Canaux de commercialisation » (fond ambre clair,
+   toujours marqué indicatif) — bordures `border-l-2` plus marquées aux frontières de groupe.
+- Tests : `e2e/income-statement-params.spec.js` entièrement réaligné sur le nouveau format de
+  montant et les nouveaux libellés/placeholders. **165/165 tests unitaires** (161 + 4, dont
+  `formatCurrency`), **28/28 tests e2e**, lint propre, `dist/` reconstruit. Non-régression confirmée
+  par capture d'écran Playwright à 1440 px (aucun défilement horizontal, zones bien distinguées).
+
+**Correctif du 13/10 (5e retour)** : la séparation des 3 zones par couleur de fond (bleu/ambre) a
+été retirée — remplacée par une seule bordure claire (`border-l border-gray-300` en en-tête,
+`border-gray-200` dans le corps) à **chaque frontière de zone uniquement** (première colonne
+Général, première colonne de canal), pas répétée sur chaque colonne individuelle comme la version
+précédente (`border-l-2` sur chaque `<th>`/`<td>`) — nulle part ailleurs dans le tableau. **165/165
+tests unitaires, 27/27 tests e2e**, lint propre, `dist/` reconstruit. Confirmé par capture d'écran :
+les 3 zones restent clairement lisibles (libellés de groupe + deux traits verticaux), sans couleur
+ni bordures parasites.
+
+**Correctif du 13/10 (6e retour)** : les bordures de frontière de zone (point précédent) étaient
+trop discrètes pour bien séparer visuellement les sections. Renforcées — `border-l-4 border-gray-400`
+(au lieu de `border-l`/`border-l-2 border-gray-200/300`), même couleur/épaisseur en en-tête et dans
+le corps pour lire comme un seul trait continu de haut en bas. Toujours seulement aux 2 frontières
+de zone, toujours sans couleur de fond. **165/165 tests unitaires, 27/27 tests e2e**, lint propre,
+`dist/` reconstruit. Confirmé par capture d'écran : les 3 zones (Paramètres généraux / Activités de
+production / Canaux de commercialisation) sont maintenant nettement délimitées.
+
+**Correctif du 13/10 (7e retour)** : le rendu bordures épaisses + gris jugé laid par l'utilisateur.
+Plutôt que d'itérer encore sur l'épaisseur/couleur d'une bordure, proposition d'un changement
+d'approche — validée par l'utilisateur plutôt qu'un détail de plus à ajuster : abandonner les
+bordures de séparation entièrement, remplacées par les **3 couleurs déjà établies dans Recette &
+Calcul** pour ses sections numérotées (1. Ingrédients `bg-green-50`/`text-green-700`, 3. Processus
+`bg-yellow-50`/`text-yellow-700`, 6. Récapitulatif `bg-blue-50`/`text-blue-700` —
+`RecipeCalculator.jsx`). Les 3 zones de Revenus reprennent exactement cette palette sur toute leur
+hauteur (en-tête + corps) : **1. Paramètres généraux** (vert), **2. Activités de production**
+(jaune), **3. Canaux de commercialisation** (bleu) — numérotées comme les sections de Recette &
+Calcul, sans bordure superposée (la transition de couleur suffit à séparer visuellement). Table
+passée en `border-separate border-spacing-0` pour un rendu de fond propre sans artefact entre
+cellules adjacentes de couleurs différentes. **165/165 tests unitaires, 27/27 tests e2e** (libellé
+de test ajusté pour le préfixe numéroté), lint propre, `dist/` reconstruit. Confirmé par capture
+d'écran : rendu nettement plus propre et cohérent avec le langage visuel déjà établi ailleurs dans
+l'app.
+
+**Correctif du 13/10 (8e retour)** : rendu jugé encore « laid » par l'utilisateur — pas la couleur
+en soi, mais le fait que les 3 zones restaient collées (une seule bande continue), pas lisibles
+comme de vraies sous-sections. Proposition acceptée : simuler visuellement **3 rectangles détachés
+aux coins arrondis** (comme les encadrés verts/jaune/bleu de Recette & Calcul, mais juxtaposés à
+l'horizontale plutôt qu'empilés à la verticale), **sans modifier le tableau lui-même** (mêmes
+lignes/colonnes de données, même comportement). Implémenté par pur habillage visuel :
+- Colonnes d'écart décoratives (`<th>`/`<td>` vides, `w-3 p-0`, aucune couleur de fond — donc
+  transparentes sur le fond gris de la section) insérées entre les 3 zones, créant un vrai espace
+  visuel plutôt qu'une simple transition de couleur.
+- Coins arrondis : `rounded-t-lg` sur la cellule d'en-tête de groupe de chaque zone (une seule
+  cellule à colSpan, donc les deux coins supérieurs d'un coup) ; `rounded-bl-lg`/`rounded-br-lg`
+  calculés dynamiquement sur la **dernière ligne** du tableau (ajout/suppression de revenus
+  recalcule automatiquement quelle ligne est « la dernière »), première/dernière colonne de chaque
+  zone.
+- Colonne Actions (poubelle) : aucune couleur de fond, confirmé neutre.
+- Table passée de `divide-y` (sur `<table>`/`<tbody>`) à une bordure basse par cellule
+  conditionnelle (`border-b border-gray-200`, omise sur la dernière ligne) — nécessaire pour ne pas
+  casser l'arrondi du coin inférieur avec un trait qui dépasserait du rectangle.
+- Un seul test e2e ajusté (l'ajout d'une colonne d'écart décale l'index de la colonne Général de 3
+  à 4 dans `td.nth()`). **165/165 tests unitaires, 27/27 tests e2e**, lint propre, `dist/`
+  reconstruit. Confirmé par capture d'écran (incluant un zoom sur les coins arrondis) : les 3 zones
+  se lisent maintenant clairement comme des sous-sections distinctes et détachées.
+
+**Correctif du 13/10 (9e retour)** : deux derniers ajustements visuels + vérification d'une
+régression signalée.
+- Numérotation (« 1. », « 2. », « 3. ») retirée des 3 libellés d'en-tête de zone — jugée inutile
+  une fois les zones visuellement détachées (rectangles arrondis du retour précédent). Libellés
+  simplifiés : « Paramètres généraux », « Activités de production », « Canaux de commercialisation
+  (indicatif) ».
+- Incohérence de teinte corrigée : les cellules du corps de tableau utilisaient une opacité
+  `/60` (`bg-green-50/60`, `bg-yellow-50/60`, `bg-blue-50/60`) alors que l'en-tête utilisait la
+  couleur pleine — rendant le corps visiblement plus foncé que l'en-tête (capture d'écran fournie
+  par l'utilisateur). Classes alignées sur les couleurs pleines de l'en-tête sur toute la hauteur
+  de chaque zone.
+- Régression signalée : les onglets Rapport et Suivi « ne fonctionnaient plus ». Investigation via
+  script de test temporaire (`_debug-*`, supprimé après usage) : chargement du projet démo,
+  bascule d'une ligne de revenu en Saisie manuelle avec saisie réelle dans une cellule de
+  contenant, puis navigation vers Rapport et Suivi — captures d'écran des deux onglets, écouteurs
+  d'erreurs console/page actifs. **Aucune erreur détectée**, les deux onglets s'affichent
+  normalement (matrice BCG, graphiques de contribution, tableau des marges par canal pour Rapport ;
+  graphiques d'évolution, volatilité, gestion des points de référence pour Suivi). Aucune cause
+  identifiée par ce scénario — à documenter avec des étapes de reproduction plus précises si le
+  problème persiste côté utilisateur.
+- Test e2e ajusté (libellé de zone sans préfixe numéroté). **165/165 tests unitaires, 27/27 tests
+  e2e** (incluant les deux smoke tests qui naviguent dans tous les onglets, Rapport et Suivi
+  compris, sans erreur), lint propre, `dist/` reconstruit.
+
+**Correctif du 13/10 (10e retour)** : remise en place d'une rangée de sous-totaux sous le tableau
+Revenus, mais **par colonne chiffrée** cette fois (pas une seule rangée de sous-total générique
+comme la version retirée au 7e retour) — un sous-total par contenant (Général + chaque activité)
+et, indicativement, un sous-total par canal, en plus du total global déjà affiché sous le tableau
+(inchangé, toujours au patron « Coût Moyen Pondéré du Poste »). Rangée ajoutée en `<tfoot>`,
+reprenant la couleur pleine de chaque zone (vert/jaune/bleu) et les coins arrondis du bas (déplacés
+de la dernière ligne de donnée vers cette nouvelle rangée — les lignes de données ont maintenant
+toutes une bordure basse uniforme, sans arrondi). Sous-total Montant = total global (les deux
+sont dérivés des mêmes données, donc toujours identiques — pas de risque de dérive). Un test e2e
+dédié vérifie qu'un sous-total par contenant agrège bien plusieurs lignes (ex. « Soupes et
+potages » cumule 2 lignes distinctes), pas seulement le total général ; 2 assertions existantes
+ajustées (`.first()`) car le montant global apparaît désormais 2 fois dans la section (sous-total
+Montant + total sous le tableau). **165/165 tests unitaires, 27/27 tests e2e**, lint propre,
+`dist/` reconstruit. Confirmé par capture d'écran.
+
+### 4.3 — Charges directes réelles *(terminée le 13/10)*
+- Nouvelle section « Charges directes réelles » dans l'onglet État des résultats, entre Revenus et
+  Frais fixes, ventilée par **type de coût** (Matière première, Main-d'œuvre directe, Emballage,
+  Sous-traitance — nouvelle constante `DIRECT_COST_TYPES` dans `utils.js`) — pas par les 4
+  catégories de frais fixes, qui décrivent une fonction d'entreprise plutôt qu'une nature de coût
+  de production (voir `04-Conception-Modele.md`, section 1bis). Vocabulaire repris tel quel de
+  `calculateCosts.js` en vue de la réconciliation réel/théorique (4.4).
+- Nouveau tableau `directCostLines` (même patron que `expenseLines`/`revenueLines` — reducer
+  `SET_DIRECT_COST_LINES`, `getEmptyState`/`getDefaultState`, pass-through dans
+  `projectSerialization.js` sans migration à écrire puisque le champ est entièrement nouveau,
+  wiring complet dans `App.jsx`) : une ligne = `{ id, label, category, amount }`, `category` ∈
+  `DIRECT_COST_TYPES`. Démo migrée en 4 lignes (une par type) sommant 100 000 $, plausible pour un
+  chiffre d'affaires de 160 000 $ (`demoRevenueLines`).
+- **Risque minimal, même principe que 4.1/4.2** : données + UI seulement, pas encore consommé par
+  le moteur (`calculateCosts.js`/`analysisData.js` ne lisent pas `directCostLines`) — le total
+  agrégé n'est donc pas encore une clé de répartition utilisable ailleurs ; ce branchement attend
+  la 4.5/4.6, qui consommera aussi `expenseLines`/`revenueLines` de la même façon.
+- **Extraction du sous-composant `CategorizedLinesTable`** (`IncomeStatementTab.jsx`) : la table
+  « poste + catégorie + montant » est strictement identique entre Frais fixes et Charges directes
+  réelles (même structure, seules la liste de catégories et les étiquettes diffèrent) — factorisée
+  une fois qu'elle sert à deux sections plutôt que dupliquée une deuxième fois.
+- Guide d'utilisation (`InstructionModal.jsx`) : nouvelle entrée de table des matières et section
+  « Charges directes réelles » sous Onglet 5, même traitement que Revenus/Frais fixes en 4.1/4.2
+  (pas reporté à l'info-bulle globale de la 4.7).
+- Tests : reducer/sérialisation mis à jour pour `directCostLines` (absence → liste vide,
+  préservation telle quelle — pas de migration à écrire), 1 nouveau test e2e **permanent**
+  (`e2e/income-statement-params.spec.js`) couvrant ajout/édition/suppression avec annulation et
+  total recalculé. **167/167 tests unitaires** (165 + 2), **28/28 tests e2e** (27 + 1), lint propre
+  (0 erreur), `dist/` reconstruit. Confirmé par capture d'écran (section bien positionnée entre
+  Revenus et Frais fixes, même langage visuel).
+
+**Correctif du 13/10 (4.3bis) — répartition Activités/Canaux des charges directes, discutée et
+validée avec l'utilisateur avant implémentation** (voir le fil de discussion : méthodologie
+proposée, réponse sur le nombre de sous-totaux, renommage canal, comparaison MAPAQ, harmonisation
+des colonnes — intégralement repris dans `04-Conception-Modele.md`, section 1bis) :
+- **Charges directes réelles gagne les zones Activités/Canaux de vente**, même forme que Revenus
+  (3 zones colorées, sous-total par colonne). Contrairement à Revenus, la ventilation est
+  **entièrement dérivée** (pas de sélecteur manuel) : `computeDirectCostAllocation` (nouvelle
+  fonction pure, `analysisData.js`) répartit chaque ligne par activité puis par canal via un driver
+  théorique **apparié à son propre type de coût** (`DIRECT_COST_TYPE_FIELDS` : Matière première →
+  `costMatierePerPortion`, Main-d'œuvre directe → `costLaborPerPortion`, Emballage →
+  `costPackagingPerPortion`, Sous-traitance → `costSubcontractingPerPortion`) — jamais une clé
+  croisée (ex. emballage réel avec une clé de main-d'œuvre théorique), ni une clé de ventes (un
+  coût suit la production, pas le prix). Repli sur Général quand aucune activité n'a de donnée
+  théorique du type concerné. Affiché **ligne par ligne**, pas seulement au sous-total — même
+  principe déjà appliqué à la ventilation canal des revenus (dérivée au niveau de l'activité,
+  répétée sur chaque ligne), jamais signalé comme un problème.
+- **Colonnes harmonisées entre les 3 tableaux** : Poste | Catégorie | Clé de répartition | Montant
+  partout, avec une cellule neutre « — » quand une colonne ne s'applique pas encore à un tableau
+  donné (Catégorie pour Revenus, Clé de répartition pour Charges directes — toujours dérivée — et,
+  en attendant la Phase 4.5, pour Frais fixes). Revenus renomme sa colonne « Répartition » en
+  « Clé de répartition ».
+- **Renommage « Canaux de commercialisation » → « Canaux de vente »**, partout dans l'app, pour
+  s'aligner sur le vocabulaire déjà établi ailleurs (section Paramètres, docs, tests) — seul
+  l'onglet État des résultats utilisait encore l'ancien terme.
+- **Comparaison avec MAPAQ** (`Rev-Dep`, ligne 108) : confirmé que MAPAQ ne répartit pas du tout ses
+  charges directes par activité/canal — il rapatrie directement le théorique de sa feuille de coût
+  de production. RestoCalculateur va un cran plus loin (réconciliation exacte au montant réel)
+  plutôt que de reproduire cette limite.
+- Tests : 4 nouveaux tests unitaires (`computeDirectCostAllocation` — répartition normale, activité
+  sans driver théorique omise, pas de clé croisée entre types, repli sur Général quand aucune
+  donnée théorique n'existe) ; e2e étendu (zones Activités/Canaux de vente visibles, répartition
+  d'une nouvelle ligne vérifiée, indices de colonnes Revenus ajustés). **171/171 tests unitaires**
+  (167 + 4), **28/28 tests e2e**, lint propre, `dist/` reconstruit. Confirmé par capture d'écran :
+  les 3 tableaux partagent maintenant la même forme, et le sous-total de chaque type de charge
+  directe reconstitue exactement son montant réel.
+
+**Correctif du 13/10 (suite) — zones Activités/Canaux de vente pour Frais fixes** : à la demande de
+l'utilisateur, Frais fixes gagne les mêmes zones colorées que Revenus/Charges directes (même forme
+visuelle pour les 3 tableaux de l'onglet), mais avec les cellules Activités/Canaux affichées en
+« — » (espace réservé neutre, pas « indicatif ») : aucune donnée n'est encore calculée là, le
+mécanisme réel (saisie manuelle + vérification) appartient à la Phase 4.5, pas encore implémentée.
+`CategorizedLinesTable` (devenue inutilisée — Charges directes et maintenant Frais fixes ont chacun
+leur propre table zonée) retirée plutôt que laissée en code mort. Tests e2e étendus (zones visibles,
+placeholders confirmés) ; 2 assertions existantes corrigées (`.first()`) pour le même doublon de
+montant qu'ont déjà Revenus/Charges directes (rangée Sous-total + total sous le tableau).
+**171/171 tests unitaires, 28/28 tests e2e**, lint propre, `dist/` reconstruit. Confirmé par capture
+d'écran.
+
+**Nouvelle sous-phase planifiée (4.8, voir plus bas)** : à la toute fin de la Phase 4, un tableau
+récapitulatif sous Frais fixes montrera le total des frais par activité ET par canal (inspiré de la
+feuille `6 - Rep. charges fixes` du chiffrier SymbiOse) — dépend de 4.5/4.6, donc reporté après.
+
+**Correctif du 13/10 (suite) — titres de colonnes centrés, largeurs uniformisées entre les 3
+tableaux** : tous les en-têtes de colonne (2e rangée de `<thead>`) passent en `text-center` (étaient
+un mélange de `text-left`/`text-right` selon la colonne) ; les 4 colonnes de tête (Poste/Catégorie/
+Clé de répartition/Montant) et les colonnes de contenant/canal reçoivent des `min-w` identiques
+dans les 3 tableaux (150/130/120/100/85 px), au lieu de largeurs ad hoc différentes par tableau.
+Police des cellules de données (`<input>`/`<select>`/`<td>`, pas les boutons ni les totaux sous le
+tableau) réduite de `text-sm` à `text-xs` pour que les montants formatés (ex. « 90 000.00 $ »)
+restent sur une seule ligne sans élargir les colonnes — évite le retour du défilement horizontal
+(voir le retour du 13/10 plus haut : « rend l'expérience déplaisante »). Confirmé à 1280px ET
+1600px de large : aucun défilement horizontal, aucun retour à la ligne dans les cellules de montant.
+**171/171 tests unitaires, 28/28 tests e2e** (texte/structure inchangés, seul le style est touché),
+lint propre, `dist/` reconstruit.
+
+### 4.4 — Tableau de réconciliation réel/théorique — ✅ terminée le 13/10
+- Nouvelle section « Réconciliation réel / théorique » sous Frais fixes, dans l'onglet État des
+  résultats : compare, au niveau de **l'entreprise entière** (jamais par activité/canal — le détail
+  y serait partiellement circulaire, même limite déjà documentée pour les revenus en 4.2), Revenus/
+  Charges directes/Marge réels (saisis en 4.2/4.3) au théorique implicite du modèle de recettes.
+  Même patron visuel que le rapport de productivité MO déjà présent dans l'app (« heures attendues »
+  vs « heures réelles », `LaborDatabaseTab.jsx`) : table simple avec colonnes Réel/Théorique/
+  Écart ($)/Écart (%), pas la structure à 3 zones colorées des 3 tableaux au-dessus (pas de détail
+  activité/canal ici).
+- **Théorique** = `menuRevenue`/`unitsSoldById` déjà calculés par `computeAnalysisData`
+  (reconstruction du volume à partir du mix des ventes et du chiffre d'affaires du menu — ces
+  champs existaient déjà en variables locales, simplement **exposés** dans l'objet retourné plutôt
+  que redérivés en double) : Revenus théorique = `menuRevenue` (identité exacte avec Σ `prixVente`
+  × volumes reconstruits, par construction) ; Charges directes théorique = Σ
+  `costs.totalDirectCostPerPortion` × volume reconstruit, sur les produits actifs ; Marge théorique
+  = la différence des deux. Nouvelle fonction pure `computeRealVsTheoreticalReconciliation`
+  (`analysisData.js`), prend les totaux déjà calculés en entrée (pas de nouvel état).
+- Écart (%) absent (« — », jamais 0 %) quand le théorique d'une ligne est nul — même principe que
+  partout ailleurs dans l'app (donnée absente jamais comblée par du 0).
+- Tests : 2 nouveaux tests unitaires (`computeRealVsTheoreticalReconciliation` — calcul correct,
+  écart % absent quand théorique nul) ; 1 nouveau test e2e **permanent** confirmant que la démo
+  (revenus réels = théoriques par construction, 160 000 $ des deux côtés — bon test de cohérence)
+  affiche un écart de 0,0 % sur les revenus et une marge cohérente des deux côtés (Revenus − Charges
+  directes). **173/173 tests unitaires** (171 + 2), **29/29 tests e2e** (28 + 1), lint propre,
+  `dist/` reconstruit. Confirmé par capture d'écran.
+
+**Correctif du 13/10 (suite) — retrait de « Frais fixes par unité théorique »** (erreur de
+raisonnement, signalée par l'utilisateur) : la 1re livraison de 4.4 affichait un taux
+`generalInfo.totalIndirects ÷ totalUnitsSold` (une seule moyenne globale, pool total ÷ unités
+totales). Ce calcul ne correspond à **aucune** des formules déjà spécifiées en 4.6 — qui sont
+TOUJOURS par contenant (Général/Activité/Canal, Phase 4.5) et par PRODUIT, jamais une division à
+plat du pool total par un total d'unités. L'origine de l'erreur : une mauvaise lecture d'une note
+de la feuille de route (« Frais fixes par unité = pool réel ÷ unités théoriques ») qui décrivait en
+réalité le mécanisme déjà prévu pour le seul contenant **Général** (`indirectCostMethod` existant,
+réutilisé tel quel, par produit — voir 4.6), pas une statistique d'entreprise. Retiré de
+`computeRealVsTheoreticalReconciliation` (retourne seulement `{ rows }` désormais), de
+`computeAnalysisData` (`totalUnitsSold` n'était exposé que pour ce calcul — retiré du retour, reste
+une variable locale), de l'UI, des tests et du guide. La conversion en taux de la Phase 4.6 restera
+par contenant/par produit, calculée dans `calculateCosts.js` et affichée dans le rapport par SKU —
+jamais une moyenne globale dans l'État des résultats. **173/173 tests unitaires, 29/29 tests e2e**,
+lint propre, `dist/` reconstruit.
+
+**Correctif du 13/10 (suite) — largeurs de colonnes toujours différentes malgré des `min-w`
+identiques** : en layout de table `auto` (par défaut), chaque `<table>` calcule ses largeurs de
+colonne à partir de SON PROPRE contenu (texte des `placeholder`, options des `<select>`...) — des
+`min-w` identiques entre 3 tableaux SÉPARÉS ne garantissent pas des largeurs rendues identiques dès
+que le contenu diffère (ex. le `<select>` Clé de répartition de Revenus contient des noms
+d'activités longs qui n'existent pas dans les cellules « — » de Charges directes/Frais fixes).
+Passage à `table-layout: fixed` (classe `table-fixed`) sur les 3 tableaux, avec des largeurs EXACTES
+(`w-[Npx]`, plus `min-w-`) sur chaque colonne — identiques dans les 3 tableaux, y compris la colonne
+Actions (`w-10`, auparavant sans largeur déclarée). Les largeurs sont maintenant garanties
+identiques indépendamment du contenu. **173/173 tests unitaires, 29/29 tests e2e**, lint propre,
+`dist/` reconstruit. Confirmé par capture d'écran : les 3 zones colorées ont exactement la même
+largeur dans les 3 tableaux.
+
+**Correctif du 13/10 (suite) — le correctif précédent ne fonctionnait toujours pas** (signalé par
+l'utilisateur : « je ne vois pas les modifications appliquées »). Cause réelle : `table-layout:
+fixed` ne lit les largeurs de colonne QUE sur la **toute première rangée** du tableau (ou un
+`<colgroup>`) — jamais sur une rangée suivante. Nos tableaux ont une 1re rangée d'en-tête de ZONE
+avec des cellules `colSpan` sans largeur individuelle ; les classes `w-[Npx]` posées sur la 2e
+rangée (en-têtes de colonne, correctif précédent) étaient donc silencieusement ignorées — le
+navigateur répartissait l'espace à parts égales entre colonnes non dimensionnées, d'où une
+uniformité accidentelle entre les 3 tableaux (par coïncidence de structure identique) mais aucune
+différenciation réelle des largeurs. Symptôme additionnel : l'input Montant (`w-24` fixe, 96px en
+dur sur l'`<input>`) débordait de sa cellule une fois celle-ci réellement rétrécie, causant le
+décalage visuel remarqué par l'utilisateur.
+- **Vraie correction** : `<colgroup>` explicite (`IncomeStatementColGroup`, nouveau composant
+  partagé) avant le `<thead>` des 3 tableaux — seule méthode fiable pour des largeurs de colonne
+  individuelles indépendantes de la structure des rangées d'en-tête. Tous les `input`/`span`
+  à largeur fixe en dur (`w-24`, `w-20`) remplacés par `w-full` pour s'adapter à la largeur réelle
+  de leur colonne plutôt que d'entrer en conflit avec elle.
+- **Contrainte d'espace réelle découverte en testant** : à 1280px de large (plus petite largeur
+  testée), l'espace disponible pour le tableau est de 1168px ; l'agencement équilibré d'origine
+  (Poste 150/Catégorie 130/Clé 120/Montant 100, contenants/canaux 85) totalisait déjà 1159px — une
+  marge de 9px seulement. Élargir la zone verte de 1/8 tout en réduisant Montant à 75px (demande
+  initiale) poussait le total à 1224px (débordement + retour à la ligne de Montant) ; réduire
+  ensuite les contenants/canaux à 74px pour compenser faisait déborder LEUR contenu à la place
+  (« 90 000.00 $ » ne tient pas sous 85px). Aucune combinaison ne satisfait simultanément
+  « zone verte +1/8 », « aucun retour à la ligne nulle part » et « aucun défilement horizontal » à
+  1280px — **compromis retenu, testé et validé empiriquement** (vérification directe de
+  `scrollWidth`/`clientWidth`, pas seulement visuelle) : Poste 160/Catégorie 140/Clé
+  répartition 130/Montant 85 (contenants/canaux ramenés à 85, valeur déjà éprouvée sans
+  retour à la ligne), espaceurs 12→8px. Zone verte élargie de 500→515px (+3 %, bien en-deçà du
+  1/8 demandé — la marge d'espace disponible ne permet pas plus sans réintroduire un défilement
+  horizontal ou un retour à la ligne). Total : 1166px ≤ 1168px disponibles, aucun débordement.
+- **173/173 tests unitaires, 29/29 tests e2e**, lint propre, `dist/` reconstruit. Confirmé par
+  capture d'écran ET par mesure directe (`scrollWidth === clientWidth`, aucun retour à la ligne
+  dans les cellules de montant).
+
+**Correctif du 13/10 (suite) — Montant élargi pour supporter 7 chiffres, Poste réduit en
+contrepartie** : demande explicite de l'utilisateur après le compromis précédent — que le
+sous-total puisse afficher un montant à 8 chiffres (« 10 000 000.00 $ », 15 caractères) sans retour
+à la ligne. Poste (160→125px) réduit pour financer Montant (85→120px), total inchangé (toujours
+1166px, aucun débordement réintroduit). Vérifié en saisissant un montant réel de 10 000 000 $ dans
+une ligne de revenu démo : le sous-total « 10 070 000.00 $ » s'affiche sur une seule ligne, aucun
+défilement horizontal (`scrollWidth === clientWidth`, confirmé). Les colonnes Activités/Canaux
+(85px, inchangées) ne sont pas dimensionnées pour un montant à 8 chiffres concentré sur un seul
+contenant — cas marginal non demandé, non traité ici. **173/173 tests unitaires, 29/29 tests e2e**,
+lint propre, `dist/` reconstruit.
+
+**Correctif du 13/10 (suite) — Montant à 120px était trop large** (retour utilisateur : « tu as
+exagéré », demande explicite d'une largeur « pile suffisante »). Plutôt que d'estimer à l'œil,
+mesure directe dans le navigateur (`getBoundingClientRect().width` d'un `<span>` portant exactement
+les classes `text-xs font-bold` de la cellule Sous-total, injecté puis retiré du DOM) : le texte
+« 10 000 000.00 $ » occupe **89,1px**, plus 16px de padding (`px-2`) = **105,1px minimum**. Montant
+ramené de 120px à **106px** (1px de marge pour l'arrondi sous-pixel) ; les 14px libérés redonnés à
+Poste (125→139px), conformément à l'objectif d'origine (plus d'espace pour les 3 premières
+colonnes). Total inchangé (1166px), aucun débordement. Vérifié à nouveau en saisissant 10 000 000 $
+dans une ligne de revenu démo : « 10 070 000.00 $ » tient pile sur une ligne, sans espace excédentaire
+visible. **173/173 tests unitaires, 29/29 tests e2e**, lint propre, `dist/` reconstruit.
+
+**Correctif du 13/10 (suite) — cible révisée à 100 milliards $** : l'utilisateur a testé des
+montants encore plus grands (999 990 000 $, puis confirmation que 10M$ était la bonne cible pour ce
+cas précis) avant de préciser la vraie borne voulue : **100 G$** (100 000 000 000 $), pas 10 M$.
+Même méthode de mesure directe dans le navigateur : « 100 000 000 000.00 $ » (`text-xs font-bold`)
+occupe 120,0px, + 16px de padding = **136,0px minimum**. Montant ramené de 106px à **137px** (1px
+de marge) ; Poste réduit en contrepartie (139→108px) pour garder le total inchangé (1166px, aucun
+débordement). Vérifié en saisissant 99 999 960 000 $ dans une ligne de revenu démo : le sous-total
+« 100 000 030 000.00 $ » tient pile sur une ligne. **173/173 tests unitaires, 29/29 tests e2e**,
+lint propre, `dist/` reconstruit.
+
+**Correctif du 13/10 (suite) — cible DÉFINITIVE fixée à 99 999 999,99 $**, après plusieurs
+allers-retours sur la largeur de Montant (10M$ → 100G$ → ceci). Borne demandée explicitement par
+l'utilisateur : jusqu'à 99 999 999,99 $ sans débordement ; au-delà, un retour à la ligne est normal
+et acceptable. « 99 999 999.99 $ » a exactement la même longueur que « 10 000 000.00 $ » (15
+caractères) : même mesure directe qu'au premier essai, 89,1px de texte + 16px de padding = 105,1px
+minimum. **Montant = 106px** (valeur définitive). L'espace libéré par rapport à 137px (100G$) est
+redonné cette fois aux **3** premières colonnes (pas seulement Poste, comme demandé explicitement) :
+Poste 108→117px, Catégorie 140→151px, Clé de répartition 130→141px — réparti proportionnellement à
+leur largeur respective. Total inchangé (1166px ≤ 1168px disponibles à 1280px de large, aucun
+débordement). Vérifié en saisissant 99 929 999,99 $ dans une ligne de revenu démo (sous-total exact
+= 99 999 999,99 $) : tient pile sur une ligne. **173/173 tests unitaires, 29/29 tests e2e**, lint
+propre, `dist/` reconstruit.
+- **Valeurs finales des colonnes** (`IncomeStatementTab.jsx`, constantes `COL_WIDTH_*`) : Poste
+  117px, Catégorie 151px, Clé de répartition 141px, Montant 106px, contenants/canaux 85px,
+  espaceurs 8px, Actions 40px — total 1166px. Toute largeur de colonne DOIT désormais passer par un
+  `<colgroup>` (`IncomeStatementColGroup`), jamais par des classes `w-[Npx]` sur les `<th>` (ignorées
+  par `table-layout: fixed` en présence d'une 1re rangée à cellules `colSpan`, cause du bug corrigé
+  plus haut). Pour retoucher une largeur à l'avenir : mesurer d'abord le texte réel dans le
+  navigateur (`getBoundingClientRect()` avec les classes exactes de la cellule), ne jamais deviner.
+
+**Correctif du 13/10 (suite) — Poste/Catégorie/Clé de répartition égales, encadrés gris et totaux
+redondants retirés** : 3 demandes de l'utilisateur en une fois.
+- **Poste/Catégorie/Clé de répartition à largeur égale** : l'utilisateur a remarqué que Poste
+  n'avait pas vraiment profité des derniers ajustements (était resté la plus étroite des 3,
+  117px contre 151/141px). Les 3 colonnes sont maintenant **strictement égales** (136px chacune,
+  409px répartis aussi également que le permettent des pixels entiers), Montant inchangé à 106px
+  (cible définitive de 99 999 999,99 $, non retouchée). Total inchangé (1165px, toujours sous les
+  1168px disponibles).
+- **Encadrés gris retirés** : les 3 tableaux (Revenus, Charges directes réelles, Frais fixes)
+  perdent leur fond `bg-gray-100 rounded-lg p-4` — redevenus de simples sections sans encadré,
+  directement sur le fond blanc de la carte. La section Réconciliation réel/théorique **garde** son
+  encadré gris (seule exception demandée).
+- **Totaux redondants retirés** : les blocs « Total des revenus »/« Total des charges directes
+  réelles »/« Total des frais fixes » (affichés sous chaque tableau, dupliquant exactement la
+  rangée « Sous-total » déjà présente dans le tableau) sont retirés — un seul total par section
+  désormais, dans la rangée Sous-total. `totalRevenue`/`totalDirectCosts`/
+  `generalInfo.totalIndirects` restent utilisés ailleurs (rangées Sous-total, tableau de
+  réconciliation), aucune variable rendue orpheline.
+- Tests e2e mis à jour : assertions sur « Total des X » retirées, `.first()` devenu inutile sur
+  plusieurs montants retiré (un seul nœud de texte correspond désormais, plus de doublon avec le
+  bloc de total disparu). **173/173 tests unitaires, 30/30 tests e2e**, lint propre, `dist/`
+  reconstruit. Confirmé par capture d'écran.
+
+**Correctif du 13/10 (suite) — infobulles pour utilisateurs non-comptables** : à la demande de
+l'utilisateur, ajout d'info-bulles (`Tooltip`, même composant que le reste de l'app) sur les
+colonnes dont le titre suppose un vocabulaire comptable, dans les 4 tableaux de l'onglet :
+- **Catégorie** (Revenus/Charges directes/Frais fixes) : explique pourquoi la colonne est vide pour
+  Revenus (pas de catégorie comptable à classer), ce que recouvre chaque type de coût pour Charges
+  directes (Matière première/MO directe/Emballage/Sous-traitance), et chaque catégorie de frais
+  fixes (Frais généraux de production/de vente/d'administration/financiers).
+- **Clé de répartition** (les 3 tableaux) : explique le choix Général/Activité/Saisie manuelle pour
+  Revenus, pourquoi la colonne est vide pour Charges directes (dérivée automatiquement — pas
+  éditable) et pour Frais fixes (pas encore active, Phase 4.5).
+- **Colonne « Général »** des Activités de production (Revenus/Charges directes) : explique ce que
+  représente ce contenant par rapport aux activités précises.
+- **Les 5 colonnes de la Réconciliation réel/théorique** : Poste (définition de la ligne Marge),
+  Réel, Théorique, Écart ($), Écart (%).
+Aucun changement de structure/comportement, uniquement des info-bulles ajoutées. **173/173 tests
+unitaires, 30/30 tests e2e**, lint propre, `dist/` reconstruit. Confirmé par capture d'écran.
+
+**Correctif du 13/10 (suite) — boutons « Ajouter » alignés sur le style de Main-d'œuvre** : les 3
+boutons « Ajouter un revenu »/« Ajouter une charge directe »/« Ajouter une dépense » (auparavant
+boutons pleins verts avec icône `PlusCircle`, en haut de section à côté du titre) remplacés par le
+style lien texte bleu de « + Ajouter un employé » (`LaborDatabaseTab.jsx`) — `text-sm text-blue-600
+hover:text-blue-800`, préfixe « + » plutôt qu'une icône — et déplacés **au même endroit** qu'en
+Main-d'œuvre : en bas de section (`mt-4`), sous le tableau, plutôt qu'en haut à côté du titre.
+Import `PlusCircle` (lucide-react) retiré, devenu inutilisé. Les 3 titres de section (`<h2>`)
+simplifiés en conséquence (n'ont plus besoin du `flex justify-between` pour partager la ligne avec
+le bouton). Tests e2e inchangés (le texte du bouton reste une sous-chaîne du libellé affiché, donc
+toujours trouvé par `getByText`). **173/173 tests unitaires, 30/30 tests e2e**, lint propre, `dist/`
+reconstruit. Confirmé par capture d'écran.
+
+### 4.5 — Allocation à trois contenants (Général, Activité, Canal) — ✅ terminée le 13/10
+- Par ligne de frais fixes : saisie manuelle du montant $ sur **deux axes indépendants** — Général +
+  chaque activité de production (`activityAllocations`, même structure que `revenueLines.amounts`
+  en 4.2) d'un côté, chaque canal de vente (`channelAllocations`, aucun contenant Général
+  équivalent) de l'autre — chacun vérifié en temps réel contre le Montant de la ligne, sans jamais
+  exiger que les deux axes se correspondent entre eux (une dépense peut légitimement ne s'appliquer
+  qu'à un seul axe, ex. un loyer n'a aucune raison de se répartir par canal). Indicateur
+  (`AllocationCheckBadge`) purement diagnostique : coche verte si les 2 axes sont à 100 %,
+  avertissement avec détail par axe en infobulle sinon — jamais bloquant.
+- « Clé de répartition » (`repartitionKey`) : `manual` (défaut), ou pré-remplissage ponctuel
+  (modifiable ensuite) proportionnel aux sous-totaux déjà calculés pour les Revenus (4.2,
+  `bucketTotals`/`channelTotals`) ou les Charges directes réelles (4.3bis,
+  `directCostBucketTotals`/`directCostChannelTotals`) — aucun nouveau calcul moteur. La clé
+  **personnalisée nommée** (bibliothèque réutilisable façon MAPAQ) est **reportée** : hors scope de
+  ce round, demanderait une UI de gestion dédiée.
+- Réconciliation à la migration : id d'activité orphelin refond dans Général (comme
+  `revenueLines`) ; id de canal orphelin conservé tel quel (aucun équivalent neutre côté canal).
+- Nettoyage UI concurrent (demandé par l'utilisateur pendant ce round) : colonnes Poste/Catégorie/
+  Clé de répartition alignées à largeur égale (136px chacune) et colonne Montant resserrée à la
+  largeur exacte nécessaire pour afficher 99 999 999,99 $ sans saut de ligne (106px, mesuré
+  empiriquement en navigateur — au-delà, le débordement est normal et attendu), via un
+  `<colgroup>` explicite (seule méthode fiable sous `table-layout: fixed` avec un en-tête
+  multi-lignes à `colSpan` — une largeur posée sur une 2e ligne d'en-tête est silencieusement
+  ignorée par le navigateur) ; encadrés gris retirés de toutes les sous-sections sauf la
+  Réconciliation ; totaux de sous-section retirés (redondants avec les sous-totaux) ; infobulles
+  ajoutées sur Catégorie/Clé de répartition/contenant Général/les 5 colonnes de Réconciliation ;
+  boutons « Ajouter... » remis au style lien bleu de l'onglet Main d'œuvre, déplacés en bas de
+  section.
+- Correction méthodologique en cours de route : une donnée « Frais fixes par unité théorique »
+  (moyenne plate `totalIndirects / totalUnitsSold`) avait été ajoutée par erreur — ne correspond à
+  aucune des formules de conversion documentées (toujours par contenant ET par produit, jamais une
+  division globale). Entièrement retirée (fonction, UI, tests, guide) suite à la correction de
+  l'utilisateur ; voir note de clarification ajoutée dans `04-Conception-Modele.md`.
+- **175/175 tests unitaires, 32/32 tests e2e**, lint propre, `npx vite build` propre. Confirmé par
+  capture d'écran.
+
+### 4.5bis — Verrouillage par clé, sélection directe, clés personnalisées — ✅ terminée le 14/10
+Quatre retours utilisateur après usage réel de la grille de 4.5, avant de passer à la 4.6 (voir
+détails tranchés dans `04-Conception-Modele.md`, section « Révision Phase 4.5bis ») :
+- **Verrouillage** : une ligne dont la clé de répartition n'est pas Manuel n'a plus ses cellules
+  éditables sur l'axe que cette clé détermine (affichées en texte, comme les colonnes indicatives
+  de Charges directes) — élimine le risque de double-saisie silencieuse qu'un pré-remplissage
+  ponctuel toujours éditable permettait. La grille verrouillée n'est plus une valeur stockée : elle
+  se recalcule en direct (`expenseLineEffectiveAllocations`) à chaque changement de Montant, pour
+  ne jamais afficher un nombre figé périmé. Revenir à Manuel fige la dernière valeur calculée comme
+  point de départ éditable.
+- **Sélection directe d'une seule activité ou d'un seul canal** (inspirée de la colonne
+  « Répartition » de l'Agro-Calculateur, onglet Rev-Dep) : la liste « Clé de répartition » liste
+  désormais aussi chaque activité (dont Général) et chaque canal individuellement — pour les
+  dépenses attribuables à une seule colonne.
+- **Clés de répartition personnalisées, livrées** (initialement reportées en 4.5) : un % par
+  activité et/ou par canal, nommé et réutilisable sur plusieurs lignes, géré dans une fenêtre
+  modale dédiée (bouton « Gérer les clés de répartition » en haut de l'onglet). Nouvelle tranche
+  d'état `repartitionKeys`, threadée de bout en bout (reducer, App.jsx, sérialisation — avec
+  réconciliation des orphelins au chargement, même asymétrie Activités/Canaux qu'ailleurs).
+- **Arrondi à 2 décimales** (`round2`, `utils.js`) sur toute la grille Activités/Canaux (saisie
+  manuelle et valeurs dérivées) — évite les décimales résiduelles d'un calcul proportionnel.
+- Le résumé par Général/Activité/Canal en bas du tableau Frais fixes (demandé façon « VALEUR DES
+  CHARGES » du chiffrier SymbiOse) existait déjà — rangée « Sous-total » du tableau — confirmé
+  suffisant par l'utilisateur, aucun ajout nécessaire.
+
+**Correction (même jour, 14/10)** — le modèle « deux axes indépendants » ci-dessus (chaque axe
+réclamant séparément 100 % du Montant) était une erreur, repérée par l'utilisateur en testant le
+badge de vérification : avec « Selon les ventes », l'axe Canaux ne pouvait quasiment jamais
+reconstituer 100 % du montant, car la ventilation par canal des Revenus est **indicative
+uniquement** (jamais un intrant de calcul) — l'utiliser comme une vraie donnée ici était déjà une
+erreur en soi, et calculer séparément « 100 % côté Activités » ET « 100 % côté Canaux » pour la
+même dépense l'aurait fait compter deux fois lors de l'agrégation en Phase 4.6. Corrigé vers le
+modèle SymbiOse (une seule rangée de vérification par dépense, pas une par axe) : voir
+`04-Conception-Modele.md`, section « Correction (même jour, 14/10...) » pour le détail complet.
+- Activités et Canaux forment désormais **un seul bassin partagé** par ligne — `locked` (un seul
+  indicateur) et `diff` (un seul écart) remplacent `activityLocked`/`channelLocked` et
+  `activityDiff`/`channelDiff`.
+- « Selon les ventes »/« Selon les charges directes » ne remplissent plus QUE l'axe Activités —
+  plus aucune donnée dérivée de la ventilation indicative par canal des Revenus/Charges directes.
+  Un montant n'est désormais attribuable à un canal que par sélection directe de ce canal, clé
+  personnalisée, ou saisie manuelle.
+- Sélection directe d'une activité (ou d'un canal) verrouille désormais la ligne ENTIÈRE (le bassin
+  étant partagé, 100 % dans une colonne ne laisse plus rien pour l'autre groupe).
+- **177/177 tests unitaires, 35/35 tests e2e** (tests de verrouillage/vérification réécrits pour le
+  modèle corrigé), lint propre, `npx vite build` propre. Confirmé par capture d'écran.
+
+**Complément (même jour, 14/10)** — avant de passer à la 4.6 :
+- **Bouton « Gérer les clés de répartition »** recoloré en vert (même style que le bouton
+  « Nouveau », `bg-green-500`), pour cohérence avec les autres boutons principaux de l'app.
+- **Clés par défaut visibles dans la fenêtre modale, en lecture seule** : « Selon les ventes » et
+  « Selon les charges directes » y apparaissent désormais avec leur répartition par activité
+  ACTUELLE (recalculée à l'ouverture, selon les Revenus/Charges directes réels déjà saisis),
+  clairement marquées non modifiables (icône verrou) — pour que leur fonctionnement soit visible,
+  jamais une boîte noire. Jamais de colonne Canaux pour ces deux clés (elles ne répartissent que
+  sur l'axe Activités, voir la correction ci-dessus).
+- **Projet démo complété** : les 8 lignes de frais fixes portent désormais chacune une clé de
+  répartition choisie selon le tableau « Contenant suggéré par défaut » (section 1,
+  `04-Conception-Modele.md`) — Loyer (Manuel, par surface réelle), Électricité (Selon les charges
+  directes), Marketing (Manuel, par canal réel), Commissions (nouvelle clé personnalisée démo
+  « Ventes par canal (hors Général) », au prorata des ventes réelles par canal), Salaire de
+  direction/Assurances/Comptabilité/Frais bancaires (sélection directe de l'activité Général). Les
+  28 000 $ de frais fixes démo se répartissent maintenant exactement sur les colonnes Activités +
+  Canaux (confirmé par capture d'écran) — données de test réalistes et complètes pour la Phase 4.6.
+  Voir aussi la Phase 4.8 plus bas, résolue par ce même constat.
+
+### 4.6 — Conversion en taux par produit — ✅ terminée le 14/10
+
+**Méthodologie, vérifiée avant implémentation** (à la demande de l'utilisateur, qui a explicitement
+demandé une confirmation de rigueur comptable avant de donner le feu vert) — voir le détail complet
+dans `04-Conception-Modele.md`, section Phase 4.6 :
+- Comparaison des formules RÉELLES (pas juste la structure) de SymbiOse (`Rapport - Coût Revient
+  unit.`) et de l'Agro-Calculateur (`Synthèse`) : les deux réduisent, après simplification
+  algébrique, à un taux **plat $/unité dans la portée du contenant** (pool ÷ volume). Rejeté pour
+  RestoCalculateur : un driver purement volumétrique ignore que les formats varient en taille
+  (ex. 220 g vs 1 kg chez SymbiOse même) — un driver doit refléter la consommation RÉELLE de
+  ressources (principe ABC, Cooper & Kaplan), pas un décompte brut d'unités.
+- Driver retenu pour **Activité** : **coût direct combiné** (matière + emballage + main-d'œuvre +
+  sous-traitance, pas un seul composant) par défaut, ou **temps de main-d'œuvre** — les deux déjà
+  calculés par format, évitant d'inventer un nouveau concept de données (« unités produites ») que
+  l'app ne suit pas. Choisi **par activité** (Paramètres → Activités de production), pas par
+  produit — inspiré du « Coefficient d'imputation » de l'Agro-Calculateur, qui s'avère en réalité
+  être juste la sélection de l'activité (dont le driver est déjà fixé), pas un choix libre par
+  recette. Deux activités peuvent choisir des drivers différents sans casser la réconciliation :
+  chaque pool se normalise contre SES PROPRES produits seulement.
+- **Général** : mécanisme `indirectCostMethod` existant (ventes/temps de MO) inchangé, appliqué à un
+  pool réduit à sa seule part Général (plus la totalité des frais fixes comme avant).
+- **Canal : voir la correction du même jour ci-dessous** — la 1ʳᵉ version de cette sous-phase
+  proposait un driver au choix par canal (ventes/coût direct/temps de MO), corrigée depuis.
+
+**Implémentation** :
+- `engine/analysisData.js` : logique « quelle clé remplit quel contenant » de l'onglet État des
+  résultats (`expenseLineEffectiveAllocations`) extraite en fonctions pures
+  (`computeExpenseLineEffectiveAllocations`, `computeExpensePoolTotals`,
+  `computeDirectCostLineAllocations`, `computeBucketTotalsFromAmounts`, `buildActivityBuckets`) —
+  IncomeStatementTab.jsx les importe désormais au lieu de les dupliquer. Nouvelle
+  `computeIndirectCostDriverTotals` agrège, par activité et par canal, les DEUX/TROIS drivers
+  possibles (toujours les deux, pas seulement celui choisi — permet de changer de driver sans
+  recalcul).
+- `App.jsx` : calcul en **deux passes** — `computeAnalysisData` sans pools (brouillon, juste pour
+  lire les coûts directs/volumes déjà fiables de chaque produit) → pools construits à partir de ce
+  brouillon → `computeAnalysisData` à nouveau, cette fois avec les pools (Général réduit,
+  Activité/Canal ajoutés). `indirectPools` est un paramètre optionnel en toute fin de signature
+  (comme `basePackaging`/`salesChannels` avant lui) : absent, comportement strictement inchangé
+  (CostShockSimulator.jsx, pas encore mis à jour, et les ~30 appels positionnels existants de
+  analysisData.test.js continuent de fonctionner sans modification).
+- `engine/calculateCosts.js` : `productionTimeSeconds`/`portionsSold`/`nbPortions` exposés dans le
+  résultat (calculés une fois, peu importe la méthode Général) ; `computeChannelBreakdown` accepte
+  un `channelPools` optionnel — chaque canal du format reçoit SA PROPRE part de canal, en plus de
+  Général+Activité déjà communs à tous ses canaux → marge nette différente par canal, pas
+  seulement à cause du prix.
+- Nouveaux champs exposés par `costs` : `costIndirectGeneralPerPortion`,
+  `costIndirectActivityPerPortion`, `costIndirectChannelPerPortion` (celui-ci blendé par volume
+  réel sur l'ensemble des canaux du format, pour une vue agrégée) — `costIndirectPerPortion` reste
+  leur somme (champ existant, rétrocompatible).
+- **Paramètres** : sélecteur de driver (+ infobulle « guide de décision causal », pas juste une
+  définition) ajouté par activité (Activités de production) seulement — défaut `directCost`,
+  migration transparente pour les projets antérieurs. **Pas** de sélecteur par canal (voir
+  correction ci-dessous).
+- **Recette & Calcul** : section « 5. Frais indirects » retirée (demande explicite de
+  l'utilisateur — cet onglet ne montre plus que le COÛT DE PRODUCTION) ; Récapitulatif renuméroté
+  5 (était 6) ; guide/tutoriel mis à jour en conséquence (et une incohérence préexistante du guide
+  — méthodes d'indirects mortes jamais vraiment branchées, marge nette/point mort déjà retirés le
+  06/10 mais jamais documentés comme tels — corrigée au passage).
+- **Rapport → Par SKU** : la cascade par canal (inspirée de SymbiOse, déjà en place depuis le 06/10
+  avec une note explicite « pas encore ventilé... arrive en Phase 4 ») affiche maintenant le détail
+  Général/Activité/Canal (3 nouvelles rangées) avant le total — Général et Activité identiques
+  quel que soit le canal (comme chez SymbiOse), Canal variable par colonne.
+- **177/177 → 183/183 tests unitaires** (3 nouveaux tests de réconciliation exacte des pools dans
+  analysisData.test.js), **37/37 tests e2e** (2 nouveaux tests driver + 1 nouveau test Rapport par
+  SKU ; 2 régressions trouvées et corrigées en cours de route — un texte de test figé sur l'ancien
+  numéro de section, un sélecteur `select` devenu ambigu avec le nouveau driver de canal), lint
+  propre, `npx vite build` propre. Confirmé par capture d'écran.
+
+**Correction (même jour, 14/10, 2e retour utilisateur)** — la proposition initiale pour Canal
+(driver au choix : ventes/charges directes/temps de MO, par analogie avec Activité) a été
+repoussée : l'utilisateur s'est rappelé que dans l'Agro-Calculateur, le CICI ne se choisit
+**qu'à l'activité**, jamais par circuit. Vérification formule par formule de la matrice « Coût de
+revient complet » (`Synthèse`, lignes 27+) — voir le détail complet dans
+`04-Conception-Modele.md`, section 1ter, point 4 : **aucun sélecteur de driver par circuit dans
+l'Agro-Calculateur**. Le circuit applique toujours une **majoration % sur le coût de production
+déjà établi** (peu importe quel driver d'activité l'a produit) — jamais un mécanisme indépendant.
+C'est la méthode traditionnelle « majoration sur coût de production », qui hérite automatiquement
+de la fidélité déjà établie à l'activité et se réconcilie exactement par construction.
+- Retiré : le sélecteur de driver par canal (Paramètres → Circuits de vente), le champ
+  `indirectCostDriver` sur `salesChannels` (demo, défaut, migration), l'infobulle correspondante.
+- `computeIndirectCostDriverTotals` : `channelDriverTotals[canalId]` redevient un seul nombre (la
+  valeur totale au coût de production transitant par ce canal), plus un objet à 3 drivers.
+- `computeChannelBreakdown` : `channelPools[canalId] = { amount, driverTotal }` (sans `driver`) ;
+  la part de canal = coût de production du produit × (pool ÷ driverTotal), toujours.
+- Tests mis à jour : le test de réconciliation du canal dans analysisData.test.js recalculé avec
+  un vrai coût de production (ingrédient à 1 $) plutôt qu'un driver « ventes » qui n'existe plus ;
+  le test e2e du sélecteur de canal (Phase 4.6) supprimé (plus de sélecteur à tester).
+- **180/180 tests unitaires**, lint propre, `npx vite build` propre. Confirmé par capture d'écran.
+
+### 4.7 — Assistant d'import de l'état des résultats — ✅ terminée le 15/10 (PDF + fichiers structurés)
+- Voir `05-Imports-Integrations.md` pour le détail complet : import des lignes de revenus/dépenses
+  catégorisées — `IncomeStatementImportWizardModal.jsx`, même patron en 4 étapes que
+  `SalesReportImportWizardModal.jsx` mais sans étape d'agrégation (un état des résultats liste déjà
+  un poste par ligne). Type et Catégorie devinés par mots-clés (`guessExpenseCategory`),
+  ventilation par activité (fichier structuré seulement) quand la colonne Produit/SKU reconnaît un
+  plat existant, choix Additif/Remplacer à la confirmation.
+- **Correction (même jour, 15/10, retour utilisateur)** : la 1ère version livrée ne couvrait que le
+  CSV/Excel, le **PDF textuel** étant repoussé à plus tard. L'utilisateur a fait remarquer qu'un
+  état des résultats est reçu en PDF bien plus souvent qu'en Excel (export natif du comptable) —
+  l'ordre de priorité était inversé. Corrigé le même jour, pas reporté : un PDF n'a pas de vraies
+  colonnes, donc aucune étape 2 — `pdf.js` (`pdfjs-dist`, chargé en différé via `React.lazy` pour
+  ne jamais alourdir le chargement initial) reconstruit chaque ligne de texte par position (les
+  fragments à la même hauteur Y, tolérance 2 unités, sont regroupés), puis `parsePdfStatementLine`
+  (`utils.js`, fonction pure testée unitairement) isole le poste et son montant en fin de ligne.
+  Saute directement de l'étape 1 à l'étape 3. Pas de PDF scanné/image (OCR, hors scope) — message
+  d'erreur explicite si aucune ligne n'est reconnue.
+- Tests : 2 tests e2e (`e2e/income-statement-import.spec.js` pour le CSV,
+  `e2e/income-statement-import-pdf.spec.js` pour le PDF, fixture générée par
+  `scripts/generate-income-statement-pdf-fixture.cjs`), 6 tests unitaires pour
+  `parsePdfStatementLine`/`guessExpenseCategory`. **189/189 tests unitaires**, **39/39 tests e2e**,
+  lint propre, `npx vite build` propre (bundle principal revérifié à sa taille d'origine malgré
+  l'ajout de `pdfjs-dist`, grâce au chargement différé).
+
+### 4.8 — Tableau récapitulatif des frais par activité et par canal — ✅ résolue le 14/10 (fusionnée
+dans la 4.5bis)
+- Demandée le 13/10 : un tableau récapitulatif sous Frais fixes, **par activité de production ET
+  par canal de vente**, avec une colonne « Général » et une vérification que la somme des colonnes
+  égale le total — inspiré du chiffrier SymbiOse (feuille `6 - Rep. charges fixes`, analysée dans
+  `06-Analyse-Chiffrier-SymbiOse.md`, section 3).
+- **Confirmé le 14/10 (pendant la 4.5bis) : la rangée « Sous-total » déjà livrée en 4.5 EST ce
+  tableau récapitulatif** — elle affiche exactement un total par activité ET par canal, avec Général
+  comme contenant à part entière, et la vérification par ligne (Phase 4.5bis) confirme maintenant
+  que la somme de toutes les colonnes égale exactement le total des frais fixes (28 000 $ dans la
+  démo, voir capture d'écran). L'utilisateur a validé que ce Sous-total suffit — pas de tableau
+  séparé à construire.
+- La variante « combiné avec les charges directes de la 4.3bis » envisagée dans la demande initiale
+  n'a pas été retenue : aucune demande en ce sens depuis, portée non confirmée.
 
 ---
 
-## Phase 5 — Main-d'œuvre hors-recette (module léger, ex-Phase 4)
-- Par employé : répartition en % du temps entre production hors-recette, administration, vente.
-- Alimente la section Frais fixes (salaires admin/vente comme frais catégorisés) — dépendance
-  molle : en son absence, ce montant reste saisi manuellement, comme toute donnée de cette app
-  avant qu'une automatisation ne s'y greffe.
+## Phase 5 — ❌ abandonnée le 14/10 (voir correction ci-dessous)
+
+~~Main-d'œuvre hors-recette (module léger, ex-Phase 4)~~
+~~- Par employé : répartition en % du temps entre production hors-recette, administration, vente.~~
+~~- Alimente la section Frais fixes (salaires admin/vente comme frais catégorisés) — dépendance~~
+~~  molle : en son absence, ce montant reste saisi manuellement, comme toute donnée de cette app~~
+~~  avant qu'une automatisation ne s'y greffe.~~
+
+**Correction (14/10)** — l'utilisateur a questionné la rigueur comptable de cette phase avant son
+démarrage, une fois Frais fixes (4.1-4.6) terminé. Réponse, après vérification :
+- **En comptabilité réelle, un salaire n'est jamais scindé par % de temps estimé.** Il est enregistré
+  par la paie comme **une seule ligne au grand livre**, par poste/département — scinder par estimé
+  (« 20 % du temps du chef en admin ») est une technique de **comptabilité de gestion** (allocation
+  analytique), pas un fait comptable. Aucune paie standard ne le fait, et un petit transformateur
+  n'a généralement pas de suivi du temps assez fin pour le justifier.
+- **Ça aurait cassé le principe fondateur de Frais fixes** (Phase 4.1 : « l'état des résultats réel
+  — tel qu'il apparaît dans votre vraie comptabilité ») : injecter un montant estimé (ex. une ligne
+  « Frais d'administration » synthétique à partir d'un % de salaire) crée soit un double comptage
+  (si la ligne réelle « Salaires de production » n'est pas aussi réduite d'autant — ce que la vraie
+  comptabilité ne fait jamais), soit un écart permanent et inexpliqué avec le document comptable réel
+  que l'utilisateur consulte en parallèle.
+- **Argument d'efficacité, également valide** : configurer un % par employé est une nouvelle saisie
+  de données — pas moins d'effort que d'entrer directement 1-2 montants en Frais fixes, qui eux
+  correspondent exactement à la vraie comptabilité. L'automatisation ne réduisait pas la saisie,
+  elle la déplaçait vers un résultat moins fiable.
+- **Confirmation croisée** : ni SymbiOse ni l'Agro-Calculateur (nos deux références validées) ne
+  scindent un salaire non-recette par % de temps. Leurs modules de main-d'œuvre calculent le coût
+  direct d'une recette, jamais une allocation analytique de salaire — cette idée n'avait jamais été
+  vérifiée contre une référence réelle, seulement envisagée le 22/09, avant que Frais fixes existe.
+- **Conclusion** : la saisie manuelle déjà en place (depuis la 4.1) est la méthode la PLUS
+  rigoureuse ici, pas un pis-aller en attendant une automatisation. Rien à construire — la Phase 4
+  couvre déjà entièrement ce besoin.
 
 ---
 
@@ -1461,6 +2269,253 @@ indirects de l'entreprise, ce n'est pas une comptabilité complète (pas d'AR/AP
 
 ---
 
+### 6.1 — Simulateur de chocs de coûts : portées « par format » et « par activité » — ✅ terminée le 15/10
+- Deux nouvelles portées pour les chocs d'INTRANTS et de MAIN-D'ŒUVRE : `'format'` (target = un
+  format de vente précis) et `'activity'` (target = une activité de production) —
+  `CostShockSimulator.jsx`. Résolues en une sélection concrète d'ingrédients/employés
+  (`expandShockScopes`, `engine/costScenario.js`, fonction pure testée unitairement) à partir de ce
+  que ce format/cette activité consomme réellement (ingrédients directs du format, postes utilisés
+  dans ses étapes de production) — réutilise le filtrage `'selection'` déjà existant dans
+  `applyCostShocks`/`applyLaborShocks` plutôt que de dupliquer la logique de correspondance : ces
+  deux fonctions restent inchangées.
+- Rapport d'impact étendu avec deux nouveaux tableaux (`computeActivityImpact`,
+  `computeChannelImpact`, `engine/analysisData.js`) : marge brute / food cost / coût MO moyens
+  pondérés, actuel → scénario, **par activité de production** (pondéré par le mix de vente des
+  seuls formats de cette activité — isole son impact propre de la moyenne globale du menu) et
+  **par circuit de vente** (pondéré par le volume RÉEL de ce canal, pas la vue tous-canaux).
+- **Portée volontairement écartée** : pas de choc directement « sur un circuit » (ex. simuler une
+  hausse de la marge d'un distributeur) — un canal n'est pas un COÛT du point de vue du
+  transformateur (ses maillons déterminent le prix consommateur, pas son propre coût de revient).
+  L'extension aux circuits se fait donc côté RAPPORT (tableau d'impact ci-dessus), pas côté ciblage
+  du choc.
+- Découverte en testant (comportement correct, pas un bug) : un choc d'intrants scopé à UNE
+  activité peut faire bouger une AUTRE activité si elles partagent un ingrédient (son prix est
+  global, jamais scopé par activité) — attendu, documenté dans le test e2e dédié plutôt que
+  mal-interprété comme une fuite de portée.
+- Tests : 12 nouveaux tests unitaires (`costScenario.test.js` ×6, `analysisData.test.js` ×6), 1
+  nouveau test e2e (`e2e/cost-shock-simulator-scopes.spec.js`). **201/201 tests unitaires**,
+  **41/41 tests e2e**, lint propre, `npx vite build` propre (bundle principal inchangé — aucune
+  nouvelle dépendance).
+
+### 6.2 — Suivi historique / volatilité : étendu à l'emballage et au coût direct par format — ✅ terminée le 15/10
+- `engine/priceVolatility.js` généralisé : la logique d'amplitude/tendance/palier (auparavant
+  seulement `computeIngredientVolatility`, lisant `pt.baseIngredients`) est extraite dans une
+  fonction interne commune, réutilisée par deux nouvelles fonctions exportées :
+  - `computePackagingVolatility` — même analyse, sur `pt.basePackaging` (poste toujours séparé des
+    ingrédients, voir Phase 2).
+  - `computeFormatCostVolatility` — sur le **coût direct total par portion** de chaque FORMAT
+    (matière + emballage + main-d'œuvre + sous-traitance), déjà figé dans `pt.productsWithCosts`
+    à chaque point de référence — aucun recalcul nécessaire, chaque snapshot contient déjà ce
+    qu'il faut (confirmé en recherche avant de commencer : bonne nouvelle, pas un chantier de
+    schéma de snapshot comme redouté initialement).
+- `TrackingTab.jsx` : le bloc de tableau (tri/filtre/pagination/badge de palier), auparavant
+  dupliqué pour les ingrédients seulement, extrait en composant réutilisable `VolatilityTable` —
+  deux nouvelles sections : « Volatilité des prix d'achat — Emballage » (sous le graphique
+  d'évolution du prix des emballages) et « Volatilité du coût direct par format » (sous le
+  graphique « Analyse par format »). Pas de colonne Fournisseur pour les formats (n'a pas de sens).
+- **Activités/circuits de vente, volontairement pas étendus ici** : contrairement aux formats et à
+  l'emballage, un point de référence (snapshot) ne capture ni `productionActivities` ni
+  `salesChannels` — une volatilité par activité/canal demanderait d'abord d'ajouter ces champs au
+  schéma de snapshot (`handleSaveSnapshot`, `TrackingTab.jsx`), un chantier distinct et plus
+  structurant que cette sous-étape. Reporté, pas abandonné.
+- Tests : 4 nouveaux tests unitaires (`priceVolatility.test.js`), 1 nouveau test e2e
+  (`e2e/tracking-volatility-packaging-format.spec.js`), 1 test e2e existant corrigé
+  (`smoke.spec.js` : titre « Volatilité des prix d'achat » devenu ambigu avec le nouveau titre
+  « — Emballage », `exact: true` ajouté). **205/205 tests unitaires**, **42/42 tests e2e**, lint
+  propre, `npx vite build` propre.
+
+### 6.3 — Rapport de productivité : extension par activité de production — ✅ terminée le 15/10 (Phase 6 complète)
+- `App.jsx` (`calculatedGeneralInfo`) : la boucle existante qui accumule
+  `totalDirectLaborHoursNeededByPost` (heures de MO réellement nécessaires, par POSTE) accumule
+  maintenant AUSSI `totalDirectLaborHoursNeededByActivity` (même boucle, une seule passe — pas de
+  recalcul séparé) en groupant par `product.activityId` plutôt que `person.postId`. Un format sans
+  activité assignée ne contribue à aucune activité (jamais rattaché à « Général » arbitrairement).
+- `productivityReport.byActivity` (nouveau champ, même objet — pas un rapport séparé, comme demandé) :
+  une ligne par activité, avec les heures réellement nécessaires et sa part (%) du total du menu.
+  **Pas de « heures attendues » par activité** (contrairement au rapport par poste) : un poste/
+  employé n'est pas rattaché à une seule activité, rien d'analogue à comparer — la donnée n'existe
+  simplement pas, et inventer une répartition aurait été arbitraire.
+- `LaborDatabaseTab.jsx` : nouveau tableau « Capacité de production par activité » sous le rapport
+  par poste existant (Activité / Heures Productives Réelles / Part du total).
+- Vérifié contre les vraies données démo (script `_debug-*` temporaire, supprimé après usage) :
+  Plats principaux surgelés 64,8 %, Soupes et potages 19,4 %, Sauces et accompagnements 15,9 % —
+  somme exacte à 100 %.
+- Tests : 1 nouveau test e2e (`e2e/productivity-report-by-activity.spec.js`). **205/205 tests
+  unitaires inchangés** (logique dans `App.jsx`, pas le moteur — même patron que le reste de
+  `calculatedGeneralInfo`, jamais extrait en fonction pure testable isolément), **43/43 tests
+  e2e**, lint propre, `npx vite build` propre.
+
+**Phase 6 — terminée le 15/10** (6.1 simulateur de chocs, 6.2 volatilité, 6.3 productivité).
+
+## Phase 6.4 — Suppression de « Frais et revenus » (Paramètres) et de son influence sur le coût de revient — ✅ terminée le 18/10
+
+Retour utilisateur du 18/10 : la section « Frais et revenus » de Paramètres (période de référence,
+revenus totaux, % du menu analysé, méthode d'attribution, heures d'opération...) devait être
+déplacée/retirée, et ses données ne devaient plus influencer le coût de revient. Vérification
+méthodologique complète avant toute transformation (comme demandé), détaillée ci-dessous — un vrai
+bug a été trouvé en cours de route, pas seulement un déplacement de champs.
+
+**1. Période de référence** — déplacée telle quelle (aucune donnée perdue) tout en haut de l'onglet
+État des résultats, avant Revenus (`IncomeStatementTab.jsx`). L'assistant d'import de l'état des
+résultats (Phase 4.7) la détecte maintenant automatiquement depuis une colonne Date du fichier
+(`INCOME_STATEMENT_APP_FIELDS`, nouveau champ `date`), même patron que l'import de rapport de
+ventes (`App.jsx::handleSalesReportImport`) — bascule la période en « Personnalisée » avec les
+dates min/max du fichier, sans écraser une période déjà choisie si le fichier n'a pas de date
+reconnaissable (fichier structuré seulement ; un PDF textuel n'a pas de colonne par ligne).
+
+**2. `menuRevenuePercentage` — retiré, confirmé redondant (pas seulement déplacé)** : son rôle dans
+`calculateCosts.js` (réduire le bassin de frais indirects par un second %, dans les deux méthodes
+d'attribution) faisait DOUBLE EMPLOI avec la Phase 4.6 — le bassin Général y est déjà correctement
+scopé par la répartition Activité/Canal des Frais fixes avant même d'arriver dans ce calcul.
+Appliquer encore un % « part du menu analysé » par-dessus l'aurait réduit une seconde fois. Retiré
+des 3 points d'usage (`calculateCosts.js` lignes ~236/282/298 avant correction) et de
+`analysisData.js` (`globalBreakEven`, qui réduisait `totalIndirects` par ce même %).
+
+**3. `totalRevenue` — retiré comme intrant de coût, remplacé par le volume RÉEL par canal partout
+où c'était possible**, jamais par rien (jamais une estimation fabriquée — voir addendum du 19/10
+ci-dessous : une tentative de repli sur `totalRevenue` a été explorée puis explicitement rejetée,
+pas seulement laissée de côté) :
+   - `calculateCosts.js` : le repli de `portionsSold` (quand `fmt.indirectCosts.portionsSold`
+     n'est pas saisi) utilise maintenant `fmt.channelPrices[].volume` — la même donnée réelle que
+     `channelBreakdown` utilise déjà ailleurs dans le moteur.
+   - `App.jsx` (`calculatedGeneralInfo`) : la reconstruction `totalDirectLaborHoursNeeded` (qui
+     alimente `kitchenProductivity` et le rapport de productivité, Phase 6.3) utilise maintenant le
+     même volume réel par canal, plus `totalRevenue × menuRevenuePercentage / prix moyen pondéré`.
+   - `analysisData.js` : `menuRevenue`/`unitsSoldById` (utilisés par les KPIs pondérés, le rapport
+     d'achats, l'analyse ABC, le point mort global $, et la réconciliation réel/théorique) viennent
+     maintenant de `p.blended.totalVolume` (volume réel agrégé, déjà calculé pour la matrice BCG)
+     et de `Σ netPrice × volume` par canal — plus aucune lecture de `generalInfo.totalRevenue`.
+
+**4. Bug trouvé et corrigé en cours de vérification (pas qu'un simple retrait)** : un premier
+repli de `portionsSold` à **1 unité** (quand ni `portionsSold` ni volume réel par canal n'existent)
+produisait un coût indirect par portion délirant — tout le bassin divisé par une seule unité (ex.
+1 125 $/portion sur « Sauce à spaghetti maison » dans la démo, repéré en vérifiant contre le vrai
+rapport Par SKU). Corrigé : sans AUCUNE donnée réelle, `portionsSold` reste `null` et le coût
+indirect « ventes » de ce format reste absent (0 $), jamais une estimation fabriquée — même
+principe que `channelBreakdown` partout ailleurs dans le moteur. Un SKU encore en % manuel (jamais
+de volume réel saisi) affiche donc honnêtement 0 $ de frais fixes tant qu'aucune vente réelle n'y
+est rattachée, plutôt qu'un chiffre inventé.
+
+**5. `indirectCostMethod` (méthode d'attribution ventes/temps de MO)** — reste un intrant actif du
+moteur (aucune autre donnée ne peut le remplacer) : relocalisé dans État des résultats, à côté de
+la liste Frais fixes qu'il gouverne, plutôt que supprimé.
+
+**6. Champs devenus orphelins, section supprimée** : `period`/`startDate`/`endDate` (relocalisés,
+voir point 1), `totalRevenue`/`menuRevenuePercentage` (retirés, voir points 2-3),
+`totalIndirects`/`totalKitchenLaborCost` affichés en Paramètres (simples miroirs — la vraie donnée
+vit dans Frais fixes/Main-d'œuvre, déjà affichée là), `operationHours`/`operationCostPerHour`
+(jamais lus par le moteur de calcul, purement diagnostiques, sans autre utilité une fois la section
+retirée). La section `#tutorial-section-info-frais` est donc entièrement supprimée de
+`ProductInfo.jsx` — plus aucune donnée saisie là n'était connectée à quoi que ce soit après les
+points 1-5. Nettoyage en cascade : guide d'utilisation (`InstructionModal.jsx`), tutoriel
+(`AppDialogs.jsx`), rapports PDF/Excel (lignes Revenus Totaux/Heures d'opération/Coût horaire
+d'opération retirées, orphelines).
+- Tests : 209/209 tests unitaires (nouveaux : repli sur volume réel, cas totalement absent → 0 $,
+  priorité à `portionsSold` explicite — `calculateCosts.test.js` ; reconstruction par volume réel,
+  format sans volume → 0 — `analysisData.test.js`), 46/46 tests e2e (nouveaux :
+  `e2e/income-statement-period.spec.js` ×3 — période relocalisée, détection auto par import, bascule
+  en Personnalisée avec les bonnes dates — et re-vérification chiffre par chiffre de
+  `réconciliation réel/théorique` et `Par SKU : Général/Activité/Canal` contre les vraies données
+  démo recalculées), lint propre, `npx vite build` propre.
+
+**Addendum du 19/10 — tentative de repli sur `totalRevenue` EXPLORÉE PUIS REJETÉE (ne pas la
+retenter sans relire ce paragraphe) :** un premier retour utilisateur avait fait remarquer que le
+point 3 ci-dessus laissait un format sans volume réel par canal propre honnêtement absent (0 $ de
+frais indirects « ventes »), alors que le revenu TOTAL réel de l'entreprise (lignes de revenus
+réels de l'État des résultats) reste une donnée calculable même dans ce cas — ce qui semblait, à
+tort, être une lacune de rigueur comptable. Une hiérarchie à 3 niveaux a donc été implémentée
+(`portionsSold` saisi → volume réel par canal → reconstruit depuis `generalInfo.totalRevenue` ÷
+prix moyen pondéré × part du mix de vente), avec `generalInfo.totalRevenue` redevenu un champ DÉRIVÉ
+de `revenueLines` (même patron que `totalIndirects`).
+
+**Un second retour utilisateur a identifié le vrai problème, plus fondamental : ce repli mélangeait
+deux jeux de données que l'architecture de l'app garde délibérément indépendants.** Le moteur de
+coût de revient (théorique — modèle de recette : `prixVente`, `salesMix`, `fmt.channelPrices`) et
+l'État des résultats (réel — `revenueLines`, `expenseLines`) sont deux sources séparées PAR
+CONCEPTION, précisément pour que la Réconciliation réel/théorique (Phase 4.4, point 3 de
+04-Conception-Modele.md) ait un sens — elle existe pour MESURER l'écart entre ces deux sources, pas
+pour qu'une alimente discrètement l'autre. En repliant le volume théorique d'un SKU sans donnée de
+canal sur `generalInfo.totalRevenue` (réel), le théorique de ce SKU devenait partiellement composé
+du réel même auquel la réconciliation le compare — un écart artificiellement rétréci, sans gain de
+rigueur comptable réel : ce n'est pas qu'une « estimation » un peu moins précise, c'est une
+contamination d'une source de données par l'autre, qui masque exactement le signal que la
+réconciliation est censée révéler (une partie des ventes réelles n'a pas encore de volume saisi par
+canal). La propriété « 100 % du bassin de frais indirects doit être alloué » qui motivait
+l'addendum n'était d'ailleurs pas réellement en péril : elle porte sur le partage en DOLLARS du
+bassin (`allocatedIndirects = totalIndirects × salesMixPercent / totalActiveSalesMix`, calculé
+indépendamment de `portionsSold`), pas sur le TAUX par unité — un SKU sans volume réel ne peut
+légitimement pas afficher de coût PAR PORTION (on ne peut pas diviser par une quantité inconnue),
+exactement comme `channelBreakdown` omet un canal sans prix ou la matrice BCG exclut un SKU sans
+volume réel (principe déjà établi, voir CLAUDE.md) — ce n'était pas une incohérence à corriger.
+
+**Entièrement annulé** : les 3 points d'entrée (`calculateCosts.js`, `App.jsx::calculatedGeneralInfo`,
+`analysisData.js::unitsSoldById`/`menuRevenue`) sont revenus à la hiérarchie à 2 niveaux du point 3
+ci-dessus (`portionsSold` saisi → volume réel par canal → absent, jamais 1 unité, jamais
+`totalRevenue`) ; `generalInfo.totalRevenue` n'est plus dérivé de `revenueLines`
+(`App.jsx::handleUpdateRevenueLines` et `projectSerialization.js` retirés) — il n'a plus aucun
+lecteur dans le moteur de coût, exactement comme au point 3. Laissé en champ inerte dans la forme
+par défaut de `generalInfo` (même traitement que `menuRevenuePercentage`, point 2 ci-dessus — retirer
+sa migration/ses tests serait un nettoyage non lié à cette correction). Les tests et valeurs e2e du
+point 3 ci-dessus (209/209 unitaires, 46/46 e2e, dont `channel-filter-resume.spec.js` 0.83 $/2.63 $
+et `income-statement-params.spec.js` réconciliation à 75 366.10 $/+112.3 %) sont donc à nouveau les
+valeurs correctes et actuelles — re-confirmées propres (lint, `npx vitest run`, `npx playwright
+test`, `npx vite build`) après cette annulation.
+
+**Addendum du 19/10 (suite) — mise à jour du projet démo (`initialState.js`) et audit méthodologique
+complet contre l'app réellement affichée :**
+- Nettoyage de données/commentaires devenus faux après les Phases 4.1-6.4 : `demoRevenueLines` et
+  `demoDirectCostLines` étaient commentés « pas encore consommé(es) par le moteur » — faux depuis
+  les clés de répartition (Phase 4.5bis) et la Réconciliation réel/théorique (Phase 4.4), qui les
+  lisent activement. `generalInfo.totalRevenue` (160 000 $, champ d'affichage inerte — jamais lu par
+  le moteur de coût, voir addendum précédent) est maintenant calculé depuis `demoRevenueLines`
+  (`sumAmountsMap`), comme `totalIndirects` l'est déjà depuis `demoExpenseLines`, plutôt qu'un
+  chiffre recopié à la main qui dériverait silencieusement si la liste change. `operationHours`
+  (`getDefaultState`/`getEmptyState`) supprimé : plus aucun lecteur depuis la suppression de la
+  section « Frais et revenus » (Phase 6.4, point 6) — même sort que `operationCostPerHour`.
+- Audit méthodologique contre le projet démo réellement rendu (navigateur, pas seulement les
+  assertions e2e déjà en place) :
+  - Frais fixes : sous-total 28 000,00 $ ; somme des colonnes Général + 3 Activités + 3 Canaux =
+    28 000,00 $ (à l'arrondi) — le pool se réconcilie exactement à l'étape d'allocation (Phase 4.5).
+  - Réconciliation réel/théorique : 160 000 $/75 366,10 $ (+112,3 %) Revenus, 100 000 $/72 960,44 $
+    (+37,1 %) Charges directes, 60 000 $/2 405,66 $ (+2394,1 %) Marge — valeurs identiques à celles
+    déjà confirmées (voir addendum précédent), donc stables après la mise à jour des données démo.
+  - Par SKU, « Sauce à spaghetti maison » (le seul format du menu démo sans AUCUN volume réel saisi
+    sur aucun canal — volontairement, voir `sales-mix-units-coexistence.spec.js`) : Frais fixes —
+    Général/Activité/Canal affichent honnêtement 0,00 $ sur les 3 canaux (jamais une estimation),
+    Point mort affiche N/A sur les 3 canaux, alors que son coût matière/emballage/MO (2,26 $/1,34 $/
+    3,98 $) reste pleinement calculé — seule la part « ventes » du coût indirect, qui a besoin d'un
+    volume pour devenir un taux, est absente.
+  - Matrice stratégique (BCG, section « Analyse stratégique et point mort global ») : 0 occurrence
+    de « Sauce à spaghetti maison » — exclue comme prévu (décisions du 06-07/10). La matrice séparée
+    « Marges nettes des SKUs par canaux » (basée sur le prix net, pas le volume) l'inclut bien, elle
+    — comportement distinct et correct, pas une incohérence.
+- Tests : 209/209 unitaires, 46/46 e2e, lint et `npx vite build` propres après ce nettoyage (aucune
+  valeur numérique n'a changé — la mise à jour ne touchait que des commentaires et le mode de calcul
+  d'un champ d'affichage inerte, jamais lu par le moteur).
+
+**Correction (retour utilisateur) — PDS manquant sur chaque format/SKU démo** : l'audit ci-dessus
+avait vérifié les calculs mais pas la complétude des données saisies elles-mêmes — aucun format du
+projet démo n'avait de PDS (Prix de Détail Suggéré, Phase 3.2bis), alors que `demoChannelPriceSet`
+dérive déjà les 3 prix nets de chaque format À PARTIR d'un prix tablette identique à ce que le PDS
+représente (vérifié formule par formule contre `computeNetPriceFromPds`/`salesChannelCascade.js` :
+épiceries/grandes surfaces reproduisent exactement ce que le PDS donnerait). Cette valeur existait
+donc déjà implicitement dans les données, simplement jamais exposée comme champ `pds` du format.
+Corrigé par un nouveau petit assembleur `demoFormatPricing(retailPrice, opts)` qui regroupe `{ pds:
+retailPrice, channelPrices: demoChannelPriceSet(retailPrice, opts) }` — aucune valeur de prix net
+existante n'a changé, seul le champ `pds` a été ajouté (`...demoFormatPricing(...)` remplace
+`channelPrices: demoChannelPriceSet(...)` aux 12 formats vendus de la démo). Exception documentée :
+le canal « Vente directe » (sans maillon) donnerait normalement prix net = PDS exactement, mais la
+démo lui applique volontairement un rabais de 10 % depuis l'origine (`directRatio`, antérieur au
+PDS) — cliquer sur « Générer » pour ce canal précis écraserait donc ce rabais, comme pour tout
+format réel, un geste volontaire de l'utilisateur jamais appliqué automatiquement. `format-pds-
+generate-net-price.spec.js` ajusté : vidait auparavant un PDS absent par défaut pour tester l'état
+désactivé du bouton « Générer » — vide maintenant explicitement le champ d'un format qui EN a un,
+pour tester la même chose sans dépendre d'une case vide accidentelle des données démo. Vérifié
+ensuite dans le navigateur (script Playwright temporaire) : les 12 formats vendus affichent tous un
+PDS cohérent avec leur prix net déjà saisi ; seul « Bouillon de poulet maison » (sous-recette
+`onMenu: false`, jamais vendue sur aucun canal) reste sans PDS — correct, pas un oubli. 209/209
+unitaires, 46/46 e2e (après correction du test ci-dessus), lint et `npx vite build` propres.
+
 ## Phase 7 — Revalidation UI/UX transversale et consolidation du guide
 Phase dédiée, distincte du QA technique de la Phase 6, une fois toutes les fonctionnalités en
 place :
@@ -1471,3 +2526,36 @@ place :
   s'assurer que le guide explique le pourquoi (pas seulement où cliquer) et couvre l'ensemble des
   nouvelles fonctionnalités.
 - Rapport final de fin de projet (programmation, UI, UX, méthodologie).
+
+---
+
+## Corrections UX du 15/10 (avant Phase 6/7)
+Trois demandes ponctuelles de l'utilisateur, faites exprès avant de démarrer la Phase 6/7 (la
+Phase 7 en particulier suppose « toutes les fonctionnalités en place » — les faire maintenant évite
+de repasser sur ces écrans après coup) :
+
+1. **Packaging : outil « Comparer un emballage »** — dupliqué depuis `IngredientsTab.jsx` (même
+   logique exacte : filtre par nom, prix unitaire corrigé du taux de perte = « prix efficace »,
+   meilleur prix en évidence). `basePackaging` partage déjà la même forme que `baseIngredients`
+   (nom, fournisseur, prix unitaire, taux de perte, unité) — aucune adaptation de données requise.
+2. **Renommage de l'onglet « Recette & Calcul » → « Recettes et produits »** — bouton d'onglet
+   (`App.jsx`), guide d'utilisation (`InstructionModal.jsx`, TOC + corps), tutoriel
+   (`AppDialogs.jsx`), info-bulle d'édition de SKU (`SummaryTable.jsx`). Le titre interne de la page
+   (« Recette et calcul pour : [sélecteur] », dans `RecipeCalculator.jsx`) n'a pas été touché —
+   demande explicitement limitée au titre de l'ONGLET.
+3. **Produits et SKUs : le PDS change de nature** — retour utilisateur direct sur la Phase 3.2.
+   Avant : un « Prix de détail suggéré » calculé automatiquement PAR CANAL à partir du prix net
+   (cascade descendante). Maintenant : le PDS est saisi manuellement UNE SEULE FOIS par format
+   (nouvelle colonne, à droite du SKU — le prix tablette visé au consommateur ne varie
+   généralement pas par canal, contrairement au prix net producteur) ; chaque canal propose un
+   bouton **« Générer »** qui calcule son prix net en REMONTANT sa cascade de maillons à partir de
+   ce PDS (`computeNetPriceFromPds`, direction inverse de l'ancienne implémentation — le moteur
+   `computeSalesChannelCascade` supportait déjà nativement l'ancrage à n'importe quel maillon, donc
+   aucun changement dans `engine/salesChannelCascade.js`). Le prix net généré reste ensuite
+   librement modifiable à la main — le bouton ne fige rien. Les champs `cp.pds`/`cp.pdsManual`
+   (par canal) disparaissent ; un ancien projet sauvegardé qui les contiendrait encore les ignore
+   simplement (orphelins inertes, aucune migration nécessaire).
+- Tests : 1 nouveau test e2e (`e2e/format-pds-generate-net-price.spec.js`, valeurs attendues
+  dérivées des % réels des canaux du projet démo), `e2e/sales-mix-units-coexistence.spec.js`
+  corrigé (décalage d'index d'un `input[inputmode="decimal"]` causé par la nouvelle colonne PDS).
+  **189/189 tests unitaires inchangés**, **40/40 tests e2e**, lint propre, `npx vite build` propre.

@@ -374,7 +374,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                     <h2 className="text-lg font-semibold text-gray-800">Unités de mesure</h2>
                     <p className="text-sm text-gray-600">Choisissez les unités offertes dans les listes déroulantes (ingrédients, emballages, formats).</p>
                 </div>
-                <button onClick={() => setIsUnitsModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
+                <button onClick={() => setIsUnitsModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-500 hover:bg-green-600 whitespace-nowrap">
                     Gérer les unités de mesure
                 </button>
             </div>

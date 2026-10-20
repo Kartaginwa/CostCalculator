@@ -118,6 +118,19 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
         return (before != null && after != null) ? after - before : null;
     };
 
+    // Total $ de TOUS les maillons de ce canal (somme des deltas ci-dessus) : PDS moins le prix
+    // net que produirait la cascade complète — un canal sans maillon (ex. vente directe) donne
+    // bien 0 $, une vraie valeur (aucun maillon à additionner), jamais confondue avec un PDS absent.
+    const getTotalLinkDelta = (cb) => {
+        if (!(pds > 0)) return null;
+        const links = salesChannels.find(c => c.id === cb.channelId)?.links || [];
+        if (links.length === 0) return 0;
+        const prices = computeSalesChannelCascade({ links, anchorIndex: links.length, anchorValue: pds });
+        const first = prices[0];
+        const last = prices[links.length];
+        return (first != null && last != null) ? last - first : null;
+    };
+
     return (
         <div>
             {/* Coût de production : fixe, peu importe le canal — jamais de frais indirects ici. */}
@@ -176,11 +189,19 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                                     );
                                 })} />
                             ))}
+                            <BySkuRow label="Frais de mise en marché totaux par unité" tooltip="La somme de tous les maillons ci-dessus pour ce canal — PDS moins le prix net QUE PRODUIRAIT la cascade de maillons de ce canal (bouton « Générer » de Produits et SKUs), jamais le prix net réellement saisi." emphasis render={channelBreakdown.map(cb => {
+                                const totalDelta = getTotalLinkDelta(cb);
+                                return (
+                                    <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">
+                                        {totalDelta != null ? `${formatCurrency(totalDelta)} $` : <span className="text-gray-400 font-normal" title="PDS non saisi pour ce format">—</span>}
+                                    </td>
+                                );
+                            })} />
+
+                            <BySkuSectionHeader label="Marge brute" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Prix de vente" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-medium text-gray-800">{formatCurrency(cb.netPrice)} $</td>
                             ))} />
-
-                            <BySkuSectionHeader label="Marge brute" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Bénéfice brut" tooltip="Prix net moins le coût de production. Avant frais fixes." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatCurrency(cb.margeBruteDollar)} $</td>
                             ))} />

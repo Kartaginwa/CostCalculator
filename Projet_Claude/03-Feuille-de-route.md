@@ -2968,3 +2968,25 @@ dans `engine/analysisData.js`, au cas où une vue future la réutiliserait.
   activité ET canal de Bénéfice net vides et sans couleur ; arrondis des coins corrigés — le
   Montant de Bénéfice net devient le coin arrondi de droite puisqu'aucune colonne colorée ne le
   suit plus), lint et `npx vite build` propres.
+
+## Correction du 20/10 (suite 4) : Prix de vente déplacé dans « Marge brute », total des maillons ajouté
+
+Deux retours utilisateur sur la section « PDS et frais de mise en marché » du rapport Par SKU :
+
+1. **« Prix de vente » déplacé** de la fin de la section « PDS et frais de mise en marché » vers
+   le début de la section « Marge brute » qui suit (juste avant « Bénéfice brut ») — la section
+   PDS se termine maintenant directement sur le total des maillons (point 2), sans répéter une
+   valeur qui appartient conceptuellement au calcul de marge, pas à la décomposition du PDS.
+2. **Nouvelle ligne « Frais de mise en marché totaux par unité »**, juste sous le dernier maillon
+   — la somme de tous les maillons de ce canal (PDS moins le prix net que produirait la cascade
+   complète, `getTotalLinkDelta`, même calcul que `getLinkDelta` mais sur l'écart PDS/prix net
+   global plutôt que maillon par maillon). Un canal sans maillon (Vente directe) affiche 0,00 $ —
+   une vraie valeur (aucun maillon à additionner), jamais confondue avec un PDS non saisi (qui,
+   lui, affiche toujours « — »). Fond bleuté (`emphasis`, `bg-indigo-50`), même patron que « Frais
+   fixes totaux par unité » et « Point mort » plus bas dans le même tableau.
+- Fichiers touchés : `src/features/SummaryTable.jsx` (`BySkuWaterfall` : réordonnancement,
+  `getTotalLinkDelta`, nouvelle ligne).
+- Tests : 225/225 unitaires (inchangés, purement UI), 46/46 e2e, vérification fonctionnelle par
+  script Playwright temporaire (ordre des lignes confirmé ; total des maillons 0,00 $/2,55 $/
+  3,34 $ pour Vente directe/Épiceries/Grandes surfaces — 3,34 $ retrouvant exactement la somme de
+  ses 2 maillons, 0,62 $ + 2,72 $ ; fond `bg-indigo-50` confirmé), lint et `npx vite build` propres.

@@ -2756,3 +2756,23 @@ passe de ~150 px à ~50 px dans l'écran principal, peu importe son nombre de ma
 - Tests : 209/209 unitaires, 46/46 e2e, vérification fonctionnelle par script Playwright temporaire
   (point mort affiché, et baisse bien après une hausse du prix net du canal), lint et
   `npx vite build` propres.
+
+**Correction du même jour — le point mort s'effaçait pendant la simulation de prix.** Retour
+utilisateur : les autres tuiles du récapitulatif (Coût Matière %, Marge de contribution, Marge
+brute, Prix de Vente) affichent déjà un comparatif réel/simulé pendant une simulation
+(`renderComparison`, `RecipeCalculator.jsx`) — le point mort, lui, disparaissait entièrement
+(`{!isSimulating && (...)}`). Corrigé en lui appliquant le même comparatif, PAS en recalculant
+l'allocation des frais fixes (Général/Activité/Canal, Phase 4.6) : `allocatedIndirects` (la part $
+allouée à ce format) ne dépend pas du prix, donc identique au prix réel ou simulé — déduite du
+canal PRINCIPAL déjà calculé par `analysisData` (`margeBruteDollar × breakEvenUnits`, en inversant
+la formule existante), puis seule la division finale est refaite avec la marge brute du prix
+simulé (`Math.ceil(allocatedIndirects ÷ margeBruteDollar simulée)`) — exactement la même formule
+que `computeChannelBreakdown` utilise déjà pour le prix réel, appliquée localement au prix simulé
+seulement (jamais une ré-implémentation de l'allocation elle-même). Basé sur le canal PRINCIPAL
+pendant la simulation (comme `costs`/`simulatedCosts`), puisque le sélecteur de canal reste masqué
+à ce moment-là — cohérent avec le reste du récapitulatif. `renderComparison(..., higherIsBetter:
+false)` colore correctement la variation : moins d'unités à vendre après une hausse de prix
+s'affiche en vert. Guide d'utilisation mis à jour.
+- Tests : 209/209 unitaires, 46/46 e2e, vérification visuelle par script Playwright temporaire
+  (point mort reste affiché en mode simulation, comparatif correctement coloré), lint et
+  `npx vite build` propres.

@@ -167,6 +167,24 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
     const analysisChannelEntry = analysisFormatEntry?.channelBreakdown?.find(cb => cb.channelId === selectedChannelData?.channelId);
     const breakEvenUnits = analysisChannelEntry?.breakEvenUnits ?? null;
 
+    // Point mort en mode simulation (retour utilisateur du 19/10 : ne doit plus s'effacer pendant
+    // la simulation, comme les autres tuiles). `allocatedIndirects` (la part $ des frais fixes
+    // allouée à CE format) ne dépend pas du prix — identique au prix réel ou simulé — donc on la
+    // déduit du canal PRINCIPAL déjà calculé par analysisData (même baseline que `costs`/
+    // `simulatedCosts`, qui ne portent eux-mêmes que sur le canal principal pendant une
+    // simulation — voir plus bas, sélecteur de canal masqué). Pas de ré-implémentation de
+    // l'allocation elle-même (Général/Activité/Canal, Phase 4.6) : seule la division finale
+    // (allocatedIndirects ÷ marge brute du prix simulé) est recalculée, exactement comme
+    // `computeChannelBreakdown` le fait déjà pour le prix réel.
+    const primaryAnalysisChannelEntry = analysisFormatEntry?.channelBreakdown?.[0] || null;
+    const realBreakEvenUnitsForSim = primaryAnalysisChannelEntry?.breakEvenUnits ?? null;
+    const impliedAllocatedIndirects = (primaryAnalysisChannelEntry && realBreakEvenUnitsForSim != null)
+        ? primaryAnalysisChannelEntry.margeBruteDollar * realBreakEvenUnitsForSim
+        : null;
+    const simulatedBreakEvenUnits = (simulatedCosts && impliedAllocatedIndirects != null && simulatedCosts.margeBruteDollar > 0)
+        ? Math.ceil(impliedAllocatedIndirects / simulatedCosts.margeBruteDollar)
+        : null;
+
     if (!product || !format) return <div className="text-center p-8">Veuillez d'abord sélectionner ou ajouter un plat.</div>;
 
     const handleDragStart = (e, index, type) => {
@@ -1436,22 +1454,28 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     </div>
                 </div>
                 {/* Point mort réintroduit le 19/10, en bas de la cascade — valeur déjà calculée par
-                    analysisData (voir plus haut), jamais recalculée ici. Masqué pendant une
-                    simulation de prix, comme le sélecteur de canal : le point mort affiché reste
-                    celui du prix réel, pas une projection sur le prix simulé. */}
-                {!isSimulating && (
-                    <div className="flex justify-center mt-4">
-                        <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center">
-                            <div className="text-sm text-gray-500 flex items-center justify-center">
-                                Point Mort
-                                <Tooltip text="Unités à vendre dans ce canal pour couvrir la part des frais fixes allouée à ce SKU — déjà calculé pour le Rapport (Par SKU), simplement affiché ici." />
-                            </div>
-                            <p className="text-xl font-bold text-gray-800">
-                                {breakEvenUnits != null ? `${breakEvenUnits} unités` : 'N/A'}
-                            </p>
+                    analysisData (voir plus haut), jamais recalculée ici. Retour utilisateur :
+                    reste affiché pendant une simulation de prix (ne s'efface plus), avec le même
+                    comparatif réel/simulé que les autres tuiles — basé sur le canal PRINCIPAL
+                    pendant la simulation, comme `costs`/`simulatedCosts` eux-mêmes (le sélecteur
+                    de canal reste masqué pendant une simulation). */}
+                <div className="flex justify-center mt-4">
+                    <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center">
+                        <div className="text-sm text-gray-500 flex items-center justify-center">
+                            Point Mort
+                            <Tooltip text="Unités à vendre dans ce canal pour couvrir la part des frais fixes allouée à ce SKU — déjà calculé pour le Rapport (Par SKU), simplement affiché ici. Pendant une simulation, reflète le canal principal (comme le reste du récapitulatif)." />
                         </div>
+                        <p className="text-xl font-bold text-gray-800">
+                            {simulatedCosts ? (
+                                realBreakEvenUnitsForSim != null && simulatedBreakEvenUnits != null
+                                    ? renderComparison(realBreakEvenUnitsForSim, simulatedBreakEvenUnits, (v) => v, false, ' unités')
+                                    : (simulatedBreakEvenUnits != null ? `${simulatedBreakEvenUnits} unités` : 'N/A')
+                            ) : (
+                                breakEvenUnits != null ? `${breakEvenUnits} unités` : 'N/A'
+                            )}
+                        </p>
                     </div>
-                )}
+                </div>
                 <div className="mt-6 pt-4 border-t">
                     {!isSimulating ? (
                         <div className="text-center">

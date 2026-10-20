@@ -739,7 +739,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                 <td colSpan={7} className="px-4 py-3 bg-gray-50">
                                                     <div className="max-w-3xl">
                                                     {channelPrices.length === 0 && (
-                                                        <p className="text-sm text-gray-500">Ce format n'est rattaché à aucun canal de vente — il n'apparaîtra dans aucune analyse de marge tant qu'aucun canal n'est ajouté.</p>
+                                                        <p className="text-xs text-gray-500">Ce format n'est rattaché à aucun canal de vente — il n'apparaîtra dans aucune analyse de marge tant qu'aucun canal n'est ajouté.</p>
                                                     )}
                                                     {channelPrices.length > 0 && (
                                                         <div className="flex items-center gap-2 px-2 pb-1">
@@ -769,7 +769,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                     <select
                                                                         value={cp.channelId}
                                                                         onChange={(e) => handleChannelPriceFieldChange(productIndex, formatIndex, format, cp.id, 'channelId', e.target.value)}
-                                                                        className="flex-1 p-1 border rounded text-sm border-gray-300"
+                                                                        className="flex-1 p-1 border rounded text-xs border-gray-300"
                                                                     >
                                                                         {salesChannels.map(c => <option key={c.id} value={c.id}>{c.name || 'Sans nom'}</option>)}
                                                                     </select>
@@ -780,7 +780,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                             value={cp.netPrice}
                                                                             onChange={(e) => handleChannelPriceFieldChange(productIndex, formatIndex, format, cp.id, 'netPrice', e.target.value)}
                                                                             placeholder="Prix net $"
-                                                                            className={`w-24 p-1 border rounded text-right text-sm ${!isValidNumber(cp.netPrice) ? 'border-red-500' : 'border-gray-300'}`}
+                                                                            className={`w-24 p-1 border rounded text-right text-xs ${!isValidNumber(cp.netPrice) ? 'border-red-500' : 'border-gray-300'}`}
                                                                         />
                                                                     </div>
                                                                     <div className="w-24 flex justify-end">
@@ -802,7 +802,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                             value={cp.volume}
                                                                             onChange={(e) => handleChannelPriceFieldChange(productIndex, formatIndex, format, cp.id, 'volume', e.target.value)}
                                                                             placeholder="Volume (u.)"
-                                                                            className={`w-28 p-1 border rounded text-right text-sm ${!isValidNumber(cp.volume) ? 'border-red-500' : 'border-gray-300'}`}
+                                                                            className={`w-28 p-1 border rounded text-right text-xs ${!isValidNumber(cp.volume) ? 'border-red-500' : 'border-gray-300'}`}
                                                                         />
                                                                     </div>
                                                                     {channel?.links?.length > 0 && (

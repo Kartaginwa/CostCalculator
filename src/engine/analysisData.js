@@ -473,13 +473,19 @@ export function computeDirectCostLineAllocations(directCostLines, productsWithCo
 // MO déjà présent dans l'app (« heures attendues » vs « heures réelles »), pas un concept étranger.
 // `menuRevenue`/`unitsSoldById` (volumes reconstruits à partir du mix des ventes) viennent de
 // `computeAnalysisData`, jamais redérivés ici en double.
-// N'inclut PAS de taux de frais fixes par unité : les frais fixes ne se divisent jamais par un total
+// N'inclut PAS de taux de frais fixes PAR UNITÉ : les frais fixes ne se divisent jamais par un total
 // d'unités à plat (correction du 13/10, suite à un retour utilisateur) — leur conversion en taux
 // (Phase 4.6) est TOUJOURS par contenant (Général/Activité/Canal, Phase 4.5), par PRODUIT, calculée
 // dans `calculateCosts.js` et affichée dans le rapport par SKU — jamais une seule moyenne globale
-// dans cet onglet. Voir `04-Conception-Modele.md`, section 1bis.
+// dans cet onglet. Voir `04-Conception-Modele.md`, section 1bis. La ligne « Bénéfice net »
+// (20/10) déroge volontairement à ce principe : elle soustrait le TOTAL $ des frais fixes
+// (`generalInfo.totalIndirects`, déjà affiché en sous-total du tableau Dépenses ci-dessus) — pas
+// une nouvelle moyenne par unité. Un seul total existe dans l'app (les frais fixes sont saisis une
+// fois, jamais modélisés par produit) : il est donc soustrait identiquement du réel ET du
+// théorique, l'écart entre les deux colonnes ne venant alors que des revenus/charges directes
+// ci-dessus, jamais de ce total commun.
 export function computeRealVsTheoreticalReconciliation({
-    totalRevenue, totalDirectCosts, activeProducts, unitsSoldById, menuRevenue,
+    totalRevenue, totalDirectCosts, activeProducts, unitsSoldById, menuRevenue, totalIndirects,
 }) {
     const theoreticalDirectCosts = (activeProducts || []).reduce(
         (sum, p) => sum + (unitsSoldById?.[p.id] || 0) * parseLocaleNumber(p.costs?.totalDirectCostPerPortion),
@@ -496,10 +502,15 @@ export function computeRealVsTheoreticalReconciliation({
         diffPercent: theoretical !== 0 ? (real - theoretical) / theoretical : null,
     });
 
+    const grossProfitReal = totalRevenue - totalDirectCosts;
+    const grossProfitTheoretical = menuRevenue - theoreticalDirectCosts;
+    const indirects = parseLocaleNumber(totalIndirects);
+
     const rows = [
         makeRow('Revenus', totalRevenue, menuRevenue),
         makeRow('Charges directes', totalDirectCosts, theoreticalDirectCosts),
-        makeRow('Marge', totalRevenue - totalDirectCosts, menuRevenue - theoreticalDirectCosts),
+        makeRow('Bénéfice brut', grossProfitReal, grossProfitTheoretical),
+        makeRow('Bénéfice net', grossProfitReal - indirects, grossProfitTheoretical - indirects),
     ];
 
     return { rows };

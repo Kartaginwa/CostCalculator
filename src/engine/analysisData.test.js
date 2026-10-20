@@ -738,26 +738,37 @@ describe('computeRealVsTheoreticalReconciliation — réconciliation réel/théo
     ];
     const unitsSoldById = { p1: 100, p2: 50 }; // théorique : 100 unités à 4$ + 50 à 2$ = 500$
 
-    it('compare Revenus/Charges directes/Marge réels au théorique du modèle de recettes', () => {
+    it('compare Revenus/Charges directes/Bénéfice brut/Bénéfice net réels au théorique du modèle de recettes', () => {
         const result = computeRealVsTheoreticalReconciliation({
             totalRevenue: 1200, totalDirectCosts: 450,
-            activeProducts, unitsSoldById, menuRevenue: 1000,
+            activeProducts, unitsSoldById, menuRevenue: 1000, totalIndirects: 100,
         });
         expect(result.rows).toEqual([
             { label: 'Revenus', real: 1200, theoretical: 1000, diff: 200, diffPercent: 200 / 1000 },
             { label: 'Charges directes', real: 450, theoretical: 500, diff: -50, diffPercent: -50 / 500 },
-            { label: 'Marge', real: 750, theoretical: 500, diff: 250, diffPercent: 250 / 500 },
+            { label: 'Bénéfice brut', real: 750, theoretical: 500, diff: 250, diffPercent: 250 / 500 },
+            // Même total de frais fixes (100) soustrait du réel et du théorique — l'écart ne vient
+            // que du Bénéfice brut ci-dessus, jamais de ce total commun.
+            { label: 'Bénéfice net', real: 650, theoretical: 400, diff: 250, diffPercent: 250 / 400 },
         ]);
     });
 
     it("diffPercent absent (pas 0 %) quand le théorique d'une ligne est nul — jamais une précision inventée", () => {
         const result = computeRealVsTheoreticalReconciliation({
             totalRevenue: 1200, totalDirectCosts: 450,
-            activeProducts: [], unitsSoldById: {}, menuRevenue: 0,
+            activeProducts: [], unitsSoldById: {}, menuRevenue: 0, totalIndirects: 100,
         });
         expect(result.rows[0]).toEqual({ label: 'Revenus', real: 1200, theoretical: 0, diff: 1200, diffPercent: null });
-        // Charges directes théoriques nulles ici (aucun produit actif) → Marge théorique = 0 aussi.
+        // Charges directes théoriques nulles ici (aucun produit actif) → Bénéfice brut théorique = 0 aussi.
         expect(result.rows[2].diffPercent).toBeNull();
+    });
+
+    it('sans frais fixes (totalIndirects absent), Bénéfice net égale Bénéfice brut', () => {
+        const result = computeRealVsTheoreticalReconciliation({
+            totalRevenue: 1200, totalDirectCosts: 450,
+            activeProducts, unitsSoldById, menuRevenue: 1000,
+        });
+        expect(result.rows[3]).toEqual({ label: 'Bénéfice net', real: 750, theoretical: 500, diff: 250, diffPercent: 250 / 500 });
     });
 });
 

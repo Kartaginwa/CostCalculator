@@ -39,11 +39,13 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
 // (couleurs de marge, info-bulles, mise en évidence du point mort). La ventilation des charges
 // fixes par activité de production ET par canal (Général/Activité/Canal, chacun avec son propre
 // driver choisi dans Paramètres) vient de la Phase 4.6 — voir calculateCosts.js/analysisData.js.
-// Un groupe du chiffrier original n'est toujours pas repris : « Frais de mise en marché » (frais de
-// courtage/distribution/facturation, traités à part des charges fixes chez SymbiOse) ; les frais
-// d'expédition, eux, restent absorbés dans les frais fixes plutôt que traités à part. Le coût de
-// production ne varie jamais par canal — affiché une seule fois, au-dessus de la grille, plutôt
-// que répété colonne par colonne.
+// « Frais de mise en marché » (20/10, retour utilisateur) : chez SymbiOse, trois lignes détaillées
+// (courtage, distribution, facturation) ; notre modèle de cascade de maillons (Canaux de vente) ne
+// les détaille pas séparément — affiché ici comme un seul total déjà implicite dans la cascade :
+// PDS moins Prix de vente (= tout ce que les maillons déduisent avant le prix net producteur).
+// Les frais d'expédition, eux, restent absorbés dans les frais fixes plutôt que traités à part. Le
+// coût de production ne varie jamais par canal — affiché une seule fois, au-dessus de la grille,
+// plutôt que répété colonne par colonne.
 const BySkuRow = ({ label, tooltip, render, emphasis }) => (
     <tr className={emphasis ? 'bg-indigo-50' : ''}>
         <th className="px-4 py-2.5 text-left text-sm font-medium text-gray-600 sticky left-0 bg-inherit whitespace-nowrap">
@@ -119,7 +121,23 @@ const BySkuWaterfall = ({ row, productionActivities = [] }) => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             <BySkuSectionHeader label="Revenu et marge brute" colSpan={channelBreakdown.length + 1} />
-                            <BySkuRow label="Prix net" render={channelBreakdown.map(cb => (
+                            <BySkuRow label="PDS" tooltip="Prix de détail suggéré au consommateur pour ce format — une seule valeur, la même pour tous les canaux (saisie dans Produits et SKUs)." render={channelBreakdown.map(cb => {
+                                const pds = parseLocaleNumber(row.format?.pds);
+                                return (
+                                    <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
+                                        {pds > 0 ? `${formatCurrency(pds)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
+                                    </td>
+                                );
+                            })} />
+                            <BySkuRow label="Frais de mise en marché" tooltip="Le coût total des maillons de ce canal (courtage, distribution, marge du détaillant, etc.) entre le PDS et le prix net — PDS moins prix de vente." render={channelBreakdown.map(cb => {
+                                const pds = parseLocaleNumber(row.format?.pds);
+                                return (
+                                    <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
+                                        {pds > 0 ? `${formatCurrency(pds - cb.netPrice)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
+                                    </td>
+                                );
+                            })} />
+                            <BySkuRow label="Prix de vente" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-medium text-gray-800">{formatCurrency(cb.netPrice)} $</td>
                             ))} />
                             <BySkuRow label="Bénéfice brut" tooltip="Prix net moins le coût de production. Avant frais fixes." render={channelBreakdown.map(cb => (
@@ -155,6 +173,21 @@ const BySkuWaterfall = ({ row, productionActivities = [] }) => {
                             ))} />
 
                             <BySkuSectionHeader label="Seuil de rentabilité par canal de vente" colSpan={channelBreakdown.length + 1} />
+                            <BySkuRow label="Revenu total" tooltip="Prix de vente × volume réel vendu dans ce canal (saisi dans Produits et SKUs)." render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
+                                    {cb.volume > 0 ? `${formatCurrency(cb.netPrice * cb.volume)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                </td>
+                            ))} />
+                            <BySkuRow label="Frais totaux" tooltip="Coût net par unité (production + frais fixes alloués) × volume réel vendu dans ce canal." render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
+                                    {cb.volume > 0 ? `${formatCurrency((cb.netPrice - cb.margeNetteDollar) * cb.volume)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                </td>
+                            ))} />
+                            <BySkuRow label="Bénéfices / Pertes" tooltip="Revenu total moins frais totaux — le profit réel dans ce canal, au volume réellement vendu." emphasis render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold" style={cb.volume > 0 ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
+                                    {cb.volume > 0 ? `${formatCurrency(cb.margeNetteDollar * cb.volume)} $` : <span className="text-gray-400 font-normal" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                </td>
+                            ))} />
                             <BySkuRow label="Point mort" tooltip="Unités à vendre dans ce canal pour couvrir la part des frais fixes allouée à ce SKU." emphasis render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold text-indigo-700">
                                     {cb.breakEvenUnits != null ? `${cb.breakEvenUnits} unités` : 'N/A'}

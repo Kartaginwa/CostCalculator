@@ -232,10 +232,16 @@ test("réconciliation réel/théorique dans l'onglet État des résultats (Phase
     await expect(directCostsRow.getByText('100 000.00 $', { exact: true })).toBeVisible();
     await expect(directCostsRow.getByText('72 960.44 $', { exact: true })).toBeVisible();
 
-    // Marge = Revenus - Charges directes, des deux côtés (réel ET théorique).
-    const margeRow = section.locator('tbody tr', { hasText: 'Marge' });
-    await expect(margeRow.getByText('60 000.00 $', { exact: true })).toBeVisible();
-    await expect(margeRow.getByText('2 405.66 $', { exact: true })).toBeVisible();
+    // Bénéfice brut = Revenus - Charges directes, des deux côtés (réel ET théorique).
+    const grossProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice brut' });
+    await expect(grossProfitRow.getByText('60 000.00 $', { exact: true })).toBeVisible();
+    await expect(grossProfitRow.getByText('2 405.66 $', { exact: true })).toBeVisible();
+
+    // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo), même total
+    // soustrait des deux côtés.
+    const netProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice net' });
+    await expect(netProfitRow.getByText('32 000.00 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('-25 594.34 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

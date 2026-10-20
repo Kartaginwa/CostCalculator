@@ -545,9 +545,9 @@ export const IncomeStatementTab = () => {
         () => computeRealVsTheoreticalReconciliation({
             totalRevenue, totalDirectCosts,
             activeProducts: analysisData.activeProducts, unitsSoldById: analysisData.unitsSoldById,
-            menuRevenue: analysisData.menuRevenue,
+            menuRevenue: analysisData.menuRevenue, totalIndirects: generalInfo.totalIndirects,
         }),
-        [totalRevenue, totalDirectCosts, analysisData.activeProducts, analysisData.unitsSoldById, analysisData.menuRevenue]
+        [totalRevenue, totalDirectCosts, analysisData.activeProducts, analysisData.unitsSoldById, analysisData.menuRevenue, generalInfo.totalIndirects]
     );
 
     return (
@@ -1221,7 +1221,7 @@ export const IncomeStatementTab = () => {
                                 <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">
                                     <span className="flex items-center justify-center">
                                         Poste
-                                        <Tooltip text="Marge = Revenus moins Charges directes (avant frais fixes) — reprend les totaux des tableaux ci-dessus, pas une donnée saisie séparément." />
+                                        <Tooltip text="Bénéfice brut = Revenus moins Charges directes (avant frais fixes). Bénéfice net = Bénéfice brut moins le total des frais fixes (Dépenses ci-dessus) — ce total n'ayant qu'une seule valeur dans l'app, il est soustrait identiquement du réel et du théorique. Toutes ces lignes reprennent les totaux des tableaux ci-dessus, jamais une donnée saisie séparément." />
                                     </span>
                                 </th>
                                 <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">
@@ -1252,7 +1252,7 @@ export const IncomeStatementTab = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {reconciliation.rows.map((row) => {
-                                const isMarge = row.label === 'Marge';
+                                const isMarge = row.label === 'Bénéfice net';
                                 return (
                                     <tr key={row.label} className={isMarge ? 'font-bold border-t-2 border-gray-300' : ''}>
                                         <td className="px-4 py-2">{row.label}</td>

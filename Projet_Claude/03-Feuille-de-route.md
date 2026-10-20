@@ -2830,3 +2830,40 @@ production.
   (activation de « lb »/« douzaine » propagée à Ingrédients/Packaging/Produits et SKUs/Recette &
   Calcul ; désactivation d'une unité déjà utilisée par une donnée existante confirmée sans casse du
   select correspondant), lint et `npx vite build` propres.
+
+## Restructuration du rapport Par SKU et ajout du Bénéfice brut/net (20/10)
+
+Deux retours utilisateur distincts, traités ensemble :
+
+1. **Rapport → Par SKU, section « Revenu et marge brute »** : l'utilisateur voulait retrouver la
+   structure du chiffrier SymbiOse (`Rapport - Coût Revient unit.`, confirmé par lecture directe du
+   fichier `Inspiration/Coût de revient_SymbiOse.xlsx`) — PDS, puis le coût des maillons, puis le
+   prix net. Nouvel ordre des lignes : **PDS** (prix de détail suggéré du format, `format.pds`,
+   identique pour tous les canaux — « — » si non saisi) → **Frais de mise en marché** (PDS moins
+   prix de vente de CE canal — le total déjà implicite dans la cascade de maillons, contrairement à
+   SymbiOse qui le détaille en 3 lignes séparées que notre modèle de maillons ne modélise pas
+   séparément) → **Prix de vente** (renommé depuis « Prix net », valeur inchangée). Bénéfice
+   brut/Marge brute inchangés, toujours après.
+2. **Rapport → Par SKU, section « Seuil de rentabilité par canal de vente »** : ajout de 3 lignes
+   avant le Point mort existant, reprenant les totaux du même chiffrier SymbiOse (section « SEUIL
+   DE RENTABILITÉ PAR CANAL DE VENTE ») — **Revenu total** (prix de vente × volume réel du canal),
+   **Frais totaux** (coût net par unité × volume réel) et **Bénéfices / Pertes** (marge nette $ ×
+   volume réel). Toutes les trois affichent « — » quand aucun volume réel n'est saisi pour ce canal
+   (jamais un total à 0 $ inventé — même principe que le reste de l'app).
+3. **État des résultats → Réconciliation réel/théorique** : la ligne « Marge » (Revenus − Charges
+   directes) renommée **Bénéfice brut** ; nouvelle ligne **Bénéfice net** = Bénéfice brut moins le
+   total des frais fixes (`generalInfo.totalIndirects`, déjà affiché en sous-total du tableau
+   Dépenses). Un seul total de frais fixes existe dans l'app (saisi une fois, jamais modélisé par
+   produit) — soustrait identiquement du réel ET du théorique dans `computeRealVsTheoreticalReconciliation`
+   (`engine/analysisData.js`), pour que l'écart entre les deux colonnes ne vienne jamais de ce total
+   commun, uniquement du Bénéfice brut au-dessus. Déroge volontairement au principe du 13/10 (« pas
+   de taux de frais fixes par unité ») : ici c'est un total $, pas une nouvelle moyenne par unité.
+- Fichiers touchés : `src/features/SummaryTable.jsx` (`BySkuWaterfall`), `src/engine/analysisData.js`
+  (`computeRealVsTheoreticalReconciliation`), `src/engine/analysisData.test.js`,
+  `src/features/IncomeStatementTab.jsx` (passe `totalIndirects`, renomme la ligne mise en évidence),
+  `src/components/InstructionModal.jsx` (guide de la Réconciliation).
+- Tests : 216/216 unitaires (nouveau test `computeRealVsTheoreticalReconciliation` avec
+  `totalIndirects`), 46/46 e2e (test de réconciliation du projet démo adapté aux nouvelles valeurs
+  attendues), vérification fonctionnelle par script Playwright temporaire (toutes les nouvelles
+  lignes affichées avec les bonnes valeurs sur un SKU multi-canal du projet démo), lint et
+  `npx vite build` propres.

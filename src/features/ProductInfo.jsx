@@ -589,72 +589,87 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                             const formats = product.formats || [];
                             return (
                         <div id="product-detail-pane" className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-                            <div className="bg-gray-50 p-3 flex flex-wrap items-end gap-3 border-b border-gray-200">
-                                <div className="flex-1 min-w-[200px]">
-                                    <label className="block text-xs font-medium text-gray-500 uppercase">Nom du plat</label>
-                                    <input type="text" value={product.platName || ''} onChange={(e) => handleProductValueChange(productIndex, 'platName', e.target.value)} className={`mt-1 w-full p-1.5 border rounded font-semibold ${!isNotEmpty(product.platName) ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {!isNotEmpty(product.platName) && <ValidationMessage message="Requis." />}
-                                </div>
-                                <div className="w-48">
-                                    <label className="flex items-center text-xs font-medium text-gray-500 uppercase">
-                                        Activité de production
-                                        <Tooltip text="Le procédé de fabrication auquel ce produit appartient (ex. Confitures, Produits séchés) — servira à répartir vos frais indirects par activité dans l'onglet État des résultats." />
-                                    </label>
-                                    <select value={product.activityId || ''} onChange={(e) => handleProductValueChange(productIndex, 'activityId', e.target.value)} className="mt-1 w-full p-1.5 border rounded border-gray-300">
-                                        {productionActivities.map(activity => (
-                                            <option key={activity.id} value={activity.id}>{activity.name || 'Sans nom'}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="w-48">
-                                    <label className="block text-xs font-medium text-gray-500 uppercase">Catégorie</label>
-                                    <div className="mt-1">
-                                        <Combobox
-                                            options={categoryOptions}
-                                            value={product.category ? { id: product.category, name: product.category } : null}
-                                            onChange={(selection) => handleProductValueChange(
-                                                productIndex, 'category', typeof selection === 'object' && selection !== null ? selection.name : selection
-                                            )}
-                                            getOptionLabel={(option) => option.name}
-                                            getOptionKey={(option) => option.id}
-                                        />
+                            <div className="bg-gray-50 p-3 border-b border-gray-200">
+                                {/* Nom du plat sur sa propre ligne, pleine largeur (jamais cramé par
+                                    les deux autres champs) ; actions alignées à droite. Activité et
+                                    catégorie en-dessous, sur une grille responsive — se replient
+                                    proprement à 1 colonne plutôt que de tronquer leur contenu
+                                    (select natif, Combobox) dans une colonne de détail étroite. */}
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <label className="block text-xs font-medium text-gray-500 uppercase">Nom du plat</label>
+                                        <input type="text" value={product.platName || ''} onChange={(e) => handleProductValueChange(productIndex, 'platName', e.target.value)} className={`mt-1 w-full p-1.5 border rounded font-semibold ${!isNotEmpty(product.platName) ? 'border-red-500' : 'border-gray-300'}`} />
+                                        {!isNotEmpty(product.platName) && <ValidationMessage message="Requis." />}
+                                    </div>
+                                    <div className="flex items-center gap-1 pt-5 flex-shrink-0">
+                                        <button onClick={() => onDuplicateProduct(productIndex)} title="Dupliquer le plat" className="text-indigo-500 hover:text-indigo-700 p-1.5 rounded-full hover:bg-indigo-50"><Layers size={18}/></button>
+                                        <button onClick={() => onDeleteProduct(productIndex)} title="Supprimer le plat (tous ses formats)" className="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100"><Trash2 size={18}/></button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 pb-1">
-                                    <button onClick={() => onDuplicateProduct(productIndex)} title="Dupliquer le plat" className="text-indigo-500 hover:text-indigo-700 p-1.5 rounded-full hover:bg-indigo-50"><Layers size={18}/></button>
-                                    <button onClick={() => onDeleteProduct(productIndex)} title="Supprimer le plat (tous ses formats)" className="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100"><Trash2 size={18}/></button>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                                    <div>
+                                        <label className="flex items-center text-xs font-medium text-gray-500 uppercase">
+                                            Activité de production
+                                            <Tooltip text="Le procédé de fabrication auquel ce produit appartient (ex. Confitures, Produits séchés) — servira à répartir vos frais indirects par activité dans l'onglet État des résultats." />
+                                        </label>
+                                        <select value={product.activityId || ''} onChange={(e) => handleProductValueChange(productIndex, 'activityId', e.target.value)} className="mt-1 w-full p-1.5 border rounded border-gray-300">
+                                            {productionActivities.map(activity => (
+                                                <option key={activity.id} value={activity.id}>{activity.name || 'Sans nom'}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase">Catégorie</label>
+                                        <div className="mt-1">
+                                            <Combobox
+                                                options={categoryOptions}
+                                                value={product.category ? { id: product.category, name: product.category } : null}
+                                                onChange={(selection) => handleProductValueChange(
+                                                    productIndex, 'category', typeof selection === 'object' && selection !== null ? selection.name : selection
+                                                )}
+                                                getOptionLabel={(option) => option.name}
+                                                getOptionKey={(option) => option.id}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
+                            {/* overflow-x-auto : sur une colonne de détail étroite, les 7 colonnes
+                                scrollent horizontalement plutôt que de forcer les en-têtes à se
+                                replier sur plusieurs lignes (ou de disparaître hors champ sans
+                                indication). whitespace-nowrap sur chaque en-tête pour ne jamais
+                                couper un mot au milieu ("Canaux de vente" → 3 lignes). */}
+                            <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
                                                 Format
                                                 <Tooltip text="L'emballage et la quantité de ce format de vente (ex. 250 ml, 1 kg). Un produit peut avoir plusieurs formats — un pot de 250 ml et un pot de 500 ml, par exemple — chacun avec sa propre fiche recette, son propre prix et mix des ventes." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
                                                 SKU
                                                 <Tooltip text="Numéro de référence de ce format, déduit automatiquement de la recette et du format (librement modifiable)." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
                                                 PDS ($)
                                                 <Tooltip text="Prix de détail suggéré au consommateur pour ce format — saisi manuellement, une seule valeur pour tous les canaux (le prix tablette visé ne varie généralement pas par canal, contrairement au prix net producteur). Sert à générer le prix net de chaque canal via le bouton « Générer » (section Canaux de vente ci-dessous), qui redescend la cascade de maillons de ce canal à partir de ce prix." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
-                                                Canaux de vente
+                                                Canaux
                                                 <Tooltip text="Le prix net et le volume de ce format diffèrent selon le canal (vente directe, distributeur...). Un format n'est pas forcément vendu dans tous les canaux — ex. un grand format réservé à la restauration. Le premier canal de la liste détermine le prix utilisé ailleurs dans l'app (marge, rapports) en attendant que ces écrans deviennent eux-mêmes multi-canal." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Mix des Ventes (%)</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Au Menu</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Mix (%)</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Au Menu</th>
                                         <th className="relative px-4 py-2"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
@@ -805,6 +820,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                     )})}
                                 </tbody>
                             </table>
+                            </div>
                             <div className="p-2 bg-gray-50 border-t border-gray-200">
                                 <button onClick={() => onAddFormat(productIndex)} className="inline-flex items-center text-sm text-green-600 hover:text-green-800">
                                     <PlusCircle size={16} className="mr-1" /> Ajouter un format

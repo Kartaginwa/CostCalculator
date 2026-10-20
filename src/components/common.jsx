@@ -60,9 +60,13 @@ export const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     return (
-        <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-700">Items par page:</span>
+        // flex-wrap + whitespace-nowrap sur chaque groupe (plutôt qu'un flex rigide) : dans un
+        // conteneur étroit (ex. la colonne de gauche de Produits et SKUs), les deux groupes
+        // passent proprement à la ligne suivante au lieu de laisser chaque mot se couper
+        // individuellement ("Items / par / page :" sur 3 lignes).
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+            <div className="flex items-center gap-2 whitespace-nowrap">
+                <span className="text-sm text-gray-700">Items par page :</span>
                 <select
                     value={itemsPerPage}
                     onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
@@ -76,7 +80,7 @@ export const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange
 
             {/* Affiche la navigation des pages seulement si nécessaire */}
             {totalPages > 1 && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2 whitespace-nowrap">
                     <button
                         onClick={() => onPageChange(currentPage - 1)}
                         disabled={currentPage === 1}

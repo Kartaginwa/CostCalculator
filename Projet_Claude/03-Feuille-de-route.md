@@ -2647,3 +2647,24 @@ raisonnement détaillé des choix de design.
   `src/engine`/`src/state`), 46/46 e2e (après les 11 fichiers adaptés), vérification visuelle
   (desktop + mobile 390px, script Playwright temporaire supprimé après usage) confirmant le
   comportement liste/détail et le repli mobile, lint et `npx vite build` propres.
+
+**Correction du même jour (retour utilisateur, captures d'écran) — débordements dans le panneau de
+détail plus étroit :** le passage d'un tableau pleine page à une colonne de détail plus étroite a
+révélé 3 problèmes de mise en page, invisibles dans l'ancienne disposition plein écran :
+1. **Le `<table>` des formats n'avait aucun `overflow-x-auto`** — sous ~830 px de large utile, les
+   dernières colonnes (Mix, Au Menu, Actions) disparaissaient carrément hors champ au lieu de
+   rester accessibles. Vérifié par script Playwright temporaire (`el.scrollWidth` vs `clientWidth`)
+   avant et après correctif. Corrigé en enveloppant le tableau d'un conteneur `overflow-x-auto`,
+   avec `whitespace-nowrap` sur chaque en-tête de colonne (plus de "CANAUX / DE / VENTE" étalé sur
+   3 lignes) et les libellés les plus longs raccourcis ("Canaux de vente" → "Canaux", "Mix des
+   Ventes (%)" → "Mix (%)" — signification complète toujours dans l'infobulle).
+2. **En-tête du produit (Nom du plat/Activité/Catégorie/actions)** : largeurs fixes (`w-48`) qui
+   tenaient sur la pleine largeur de page mais plus dans ~300-800 px — select natif et Combobox
+   tronqués. Restructuré : Nom du plat seul sur sa ligne (jamais cramé), Activité/Catégorie
+   en-dessous sur une grille `sm:grid-cols-2` qui se replie à 1 colonne plutôt que de tronquer.
+3. **`Pagination` (`src/components/common.jsx`, composant partagé)** : `flex justify-between`
+   rigide faisait couper "Items par page :" et "Page X sur Y" mot par mot dans la colonne de
+   gauche (~288 px). Corrigé en `flex-wrap` + `whitespace-nowrap` par groupe — passe proprement à 2
+   lignes au lieu de casser chaque mot ; comportement inchangé en pleine largeur (Ingrédients,
+   Packaging), confirmé par la suite e2e complète.
+- Tests : 209/209 unitaires, 46/46 e2e, lint et `npx vite build` propres après ce correctif.

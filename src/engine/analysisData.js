@@ -466,6 +466,53 @@ export function computeDirectCostLineAllocations(directCostLines, productsWithCo
     return { directCostLineAllocations, directCostBucketTotals, directCostChannelTotals };
 }
 
+// Phase 4.4bis (20/10, retour utilisateur) : Bénéfice brut (affiché sous Charges directes réelles,
+// avant Frais fixes) et Bénéfice net (affiché sous Frais fixes, avant la Réconciliation), tous deux
+// ventilés par activité ET par canal — comme les 3 tableaux ci-dessus, pas un seul total
+// entreprise comme l'ancienne ligne « Marge » de la Réconciliation (qui garde son propre total,
+// voir computeRealVsTheoreticalReconciliation ci-dessous : les deux affichages coexistent, à deux
+// niveaux de détail différents).
+// Bénéfice brut = Revenus moins Charges directes, par contenant (Général/Activité, déjà des
+// totaux réels) et par canal — indicatif des deux côtés, comme les tableaux Revenus/Charges
+// directes eux-mêmes. Visible SEULEMENT si revenus ET charges directes ont, l'un et l'autre, une
+// part connue (`hasShare`) pour ce canal ; sinon `null` — jamais une soustraction avec un côté
+// forcé à 0, qui sous-estimerait silencieusement les charges de ce canal.
+export function computeGrossProfitTotals({ activityBuckets, salesChannels, bucketTotals, directCostBucketTotals, channelTotals, directCostChannelTotals }) {
+    const bucketValues = {};
+    (activityBuckets || []).forEach((b) => {
+        bucketValues[b.key] = (bucketTotals?.[b.key] || 0) - (directCostBucketTotals?.[b.key] || 0);
+    });
+
+    const channelValues = {};
+    (salesChannels || []).forEach((c) => {
+        const rev = channelTotals?.[c.id];
+        const dc = directCostChannelTotals?.[c.id];
+        channelValues[c.id] = (rev?.hasShare && dc?.hasShare) ? (rev.total - dc.total) : null;
+    });
+
+    return { bucketValues, channelValues };
+}
+
+// Bénéfice net = Bénéfice brut moins Frais fixes, par contenant ET par canal. Les deux côtés des
+// Frais fixes (Phase 4.5) sont des allocations RÉELLES (saisies manuellement ou par clé), jamais
+// une part indicative — un contenant/canal sans frais fixes qui lui soit alloué vaut simplement 0,
+// une vraie valeur, pas une donnée manquante. Un canal dont le Bénéfice brut est `null` ci-dessus
+// reste `null` ici aussi : on ne bâtit jamais une valeur sur une base absente.
+export function computeNetProfitTotals({ activityBuckets, salesChannels, grossProfitBucketValues, grossProfitChannelValues, expenseBucketTotals, expenseChannelTotals }) {
+    const bucketValues = {};
+    (activityBuckets || []).forEach((b) => {
+        bucketValues[b.key] = (grossProfitBucketValues?.[b.key] || 0) - (expenseBucketTotals?.[b.key] || 0);
+    });
+
+    const channelValues = {};
+    (salesChannels || []).forEach((c) => {
+        const gp = grossProfitChannelValues?.[c.id];
+        channelValues[c.id] = gp != null ? gp - (expenseChannelTotals?.[c.id] || 0) : null;
+    });
+
+    return { bucketValues, channelValues };
+}
+
 // Phase 4.4 — Tableau de réconciliation réel/théorique : compare, au niveau de l'ENTREPRISE entière
 // (jamais par activité/canal — le détail par activité resterait partiellement circulaire, voir la
 // limite déjà documentée pour les revenus en 4.2), le réel saisi (Revenus de 4.2, Charges directes

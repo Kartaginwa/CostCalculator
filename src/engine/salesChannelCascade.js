@@ -42,3 +42,25 @@ export function computeSalesChannelCascade({ links = [], anchorIndex = 0, anchor
     }
     return prices;
 }
+
+// Prix de détail suggéré (PDS, retour utilisateur du 15/10) : une donnée du FORMAT (saisie
+// manuellement, une seule valeur pour tous ses canaux — le prix tablette visé au consommateur ne
+// varie typiquement pas par canal, contrairement au prix net producteur). Descend la cascade de
+// maillons du canal (markup/marge, ci-dessus) à partir de ce PDS, ancrée au DERNIER maillon (le
+// prix consommateur), pour en déduire le prix net producteur de ce canal. Un canal sans maillon
+// (ex. vente directe) donne prix net = PDS. Repli null si le PDS n'est pas un nombre valide, pour
+// ne jamais écraser un prix net existant par une valeur fausse.
+//
+// Extrait de ProductInfo.jsx (20/10, retour utilisateur) : réutilisé par le rapport Par SKU pour
+// calculer le coût RÉEL des maillons (« Frais de mise en marché » = PDS moins CE prix recalculé),
+// jamais PDS moins le prix net RÉELLEMENT saisi pour ce canal — qui peut diverger de la cascade
+// (ex. un rabais ponctuel appliqué à la main sur le prix net) et compterait alors un coût de
+// maillon inexistant.
+export const computeNetPriceFromPds = (pds, channel) => {
+    const parsedPds = parseLocaleNumber(pds);
+    if (!(parsedPds > 0)) return null;
+    const links = channel?.links || [];
+    const prices = computeSalesChannelCascade({ links, anchorIndex: links.length, anchorValue: parsedPds });
+    const net = prices[0];
+    return net != null ? Math.round(net * 100) / 100 : null;
+};

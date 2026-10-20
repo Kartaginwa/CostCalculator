@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeSalesChannelCascade } from './salesChannelCascade.js';
+import { computeSalesChannelCascade, computeNetPriceFromPds } from './salesChannelCascade.js';
 
 describe('computeSalesChannelCascade - ancré au coût de revient (cas par défaut)', () => {
     it("un seul maillon en marge (ex. vente directe à la ferme)", () => {
@@ -93,5 +93,30 @@ describe('computeSalesChannelCascade - cas limites', () => {
             anchorValue: 12,
         });
         expect(prices[0]).toBeNull();
+    });
+});
+
+describe('computeNetPriceFromPds — prix net déduit du PDS en redescendant les maillons', () => {
+    it('un canal sans maillon (vente directe) donne prix net = PDS', () => {
+        expect(computeNetPriceFromPds(10, { links: [] })).toBe(10);
+    });
+
+    it('redescend un maillon en marge (ex. marge détaillant de 20% sur le PDS)', () => {
+        // PDS 10 $ au consommateur, marge détaillant 20% -> prix net producteur = 10 * (1 - 0.20) = 8.
+        expect(computeNetPriceFromPds(10, { links: [{ type: 'margin', percent: 20 }] })).toBe(8);
+    });
+
+    it('arrondit à 2 décimales', () => {
+        expect(computeNetPriceFromPds(10, { links: [{ type: 'margin', percent: 15 }] })).toBe(8.5);
+    });
+
+    it('retourne null si le PDS n\'est pas un nombre positif valide — jamais un prix net inventé', () => {
+        expect(computeNetPriceFromPds('', { links: [] })).toBeNull();
+        expect(computeNetPriceFromPds(0, { links: [] })).toBeNull();
+        expect(computeNetPriceFromPds(-5, { links: [] })).toBeNull();
+    });
+
+    it('un canal absent (channel undefined) est traité comme sans maillon', () => {
+        expect(computeNetPriceFromPds(10, undefined)).toBe(10);
     });
 });

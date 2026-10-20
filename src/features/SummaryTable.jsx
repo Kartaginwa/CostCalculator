@@ -7,6 +7,7 @@ import { Tooltip, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
 import { computeMenuEngineeringQuadrants } from '../engine/analysisData.js';
+import { computeNetPriceFromPds } from '../engine/salesChannelCascade.js';
 
 // Doit être déclaré en dehors de StrategicAnalysis : un composant recréé à chaque rendu
 // perdrait son état et forcerait un remontage complet de ses enfants à chaque frappe.
@@ -63,9 +64,10 @@ const BySkuSectionHeader = ({ label, colSpan }) => (
     </tr>
 );
 
-const BySkuWaterfall = ({ row, productionActivities = [] }) => {
+const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) => {
     const costs = row.costs;
     const channelBreakdown = row.channelBreakdown || [];
+    const pds = parseLocaleNumber(row.format?.pds);
     // Phase 4.6 : nom de l'activité de ce SKU, pour une infobulle lisible sur la ligne « Activité »
     // ci-dessous (le produit n'a pas de contenant « Général » propre — absent, jamais inventé).
     const activityName = productionActivities.find(a => a.id === row.activityId)?.name;
@@ -121,19 +123,17 @@ const BySkuWaterfall = ({ row, productionActivities = [] }) => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             <BySkuSectionHeader label="Revenu et marge brute" colSpan={channelBreakdown.length + 1} />
-                            <BySkuRow label="PDS" tooltip="Prix de détail suggéré au consommateur pour ce format — une seule valeur, la même pour tous les canaux (saisie dans Produits et SKUs)." render={channelBreakdown.map(cb => {
-                                const pds = parseLocaleNumber(row.format?.pds);
+                            <BySkuRow label="PDS" tooltip="Prix de détail suggéré au consommateur pour ce format — une seule valeur, la même pour tous les canaux (saisie dans Produits et SKUs)." render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
+                                    {pds > 0 ? `${formatCurrency(pds)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
+                                </td>
+                            ))} />
+                            <BySkuRow label="Frais de mise en marché" tooltip="Le coût des maillons de ce canal (courtage, distribution, marge du détaillant, etc.) entre le PDS et le prix net — PDS moins le prix net QUE PRODUIRAIT la cascade de maillons de ce canal (bouton « Générer » de Produits et SKUs), jamais le prix net réellement saisi : un rabais ponctuel appliqué à la main sur ce dernier (ex. 10 % en ligne) n'est pas un maillon et ne doit pas compter comme un coût de mise en marché." render={channelBreakdown.map(cb => {
+                                const channel = salesChannels.find(c => c.id === cb.channelId);
+                                const cascadeNetPrice = pds > 0 ? computeNetPriceFromPds(pds, channel) : null;
                                 return (
                                     <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                        {pds > 0 ? `${formatCurrency(pds)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
-                                    </td>
-                                );
-                            })} />
-                            <BySkuRow label="Frais de mise en marché" tooltip="Le coût total des maillons de ce canal (courtage, distribution, marge du détaillant, etc.) entre le PDS et le prix net — PDS moins prix de vente." render={channelBreakdown.map(cb => {
-                                const pds = parseLocaleNumber(row.format?.pds);
-                                return (
-                                    <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                        {pds > 0 ? `${formatCurrency(pds - cb.netPrice)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
+                                        {cascadeNetPrice != null ? `${formatCurrency(pds - cascadeNetPrice)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format, ou maillons de ce canal incalculables">—</span>}
                                     </td>
                                 );
                             })} />
@@ -519,7 +519,7 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
                     )}
                 </div>
                 {selectedSkuRow
-                    ? <BySkuWaterfall row={selectedSkuRow} productionActivities={productionActivities} />
+                    ? <BySkuWaterfall row={selectedSkuRow} productionActivities={productionActivities} salesChannels={salesChannels} />
                     : <p className="text-center text-gray-500 py-8">Aucun SKU dans le menu pour l'instant.</p>}
             </div>
             )}

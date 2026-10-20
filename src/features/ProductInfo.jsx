@@ -3,25 +3,7 @@ import { ArrowUpDown, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle
 import { parseLocaleNumber, isValidNumber, isValidPositiveNumber, isValidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal, UnitsModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
-import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
-
-// Prix de détail suggéré (PDS, retour utilisateur du 15/10) : maintenant une donnée du FORMAT
-// (saisie manuelle, une seule valeur pour tous ses canaux — le prix tablette visé au consommateur
-// ne varie typiquement pas par canal, contrairement au prix net producteur), pas une valeur
-// déduite par canal comme avant. Descend la cascade de maillons du canal (markup/marge, voir
-// salesChannelCascade.js) à partir de ce PDS, ancrée au DERNIER maillon (le prix consommateur),
-// pour en déduire le prix net producteur de ce canal — direction inverse de l'ancienne
-// implémentation. Un canal sans maillon (ex. vente directe) donne prix net = PDS. Repli null si le
-// PDS n'est pas un nombre valide, pour ne jamais écraser un prix net existant par une valeur
-// fausse.
-const computeNetPriceFromPds = (pds, channel) => {
-    const parsedPds = parseLocaleNumber(pds);
-    if (!(parsedPds > 0)) return null;
-    const links = channel?.links || [];
-    const prices = computeSalesChannelCascade({ links, anchorIndex: links.length, anchorValue: parsedPds });
-    const net = prices[0];
-    return net != null ? Math.round(net * 100) / 100 : null;
-};
+import { computeNetPriceFromPds } from '../engine/salesChannelCascade.js';
 
 export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct, handleProductValueChange, handleFormatValueChange, handleFormatChannelPricesChange, onAddFormat, onDuplicateFormat, onDeleteFormat, itemsPerPage, onItemsPerPageChange, onOpenSalesImport }) => {
     const {

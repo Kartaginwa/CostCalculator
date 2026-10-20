@@ -2,7 +2,7 @@
 // du FORMAT (saisie manuelle, une seule valeur pour tous ses canaux), positionnée à droite du SKU
 // — plutôt qu'une valeur déduite par canal comme avant. Le bouton « Générer », dans le détail de
 // chaque canal, calcule le prix net de CE canal en redescendant sa cascade de maillons à partir du
-// PDS (voir computeNetPriceFromPds dans ProductInfo.jsx, direction inverse de
+// PDS (voir computeNetPriceFromPds dans engine/salesChannelCascade.js, direction inverse de
 // computeSalesChannelCascade). Canaux du projet démo (initialState.js) :
 // - Vente directe (boutique en ligne) : aucun maillon -> prix net = PDS.
 // - Épiceries indépendantes : 1 maillon marge 30 % -> prix net = PDS x (1 - 0,30).

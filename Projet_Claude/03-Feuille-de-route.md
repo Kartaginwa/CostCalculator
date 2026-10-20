@@ -2867,3 +2867,42 @@ Deux retours utilisateur distincts, traités ensemble :
   attendues), vérification fonctionnelle par script Playwright temporaire (toutes les nouvelles
   lignes affichées avec les bonnes valeurs sur un SKU multi-canal du projet démo), lint et
   `npx vite build` propres.
+
+## Corrections du 20/10 (suite) : Frais de mise en marché basé sur les maillons, Bénéfice brut/net par activité et canal
+
+Deux corrections sur la restructuration ci-dessus, suite à un nouveau retour utilisateur :
+
+1. **« Frais de mise en marché » utilisait le mauvais prix net.** Il était calculé comme PDS moins
+   le prix net RÉELLEMENT saisi pour ce canal (`cb.netPrice`) — mais ce prix net peut diverger de
+   ce que la cascade de maillons produirait réellement : le projet démo applique par exemple un
+   rabais ponctuel de 10 % sur le canal Vente directe (`directRatio` dans `initialState.js`), qui
+   n'est PAS un maillon. L'ancien calcul comptait ce rabais comme un faux coût de mise en marché
+   (0,85 $ sur un canal n'ayant AUCUN maillon). Corrigé : désormais PDS moins le prix net QUE
+   PRODUIRAIT la cascade de maillons de ce canal (exactement ce que calcule le bouton « Générer »
+   de Produits et SKUs) — jamais le prix net réellement saisi. `computeNetPriceFromPds`, qui
+   vivait en local dans `ProductInfo.jsx`, a été extrait vers `engine/salesChannelCascade.js`
+   (exporté, testé) pour être réutilisable par le rapport Par SKU sans dupliquer la logique.
+2. **Bénéfice brut (sous Charges directes réelles, avant Frais fixes) et Bénéfice net (sous Frais
+   fixes, avant la Réconciliation) manquaient entièrement dans l'État des résultats** — seule la
+   version globale entreprise (dans la Réconciliation réel/théorique) existait. Ajout de deux
+   nouvelles fonctions pures `computeGrossProfitTotals`/`computeNetProfitTotals`
+   (`engine/analysisData.js`) et d'un nouveau composant `ProfitSummaryBar`
+   (`IncomeStatementTab.jsx`) : une seule ligne mise en évidence, avec la MÊME grille de colonnes
+   que les 3 tableaux Revenus/Charges directes/Frais fixes (Général + chaque activité, puis canaux
+   indicatifs) — jamais un nouveau tableau à faire défiler. Bénéfice brut par canal n'affiche une
+   valeur que si Revenus ET Charges directes ont, l'un et l'autre, une part indicative connue pour
+   ce canal (sinon « — », jamais une soustraction avec un côté forcé à 0). Bénéfice net par canal
+   soustrait l'allocation RÉELLE des frais fixes (toujours disponible, contrairement aux parts
+   indicatives de revenus/charges) — mais reste « — » si le Bénéfice brut sous-jacent l'était déjà.
+- Fichiers touchés : `src/engine/salesChannelCascade.js` (`computeNetPriceFromPds` déplacé
+  depuis `ProductInfo.jsx`, exporté), `src/engine/salesChannelCascade.test.js` (nouveaux tests),
+  `src/features/ProductInfo.jsx` (import depuis le nouvel emplacement), `src/features/SummaryTable.jsx`
+  (`BySkuWaterfall` reçoit `salesChannels`, recalcule la cascade plutôt que de lire `cb.netPrice`),
+  `src/engine/analysisData.js` (`computeGrossProfitTotals`/`computeNetProfitTotals`),
+  `src/engine/analysisData.test.js`, `src/features/IncomeStatementTab.jsx` (`ProfitSummaryBar`,
+  deux nouvelles barres), `src/components/InstructionModal.jsx` (guide : sections Bénéfice brut/net).
+- Tests : 225/225 unitaires (nouveaux tests `computeNetPriceFromPds`,
+  `computeGrossProfitTotals`/`computeNetProfitTotals`), 46/46 e2e, vérification fonctionnelle par
+  script Playwright temporaire (Frais de mise en marché = 0,00 $ pour Vente directe sur le projet
+  démo, confirmant la correction ; barres Bénéfice brut/net affichées avec les bons totaux et la
+  bonne ventilation par activité/canal), lint et `npx vite build` propres.

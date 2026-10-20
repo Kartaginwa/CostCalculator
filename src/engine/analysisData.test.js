@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact } from './analysisData.js';
+import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -769,6 +769,61 @@ describe('computeRealVsTheoreticalReconciliation — réconciliation réel/théo
             activeProducts, unitsSoldById, menuRevenue: 1000,
         });
         expect(result.rows[3]).toEqual({ label: 'Bénéfice net', real: 750, theoretical: 500, diff: 250, diffPercent: 250 / 500 });
+    });
+});
+
+describe('computeGrossProfitTotals/computeNetProfitTotals — Bénéfice brut/net par activité et canal (20/10)', () => {
+    const activityBuckets = [{ key: 'general', label: 'Général' }, { key: 'act1', label: 'Activité 1' }];
+    const salesChannels = [{ id: 'c1', name: 'Direct' }, { id: 'c2', name: 'Épiceries' }];
+
+    it('Bénéfice brut par contenant = Revenus moins Charges directes, contenant par contenant', () => {
+        const { bucketValues } = computeGrossProfitTotals({
+            activityBuckets, salesChannels: [],
+            bucketTotals: { general: 1000, act1: 500 },
+            directCostBucketTotals: { general: 400, act1: 300 },
+            channelTotals: {}, directCostChannelTotals: {},
+        });
+        expect(bucketValues).toEqual({ general: 600, act1: 200 });
+    });
+
+    it('Bénéfice brut par canal : visible seulement si revenus ET charges directes ont une part pour ce canal', () => {
+        const { channelValues } = computeGrossProfitTotals({
+            activityBuckets: [], salesChannels,
+            bucketTotals: {}, directCostBucketTotals: {},
+            channelTotals: { c1: { total: 1000, hasShare: true }, c2: { total: 200, hasShare: false } },
+            directCostChannelTotals: { c1: { total: 400, hasShare: true }, c2: { total: 0, hasShare: false } },
+        });
+        expect(channelValues.c1).toBe(600);
+        // c2 : revenu sans part connue -> jamais une soustraction avec un côté à 0 inventé.
+        expect(channelValues.c2).toBeNull();
+    });
+
+    it('Bénéfice net par contenant et canal = Bénéfice brut moins Frais fixes (allocations réelles, jamais absentes)', () => {
+        const grossProfit = computeGrossProfitTotals({
+            activityBuckets, salesChannels,
+            bucketTotals: { general: 1000, act1: 500 },
+            directCostBucketTotals: { general: 400, act1: 300 },
+            channelTotals: { c1: { total: 1000, hasShare: true }, c2: { total: 500, hasShare: true } },
+            directCostChannelTotals: { c1: { total: 400, hasShare: true }, c2: { total: 300, hasShare: true } },
+        });
+        const { bucketValues, channelValues } = computeNetProfitTotals({
+            activityBuckets, salesChannels,
+            grossProfitBucketValues: grossProfit.bucketValues, grossProfitChannelValues: grossProfit.channelValues,
+            expenseBucketTotals: { general: 100, act1: 50 },
+            expenseChannelTotals: { c1: 80, c2: 20 },
+        });
+        expect(bucketValues).toEqual({ general: 500, act1: 150 });
+        expect(channelValues).toEqual({ c1: 520, c2: 180 });
+    });
+
+    it('Bénéfice net par canal reste absent si le Bénéfice brut de ce canal l\'était déjà', () => {
+        const { channelValues } = computeNetProfitTotals({
+            activityBuckets: [], salesChannels,
+            grossProfitBucketValues: {}, grossProfitChannelValues: { c1: null, c2: 300 },
+            expenseBucketTotals: {}, expenseChannelTotals: { c1: 50, c2: 50 },
+        });
+        expect(channelValues.c1).toBeNull();
+        expect(channelValues.c2).toBe(250);
     });
 });
 

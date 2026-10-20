@@ -10,6 +10,7 @@ export const toProjectState = (flatState) => ({
     laborDatabase: flatState.laborDatabase,
     productionActivities: flatState.productionActivities,
     salesChannels: flatState.salesChannels,
+    activeUnits: flatState.activeUnits,
     expenseLines: flatState.expenseLines,
     revenueLines: flatState.revenueLines,
     directCostLines: flatState.directCostLines,
@@ -48,6 +49,8 @@ export function projectReducer(state, action) {
             return { ...state, productionActivities: resolve(action.payload, state.productionActivities) };
         case 'SET_SALES_CHANNELS':
             return { ...state, salesChannels: resolve(action.payload, state.salesChannels) };
+        case 'SET_ACTIVE_UNITS':
+            return { ...state, activeUnits: resolve(action.payload, state.activeUnits) };
         case 'SET_EXPENSE_LINES':
             return { ...state, expenseLines: resolve(action.payload, state.expenseLines) };
         case 'SET_REVENUE_LINES':

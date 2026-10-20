@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown, Trash2, PlusCircle } from 'lucide-react';
-import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage } from '../utils.js';
+import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits } from '../utils.js';
 import { useValueFlash } from '../ui-utils.jsx';
 
 // Composant pour les messages de validation
@@ -521,6 +521,73 @@ export const AllergenModal = ({ isOpen, onClose, ingredientName, assignedAllerge
         </div>
     );
 };
+
+// --- MODAL DE GESTION DES UNITÉS DE MESURE ACTIVES ---
+// Retour utilisateur (19/10) : plutôt que des unités personnalisées à facteur de conversion libre
+// (risque d'incohérence silencieuse dans tout le convertisseur), une case à cocher par unité d'un
+// catalogue plus large déjà défini par l'app (`CONVERSION_FACTORS`, utils.js) — mêmes patron et
+// style qu'`AllergenModal` ci-dessus (entièrement contrôlée, aucun état interne), juste groupée par
+// famille (Masse/Volume/Discrètes, dérivée de `.base` — pas une 2e liste à tenir à jour) plutôt
+// qu'en grille plate. Les unités désactivées restent filtrées des <select> partout dans l'app via
+// `filterActiveUnits` (utils.js), qui garde toujours la valeur déjà choisie par une donnée
+// existante même si elle vient d'être désactivée ici.
+export const UnitsModal = ({ isOpen, onClose, activeUnits, onUpdateActiveUnits }) => {
+    if (!isOpen) return null;
+
+    const handleCheckboxChange = (unitKey, isChecked) => {
+        const current = activeUnits || [];
+        const newUnits = isChecked
+            ? [...current, unitKey]
+            : current.filter(u => u !== unitKey);
+        onUpdateActiveUnits(newUnits);
+    };
+
+    const groupedUnits = Object.keys(CONVERSION_FACTORS).reduce((groups, unitKey) => {
+        const familyLabel = UNIT_BASE_FAMILY_LABELS[CONVERSION_FACTORS[unitKey].base] || CONVERSION_FACTORS[unitKey].base;
+        if (!groups[familyLabel]) groups[familyLabel] = [];
+        groups[familyLabel].push(unitKey);
+        return groups;
+    }, {});
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg p-6 shadow-xl max-w-2xl w-full">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1">Gérer les unités de mesure</h3>
+                <p className="text-xs text-gray-500 mb-4">Les unités cochées apparaissent partout où une unité peut être choisie (Ingrédients, Packaging, Produits et SKUs, Recette & Calcul). Décocher une unité déjà utilisée par une donnée existante ne la supprime pas — cette donnée garde sa valeur.</p>
+                <div className="space-y-4">
+                    {Object.entries(groupedUnits).map(([familyLabel, unitKeys]) => (
+                        <div key={familyLabel}>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">{familyLabel}</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {unitKeys.map(unitKey => (
+                                    <label key={unitKey} className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={(activeUnits || []).includes(unitKey)}
+                                            onChange={(e) => handleCheckboxChange(unitKey, e.target.checked)}
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm text-gray-700">{unitKey}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-6 flex justify-end">
+                    <button
+                        type="button"
+                        className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:text-sm"
+                        onClick={onClose}
+                    >
+                        Terminé
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- MODAL D'ASSIGNATION DU PERSONNEL (VERSION AMÉLIORÉE) ---
 export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdatePersonnel }) => {
     if (!isOpen) return null;
@@ -652,7 +719,7 @@ export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkC
 // l'utilisateur à changer d'onglet en pleine édition d'une recette. Écrit dans le même état
 // central (onCreate délègue à onAddFormat/onDuplicateFormat déjà utilisés par Paramètres) : le
 // nouveau format apparaît donc immédiatement dans les deux écrans, sans copie ni état séparé.
-export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, onCreate }) => {
+export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, onCreate, activeUnits }) => {
     const [portionSize, setPortionSize] = useState('');
     const [portionUnit, setPortionUnit] = useState('unité');
     const [sku, setSku] = useState('');
@@ -695,11 +762,9 @@ export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, 
                     <div>
                         <label htmlFor="newFormatUnit" className="block text-sm font-medium text-gray-700">Unité</label>
                         <select id="newFormatUnit" value={portionUnit} onChange={(e) => setPortionUnit(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                            <option value="g">g</option>
-                            <option value="kg">kg</option>
-                            <option value="ml">ml</option>
-                            <option value="L">L</option>
-                            <option value="unité">unité</option>
+                            {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, portionUnit).map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                            ))}
                         </select>
                     </div>
                 </div>

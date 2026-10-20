@@ -2776,3 +2776,57 @@ s'affiche en vert. Guide d'utilisation mis à jour.
 - Tests : 209/209 unitaires, 46/46 e2e, vérification visuelle par script Playwright temporaire
   (point mort reste affiché en mode simulation, comparatif correctement coloré), lint et
   `npx vite build` propres.
+
+## Unités de mesure activables (20/10)
+
+Retour utilisateur : les unités (g, kg, ml, L, unité) étaient codées en dur partout où une unité
+se choisit — aucun moyen de calculer à l'hectolitre, à la tonne, en livres, etc. Première piste
+(unités personnalisées à facteur de conversion libre) écartée par l'utilisateur lui-même : « créer
+ses propres unités ne reviendrait qu'à généré des problèmes pour le convertisseur ». Solution
+retenue : une modale à cases à cocher (même patron que `AllergenModal`) activant/désactivant des
+unités parmi un catalogue étendu déjà défini et validé par l'app (pas de conversion libre, donc
+aucun risque d'incohérence) — les 5 historiques restant actives par défaut. Catalogue validé par
+une recherche web (norme GS1/UN·CEFACT Rec 20 pour les codes d'unités, réglementation ACIA pour le
+statut métrique obligatoire/impérial facultatif sur l'étiquetage canadien) : ajout de oz, lb,
+tonne (masse), cl, hL, fl oz, gal (volume), douzaine (discrète) — 13 unités au total dans
+`CONVERSION_FACTORS` (`src/utils.js`).
+
+**Nouvel état de projet persisté `activeUnits`** — suit exactement le patron déjà établi pour
+`salesChannels`/`productionActivities` : `initialState.js` (défaut = les 5 historiques via le
+nouvel export `DEFAULT_ACTIVE_UNITS`), `projectReducer.js` (`SET_ACTIVE_UNITS`), `App.jsx`
+(`setActiveUnits`, propagé dans tous les handlers reset/démo/chargement), `projectSerialization.js`
+(migration à repli gardé par longueur — un projet sauvegardé avant cette fonctionnalité n'a jamais
+`activeUnits`, retombe proprement sur les 5 historiques, aucune régression).
+
+**Nouveau helper partagé `filterActiveUnits(units, activeUnits, currentValue)`** (`src/utils.js`) —
+garde TOUJOURS `currentValue` dans la liste même si cette unité a été désactivée depuis, pour ne
+jamais casser silencieusement un ingrédient/format/ligne de recette existant dont le `<select>` se
+retrouverait avec une valeur ne correspondant à aucune option (principe « donnée absente reste
+absente, jamais forcée » appliqué à l'inverse : une donnée déjà présente n'est jamais invalidée).
+Un seul helper, réutilisé aux 6 points d'appel partout où une unité se choisit — confirmé
+explicitement par l'utilisateur que la portée doit couvrir Ingrédients et Packaging en plus de
+Produits et SKUs, pas seulement un écran isolé.
+
+**Nouvelle modale `UnitsModal`** (`src/components/common.jsx`, juste après `AllergenModal`, même
+style exact) : cases à cocher groupées par famille (Masse/Volume/Discrètes), regroupement dérivé
+live de `CONVERSION_FACTORS[u].base` (pas de structure parallèle à maintenir). Bouton déclencheur
+« Gérer les unités de mesure » dans Paramètres (`ProductInfo.jsx`), nouvelle section compacte
+placée juste après Informations sur l'entreprise/Objectifs stratégiques, avant Activités de
+production.
+
+- Fichiers touchés : `src/utils.js` (catalogue étendu, `DEFAULT_ACTIVE_UNITS`,
+  `UNIT_BASE_FAMILY_LABELS`, `filterActiveUnits`), `src/components/common.jsx` (`UnitsModal`,
+  `AddFormatModal` reçoit `activeUnits`), `src/state/initialState.js`, `projectReducer.js`,
+  `projectSerialization.js`, `App.jsx` (plomberie `activeUnits` identique au patron
+  `salesChannels`), `src/features/IngredientsTab.jsx`, `PackagingTab.jsx`, `ProductInfo.jsx`
+  (bouton + select de format), `RecipeCalculator.jsx` (2 selects de ligne de recette + passage du
+  prop à `AddFormatModal`). Hors scope, volontairement : `CatalogImportWizardModal.jsx` (chaîne de
+  reconnaissance de synonymes textuels depuis un fichier importé, pas un contrôle de « choix » —
+  limite documentée, correction manuelle possible après import via les selects désormais
+  dynamiques).
+- Tests : 215/215 unitaires (nouveaux : `filterActiveUnits` dans `utils.test.js`, migration
+  `activeUnits` dans `projectSerialization.test.js`, `SET_ACTIVE_UNITS`/`toProjectState` dans
+  `projectReducer.test.js`), 46/46 e2e, vérification fonctionnelle par script Playwright temporaire
+  (activation de « lb »/« douzaine » propagée à Ingrédients/Packaging/Produits et SKUs/Recette &
+  Calcul ; désactivation d'une unité déjà utilisée par une donnée existante confirmée sans casse du
+  select correspondant), lint et `npx vite build` propres.

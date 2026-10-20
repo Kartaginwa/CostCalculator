@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { ArrowUpDown, Upload, AlertCircle, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.js';
+import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeIngredientVolatility } from '../engine/priceVolatility.js';
@@ -32,7 +32,7 @@ const AbcItem = ({ item, volatilityByName }) => {
 };
 
 export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, analysisData, trackingPoints } = useProject();
+    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, analysisData, trackingPoints, activeUnits } = useProject();
     const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
 
     // --- LOGIQUE CENTRALISÉE : ON EXTRAIT LES DONNÉES DU CERVEAU ---
@@ -411,11 +411,9 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 </td>
                                 <td className="px-4 py-2">
                                     <select value={item.unit} onChange={e => handleUpdate(item.id, 'unit', e.target.value)} className="w-full p-1 border rounded" disabled={item.isRecipe}>
-                                        <option value="g">g</option>
-                                        <option value="kg">kg</option>
-                                        <option value="ml">ml</option>
-                                        <option value="L">L</option>
-                                        <option value="unité">unité</option>
+                                        {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, item.unit).map(u => (
+                                            <option key={u} value={u}>{u}</option>
+                                        ))}
                                     </select>
                                 </td>
                                 <td className="px-2 py-2">

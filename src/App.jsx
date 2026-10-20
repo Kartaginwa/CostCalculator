@@ -45,7 +45,7 @@ const App = () => {
     // dans un reducer et exposées via ProjectContext pour éviter de les faire descendre
     // manuellement à travers chaque onglet (voir src/state/projectReducer.js).
     const [projectState, dispatch] = useReducer(projectReducer, undefined, () => toProjectState(getEmptyState()));
-    const { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings } = projectState;
+    const { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings } = projectState;
 
     // Setters stables (dispatch seul en dépendance, garanti stable par React) : la résolution
     // des mises à jour fonctionnelles (value => ...) se fait dans le reducer lui-même plutôt
@@ -53,7 +53,7 @@ const App = () => {
     // projectContextValue plus bas (sinon un nouveau setter à chaque rendu invaliderait le memo).
     const {
         setCompanyName, setLogoUrl, setGeneralInfo, setBaseIngredients, setBasePackaging,
-        setProducts, setLaborDatabase, setTrackingPoints, setProductionActivities, setSalesChannels, setExpenseLines, setRevenueLines, setDirectCostLines, setRepartitionKeys, setUiSettings,
+        setProducts, setLaborDatabase, setTrackingPoints, setProductionActivities, setSalesChannels, setActiveUnits, setExpenseLines, setRevenueLines, setDirectCostLines, setRepartitionKeys, setUiSettings,
     } = useMemo(() => {
         const makeSetter = (type) => (value) => dispatch({ type, payload: value });
         return {
@@ -67,6 +67,7 @@ const App = () => {
             setTrackingPoints: makeSetter('SET_TRACKING_POINTS'),
             setProductionActivities: makeSetter('SET_PRODUCTION_ACTIVITIES'),
             setSalesChannels: makeSetter('SET_SALES_CHANNELS'),
+            setActiveUnits: makeSetter('SET_ACTIVE_UNITS'),
             setExpenseLines: makeSetter('SET_EXPENSE_LINES'),
             setRevenueLines: makeSetter('SET_REVENUE_LINES'),
             setDirectCostLines: makeSetter('SET_DIRECT_COST_LINES'),
@@ -780,6 +781,7 @@ const App = () => {
         setLaborDatabase(defaultState.laborDatabase);
         setProductionActivities(defaultState.productionActivities);
         setSalesChannels(defaultState.salesChannels);
+        setActiveUnits(defaultState.activeUnits);
         setExpenseLines(defaultState.expenseLines);
         setRevenueLines(defaultState.revenueLines);
         setDirectCostLines(defaultState.directCostLines);
@@ -808,6 +810,7 @@ const App = () => {
         setLaborDatabase(emptyState.laborDatabase);
         setProductionActivities(emptyState.productionActivities);
         setSalesChannels(emptyState.salesChannels);
+        setActiveUnits(emptyState.activeUnits);
         setExpenseLines(emptyState.expenseLines);
         setRevenueLines(emptyState.revenueLines);
         setDirectCostLines(emptyState.directCostLines);
@@ -834,6 +837,7 @@ const App = () => {
         setLaborDatabase(emptyState.laborDatabase);
         setProductionActivities(emptyState.productionActivities);
         setSalesChannels(emptyState.salesChannels);
+        setActiveUnits(emptyState.activeUnits);
         setExpenseLines(emptyState.expenseLines);
         setRevenueLines(emptyState.revenueLines);
         setDirectCostLines(emptyState.directCostLines);
@@ -860,6 +864,7 @@ const App = () => {
         setLaborDatabase(defaultState.laborDatabase); // Ajout de la ligne manquante
         setProductionActivities(defaultState.productionActivities);
         setSalesChannels(defaultState.salesChannels);
+        setActiveUnits(defaultState.activeUnits);
         setExpenseLines(defaultState.expenseLines);
         setRevenueLines(defaultState.revenueLines);
         setDirectCostLines(defaultState.directCostLines);
@@ -875,7 +880,7 @@ const App = () => {
         try {
             const projectData = buildProjectData({
                 companyName, logoUrl, generalInfo, baseIngredients, basePackaging,
-                products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings,
+                products, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings,
             });
 
             const jsonString = JSON.stringify(projectData, null, 2);
@@ -916,6 +921,7 @@ const App = () => {
                 setLaborDatabase(parsed.laborDatabase);
                 setProductionActivities(parsed.productionActivities);
                 setSalesChannels(parsed.salesChannels);
+                setActiveUnits(parsed.activeUnits);
                 setExpenseLines(parsed.expenseLines);
                 setRevenueLines(parsed.revenueLines);
                 setDirectCostLines(parsed.directCostLines);
@@ -1004,6 +1010,7 @@ const App = () => {
             trackingPoints, setTrackingPoints,
             productionActivities, onUpdateProductionActivities: setProductionActivities,
             salesChannels, onUpdateSalesChannels: setSalesChannels,
+            activeUnits, onUpdateActiveUnits: setActiveUnits,
             expenseLines, onUpdateExpenseLines: handleUpdateExpenseLines,
             revenueLines, onUpdateRevenueLines: setRevenueLines,
             directCostLines, onUpdateDirectCostLines: setDirectCostLines,
@@ -1017,6 +1024,7 @@ const App = () => {
             basePackaging, setBasePackaging,
             laborDatabase, setLaborDatabase, trackingPoints, setTrackingPoints,
             productionActivities, setProductionActivities, salesChannels, setSalesChannels,
+            activeUnits, setActiveUnits,
             expenseLines, handleUpdateExpenseLines, revenueLines, setRevenueLines,
             directCostLines, setDirectCostLines, repartitionKeys, setRepartitionKeys,
             analysisData, showNotification, setNotification,

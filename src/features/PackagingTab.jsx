@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { ArrowUpDown, Copy, Trash2, Upload } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isValidPercentage } from '../utils.js';
+import { parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isValidPercentage, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
@@ -13,7 +13,7 @@ const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.j
 // assistant d'import (même composant générique que les ingrédients — voir
 // CatalogImportWizardModal.jsx). Sans allergènes (non pertinent pour un emballage).
 export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, analysisData } = useProject();
+    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, analysisData, activeUnits } = useProject();
     const { packagingPurchasingReportData, packagingAbcAnalysisData } = analysisData;
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
     const [reportFilterProvider, setReportFilterProvider] = useState('none');
@@ -342,11 +342,9 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 </td>
                                 <td className="px-4 py-2">
                                     <select value={item.unit} onChange={e => handleUpdate(item.id, 'unit', e.target.value)} className="w-full p-1 border rounded">
-                                        <option value="g">g</option>
-                                        <option value="kg">kg</option>
-                                        <option value="ml">ml</option>
-                                        <option value="L">L</option>
-                                        <option value="unité">unité</option>
+                                        {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, item.unit).map(u => (
+                                            <option key={u} value={u}>{u}</option>
+                                        ))}
                                     </select>
                                 </td>
                                 <td className="px-2 py-2">

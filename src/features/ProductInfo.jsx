@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ArrowUpDown, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
-import { parseLocaleNumber, isValidNumber, isValidPositiveNumber, isValidPercentage, isNotEmpty } from '../utils.js';
-import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal } from '../components/common.jsx';
+import { parseLocaleNumber, isValidNumber, isValidPositiveNumber, isValidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
+import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal, UnitsModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 
@@ -27,9 +27,11 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     const {
         companyName, onUpdateCompanyName, logoUrl, onUpdateLogoUrl, generalInfo, onUpdateGeneralInfo, products,
         productionActivities, onUpdateProductionActivities, salesChannels, onUpdateSalesChannels,
+        activeUnits, onUpdateActiveUnits,
         showNotification, setNotification,
     } = useProject();
 
+    const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
     const [filterName, setFilterName] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
     const [filterActivity, setFilterActivity] = useState('all');
@@ -367,6 +369,17 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 </div>
             </div>
 
+            <div className="p-4 bg-gray-100 rounded-lg flex justify-between items-center">
+                <div>
+                    <h2 className="text-lg font-semibold text-gray-800">Unités de mesure</h2>
+                    <p className="text-sm text-gray-600">Choisissez les unités offertes dans les listes déroulantes (ingrédients, emballages, formats).</p>
+                </div>
+                <button onClick={() => setIsUnitsModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
+                    Gérer les unités de mesure
+                </button>
+            </div>
+            <UnitsModal isOpen={isUnitsModalOpen} onClose={() => setIsUnitsModalOpen(false)} activeUnits={activeUnits} onUpdateActiveUnits={onUpdateActiveUnits} />
+
             <div id="tutorial-section-info-activites" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
@@ -685,11 +698,9 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                 <div className="flex items-center gap-1">
                                                     <input type="text" inputMode="decimal" value={format.portionSize || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionSize', e.target.value)} className={`w-12 p-1 border rounded text-right text-sm ${!isValidNumber(format.portionSize) ? 'border-red-500' : 'border-gray-300'}`} />
                                                     <select value={format.portionUnit || 'unité'} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionUnit', e.target.value)} className="p-1 border rounded border-gray-300 text-sm">
-                                                        <option value="g">g</option>
-                                                        <option value="kg">kg</option>
-                                                        <option value="ml">ml</option>
-                                                        <option value="L">L</option>
-                                                        <option value="unité">unité</option>
+                                                        {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, format.portionUnit || 'unité').map(u => (
+                                                            <option key={u} value={u}>{u}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                                 {!isValidNumber(format.portionSize) && <ValidationMessage message="Quantité invalide." />}

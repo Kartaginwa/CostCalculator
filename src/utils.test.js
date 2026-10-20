@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine } from './utils.js';
+import { isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
 
 describe('formatCurrency', () => {
     it('ajoute un espace comme séparateur de milliers, point comme séparateur décimal', () => {
@@ -38,6 +38,31 @@ describe('isDiscreteUnit', () => {
     it('une unité inconnue est traitée comme discrète par défaut (comportement historique, prudent)', () => {
         expect(isDiscreteUnit('caisse')).toBe(true);
         expect(isDiscreteUnit(undefined)).toBe(true);
+    });
+});
+
+describe('filterActiveUnits (retour utilisateur du 19/10 — unités de mesure activables)', () => {
+    it('ne garde que les unités activées parmi une liste plus large', () => {
+        const result = filterActiveUnits(getCompatibleUnits('g'), ['g', 'kg']);
+        expect(result).toEqual(['g', 'kg']);
+    });
+
+    it("garde TOUJOURS la valeur actuelle même si elle n'est plus active (donnée existante jamais cassée)", () => {
+        const result = filterActiveUnits(getCompatibleUnits('g'), ['g', 'kg'], 'oz');
+        expect(result).toContain('oz');
+        expect(result).toEqual(expect.arrayContaining(['g', 'kg', 'oz']));
+    });
+
+    it('retombe sur DEFAULT_ACTIVE_UNITS si activeUnits est vide ou absent', () => {
+        const allMassUnits = getCompatibleUnits('g');
+        expect(filterActiveUnits(allMassUnits, [])).toEqual(allMassUnits.filter(u => DEFAULT_ACTIVE_UNITS.includes(u)));
+        expect(filterActiveUnits(allMassUnits, undefined)).toEqual(allMassUnits.filter(u => DEFAULT_ACTIVE_UNITS.includes(u)));
+    });
+
+    it("n'ajoute jamais une unité qui n'était pas déjà dans la liste fournie, même si activée", () => {
+        // 'unité' est active par défaut mais absente de la famille masse (getCompatibleUnits('g')).
+        const result = filterActiveUnits(getCompatibleUnits('g'), DEFAULT_ACTIVE_UNITS);
+        expect(result).not.toContain('unité');
     });
 });
 

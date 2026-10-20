@@ -3,7 +3,7 @@ import { AlertCircle, ChevronDown, GripVertical, Trash2, Scale, PlusCircle } fro
 import {
     parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPositiveNumber, isValidPercentage,
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent, formatQuantityLabel,
-    getCompatibleUnits, CONVERSION_FACTORS, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS,
+    getCompatibleUnits, CONVERSION_FACTORS, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits,
 } from '../utils.js';
 import { getCostTargetIndicator, useValueFlash } from '../ui-utils.jsx';
 import { Tooltip, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
@@ -12,7 +12,7 @@ import { computeYieldUnits } from '../engine/yieldCalculator.js';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, onSelectProduct, openRecipeSections, setOpenRecipeSections, onAddFormat, onDuplicateFormat }) => {
-    const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification, analysisData } = useProject();
+    const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification, analysisData, activeUnits } = useProject();
     const product = products[editingProductIndex] || null;
 
     const [selectedFormatIndex, setSelectedFormatIndex] = useState(0);
@@ -656,6 +656,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 onClose={() => setIsAddFormatModalOpen(false)}
                 productName={product.platName || 'ce produit'}
                 existingFormats={formats}
+                activeUnits={activeUnits}
                 onCreate={({ sku, portionSize, portionUnit, copyFromFormatId }) => {
                     const overrides = { sku, portionSize, portionUnit };
                     if (copyFromFormatId) {
@@ -880,7 +881,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                                 className="w-full p-1 border rounded"
                                                 disabled={!baseIngredient}
                                             >
-                                                {getCompatibleUnits(baseIngredient?.unit).map(unit => (
+                                                {filterActiveUnits(getCompatibleUnits(baseIngredient?.unit), activeUnits, item.recipeUnit || baseIngredient?.unit).map(unit => (
                                                     <option key={unit} value={unit}>{unit}</option>
                                                 ))}
                                             </select>
@@ -981,7 +982,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                                 className="w-full p-1 border rounded"
                                                 disabled={!basePkg}
                                             >
-                                                {getCompatibleUnits(basePkg?.unit).map(unit => (
+                                                {filterActiveUnits(getCompatibleUnits(basePkg?.unit), activeUnits, item.recipeUnit || basePkg?.unit).map(unit => (
                                                     <option key={unit} value={unit}>{unit}</option>
                                                 ))}
                                             </select>

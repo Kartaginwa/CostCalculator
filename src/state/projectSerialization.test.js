@@ -16,6 +16,7 @@ const demoState = () => {
         laborDatabase: s.laborDatabase,
         productionActivities: s.productionActivities,
         salesChannels: s.salesChannels,
+        activeUnits: s.activeUnits,
         expenseLines: s.expenseLines,
         revenueLines: s.revenueLines,
         directCostLines: s.directCostLines,
@@ -28,7 +29,7 @@ describe('buildProjectData', () => {
     it("n'exporte que les tranches attendues (pas de bruit)", () => {
         const data = buildProjectData(demoState());
         expect(Object.keys(data).sort()).toEqual(
-            ['baseIngredients', 'basePackaging', 'companyName', 'generalInfo', 'laborDatabase', 'logoUrl', 'productionActivities', 'salesChannels', 'expenseLines', 'revenueLines', 'directCostLines', 'repartitionKeys', 'products', 'trackingPoints', 'uiSettings'].sort()
+            ['baseIngredients', 'basePackaging', 'companyName', 'generalInfo', 'laborDatabase', 'logoUrl', 'productionActivities', 'salesChannels', 'activeUnits', 'expenseLines', 'revenueLines', 'directCostLines', 'repartitionKeys', 'products', 'trackingPoints', 'uiSettings'].sort()
         );
     });
 });
@@ -49,6 +50,7 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(parsed.laborDatabase).toEqual(state.laborDatabase);
         expect(parsed.productionActivities).toEqual(state.productionActivities);
         expect(parsed.salesChannels).toEqual(state.salesChannels);
+        expect(parsed.activeUnits).toEqual(state.activeUnits);
         // Chaque ligne démo porte désormais sa propre clé de répartition explicite (Phase 4.5bis,
         // méthodologie comptable complétée le 14/10) — round-trip à l'identique, sans complément.
         expect(parsed.expenseLines).toEqual(state.expenseLines);
@@ -138,6 +140,18 @@ describe('round-trip sauvegarde -> chargement', () => {
         const legacy = { salesChannels: [{ id: 'c1', name: 'Grande distribution', links: [{ id: 'l1', name: 'Distributeur', type: 'margin', percent: 20 }] }] };
         const parsed = parseProjectData(legacy, getEmptyState());
         expect(parsed.salesChannels).toEqual(legacy.salesChannels);
+    });
+
+    it('retombe sur les 5 unités de mesure historiques pour un projet antérieur à cette fonctionnalité (sans activeUnits)', () => {
+        const legacy = { generalInfo: { totalIndirects: 1000 } }; // pas de activeUnits
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.activeUnits).toEqual(['g', 'kg', 'ml', 'L', 'unité']);
+    });
+
+    it('préserve les unités de mesure déjà activées sur un projet', () => {
+        const legacy = { activeUnits: ['g', 'kg', 'lb', 'douzaine'] };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.activeUnits).toEqual(legacy.activeUnits);
     });
 
     it("migre l'ancien generalInfo.totalIndirects à plat vers une ligne de dépense unique (Phase 4.1)", () => {

@@ -156,13 +156,40 @@ export const isValidPercentage = (value) => {
 // entier). Utilisé par isDiscreteUnit ci-dessous pour adapter la validation de « quantité
 // produite » (RecipeCalculator.jsx) à l'unité réellement choisie, plutôt que d'imposer un entier
 // partout (ce qui empêchait un producteur vendant au poids de saisir un lot manuellement).
+// Catalogue complet (retour utilisateur du 19/10) : les 5 historiques + un ensemble plus large
+// qu'un projet peut activer/désactiver (voir `activeUnits`, state de projet, et `UnitsModal`,
+// common.jsx) — jamais une unité personnalisée à facteur libre (risque d'incohérence silencieuse
+// dans tout le convertisseur), seulement un choix parmi ce catalogue contrôlé. Facteurs de
+// conversion vérifiés contre la norme GS1/UN·CEFACT Recommandation 20 (codes KGM/GRM/LTR/LBR/ONZ/
+// TNE). Ordre d'insertion = ordre d'affichage dans la modale (petit → grand par famille) —
+// `UnitsModal` itère ce catalogue directement, pas de structure parallèle à maintenir.
 export const CONVERSION_FACTORS = {
+    // Masse (base 'g')
     'g': { base: 'g', factor: 1, type: 'continuous' },
     'kg': { base: 'g', factor: 1000, type: 'continuous' },
+    'oz': { base: 'g', factor: 28.3495, type: 'continuous' },
+    'lb': { base: 'g', factor: 453.592, type: 'continuous' },
+    'tonne': { base: 'g', factor: 1000000, type: 'continuous' },
+    // Volume (base 'ml')
     'ml': { base: 'ml', factor: 1, type: 'continuous' },
     'L': { base: 'ml', factor: 1000, type: 'continuous' },
+    'cl': { base: 'ml', factor: 10, type: 'continuous' },
+    'hL': { base: 'ml', factor: 100000, type: 'continuous' },
+    'fl oz': { base: 'ml', factor: 29.5735, type: 'continuous' },
+    'gal': { base: 'ml', factor: 3785.41, type: 'continuous' },
+    // Discrète (base 'unité')
     'unité': { base: 'unité', factor: 1, type: 'discrete' },
+    'douzaine': { base: 'unité', factor: 12, type: 'discrete' },
 };
+
+// Libellés de famille pour le regroupement visuel dans UnitsModal — dérivés de `.base`, jamais une
+// 2e liste d'unités à tenir à jour en parallèle de CONVERSION_FACTORS.
+export const UNIT_BASE_FAMILY_LABELS = { g: 'Masse', ml: 'Volume', 'unité': 'Discrètes' };
+
+// Unités actives par défaut (projets neufs, et repli pour tout projet sauvegardé avant cette
+// fonctionnalité — voir projectSerialization.js) : exactement les 5 historiques, jamais désactivées
+// silencieusement par une migration.
+export const DEFAULT_ACTIVE_UNITS = ['g', 'kg', 'ml', 'L', 'unité'];
 
 // Une unité absente de cette table (cas rare) est traitée comme discrète par défaut — comportement
 // historique (entier obligatoire), le plus prudent tant qu'elle n'est pas explicitement classée.
@@ -173,6 +200,18 @@ export const getCompatibleUnits = (baseUnit) => {
     const baseType = CONVERSION_FACTORS[baseUnit]?.base;
     if (!baseType) return [baseUnit]; // Si l'unité est inconnue, elle est la seule option
     return Object.keys(CONVERSION_FACTORS).filter(u => CONVERSION_FACTORS[u].base === baseType);
+};
+
+// Filtre une liste d'unités (déjà compatibles ou non) sur celles activées par le projet (voir
+// `activeUnits`, state de projet) — EN GARDANT TOUJOURS `currentValue` même si désactivée depuis :
+// sinon un format/ingrédient existant utilisant une unité qu'on désactive plus tard se retrouve
+// avec un <select> dont la valeur ne correspond à aucune <option> (donnée existante cassée
+// silencieusement — contraire au principe "donnée absente reste absente, jamais forcée"). Repli sur
+// DEFAULT_ACTIVE_UNITS si `activeUnits` est vide/absent (ne devrait plus arriver une fois la
+// migration de projectSerialization.js en place, mais reste un filet de sécurité défensif).
+export const filterActiveUnits = (units, activeUnits, currentValue) => {
+    const activeSet = new Set(activeUnits?.length ? activeUnits : DEFAULT_ACTIVE_UNITS);
+    return units.filter(u => activeSet.has(u) || u === currentValue);
 };
 
 // Formate un coût unitaire avec plus de précision si nécessaire

@@ -15,8 +15,8 @@ const reconcileBucket = (bucketKey, productionActivities) =>
     (bucketKey === 'general' || productionActivities.some(a => a.id === bucketKey)) ? bucketKey : 'general';
 
 // Construit l'objet exporté vers le fichier .json à partir de l'état courant.
-export function buildProjectData({ companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings }) {
-    return { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings };
+export function buildProjectData({ companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings }) {
+    return { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings };
 }
 
 // Reconstruit les tranches d'état à partir des données JSON chargées, en appliquant migrations et
@@ -85,6 +85,14 @@ export function parseProjectData(data, emptyState) {
     const salesChannels = (data.salesChannels && data.salesChannels.length > 0)
         ? data.salesChannels
         : emptyState.salesChannels;
+
+    // Unités de mesure activées (19/10) : un projet sauvegardé avant cette fonctionnalité n'a
+    // jamais `activeUnits` — retombe sur les 5 historiques (emptyState.activeUnits, dérivées de
+    // DEFAULT_ACTIVE_UNITS), même repli "longueur-gardée" que salesChannels/productionActivities
+    // ci-dessus, jamais un tableau vide qui masquerait toutes les unités partout dans l'app.
+    const activeUnits = (data.activeUnits && data.activeUnits.length > 0)
+        ? data.activeUnits
+        : emptyState.activeUnits;
 
     // Clés de répartition personnalisées (Phase 4.5bis, 14/10) : gabarits % réutilisables, un axe
     // Activités et un axe Canaux par clé, chacun optionnel. Comme pour `activityAllocations`, une
@@ -249,5 +257,5 @@ export function parseProjectData(data, emptyState) {
         return stripFormatOwnedFields(normalized);
     });
 
-    return { companyName, logoUrl, generalInfo, uiSettings, trackingPoints, laborDatabase, productionActivities, salesChannels, expenseLines, revenueLines, directCostLines, repartitionKeys, baseIngredients, basePackaging, products };
+    return { companyName, logoUrl, generalInfo, uiSettings, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, baseIngredients, basePackaging, products };
 }

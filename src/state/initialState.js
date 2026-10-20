@@ -1,5 +1,5 @@
 import { calculateCosts } from '../engine/calculateCosts.js';
-import { generateSlug, buildRowDisplayName, sumLineAmounts, sumAmountsMap } from '../utils.js';
+import { generateSlug, buildRowDisplayName, sumLineAmounts, sumAmountsMap, DEFAULT_ACTIVE_UNITS } from '../utils.js';
 
 // Construit le format de vente par défaut d'un produit à partir de ses champs "à plat"
 // (prixVente, nbPortions, etc.) ET de sa fiche recette (ingrédients, étapes de production, statut
@@ -739,6 +739,9 @@ export const getDefaultState = () => {
         trackingPoints: buildTrackingHistory(ingredients, labor, rawProducts, generalInfo, packaging),
         productionActivities: demoProductionActivities,
         salesChannels: demoSalesChannels,
+        // Unités de mesure activées (19/10) : les 5 historiques par défaut, projet démo compris —
+        // voir DEFAULT_ACTIVE_UNITS (utils.js), seule source de vérité pour ce défaut.
+        activeUnits: [...DEFAULT_ACTIVE_UNITS],
         expenseLines: demoExpenseLines,
         revenueLines: demoRevenueLines,
         directCostLines: demoDirectCostLines,
@@ -757,6 +760,7 @@ export const getEmptyState = () => ({
     logoUrl: '',
     productionActivities: [{ id: 'act_general', name: 'Général', indirectCostDriver: 'directCost' }],
     salesChannels: [{ id: 'channel_default', name: 'Vente directe', links: [] }],
+    activeUnits: [...DEFAULT_ACTIVE_UNITS],
     expenseLines: [],
     revenueLines: [],
     directCostLines: [],

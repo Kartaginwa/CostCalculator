@@ -99,6 +99,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
                                         <li><a href="#guide-param-entreprise" onClick={(e) => handleLinkClick(e, '#guide-param-entreprise')} className="text-gray-600 hover:underline">Informations sur l'entreprise</a></li>
                                         <li><a href="#guide-param-objectifs" onClick={(e) => handleLinkClick(e, '#guide-param-objectifs')} className="text-gray-600 hover:underline">Objectifs stratégiques</a></li>
+                                        <li><a href="#guide-param-units" onClick={(e) => handleLinkClick(e, '#guide-param-units')} className="text-gray-600 hover:underline">Unités de mesure</a></li>
                                         <li><a href="#guide-param-activites" onClick={(e) => handleLinkClick(e, '#guide-param-activites')} className="text-gray-600 hover:underline">Activités de production</a></li>
                                         <li><a href="#guide-param-channels" onClick={(e) => handleLinkClick(e, '#guide-param-channels')} className="text-gray-600 hover:underline">Canaux de vente</a></li>
                                         <li><a href="#guide-param-menu" onClick={(e) => handleLinkClick(e, '#guide-param-menu')} className="text-gray-600 hover:underline">Produits et SKUs</a></li>
@@ -198,6 +199,10 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                      <div id="guide-param-objectifs" className="space-y-2 mt-4">
                                         <h4 className="text-lg font-semibold">{highlightText("Objectifs stratégiques", searchTerm)}</h4>
                                         <p>{highlightText("Définissez des pourcentages cibles pour vos coûts. Dans l'onglet 'Rapport', des symboles apparaîtront à côté des coûts de chaque plat pour indiquer visuellement s'ils respectent ou non ces objectifs.", searchTerm)}</p>
+                                    </div>
+                                    <div id="guide-param-units" className="space-y-2 mt-4">
+                                        <h4 className="text-lg font-semibold">{highlightText("Unités de mesure", searchTerm)}</h4>
+                                        <p>{highlightText("Le bouton « Gérer les unités de mesure » ouvre une fenêtre où vous cochez les unités offertes partout où une unité peut être choisie (Ingrédients, Packaging, Produits et SKUs, Recette & Calcul). Les 5 unités de base (g, kg, ml, L, unité) sont actives par défaut ; vous pouvez en activer d'autres (ex. lb, hL, tonne, douzaine) si votre production en a besoin. Décocher une unité déjà utilisée par une donnée existante ne la supprime pas — cette donnée garde sa valeur.", searchTerm)}</p>
                                     </div>
                                     <div id="guide-param-activites" className="space-y-2 mt-4">
                                         <h4 className="text-lg font-semibold">{highlightText("Activités de production", searchTerm)}</h4>

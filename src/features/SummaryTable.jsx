@@ -7,7 +7,7 @@ import { Tooltip, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
 import { computeMenuEngineeringQuadrants } from '../engine/analysisData.js';
-import { computeNetPriceFromPds } from '../engine/salesChannelCascade.js';
+import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 
 // Doit être déclaré en dehors de StrategicAnalysis : un composant recréé à chaque rendu
 // perdrait son état et forcerait un remontage complet de ses enfants à chaque frappe.
@@ -40,10 +40,14 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
 // (couleurs de marge, info-bulles, mise en évidence du point mort). La ventilation des charges
 // fixes par activité de production ET par canal (Général/Activité/Canal, chacun avec son propre
 // driver choisi dans Paramètres) vient de la Phase 4.6 — voir calculateCosts.js/analysisData.js.
-// « Frais de mise en marché » (20/10, retour utilisateur) : chez SymbiOse, trois lignes détaillées
-// (courtage, distribution, facturation) ; notre modèle de cascade de maillons (Canaux de vente) ne
-// les détaille pas séparément — affiché ici comme un seul total déjà implicite dans la cascade :
-// PDS moins Prix de vente (= tout ce que les maillons déduisent avant le prix net producteur).
+// « PDS et frais de mise en marché » (20/10, retour utilisateur) : une section séparée, avant
+// « Marge brute », détaillant CHAQUE maillon de la cascade (markup/marge, Canaux de vente) en
+// dollars — pas un seul total global comme avant. Un maillon NOMMÉ identique dans plusieurs canaux
+// (ex. un même partenaire de distribution) n'apparaît qu'une fois ; un maillon sans nom ne fusionne
+// jamais avec un autre maillon sans nom d'un canal différent (voir `linkRowKey` : repli sur
+// channelId+index dans ce cas précis, jamais sur le nom vide lui-même). Chez SymbiOse, trois lignes
+// détaillées existent (courtage, distribution, facturation) ; notre modèle de cascade de maillons
+// ne les détaille pas de la même façon, mais le principe (une ligne par poste) est repris ici.
 // Les frais d'expédition, eux, restent absorbés dans les frais fixes plutôt que traités à part. Le
 // coût de production ne varie jamais par canal — affiché une seule fois, au-dessus de la grille,
 // plutôt que répété colonne par colonne.
@@ -79,6 +83,40 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
         .map(item => item.name || item.operation)
         .filter(Boolean)
         .join(' + ') || 'Coûts additionnels';
+
+    // Clé de dédoublonnage d'un maillon : son nom (si renseigné, pour fusionner un même maillon
+    // nommé réutilisé par plusieurs canaux) — sinon channelId+index, pour qu'un maillon sans nom ne
+    // fusionne jamais avec un autre maillon sans nom d'un canal différent (deux maillons distincts
+    // qui ne portent simplement aucun nom, pas le même maillon).
+    const linkRowKey = (channelId, link, index) => (link.name || '').trim() || `${channelId}:${index}`;
+
+    // Un maillon par ligne, du plus proche du PDS (en haut) vers celui le plus proche du prix net
+    // (en bas) — cohérent avec PDS en haut et Prix de vente en bas de cette section.
+    const linkRows = [];
+    const seenLinkKeys = new Set();
+    channelBreakdown.forEach(cb => {
+        const links = salesChannels.find(c => c.id === cb.channelId)?.links || [];
+        for (let i = links.length - 1; i >= 0; i--) {
+            const key = linkRowKey(cb.channelId, links[i], i);
+            if (seenLinkKeys.has(key)) continue;
+            seenLinkKeys.add(key);
+            linkRows.push({ key, label: (links[i].name || '').trim() || `Maillon ${i + 1}` });
+        }
+    });
+
+    // Delta $ de CE maillon pour CE canal : la part de l'écart PDS/prix net qui lui revient (la
+    // cascade complète, pas seulement son résultat final — voir computeNetPriceFromPds pour le
+    // prix net global). Absent si le canal ne passe pas par ce maillon, ou si le PDS n'est pas saisi.
+    const getLinkDelta = (cb, linkRow) => {
+        if (!(pds > 0)) return null;
+        const links = salesChannels.find(c => c.id === cb.channelId)?.links || [];
+        const index = links.findIndex((l, i) => linkRowKey(cb.channelId, l, i) === linkRow.key);
+        if (index === -1) return null;
+        const prices = computeSalesChannelCascade({ links, anchorIndex: links.length, anchorValue: pds });
+        const before = prices[index];
+        const after = prices[index + 1];
+        return (before != null && after != null) ? after - before : null;
+    };
 
     return (
         <div>
@@ -122,29 +160,32 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            <BySkuSectionHeader label="Revenu et marge brute" colSpan={channelBreakdown.length + 1} />
+                            <BySkuSectionHeader label="PDS et frais de mise en marché" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="PDS" tooltip="Prix de détail suggéré au consommateur pour ce format — une seule valeur, la même pour tous les canaux (saisie dans Produits et SKUs)." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
                                     {pds > 0 ? `${formatCurrency(pds)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
                                 </td>
                             ))} />
-                            <BySkuRow label="Frais de mise en marché" tooltip="Le coût des maillons de ce canal (courtage, distribution, marge du détaillant, etc.) entre le PDS et le prix net — PDS moins le prix net QUE PRODUIRAIT la cascade de maillons de ce canal (bouton « Générer » de Produits et SKUs), jamais le prix net réellement saisi : un rabais ponctuel appliqué à la main sur ce dernier (ex. 10 % en ligne) n'est pas un maillon et ne doit pas compter comme un coût de mise en marché." render={channelBreakdown.map(cb => {
-                                const channel = salesChannels.find(c => c.id === cb.channelId);
-                                const cascadeNetPrice = pds > 0 ? computeNetPriceFromPds(pds, channel) : null;
-                                return (
-                                    <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                        {cascadeNetPrice != null ? `${formatCurrency(pds - cascadeNetPrice)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format, ou maillons de ce canal incalculables">—</span>}
-                                    </td>
-                                );
-                            })} />
+                            {linkRows.map(linkRow => (
+                                <BySkuRow key={linkRow.key} label={linkRow.label} tooltip="Le markup ou la marge de ce maillon, en dollars, pour ce canal — une partie de l'écart entre le PDS et le prix net qui lui revient (calculée à partir de la cascade de maillons du canal, pas du prix net réellement saisi)." render={channelBreakdown.map(cb => {
+                                    const delta = getLinkDelta(cb, linkRow);
+                                    return (
+                                        <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
+                                            {delta != null ? `${formatCurrency(delta)} $` : <span className="text-gray-400" title="Ce canal ne passe pas par ce maillon, ou PDS non saisi pour ce format">—</span>}
+                                        </td>
+                                    );
+                                })} />
+                            ))}
                             <BySkuRow label="Prix de vente" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-medium text-gray-800">{formatCurrency(cb.netPrice)} $</td>
                             ))} />
+
+                            <BySkuSectionHeader label="Marge brute" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Bénéfice brut" tooltip="Prix net moins le coût de production. Avant frais fixes." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatCurrency(cb.margeBruteDollar)} $</td>
                             ))} />
                             <BySkuRow label="Marge brute" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatPercent(cb.margeBrutePercent)} %</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatPercent(cb.margeBrutePercent)} %</td>
                             ))} />
 
                             <BySkuSectionHeader label="Répartition des charges fixes" colSpan={channelBreakdown.length + 1} />
@@ -169,7 +210,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatCurrency(cb.margeNetteDollar)} $</td>
                             ))} />
                             <BySkuRow label="Marge nette" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatPercent(cb.margeNettePercent)} %</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatPercent(cb.margeNettePercent)} %</td>
                             ))} />
 
                             <BySkuSectionHeader label="Seuil de rentabilité par canal de vente" colSpan={channelBreakdown.length + 1} />
@@ -183,7 +224,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                                     {cb.volume > 0 ? `${formatCurrency((cb.netPrice - cb.margeNetteDollar) * cb.volume)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
-                            <BySkuRow label="Bénéfices / Pertes" tooltip="Revenu total moins frais totaux — le profit réel dans ce canal, au volume réellement vendu." emphasis render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Bénéfices / Pertes" tooltip="Revenu total moins frais totaux — le profit réel dans ce canal, au volume réellement vendu." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold" style={cb.volume > 0 ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
                                     {cb.volume > 0 ? `${formatCurrency(cb.margeNetteDollar * cb.volume)} $` : <span className="text-gray-400 font-normal" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>

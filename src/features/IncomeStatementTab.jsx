@@ -82,46 +82,46 @@ const IncomeStatementColGroup = ({ activityBuckets, salesChannels }) => (
 // Barre de synthèse Bénéfice brut/net (20/10, retour utilisateur) : même grille de colonnes ET
 // mêmes trois palettes que les rangées « Sous-total » des 3 tableaux ci-dessus (vert pour
 // Poste/Montant, jaune pour les activités, bleu pour les canaux — voir IncomeStatementColGroup) —
-// une seule ligne mise en évidence entre deux sections, pas un nouveau tableau à faire défiler.
-// Même taille de police que ces tableaux (`text-xs`, jamais `text-sm`) pour que les montants
-// tiennent sur une seule ligne dans des colonnes de largeur fixe identique. `bucketValues`/
-// `channelValues` déjà calculés (computeGrossProfitTotals/computeNetProfitTotals) — jamais
-// redérivés ici. Une valeur de canal `null` affiche « — » plutôt qu'un 0 forcé (voir le
-// commentaire de ces fonctions).
+// une seule ligne mise en évidence entre deux sections. Aucun wrapper `overflow-x-auto` propre
+// (retiré le 20/10) : ce tableau partage désormais le scroll horizontal UNIQUE du groupe de
+// tableaux de cet onglet (voir plus bas, autour de `tutorial-section-revenue`), pour que ses
+// colonnes restent alignées avec celles des autres tableaux pendant le défilement. Même taille de
+// police que ces tableaux (`text-xs`, jamais `text-sm`) pour que les montants tiennent sur une
+// seule ligne dans des colonnes de largeur fixe identique. `bucketValues`/`channelValues` déjà
+// calculés (computeGrossProfitTotals/computeNetProfitTotals) — jamais redérivés ici. Une valeur de
+// canal `null` affiche « — » plutôt qu'un 0 forcé (voir le commentaire de ces fonctions).
 const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues, salesChannels, channelValues }) => (
-    <div className="overflow-x-auto">
-        <table className="w-full table-fixed text-xs border-separate border-spacing-0">
-            <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
-            <tbody>
-                <tr className="font-bold">
-                    <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-l-lg">
-                        <span className="flex items-center justify-end">{label}{tooltip && <Tooltip text={tooltip} />}</span>
-                    </td>
-                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50">{formatCurrency(total)} $</td>
-                    <td className="w-2 p-0" aria-hidden="true" />
-                    {activityBuckets.map((b, i) => {
-                        const isLast = i === activityBuckets.length - 1 && salesChannels.length === 0;
-                        return (
-                            <td key={b.key} className={`px-2 py-1.5 text-right text-xs text-yellow-800 bg-yellow-50 ${isLast ? 'rounded-r-lg' : ''}`}>
-                                {formatCurrency(bucketValues[b.key] || 0)} $
-                            </td>
-                        );
-                    })}
-                    {salesChannels.length > 0 && <td className="w-2 p-0" aria-hidden="true" />}
-                    {salesChannels.map((c, i) => {
-                        const v = channelValues[c.id];
-                        const isLast = i === salesChannels.length - 1;
-                        return (
-                            <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic text-blue-800 bg-blue-50 ${isLast ? 'rounded-r-lg' : ''}`}>
-                                {v != null ? `${formatCurrency(v)} $` : '—'}
-                            </td>
-                        );
-                    })}
-                    <td className="px-1 py-1" aria-hidden="true" />
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <table className="w-full table-fixed text-xs border-separate border-spacing-0">
+        <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
+        <tbody>
+            <tr className="font-bold">
+                <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-l-lg">
+                    <span className="flex items-center justify-end">{label}{tooltip && <Tooltip text={tooltip} />}</span>
+                </td>
+                <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50">{formatCurrency(total)} $</td>
+                <td className="w-2 p-0" aria-hidden="true" />
+                {activityBuckets.map((b, i) => {
+                    const isLast = i === activityBuckets.length - 1 && salesChannels.length === 0;
+                    return (
+                        <td key={b.key} className={`px-2 py-1.5 text-right text-xs text-yellow-800 bg-yellow-50 ${isLast ? 'rounded-r-lg' : ''}`}>
+                            {formatCurrency(bucketValues[b.key] || 0)} $
+                        </td>
+                    );
+                })}
+                {salesChannels.length > 0 && <td className="w-2 p-0" aria-hidden="true" />}
+                {salesChannels.map((c, i) => {
+                    const v = channelValues[c.id];
+                    const isLast = i === salesChannels.length - 1;
+                    return (
+                        <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic text-blue-800 bg-blue-50 ${isLast ? 'rounded-r-lg' : ''}`}>
+                            {v != null ? `${formatCurrency(v)} $` : '—'}
+                        </td>
+                    );
+                })}
+                <td className="px-1 py-1" aria-hidden="true" />
+            </tr>
+        </tbody>
+    </table>
 );
 
 // Clés de répartition personnalisées (Phase 4.5, ajouté le 14/10) : gabarits de pourcentages
@@ -686,13 +686,25 @@ export const IncomeStatementTab = () => {
                 totalDirectCosts={totalDirectCosts}
             />
 
+            {/* Scroll horizontal UNIQUE pour tout ce groupe (20/10, retour utilisateur) : Revenus,
+                Charges directes réelles, Bénéfice brut, Frais fixes, Bénéfice net partagent tous
+                la même grille de colonnes (IncomeStatementColGroup) — chacun avait son propre
+                `overflow-x-auto` avant, donc faire défiler l'un ne faisait pas suivre les autres,
+                et une même colonne (ex. un canal précis) pouvait se retrouver désalignée d'un
+                tableau à l'autre après un défilement indépendant. Un seul conteneur de défilement
+                ici, partagé par les 5 — jamais par la Réconciliation plus bas, qui a sa propre
+                grille de colonnes (Poste/Réel/Théorique/Écart), sans rapport avec celle-ci. Le
+                `space-y-8` interne reproduit l'espacement que ce groupe aurait eu comme enfants
+                directs du conteneur `space-y-8` englobant (voir plus haut), puisqu'il n'en est
+                plus qu'un seul enfant direct lui-même. */}
+            <div className="overflow-x-auto">
+            <div className="space-y-8">
             <div id="tutorial-section-revenue">
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
                     Revenus
                     <Tooltip text="Vos revenus réels (tels qu'ils apparaissent dans votre vraie comptabilité). Choisissez une répartition par ligne : Général (non rattachable à une activité précise), une activité de production précise, ou Saisie manuelle pour ventiler librement entre plusieurs contenants à la fois. Les colonnes par canal sont une estimation dérivée du mix de vente, jamais une donnée réelle — à titre indicatif seulement, pas un calcul." />
                 </h2>
                 {revenueLines.length > 0 ? (
-                    <div className="overflow-x-auto">
                         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
                             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
                             <thead>
@@ -864,7 +876,6 @@ export const IncomeStatementTab = () => {
                                 </tr>
                             </tfoot>
                         </table>
-                    </div>
                 ) : (
                     <p className="text-sm text-gray-500 italic">Aucun revenu listé — ajoutez-en un pour commencer.</p>
                 )}
@@ -879,7 +890,6 @@ export const IncomeStatementTab = () => {
                     <Tooltip text="Vos charges directes réelles (telles qu'elles apparaissent dans votre vraie comptabilité), ventilées par type de coût — pas par les catégories de frais fixes ci-dessous. Sert au diagnostic réel vs théorique (comparaison avec le coût de revient calculé par le modèle de recette) ; n'entre pas encore dans un calcul en aval." />
                 </h2>
                 {directCostLines.length > 0 ? (
-                    <div className="overflow-x-auto">
                         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
                             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
                             <thead>
@@ -1028,7 +1038,6 @@ export const IncomeStatementTab = () => {
                                 </tr>
                             </tfoot>
                         </table>
-                    </div>
                 ) : (
                     <p className="text-sm text-gray-500 italic">Aucune charge directe listée — ajoutez-en une pour commencer.</p>
                 )}
@@ -1066,7 +1075,6 @@ export const IncomeStatementTab = () => {
                     </div>
                 </div>
                 {expenseLines.length > 0 ? (
-                    <div className="overflow-x-auto">
                         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
                             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
                             <thead>
@@ -1271,7 +1279,6 @@ export const IncomeStatementTab = () => {
                                 </tr>
                             </tfoot>
                         </table>
-                    </div>
                 ) : (
                     <p className="text-sm text-gray-500 italic">Aucune dépense listée — ajoutez-en une pour commencer.</p>
                 )}
@@ -1289,6 +1296,8 @@ export const IncomeStatementTab = () => {
                 salesChannels={salesChannels}
                 channelValues={netProfit.channelValues}
             />
+            </div>
+            </div>
 
             <div id="tutorial-section-reconciliation" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex justify-between items-center mb-4">

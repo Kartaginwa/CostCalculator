@@ -265,8 +265,11 @@ test("Revenus : la colonne Montant tient 99 999 999.99 $ sur une seule ligne, sa
     const subtotalRow = section.locator('tfoot tr');
     await expect(subtotalRow.getByText('99 999 999.99 $', { exact: true })).toBeVisible();
 
-    // Aucun défilement horizontal introduit par cette largeur de colonne.
-    const scrollDiv = section.locator('.overflow-x-auto').first();
+    // Aucun défilement horizontal introduit par cette largeur de colonne. Le conteneur de
+    // défilement n'est plus propre à cette section depuis le 20/10 (scroll horizontal UNIQUE
+    // partagé par les 5 tableaux/barres Revenus→Bénéfice net, voir IncomeStatementTab.jsx) — on
+    // cherche donc l'ancêtre `.overflow-x-auto` qui contient cette section, pas un descendant.
+    const scrollDiv = page.locator('div.overflow-x-auto').filter({ has: section }).first();
     const scrollWidth = await scrollDiv.evaluate(el => el.scrollWidth);
     const clientWidth = await scrollDiv.evaluate(el => el.clientWidth);
     expect(scrollWidth, 'le tableau Revenus déborde horizontalement').toBeLessThanOrEqual(clientWidth);

@@ -2906,3 +2906,45 @@ Deux corrections sur la restructuration ci-dessus, suite à un nouveau retour ut
   script Playwright temporaire (Frais de mise en marché = 0,00 $ pour Vente directe sur le projet
   démo, confirmant la correction ; barres Bénéfice brut/net affichées avec les bons totaux et la
   bonne ventilation par activité/canal), lint et `npx vite build` propres.
+
+## Corrections du 20/10 (suite 2) : couleurs conditionnelles, maillons détaillés, scroll unifié
+
+Quatre retours utilisateur sur les sections précédentes :
+
+1. **Marge brute/nette (%) sans couleur conditionnelle** — contrairement à Bénéfice brut/net ($),
+   ces deux lignes restaient en gris uniforme. Ajout de `style={getMarginCellStyle(...)}` (même
+   palette rouge/vert déjà utilisée partout ailleurs dans l'app) aux deux lignes.
+2. **« Frais de mise en marché » redécoupé par maillon** — au lieu d'un seul total, une ligne PAR
+   maillon distinct (ex. « Centre de distribution », « Détaillant national » pour Grandes
+   surfaces), chacune montrant le delta $ de CE maillon précis dans la cascade (`prices[i+1] -
+   prices[i]`, à partir de `computeSalesChannelCascade` — pas juste son résultat final). Un
+   maillon NOMMÉ identique réutilisé par plusieurs canaux ne s'affiche qu'une fois (dédoublonné par
+   nom) ; un maillon SANS nom ne fusionne jamais avec un autre maillon sans nom d'un canal
+   différent (clé de dédoublonnage repliée sur `channelId:index` dans ce cas précis — jamais sur le
+   nom vide lui-même, qui collapserait à tort des maillons non reliés). Section renommée « PDS et
+   frais de mise en marché » (PDS → maillons → Prix de vente), désormais séparée de la nouvelle
+   section « Marge brute » (Bénéfice brut + Marge brute) qui la suit — au lieu d'une seule section
+   « Revenu et marge brute » mélangeant les deux concepts.
+3. **Ligne « Bénéfices / Pertes » avec un fond bleuté indésirable** — retiré le prop `emphasis` de
+   cette ligne (qui appliquait `bg-indigo-50`) ; la coloration conditionnelle par cellule
+   (`getMarginCellStyle`) et le gras restent, seul le fond uni disparaît. La ligne « Point mort »
+   juste en dessous garde son fond bleuté (pas visée par la demande).
+4. **Scroll horizontal indépendant par tableau dans État des résultats** — Revenus, Charges
+   directes réelles, Bénéfice brut, Frais fixes et Bénéfice net avaient chacun leur propre
+   `overflow-x-auto` : faire défiler l'un ne faisait pas suivre les autres, désalignant leurs
+   colonnes (ex. un canal précis) les unes des autres. Un seul conteneur de défilement enveloppe
+   désormais ces 5 tableaux/barres (retrait de leurs `overflow-x-auto` individuels, un nouveau
+   `space-y-8` interne reproduisant l'espacement perdu) — jamais la Réconciliation plus bas, dont
+   la grille de colonnes (Poste/Réel/Théorique/Écart) n'a aucun rapport avec celle-ci et garde son
+   propre scroll.
+- Fichiers touchés : `src/features/SummaryTable.jsx` (`BySkuWaterfall` : sections, maillons,
+  couleurs), `src/features/IncomeStatementTab.jsx` (`ProfitSummaryBar` sans wrapper propre, scroll
+  unifié), `e2e/income-statement-params.spec.js` (un test de non-débordement adapté : il cherchait
+  le conteneur de scroll comme DESCENDANT de la section Revenus, qui en est maintenant un ENFANT).
+- Tests : 225/225 unitaires (inchangés, ces 4 corrections sont purement UI, pas de nouvelle règle
+  métier testable unitairement), 46/46 e2e, vérification fonctionnelle par script Playwright
+  temporaire (maillons GS = 0,62 $ + 2,72 $ = 3,34 $, somme retrouvant exactement l'ancien total
+  « Frais de mise en marché » de ce canal ; maillon Épiceries = 2,55 $, idem ; couleurs
+  conditionnelles confirmées sur Marge brute/nette ; classe `bg-indigo-50` absente de Bénéfices/
+  Pertes mais toujours présente sur Point mort ; un seul `.overflow-x-auto` couvrant Revenus à
+  Bénéfice net, un second propre à la Réconciliation), lint et `npx vite build` propres.

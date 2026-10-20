@@ -2948,3 +2948,23 @@ Quatre retours utilisateur sur les sections précédentes :
   conditionnelles confirmées sur Marge brute/nette ; classe `bg-indigo-50` absente de Bénéfices/
   Pertes mais toujours présente sur Point mort ; un seul `.overflow-x-auto` couvrant Revenus à
   Bénéfice net, un second propre à la Réconciliation), lint et `npx vite build` propres.
+
+## Correction du 20/10 (suite 3) : retrait du détail par canal/activité des barres Bénéfice brut/net
+
+Retour utilisateur, juste après l'ajout de ces deux barres : leur ventilation par canal (Bénéfice
+brut) et par activité ET canal (Bénéfice net) ne doit plus s'afficher — seul le total entreprise
+reste visible pour Bénéfice net ; Bénéfice brut garde sa ventilation par activité (non visée par
+la demande), seul son détail par canal disparaît. Nouveaux props `showActivityBuckets`/
+`showSalesChannels` sur `ProfitSummaryBar` (défaut `true`) : les colonnes concernées restent dans
+la grille (même `IncomeStatementColGroup`, même largeur totale) pour ne jamais désaligner le
+scroll horizontal unique avec les 3 tableaux voisins (voir correction précédente) — seules leur
+couleur et leur contenu disparaissent (cellule vide). `computeNetProfitTotals` n'est plus appelée
+depuis cet onglet (son résultat n'était plus affiché nulle part) mais reste exportée et testée
+dans `engine/analysisData.js`, au cas où une vue future la réutiliserait.
+- Fichiers touchés : `src/features/IncomeStatementTab.jsx` (`ProfitSummaryBar`, retrait de l'appel
+  à `computeNetProfitTotals`).
+- Tests : 225/225 unitaires (inchangés), 46/46 e2e, vérification fonctionnelle par script
+  Playwright temporaire (cellules canal de Bénéfice brut vides et sans couleur ; cellules
+  activité ET canal de Bénéfice net vides et sans couleur ; arrondis des coins corrigés — le
+  Montant de Bénéfice net devient le coin arrondi de droite puisqu'aucune colonne colorée ne le
+  suit plus), lint et `npx vite build` propres.

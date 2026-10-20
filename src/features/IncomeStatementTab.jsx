@@ -14,7 +14,7 @@ import {
     computeChannelRevenueShareByActivity, computeRealVsTheoreticalReconciliation,
     buildActivityBuckets, computeBucketTotalsFromAmounts, computeDirectCostLineAllocations,
     computeExpenseLineEffectiveAllocations, computeExpensePoolTotals,
-    computeGrossProfitTotals, computeNetProfitTotals,
+    computeGrossProfitTotals,
     REPARTITION_ACTIVITY_PREFIX, REPARTITION_CHANNEL_PREFIX, REPARTITION_CUSTOM_PREFIX,
 } from '../engine/analysisData.js';
 
@@ -90,7 +90,17 @@ const IncomeStatementColGroup = ({ activityBuckets, salesChannels }) => (
 // seule ligne dans des colonnes de largeur fixe identique. `bucketValues`/`channelValues` déjà
 // calculés (computeGrossProfitTotals/computeNetProfitTotals) — jamais redérivés ici. Une valeur de
 // canal `null` affiche « — » plutôt qu'un 0 forcé (voir le commentaire de ces fonctions).
-const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues, salesChannels, channelValues }) => (
+//
+// `showActivityBuckets`/`showSalesChannels` (20/10, retour utilisateur) : Bénéfice brut n'affiche
+// plus de donnée par canal (jugée peu fiable à ce niveau — indicative des deux côtés, souvent
+// absente) ; Bénéfice net n'affiche plus de donnée ni par activité ni par canal. Les colonnes
+// elles-mêmes restent dans la grille (`IncomeStatementColGroup` reçoit toujours les vraies listes)
+// pour que la largeur totale — donc l'alignement avec les 3 tableaux voisins dans le scroll
+// unique — ne change pas ; seules leur couleur et leur contenu disparaissent pour ce groupe.
+const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues, salesChannels, channelValues, showActivityBuckets = true, showSalesChannels = true }) => {
+    const hasVisibleChannels = showSalesChannels && salesChannels.length > 0;
+    const montantIsLast = !hasVisibleChannels && !(showActivityBuckets && activityBuckets.length > 0);
+    return (
     <table className="w-full table-fixed text-xs border-separate border-spacing-0">
         <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
         <tbody>
@@ -98,23 +108,23 @@ const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues
                 <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-l-lg">
                     <span className="flex items-center justify-end">{label}{tooltip && <Tooltip text={tooltip} />}</span>
                 </td>
-                <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50">{formatCurrency(total)} $</td>
+                <td className={`px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 ${montantIsLast ? 'rounded-r-lg' : ''}`}>{formatCurrency(total)} $</td>
                 <td className="w-2 p-0" aria-hidden="true" />
                 {activityBuckets.map((b, i) => {
-                    const isLast = i === activityBuckets.length - 1 && salesChannels.length === 0;
+                    const isLast = showActivityBuckets && i === activityBuckets.length - 1 && !hasVisibleChannels;
                     return (
-                        <td key={b.key} className={`px-2 py-1.5 text-right text-xs text-yellow-800 bg-yellow-50 ${isLast ? 'rounded-r-lg' : ''}`}>
-                            {formatCurrency(bucketValues[b.key] || 0)} $
+                        <td key={b.key} className={`px-2 py-1.5 text-right text-xs ${showActivityBuckets ? 'text-yellow-800 bg-yellow-50' : ''} ${isLast ? 'rounded-r-lg' : ''}`}>
+                            {showActivityBuckets ? `${formatCurrency(bucketValues[b.key] || 0)} $` : ''}
                         </td>
                     );
                 })}
                 {salesChannels.length > 0 && <td className="w-2 p-0" aria-hidden="true" />}
                 {salesChannels.map((c, i) => {
                     const v = channelValues[c.id];
-                    const isLast = i === salesChannels.length - 1;
+                    const isLast = showSalesChannels && i === salesChannels.length - 1;
                     return (
-                        <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic text-blue-800 bg-blue-50 ${isLast ? 'rounded-r-lg' : ''}`}>
-                            {v != null ? `${formatCurrency(v)} $` : '—'}
+                        <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic ${showSalesChannels ? 'text-blue-800 bg-blue-50' : ''} ${isLast ? 'rounded-r-lg' : ''}`}>
+                            {showSalesChannels ? (v != null ? `${formatCurrency(v)} $` : '—') : ''}
                         </td>
                     );
                 })}
@@ -122,7 +132,8 @@ const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues
             </tr>
         </tbody>
     </table>
-);
+    );
+};
 
 // Clés de répartition personnalisées (Phase 4.5, ajouté le 14/10) : gabarits de pourcentages
 // réutilisables sur plusieurs lignes de frais fixes — chaque clé définit, INDÉPENDAMMENT, une
@@ -586,19 +597,15 @@ export const IncomeStatementTab = () => {
         [expenseLines, expenseLineEffectiveAllocations, activityBuckets, salesChannels]
     );
 
-    // Phase 4.4bis (20/10) — Bénéfice brut (sous Charges directes réelles) et Bénéfice net (sous
-    // Frais fixes), ventilés par activité et par canal comme les 3 tableaux ci-dessus.
+    // Phase 4.4bis (20/10) — Bénéfice brut (sous Charges directes réelles), ventilé par activité
+    // (voir ProfitSummaryBar) comme les 3 tableaux ci-dessus. Sa ventilation par canal a été
+    // retirée le 20/10 (retour utilisateur), ainsi que toute ventilation (activité ET canal) pour
+    // Bénéfice net — qui n'affiche donc plus qu'un total entreprise, sans passer par
+    // `computeNetProfitTotals` (resté exporté dans analysisData.js, toujours testé, simplement
+    // plus consommé ici).
     const grossProfit = useMemo(
         () => computeGrossProfitTotals({ activityBuckets, salesChannels, bucketTotals, directCostBucketTotals, channelTotals, directCostChannelTotals }),
         [activityBuckets, salesChannels, bucketTotals, directCostBucketTotals, channelTotals, directCostChannelTotals]
-    );
-    const netProfit = useMemo(
-        () => computeNetProfitTotals({
-            activityBuckets, salesChannels,
-            grossProfitBucketValues: grossProfit.bucketValues, grossProfitChannelValues: grossProfit.channelValues,
-            expenseBucketTotals, expenseChannelTotals,
-        }),
-        [activityBuckets, salesChannels, grossProfit, expenseBucketTotals, expenseChannelTotals]
     );
     const grossProfitTotal = totalRevenue - totalDirectCosts;
     const netProfitTotal = grossProfitTotal - parseLocaleNumber(generalInfo.totalIndirects);
@@ -1048,12 +1055,13 @@ export const IncomeStatementTab = () => {
 
             <ProfitSummaryBar
                 label="Bénéfice brut"
-                tooltip="Revenus moins Charges directes réelles — avant frais fixes. Par activité : deux totaux réels ci-dessus, directement soustraits. Par canal : indicatif des deux côtés, visible seulement si revenus ET charges directes ont une part connue pour ce canal."
+                tooltip="Revenus moins Charges directes réelles — avant frais fixes. Par activité : deux totaux réels ci-dessus, directement soustraits. Pas de détail par canal (retiré le 20/10) : trop souvent indicatif des deux côtés pour être fiable à ce niveau."
                 total={grossProfitTotal}
                 activityBuckets={activityBuckets}
                 bucketValues={grossProfit.bucketValues}
                 salesChannels={salesChannels}
                 channelValues={grossProfit.channelValues}
+                showSalesChannels={false}
             />
 
             <div id="tutorial-section-expenses">
@@ -1289,12 +1297,14 @@ export const IncomeStatementTab = () => {
 
             <ProfitSummaryBar
                 label="Bénéfice net"
-                tooltip="Bénéfice brut moins Frais fixes. Par activité et par canal : les deux allocations réelles des Frais fixes ci-dessus, directement soustraites du Bénéfice brut correspondant — jamais une part indicative, contrairement au Bénéfice brut par canal."
+                tooltip="Bénéfice brut moins Frais fixes — au total de l'entreprise. Pas de détail par activité ni par canal (retiré le 20/10)."
                 total={netProfitTotal}
                 activityBuckets={activityBuckets}
-                bucketValues={netProfit.bucketValues}
+                bucketValues={{}}
                 salesChannels={salesChannels}
-                channelValues={netProfit.channelValues}
+                channelValues={{}}
+                showActivityBuckets={false}
+                showSalesChannels={false}
             />
             </div>
             </div>

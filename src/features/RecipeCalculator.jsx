@@ -12,7 +12,7 @@ import { computeYieldUnits } from '../engine/yieldCalculator.js';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, onSelectProduct, openRecipeSections, setOpenRecipeSections, onAddFormat, onDuplicateFormat }) => {
-    const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification } = useProject();
+    const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification, analysisData } = useProject();
     const product = products[editingProductIndex] || null;
 
     const [selectedFormatIndex, setSelectedFormatIndex] = useState(0);
@@ -155,9 +155,17 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
         });
     }, [format]);
 
-    // Point mort retiré d'ici le 06/10 (décision utilisateur) : Recette & Calcul ne montre plus
-    // les frais indirects ni le point mort, qui dépendent des frais fixes — vivent désormais dans
-    // Résumé → Par SKU, avec un point mort PAR CANAL (voir computeChannelBreakdown, calculateCosts.js).
+    // Point mort réintroduit le 19/10 (retour utilisateur) : affiche la valeur DÉJÀ calculée par
+    // le pipeline complet (analysisData.productsWithCosts, voir analysisData.js) — jamais
+    // recalculée localement ici, contrairement à l'ancienne implémentation pré-06/10
+    // (breakEvenForProduct), qui dupliquait ce calcul. Avantage concret demandé par l'utilisateur :
+    // une modification du prix de vente se répercute immédiatement ici, puisque `analysisData` se
+    // recalcule déjà à chaque changement de `products` (même cycle de rendu, voir App.jsx) — rien
+    // à maintenir en synchronisation. `null` si ce format n'a encore aucun canal rattaché, ou si la
+    // marge brute du canal sélectionné est ≤ 0 (point mort indéfini) — jamais une valeur forcée.
+    const analysisFormatEntry = analysisData?.productsWithCosts?.find(p => p.id === format?.id);
+    const analysisChannelEntry = analysisFormatEntry?.channelBreakdown?.find(cb => cb.channelId === selectedChannelData?.channelId);
+    const breakEvenUnits = analysisChannelEntry?.breakEvenUnits ?? null;
 
     if (!product || !format) return <div className="text-center p-8">Veuillez d'abord sélectionner ou ajouter un plat.</div>;
 
@@ -1427,6 +1435,23 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         </p>
                     </div>
                 </div>
+                {/* Point mort réintroduit le 19/10, en bas de la cascade — valeur déjà calculée par
+                    analysisData (voir plus haut), jamais recalculée ici. Masqué pendant une
+                    simulation de prix, comme le sélecteur de canal : le point mort affiché reste
+                    celui du prix réel, pas une projection sur le prix simulé. */}
+                {!isSimulating && (
+                    <div className="flex justify-center mt-4">
+                        <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center">
+                            <div className="text-sm text-gray-500 flex items-center justify-center">
+                                Point Mort
+                                <Tooltip text="Unités à vendre dans ce canal pour couvrir la part des frais fixes allouée à ce SKU — déjà calculé pour le Rapport (Par SKU), simplement affiché ici." />
+                            </div>
+                            <p className="text-xl font-bold text-gray-800">
+                                {breakEvenUnits != null ? `${breakEvenUnits} unités` : 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+                )}
                 <div className="mt-6 pt-4 border-t">
                     {!isSimulating ? (
                         <div className="text-center">

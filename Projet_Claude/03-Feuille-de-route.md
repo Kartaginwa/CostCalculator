@@ -2736,3 +2736,23 @@ passe de ~150 px à ~50 px dans l'écran principal, peu importe son nombre de ma
    positionner le défilement. Vérifié par script Playwright temporaire (défilement exact restauré
    au pixel près après un aller-retour d'onglet).
 - Tests : 209/209 unitaires, 46/46 e2e, lint et `npx vite build` propres.
+
+3. **Point mort réintroduit en bas du récapitulatif de Production** — retiré le 06/10 (décision de
+   l'époque : concept dépendant des frais fixes/de l'analyse globale, pas de la recette elle-même,
+   déplacé vers Rapport → Par SKU, avec son propre calcul local `breakEvenForProduct` alors
+   supprimé). L'utilisateur a demandé de le remettre, mais explicitement **sans le recalculer** :
+   affiche directement `breakEvenUnits`, déjà calculé par le pipeline complet
+   (`analysisData.productsWithCosts[...].channelBreakdown[...]`, qui a accès à l'allocation réelle
+   des frais fixes — RecipeCalculator seul ne l'a pas, son `computeChannelBreakdown` local est
+   appelé sans le paramètre `allocatedIndirects`). Nouvelle tuile en bas de la cascade du
+   récapitulatif (après Prix de Vente), retrouve l'entrée correspondant au format et au canal
+   actuellement sélectionnés dans `analysisData`, affiche `N/A` si absente (aucun canal rattaché,
+   ou marge ≤ 0) — jamais une valeur forcée. Masquée pendant une simulation de prix (reste celle du
+   prix réel, comme le sélecteur de canal). Bénéfice confirmé par test : modifier un prix net dans
+   Produits et SKUs puis revenir sur Production met à jour le point mort immédiatement, puisque
+   `analysisData` se recalcule déjà à chaque changement de `products` — aucune synchronisation à
+   maintenir, contrairement à l'ancien calcul local dupliqué. Guide d'utilisation mis à jour
+   (`guide-recette-recap`).
+- Tests : 209/209 unitaires, 46/46 e2e, vérification fonctionnelle par script Playwright temporaire
+  (point mort affiché, et baisse bien après une hausse du prix net du canal), lint et
+  `npx vite build` propres.

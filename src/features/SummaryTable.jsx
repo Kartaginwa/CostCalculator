@@ -272,6 +272,9 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels }) => {
                 </div>
             )}
 
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Matrice d'ingénierie de menu</h3>
+            <p className="text-sm text-gray-500 mb-4">Classe chaque plat selon sa popularité et sa rentabilité (matrice de Boston Consulting Group).</p>
+
             <div className="flex items-center gap-2 mb-4">
                 <label htmlFor="bcgChannelFilter" className="text-sm font-medium text-gray-700">Analyse BCG pour :</label>
                 <select

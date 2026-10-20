@@ -308,56 +308,57 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     return (
         <div id="tutorial-section-recipe-header" className="container mx-auto p-6 bg-white rounded-xl shadow-2xl max-w-7xl space-y-8">
             <h1 className="text-3xl font-bold text-gray-800">Paramètres</h1>
-            <div id="tutorial-section-info-entreprise" className="p-4 bg-gray-100 rounded-lg">
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800">Informations sur l'entreprise</h2>
-                <div>
-                    <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">Nom de l'entreprise</label>
-                    <input type="text" id="tutorial-company-name" value={companyName} onChange={(e) => onUpdateCompanyName(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="tutorial-section-info-entreprise" className="p-4 bg-gray-100 rounded-lg">
+                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Informations sur l'entreprise</h2>
+                    <div>
+                        <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">Nom de l'entreprise</label>
+                        <input type="text" id="tutorial-company-name" value={companyName} onChange={(e) => onUpdateCompanyName(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" />
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Importer un logo (fichier)</label>
+                            <input type="file" accept="image/*" onChange={handleLogoFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium text-gray-700">Importer un logo (URL)</label>
+                            <input type="text" placeholder="https://..." value={logoUrl.startsWith('data:') ? '' : logoUrl} onChange={(e) => onUpdateLogoUrl(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+                        </div>
+                    </div>
+                    {logoUrl && (
+                        <div className="mt-4 flex justify-center items-center bg-white p-2 rounded-md shadow-inner">
+                            <img src={logoUrl} alt="Logo de l'entreprise" className="h-24 w-auto object-contain" />
+                        </div>
+                    )}
                 </div>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Importer un logo (fichier)</label>
-                        <input type="file" accept="image/*" onChange={handleLogoFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Importer un logo (URL)</label>
-                        <input type="text" placeholder="https://..." value={logoUrl.startsWith('data:') ? '' : logoUrl} onChange={(e) => onUpdateLogoUrl(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
-                    </div>
-                </div>
-                {logoUrl && (
-                    <div className="mt-4 flex justify-center items-center bg-white p-2 rounded-md shadow-inner">
-                        <img src={logoUrl} alt="Logo de l'entreprise" className="h-24 w-auto object-contain" />
-                    </div>
-                )}
-            </div>
 
-
-            <div id="tutorial-section-info-objectifs" className="p-4 bg-gray-100 rounded-lg">
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800">Objectifs stratégiques</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label htmlFor="foodCostTarget" className="flex items-center text-sm font-medium text-gray-700">
-                            Objectif coût matière (%)
-                            <Tooltip text="Le pourcentage maximum du prix de vente que le coût des ingrédients devrait représenter." />
-                        </label>
-                        <input type="text" inputMode="decimal" id="foodCostTarget" value={generalInfo.foodCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('foodCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.foodCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
-                        {!isValidPercentage(generalInfo.foodCostTarget) && <ValidationMessage message="Doit être un %." />}
-                    </div>
-                    <div>
-                        <label htmlFor="packagingCostTarget" className="flex items-center text-sm font-medium text-gray-700">
-                            Objectif coût d'emballage (%)
-                            <Tooltip text="Le pourcentage maximum du prix de vente que le coût d'emballage devrait représenter." />
-                        </label>
-                        <input type="text" inputMode="decimal" id="packagingCostTarget" value={generalInfo.packagingCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('packagingCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.packagingCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
-                        {!isValidPercentage(generalInfo.packagingCostTarget) && <ValidationMessage message="Doit être un %." />}
-                    </div>
-                    <div>
-                        <label htmlFor="laborCostTarget" className="flex items-center text-sm font-medium text-gray-700">
-                            Objectif coût main-d'oeuvre (%)
-                            <Tooltip text="Le pourcentage maximum du prix de vente que le coût de la main-d'oeuvre devrait représenter." />
-                        </label>
-                        <input type="text" inputMode="decimal" id="laborCostTarget" value={generalInfo.laborCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('laborCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.laborCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
-                        {!isValidPercentage(generalInfo.laborCostTarget) && <ValidationMessage message="Doit être un %." />}
+                <div id="tutorial-section-info-objectifs" className="p-4 bg-gray-100 rounded-lg">
+                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Objectifs stratégiques</h2>
+                    <div className="grid grid-cols-1 gap-4">
+                        <div>
+                            <label htmlFor="foodCostTarget" className="flex items-center text-sm font-medium text-gray-700">
+                                Objectif coût matière (%)
+                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût des ingrédients devrait représenter." />
+                            </label>
+                            <input type="text" inputMode="decimal" id="foodCostTarget" value={generalInfo.foodCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('foodCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.foodCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
+                            {!isValidPercentage(generalInfo.foodCostTarget) && <ValidationMessage message="Doit être un %." />}
+                        </div>
+                        <div>
+                            <label htmlFor="packagingCostTarget" className="flex items-center text-sm font-medium text-gray-700">
+                                Objectif coût d'emballage (%)
+                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût d'emballage devrait représenter." />
+                            </label>
+                            <input type="text" inputMode="decimal" id="packagingCostTarget" value={generalInfo.packagingCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('packagingCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.packagingCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
+                            {!isValidPercentage(generalInfo.packagingCostTarget) && <ValidationMessage message="Doit être un %." />}
+                        </div>
+                        <div>
+                            <label htmlFor="laborCostTarget" className="flex items-center text-sm font-medium text-gray-700">
+                                Objectif coût main-d'oeuvre (%)
+                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût de la main-d'oeuvre devrait représenter." />
+                            </label>
+                            <input type="text" inputMode="decimal" id="laborCostTarget" value={generalInfo.laborCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('laborCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.laborCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
+                            {!isValidPercentage(generalInfo.laborCostTarget) && <ValidationMessage message="Doit être un %." />}
+                        </div>
                     </div>
                 </div>
             </div>

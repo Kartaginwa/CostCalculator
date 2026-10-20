@@ -79,26 +79,30 @@ const IncomeStatementColGroup = ({ activityBuckets, salesChannels }) => (
     </colgroup>
 );
 
-// Barre de synthèse Bénéfice brut/net (20/10, retour utilisateur) : même grille de colonnes que
-// les 3 tableaux ci-dessus (voir IncomeStatementColGroup) — une seule ligne mise en évidence entre
-// deux sections, pas un nouveau tableau à faire défiler. `bucketValues`/`channelValues` déjà
-// calculés (computeGrossProfitTotals/computeNetProfitTotals) — jamais redérivés ici. Une valeur de
-// canal `null` affiche « — » plutôt qu'un 0 forcé (voir le commentaire de ces fonctions).
-const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues, salesChannels, channelValues, colorClass }) => (
+// Barre de synthèse Bénéfice brut/net (20/10, retour utilisateur) : même grille de colonnes ET
+// mêmes trois palettes que les rangées « Sous-total » des 3 tableaux ci-dessus (vert pour
+// Poste/Montant, jaune pour les activités, bleu pour les canaux — voir IncomeStatementColGroup) —
+// une seule ligne mise en évidence entre deux sections, pas un nouveau tableau à faire défiler.
+// Même taille de police que ces tableaux (`text-xs`, jamais `text-sm`) pour que les montants
+// tiennent sur une seule ligne dans des colonnes de largeur fixe identique. `bucketValues`/
+// `channelValues` déjà calculés (computeGrossProfitTotals/computeNetProfitTotals) — jamais
+// redérivés ici. Une valeur de canal `null` affiche « — » plutôt qu'un 0 forcé (voir le
+// commentaire de ces fonctions).
+const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues, salesChannels, channelValues }) => (
     <div className="overflow-x-auto">
         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
             <tbody>
-                <tr className={`font-bold ${colorClass}`}>
-                    <td colSpan={3} className="px-2 py-2 text-right text-sm rounded-l-lg">
+                <tr className="font-bold">
+                    <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-l-lg">
                         <span className="flex items-center justify-end">{label}{tooltip && <Tooltip text={tooltip} />}</span>
                     </td>
-                    <td className="px-2 py-2 text-right text-sm">{formatCurrency(total)} $</td>
+                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50">{formatCurrency(total)} $</td>
                     <td className="w-2 p-0" aria-hidden="true" />
                     {activityBuckets.map((b, i) => {
                         const isLast = i === activityBuckets.length - 1 && salesChannels.length === 0;
                         return (
-                            <td key={b.key} className={`px-2 py-2 text-right text-sm ${isLast ? 'rounded-r-lg' : ''}`}>
+                            <td key={b.key} className={`px-2 py-1.5 text-right text-xs text-yellow-800 bg-yellow-50 ${isLast ? 'rounded-r-lg' : ''}`}>
                                 {formatCurrency(bucketValues[b.key] || 0)} $
                             </td>
                         );
@@ -108,7 +112,7 @@ const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues
                         const v = channelValues[c.id];
                         const isLast = i === salesChannels.length - 1;
                         return (
-                            <td key={c.id} className={`px-2 py-2 text-right text-sm italic ${isLast ? 'rounded-r-lg' : ''}`}>
+                            <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic text-blue-800 bg-blue-50 ${isLast ? 'rounded-r-lg' : ''}`}>
                                 {v != null ? `${formatCurrency(v)} $` : '—'}
                             </td>
                         );
@@ -1041,7 +1045,6 @@ export const IncomeStatementTab = () => {
                 bucketValues={grossProfit.bucketValues}
                 salesChannels={salesChannels}
                 channelValues={grossProfit.channelValues}
-                colorClass="bg-emerald-100 text-emerald-900"
             />
 
             <div id="tutorial-section-expenses">
@@ -1285,7 +1288,6 @@ export const IncomeStatementTab = () => {
                 bucketValues={netProfit.bucketValues}
                 salesChannels={salesChannels}
                 channelValues={netProfit.channelValues}
-                colorClass="bg-indigo-600 text-white"
             />
 
             <div id="tutorial-section-reconciliation" className="p-4 bg-gray-100 rounded-lg">

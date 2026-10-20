@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ArrowUpDown, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
 import { parseLocaleNumber, isValidNumber, isValidPositiveNumber, isValidPercentage, isNotEmpty } from '../utils.js';
-import { Tooltip, ValidationMessage, Pagination, Combobox } from '../components/common.jsx';
+import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 
@@ -38,6 +38,10 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     // Phase 3.2 : détail "prix par canal" repliable par format — évite d'alourdir le tableau
     // Produits et SKUs quand on n'a pas besoin de voir ce détail (voir discussion méthodologique).
     const [expandedFormatIds, setExpandedFormatIds] = useState(new Set());
+    // Id du canal dont la modale de gestion des maillons est ouverte (retour utilisateur du 19/10 :
+    // même patron que PersonnelModal — une ligne résumé dans l'écran principal, le détail complet
+    // des maillons vit dans une modale, voir ChannelLinksModal).
+    const [linksModalChannelId, setLinksModalChannelId] = useState(null);
 
     // Vue maître-détail (refonte du 19/10, retour utilisateur — l'ancienne vue en liste à plat,
     // une carte par produit avec son propre tableau complet, prenait trop de place et rendait la
@@ -426,42 +430,27 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                     <Trash2 size={20} />
                                 </button>
                             </div>
-                            <div className="pl-4 space-y-1">
-                                {channel.links.map((link) => (
-                                    <div key={link.id} className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            value={link.name}
-                                            onChange={(e) => handleLinkChange(channel.id, link.id, 'name', e.target.value)}
-                                            placeholder="ex. Distributeur"
-                                            className="flex-1 p-1 border rounded text-sm border-gray-300"
-                                        />
-                                        <select
-                                            value={link.type}
-                                            onChange={(e) => handleLinkChange(channel.id, link.id, 'type', e.target.value)}
-                                            className="p-1 border rounded text-sm border-gray-300"
-                                        >
-                                            <option value="margin">Marge</option>
-                                            <option value="markup">Markup</option>
-                                        </select>
-                                        <input
-                                            type="text" inputMode="decimal"
-                                            value={link.percent}
-                                            onChange={(e) => handleLinkChange(channel.id, link.id, 'percent', e.target.value)}
-                                            placeholder="ex. 20"
-                                            className={`w-20 p-1 border rounded text-right text-sm ${!isValidPercentage(link.percent) ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        <span className="text-xs text-gray-500">%</span>
-                                        <Tooltip text="Markup : % appliqué sur le prix précédent (ex. le coût) — prix = précédent × (1 + %). Marge : % du prix de VENTE résultant, pas du coût — prix = précédent ÷ (1 − %). Pour un même 20 % sur un coût de 10 $ : markup → 12,00 $ (10 × 1,20) ; marge → 12,50 $ (10 ÷ 0,80), car ces 20 % représentent alors 20 % du prix de vente de 12,50 $, pas du coût de 10 $." />
-                                        <button onClick={() => handleRemoveLink(channel.id, link.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={14} /></button>
-                                    </div>
-                                ))}
+                            <div className="pl-4 flex items-center justify-between">
+                                <span className="text-sm text-gray-600">
+                                    {channel.links.length === 0
+                                        ? 'Aucun maillon'
+                                        : `${channel.links.length} maillon${channel.links.length > 1 ? 's' : ''}`}
+                                </span>
+                                <button onClick={() => setLinksModalChannelId(channel.id)} className="text-xs text-blue-600 hover:text-blue-800">Gérer les maillons</button>
                             </div>
-                            <button onClick={() => handleAddLink(channel.id)} className="pl-4 text-xs text-blue-600 hover:text-blue-800">+ Ajouter un maillon</button>
                         </div>
                     ))}
                 </div>
             </div>
+
+            <ChannelLinksModal
+                isOpen={!!linksModalChannelId}
+                onClose={() => setLinksModalChannelId(null)}
+                channel={salesChannels.find(c => c.id === linksModalChannelId) || null}
+                onAddLink={handleAddLink}
+                onLinkChange={handleLinkChange}
+                onRemoveLink={handleRemoveLink}
+            />
 
             <div id="tutorial-section-info-menu" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">

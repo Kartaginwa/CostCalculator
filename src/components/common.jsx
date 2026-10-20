@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
-import { AlertTriangle, HelpCircle, ChevronDown } from 'lucide-react';
-import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber } from '../utils.js';
+import { AlertTriangle, HelpCircle, ChevronDown, Trash2, PlusCircle } from 'lucide-react';
+import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage } from '../utils.js';
 import { useValueFlash } from '../ui-utils.jsx';
 
 // Composant pour les messages de validation
@@ -567,6 +567,71 @@ export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdateP
                         <p className="text-center text-gray-500">Veuillez d'abord définir des postes et des employés dans l'onglet "Main-d'œuvre".</p>
                     )}
                 </div>
+                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                    <button
+                        type="button"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm"
+                        onClick={onClose}
+                    >
+                        Terminé
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- MODAL DE GESTION DES MAILLONS D'UN CANAL DE VENTE ---
+// Retour utilisateur (19/10) : la liste des maillons affichée en permanence dans Canaux de vente
+// (Paramètres) prenait trop de place dès qu'un canal en avait plusieurs. Même patron que
+// PersonnelModal ci-dessus (déjà établi dans l'app, pour l'assignation du personnel par étape de
+// production) — une ligne résumé ("N maillons"/"Aucun maillon") dans l'écran principal, le détail
+// complet (nom, marge/markup, %, suppression, ajout) vit dans cette modale.
+export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkChange, onRemoveLink }) => {
+    if (!isOpen || !channel) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg p-6 shadow-xl max-w-lg w-full">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1">Maillons — {channel.name || 'Sans nom'}</h3>
+                <p className="text-xs text-gray-500 mb-4">Chaque maillon applique une marge ou un markup sur le prix du maillon précédent, jusqu'au prix de vente suggéré au consommateur.</p>
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                    {channel.links.length === 0 && (
+                        <p className="text-sm text-gray-500">Aucun maillon pour ce canal — son prix net équivaut alors directement au prix de détail suggéré (PDS) du format.</p>
+                    )}
+                    {channel.links.map((link) => (
+                        <div key={link.id} className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={link.name}
+                                onChange={(e) => onLinkChange(channel.id, link.id, 'name', e.target.value)}
+                                placeholder="ex. Distributeur"
+                                className="flex-1 p-1.5 border rounded text-sm border-gray-300"
+                            />
+                            <select
+                                value={link.type}
+                                onChange={(e) => onLinkChange(channel.id, link.id, 'type', e.target.value)}
+                                className="p-1.5 border rounded text-sm border-gray-300"
+                            >
+                                <option value="margin">Marge</option>
+                                <option value="markup">Markup</option>
+                            </select>
+                            <input
+                                type="text" inputMode="decimal"
+                                value={link.percent}
+                                onChange={(e) => onLinkChange(channel.id, link.id, 'percent', e.target.value)}
+                                placeholder="ex. 20"
+                                className={`w-20 p-1.5 border rounded text-right text-sm ${!isValidPercentage(link.percent) ? 'border-red-500' : 'border-gray-300'}`}
+                            />
+                            <span className="text-xs text-gray-500">%</span>
+                            <Tooltip text="Markup : % appliqué sur le prix précédent (ex. le coût) — prix = précédent × (1 + %). Marge : % du prix de VENTE résultant, pas du coût — prix = précédent ÷ (1 − %). Pour un même 20 % sur un coût de 10 $ : markup → 12,00 $ (10 × 1,20) ; marge → 12,50 $ (10 ÷ 0,80), car ces 20 % représentent alors 20 % du prix de vente de 12,50 $, pas du coût de 10 $." />
+                            <button onClick={() => onRemoveLink(channel.id, link.id)} className="text-red-500 hover:text-red-700 p-1 flex-shrink-0"><Trash2 size={16} /></button>
+                        </div>
+                    ))}
+                </div>
+                <button onClick={() => onAddLink(channel.id)} className="mt-3 inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                    <PlusCircle size={16} className="mr-1" /> Ajouter un maillon
+                </button>
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                     <button
                         type="button"

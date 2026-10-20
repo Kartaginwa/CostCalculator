@@ -2686,3 +2686,29 @@ PAS été raccourci malgré la tentation initiale — plusieurs tests e2e vérif
 ailleurs plutôt que de risquer une régression de test pour un gain marginal.
 - Tests : 209/209 unitaires, 46/46 e2e (aucun ajusté — gains de place purement visuels, aucun texte
   vérifié par un test n'a changé), lint et `npx vite build` propres.
+
+## Canaux de vente du 19/10 — maillons déplacés dans une modale (`ChannelLinksModal`)
+
+Retour utilisateur : la liste des maillons d'un canal s'affichait en permanence (un canal à 2
+maillons prenait ~150 px), même problème que Produits et SKUs avant sa refonte maître-détail.
+L'utilisateur a lui-même suggéré de reprendre le patron du `PersonnelModal` existant (assignation
+du personnel par étape de production, dans Recette & Calcul : une ligne résumé + lien « Modifier »
+qui ouvre une modale) — confirmé après présentation de 2 autres directions (aperçu en cascade
+inline + modale, compaction pure sans modale) via maquettes ASCII comparatives.
+
+**Nouveau composant `ChannelLinksModal`** (`src/components/common.jsx`, juste après
+`PersonnelModal`, même style de modale centrée `fixed inset-0 bg-opacity-50`) : liste les maillons
+d'UN canal (nom, marge/markup, %, suppression, bouton « Ajouter un maillon »), fermeture par
+« Terminé ». Reçoit `channel` + les 3 handlers déjà existants dans `ProductInfo.jsx`
+(`handleAddLink`/`handleLinkChange`/`handleRemoveLink`, inchangés — seule leur consommation côté UI
+change). Chaque carte de canal, dans `ProductInfo.jsx`, n'affiche plus que : nom du canal + une
+ligne résumé (« N maillons » / « Aucun maillon ») + bouton « Gérer les maillons » qui ouvre la
+modale via un nouveau state local `linksModalChannelId`. Gain de hauteur : un canal à 2 maillons
+passe de ~150 px à ~50 px dans l'écran principal, peu importe son nombre de maillons.
+- Fichiers touchés : `src/components/common.jsx` (nouveau `ChannelLinksModal`),
+  `src/features/ProductInfo.jsx` (remplace le bloc inline par le résumé + la modale),
+  `src/components/InstructionModal.jsx` (reformulation de `guide-param-channels`),
+  `e2e/sales-channels-params.spec.js` (seul test touchant l'édition inline des maillons — adapté
+  pour passer par la modale).
+- Tests : 209/209 unitaires, 46/46 e2e, vérification visuelle (0, 1 et 2 maillons) confirmant la
+  réduction de hauteur et le bon fonctionnement de la modale, lint et `npx vite build` propres.

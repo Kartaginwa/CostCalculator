@@ -32,16 +32,24 @@ test('gestion des circuits de vente dans Paramètres : canal, maillons, suppress
     await channelNameInput(secondCard).fill('Grande distribution');
     await expect(channelNameInput(secondCard)).toHaveValue('Grande distribution');
 
-    // Ajouter un maillon à ce 2e canal.
-    await secondCard.getByText('Ajouter un maillon').click();
-    await secondCard.locator('input[placeholder="ex. Distributeur"]').fill('Distributeur');
-    await secondCard.locator('select').selectOption('margin');
-    await secondCard.locator('input[inputmode="decimal"]').fill('20');
-    await expect(secondCard.locator('input[placeholder="ex. Distributeur"]')).toHaveValue('Distributeur');
+    // Ajouter un maillon à ce 2e canal — via la modale de gestion des maillons (retour utilisateur
+    // du 19/10 : même patron que PersonnelModal, une ligne résumé dans la carte + modale pour le
+    // détail, voir ChannelLinksModal dans common.jsx).
+    await expect(secondCard.getByText('Aucun maillon')).toBeVisible();
+    await secondCard.getByText('Gérer les maillons').click();
+    const modal = page.locator('div.fixed.inset-0.bg-black');
+    await expect(modal.getByText('Maillons — Grande distribution')).toBeVisible();
+    await modal.getByText('Ajouter un maillon').click();
+    await modal.locator('input[placeholder="ex. Distributeur"]').fill('Distributeur');
+    await modal.locator('select').selectOption('margin');
+    await modal.locator('input[inputmode="decimal"]').fill('20');
+    await expect(modal.locator('input[placeholder="ex. Distributeur"]')).toHaveValue('Distributeur');
 
-    // Supprimer ce maillon (bouton Trash2 de la ligne de maillon, pas celui du canal).
-    await secondCard.locator('.pl-4 button').last().click();
-    await expect(secondCard.locator('input[placeholder="ex. Distributeur"]')).toHaveCount(0);
+    // Supprimer ce maillon (bouton Trash2 de la ligne de maillon dans la modale).
+    await modal.locator('button.text-red-500').click();
+    await expect(modal.locator('input[placeholder="ex. Distributeur"]')).toHaveCount(0);
+    await modal.getByText('Terminé').click();
+    await expect(secondCard.getByText('Aucun maillon')).toBeVisible();
 
     // Supprimer le canal "Vente directe" (garde "Grande distribution"), notification avec Annuler.
     await section.locator('button[title="Supprimer le circuit de vente"]').first().click();

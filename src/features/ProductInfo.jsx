@@ -489,7 +489,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                     Empilées l'une sous l'autre en dessous du breakpoint md (une seule des deux
                     visible à la fois, voir mobileShowDetail), côte à côte au-dessus. */}
                 <div className="flex flex-col md:flex-row gap-4 md:max-h-[75vh]">
-                    <div className={`${mobileShowDetail ? 'hidden' : 'flex'} md:flex flex-col md:w-72 lg:w-80 flex-shrink-0 md:max-h-[75vh]`}>
+                    <div className={`${mobileShowDetail ? 'hidden' : 'flex'} md:flex flex-col md:w-60 lg:w-64 flex-shrink-0 md:max-h-[75vh]`}>
                         <div className="flex-shrink-0 space-y-2 mb-3">
                             <div>
                                 <label htmlFor="filterPlatName" className="sr-only">Filtrer par nom</label>
@@ -635,42 +635,46 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 </div>
                             </div>
 
-                            {/* overflow-x-auto : sur une colonne de détail étroite, les 7 colonnes
-                                scrollent horizontalement plutôt que de forcer les en-têtes à se
-                                replier sur plusieurs lignes (ou de disparaître hors champ sans
-                                indication). whitespace-nowrap sur chaque en-tête pour ne jamais
-                                couper un mot au milieu ("Canaux de vente" → 3 lignes). */}
+                            {/* Compacté (retour utilisateur du 19/10 : pas de scroll horizontal,
+                                quitte à réduire police/largeurs) — paddings et largeurs de colonne
+                                resserrés, polices des champs alignées sur `text-sm` (déjà la norme
+                                une ligne plus bas, dans le détail des prix par canal) pour que les
+                                7 colonnes tiennent sans défilement sur un écran plein écran usuel.
+                                overflow-x-auto conservé comme filet de sécurité silencieux (aucun
+                                effet visuel tant que le contenu tient), pas comme solution
+                                principale, pour les cas extrêmes (fenêtre redimensionnée très
+                                étroite, zoom élevé). */}
                             <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
                                                 Format
                                                 <Tooltip text="L'emballage et la quantité de ce format de vente (ex. 250 ml, 1 kg). Un produit peut avoir plusieurs formats — un pot de 250 ml et un pot de 500 ml, par exemple — chacun avec sa propre fiche recette, son propre prix et mix des ventes." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
                                                 SKU
                                                 <Tooltip text="Numéro de référence de ce format, déduit automatiquement de la recette et du format (librement modifiable)." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
                                                 PDS ($)
                                                 <Tooltip text="Prix de détail suggéré au consommateur pour ce format — saisi manuellement, une seule valeur pour tous les canaux (le prix tablette visé ne varie généralement pas par canal, contrairement au prix net producteur). Sert à générer le prix net de chaque canal via le bouton « Générer » (section Canaux de vente ci-dessous), qui redescend la cascade de maillons de ce canal à partir de ce prix." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                             <div className="flex items-center">
                                                 Canaux
                                                 <Tooltip text="Le prix net et le volume de ce format diffèrent selon le canal (vente directe, distributeur...). Un format n'est pas forcément vendu dans tous les canaux — ex. un grand format réservé à la restauration. Le premier canal de la liste détermine le prix utilisé ailleurs dans l'app (marge, rapports) en attendant que ces écrans deviennent eux-mêmes multi-canal." />
                                             </div>
                                         </th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Mix (%)</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Au Menu</th>
-                                        <th className="relative px-4 py-2"><span className="sr-only">Actions</span></th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Mix (%)</th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Menu</th>
+                                        <th className="relative px-2 py-2"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-100">
@@ -688,10 +692,10 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                         return (
                                         <React.Fragment key={format.id}>
                                         <tr id={`format-row-${format.id}`}>
-                                            <td className="px-4 py-2">
+                                            <td className="px-2 py-2">
                                                 <div className="flex items-center gap-1">
-                                                    <input type="text" inputMode="decimal" value={format.portionSize || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionSize', e.target.value)} className={`w-16 p-1 border rounded text-right ${!isValidNumber(format.portionSize) ? 'border-red-500' : 'border-gray-300'}`} />
-                                                    <select value={format.portionUnit || 'unité'} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionUnit', e.target.value)} className="p-1 border rounded border-gray-300">
+                                                    <input type="text" inputMode="decimal" value={format.portionSize || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionSize', e.target.value)} className={`w-12 p-1 border rounded text-right text-sm ${!isValidNumber(format.portionSize) ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    <select value={format.portionUnit || 'unité'} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionUnit', e.target.value)} className="p-1 border rounded border-gray-300 text-sm">
                                                         <option value="g">g</option>
                                                         <option value="kg">kg</option>
                                                         <option value="ml">ml</option>
@@ -701,32 +705,32 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                 </div>
                                                 {!isValidNumber(format.portionSize) && <ValidationMessage message="Quantité invalide." />}
                                             </td>
-                                            <td className="px-4 py-2">
-                                                <input type="text" value={format.sku || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'sku', e.target.value)} placeholder="ex. CONF-250ML" className="w-40 p-1 border rounded border-gray-300" />
+                                            <td className="px-2 py-2">
+                                                <input type="text" value={format.sku || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'sku', e.target.value)} placeholder="ex. CONF-250ML" className="w-28 p-1 border rounded border-gray-300 text-sm" />
                                             </td>
-                                            <td className="px-4 py-2">
-                                                <input type="text" inputMode="decimal" value={format.pds ?? ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', e.target.value)} onBlur={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', parseLocaleNumber(e.target.value) || '')} placeholder="PDS $" title="Prix de détail suggéré au consommateur, saisi manuellement — sert à générer le prix net de chaque canal (bouton « Générer », section Canaux de vente)." className="w-24 p-1 border rounded text-right border-gray-300" />
+                                            <td className="px-2 py-2">
+                                                <input type="text" inputMode="decimal" value={format.pds ?? ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', e.target.value)} onBlur={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', parseLocaleNumber(e.target.value) || '')} placeholder="PDS $" title="Prix de détail suggéré au consommateur, saisi manuellement — sert à générer le prix net de chaque canal (bouton « Générer », section Canaux de vente)." className="w-16 p-1 border rounded text-right text-sm border-gray-300" />
                                             </td>
-                                            <td className="px-4 py-2">
-                                                <button onClick={() => toggleFormatExpanded(format.id)} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-sm ${channelPrices.length === 0 ? 'text-orange-700 bg-orange-50' : 'text-gray-700 bg-gray-100'} hover:bg-gray-200`}>
+                                            <td className="px-2 py-2">
+                                                <button onClick={() => toggleFormatExpanded(format.id)} className={`inline-flex items-center gap-1 px-1.5 py-1 rounded text-xs whitespace-nowrap ${channelPrices.length === 0 ? 'text-orange-700 bg-orange-50' : 'text-gray-700 bg-gray-100'} hover:bg-gray-200`}>
                                                     {channelPrices.length === 0 ? 'Aucun canal' : `${channelPrices.length} ${channelPrices.length > 1 ? 'canaux' : 'canal'}`}
-                                                    <ChevronDown className={`h-4 w-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                                    <ChevronDown className={`h-3.5 w-3.5 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                                 </button>
                                             </td>
-                                            <td className="px-4 py-2">
+                                            <td className="px-2 py-2">
                                                 <div className="flex items-center gap-1">
-                                                    <input type="text" inputMode="decimal" value={format.salesMix || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'salesMix', e.target.value)} disabled={!format.onMenu || isSalesMixAuto} className={`w-24 p-1 border rounded text-right ${!isValidPercentage(format.salesMix) ? 'border-red-500' : 'border-gray-300'} ${!format.onMenu || isSalesMixAuto ? 'bg-gray-100' : ''}`} />
+                                                    <input type="text" inputMode="decimal" value={format.salesMix || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'salesMix', e.target.value)} disabled={!format.onMenu || isSalesMixAuto} className={`w-16 p-1 border rounded text-right text-sm ${!isValidPercentage(format.salesMix) ? 'border-red-500' : 'border-gray-300'} ${!format.onMenu || isSalesMixAuto ? 'bg-gray-100' : ''}`} />
                                                     {isSalesMixAuto && <Tooltip text="Calculé automatiquement à partir des unités vendues saisies pour ce format (onglet Canaux de vente ci-dessus) — plus précis qu'un % tapé à la main. Pour reprendre la main sur ce %, retirez toutes les unités saisies pour ce format." />}
                                                 </div>
                                                 {!isValidPercentage(format.salesMix) && <ValidationMessage message="Doit être un %." />}
                                             </td>
-                                            <td className="px-4 py-2 text-center">
+                                            <td className="px-2 py-2 text-center">
                                                 <input type="checkbox" checked={format.onMenu} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'onMenu', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
                                             </td>
-                                            <td className="px-4 py-2 text-center">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button onClick={() => onDuplicateFormat(productIndex, formatIndex)} title="Dupliquer ce format" className="text-blue-500 hover:text-blue-700 p-1 rounded-full"><Copy size={16}/></button>
-                                                    <button onClick={() => onDeleteFormat(productIndex, formatIndex)} title={isOnlyFormat ? "Supprimer le plat" : "Supprimer ce format"} className="text-red-500 hover:text-red-700 p-1 rounded-full"><Trash2 size={16}/></button>
+                                            <td className="px-2 py-2 text-center">
+                                                <div className="flex items-center justify-center gap-0.5">
+                                                    <button onClick={() => onDuplicateFormat(productIndex, formatIndex)} title="Dupliquer ce format" className="text-blue-500 hover:text-blue-700 p-1 rounded-full"><Copy size={14}/></button>
+                                                    <button onClick={() => onDeleteFormat(productIndex, formatIndex)} title={isOnlyFormat ? "Supprimer le plat" : "Supprimer ce format"} className="text-red-500 hover:text-red-700 p-1 rounded-full"><Trash2 size={14}/></button>
                                                 </div>
                                             </td>
                                         </tr>

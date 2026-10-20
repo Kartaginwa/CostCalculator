@@ -2668,3 +2668,21 @@ révélé 3 problèmes de mise en page, invisibles dans l'ancienne disposition p
    lignes au lieu de casser chaque mot ; comportement inchangé en pleine largeur (Ingrédients,
    Packaging), confirmé par la suite e2e complète.
 - Tests : 209/209 unitaires, 46/46 e2e, lint et `npx vite build` propres après ce correctif.
+
+**Révision du même jour (retour utilisateur) — le scroll horizontal lui-même jugé désagréable,
+remplacé par une compaction au lieu d'un défilement :** plutôt que de garder le `overflow-x-auto`
+comme solution principale, resserré les 7 colonnes du tableau des formats pour qu'elles tiennent
+sans défilement à partir de ~1024 px de large (vérifié par script Playwright temporaire mesurant
+`scrollWidth` vs `clientWidth` à 1920/1440/1280/1100/1024 px — overflow ramené à 0 partout) :
+paddings de cellule `px-4` → `px-2`, polices des champs alignées sur `text-sm` (déjà la norme un
+niveau plus bas, dans le détail des prix par canal — incohérence corrigée au passage), largeurs
+resserrées (SKU `w-40`→`w-28`, PDS/Mix `w-24`→`w-16`, quantité `w-16`→`w-12`), icônes d'action
+réduites (16px → 14px), colonne de liste de gauche rétrécie (`md:w-72 lg:w-80` →
+`md:w-60 lg:w-64`, donne plus de place à la colonne de détail). `overflow-x-auto` gardé comme filet
+de sécurité silencieux (aucun effet tant que le contenu tient) pour les cas extrêmes, pas comme
+solution principale. Le libellé du bouton « N canal/canaux » (déplié/replié) n'a volontairement
+PAS été raccourci malgré la tentation initiale — plusieurs tests e2e vérifient ce texte exact
+(`channel-prices-produits-skus.spec.js`, `sales-report-import.spec.js`) ; la place a été trouvée
+ailleurs plutôt que de risquer une régression de test pour un gain marginal.
+- Tests : 209/209 unitaires, 46/46 e2e (aucun ajusté — gains de place purement visuels, aucun texte
+  vérifié par un test n'a changé), lint et `npx vite build` propres.

@@ -37,7 +37,7 @@ test('Recette & Calcul : le récapitulatif reflète le canal sélectionné, sans
 
     // Recette & Calcul : le récapitulatif affiche le canal principal par défaut (20 $), jamais de
     // tuile « Marge Nette ».
-    await page.locator('button:has-text("Recettes et produits")').first().click();
+    await page.locator('button:has-text("Production")').first().click();
     await page.waitForTimeout(300);
     await page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').selectOption({ label: 'Produit Multi' });
     await page.waitForTimeout(300);

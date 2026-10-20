@@ -2712,3 +2712,27 @@ passe de ~150 px à ~50 px dans l'écran principal, peu importe son nombre de ma
   pour passer par la modale).
 - Tests : 209/209 unitaires, 46/46 e2e, vérification visuelle (0, 1 et 2 maillons) confirmant la
   réduction de hauteur et le bon fonctionnement de la modale, lint et `npx vite build` propres.
+
+## Petites corrections UX du 19/10 (suite)
+
+1. **Renommage de l'onglet « Recettes et produits » → « Production »** — bouton d'onglet
+   (`App.jsx`), guide d'utilisation (`InstructionModal.jsx` : TOC, titre de section, 2 mentions
+   croisées), tutoriel (`AppDialogs.jsx`), info-bulle d'édition de SKU (`SummaryTable.jsx`). Le
+   titre interne de la page (« Recette et calcul pour : [sélecteur] », dans `RecipeCalculator.jsx`)
+   n'a volontairement pas été touché — même limitation explicite qu'au renommage du 15/10
+   (demande portant sur le nom de l'ONGLET, pas le titre interne). 2 tests e2e adaptés
+   (`channel-margins-recette-calcul.spec.js`, `unit-type-quantity.spec.js`).
+
+2. **Position de défilement conservée par onglet** — retour utilisateur : changer d'onglet puis
+   revenir au précédent ne redonnait ni le haut de page ni la position quittée, mais un mélange
+   des deux (le scroll du navigateur reste un seul état global ; `renderActiveTab()` ne garde
+   qu'un seul onglet monté à la fois — switch, pas de montage simultané — donc rien ne « se
+   souvient » nativement d'un onglet à l'autre). Corrigé par un suivi manuel dans
+   `scrollPositionsRef` (`App.jsx`, keyé par `activeTab`) : un listener `scroll` met à jour la
+   position courante en continu (pas de capture ponctuelle au moment de quitter l'onglet,
+   plus robuste) ; au changement d'onglet, restauration via `window.scrollTo` après un court délai
+   (100 ms, même patron que les cas similaires déjà présents dans l'app) pour laisser le temps au
+   contenu — parfois chargé en lazy (`Suspense`) — d'atteindre sa hauteur finale avant de
+   positionner le défilement. Vérifié par script Playwright temporaire (défilement exact restauré
+   au pixel près après un aller-retour d'onglet).
+- Tests : 209/209 unitaires, 46/46 e2e, lint et `npx vite build` propres.

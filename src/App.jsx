@@ -76,6 +76,30 @@ const App = () => {
     }, [dispatch]);
 
     const [activeTab, setActiveTab] = useState('info');
+    // Mémorise la position de défilement de chaque onglet (retour utilisateur du 19/10), pour y
+    // revenir exactement au même endroit en y revenant — plutôt que de repartir du haut, ou de
+    // garder la position pixel de l'onglet précédent (qui ne correspond à rien de sensé une fois
+    // le contenu remplacé). `renderActiveTab()` ne garde qu'un seul onglet monté à la fois (switch,
+    // pas de montage simultané) : la position ne peut donc pas survivre nativement au changement,
+    // d'où ce suivi manuel par onglet, keyé en ref pour ne jamais déclencher de re-render.
+    const scrollPositionsRef = useRef({});
+    useEffect(() => {
+        const handleScroll = () => {
+            scrollPositionsRef.current[activeTab] = window.scrollY;
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [activeTab]);
+    useEffect(() => {
+        // Léger délai : le contenu de l'onglet (parfois chargé en lazy, voir Suspense plus bas)
+        // doit d'abord avoir sa hauteur finale, sinon window.scrollTo n'a souvent nulle part où
+        // aller — même patron de délai court déjà utilisé ailleurs dans l'app pour ce genre de
+        // contrainte de timing DOM (ex. ProductInfo.jsx, scroll sur une ligne nouvellement ajoutée).
+        const id = setTimeout(() => {
+            window.scrollTo(0, scrollPositionsRef.current[activeTab] || 0);
+        }, 100);
+        return () => clearTimeout(id);
+    }, [activeTab]);
     const [editingProductIndex, setEditingProductIndex] = useState(0);
     // Format ciblé au moment de naviguer vers Recette & Calcul (Phase 1.6b) : par défaut 0, ou le
     // format précis d'où vient la navigation (ex. clic sur une ligne du Résumé, qui représente
@@ -956,7 +980,7 @@ const App = () => {
                     <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Packaging</button>
                     <button id="tab-labor" onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
                     <button id="tab-income-statement" onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Receipt className="h-5 w-5 mr-2" /> État des résultats</button>
-                    <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Recettes et produits</button>
+                    <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Production</button>
                     <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><Table className="h-5 w-5 mr-2" /> Rapport</button>
                     <button id="tab-tracking" onClick={() => setActiveTab('tracking')} className={getTabClasses('tracking')}><TrendingUp className="h-5 w-5 mr-2" /> Suivi</button>
                 </div>

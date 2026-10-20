@@ -478,7 +478,7 @@ export const SummaryTable = ({ onEditProduct, onOpenPdfModal, exportToExcel, ite
                     {selectedSkuRow && (
                         <button
                             onClick={() => onEditProduct(products.findIndex(p => p.id === selectedSkuRow.productId), selectedSkuRow.formatIndex || 0)}
-                            title="Éditer ce SKU dans Recettes et produits"
+                            title="Éditer ce SKU dans Production"
                             className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 flex-shrink-0"
                         >
                             <Pencil size={18} />

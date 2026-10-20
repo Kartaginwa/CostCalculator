@@ -142,7 +142,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="#guide-recette" onClick={(e) => handleLinkClick(e, '#guide-recette')} className="font-bold text-blue-700 hover:underline">Onglet 6: Recettes et produits</a>
+                                    <a href="#guide-recette" onClick={(e) => handleLinkClick(e, '#guide-recette')} className="font-bold text-blue-700 hover:underline">Onglet 6: Production</a>
                                      <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
                                         <li><a href="#guide-recette-header" onClick={(e) => handleLinkClick(e, '#guide-recette-header')} className="text-gray-600 hover:underline">En-tête de la recette</a></li>
                                         <li><a href="#guide-recette-ing" onClick={(e) => handleLinkClick(e, '#guide-recette-ing')} className="text-gray-600 hover:underline">1. Ingrédients</a></li>
@@ -224,7 +224,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                             <li><strong>{highlightText('Au Menu (case à cocher) :', searchTerm)}</strong> {highlightText("Détermine si ce format doit être inclus dans les calculs d'analyse (ex: analyse stratégique, rapport d'achats). Décochez cette case pour les formats saisonniers ou en développement.", searchTerm)}</li>
                                             <li><strong>{highlightText('Actions sur un format :', searchTerm)}</strong> {highlightText("Dupliquez ou supprimez ce format ; le bouton « Ajouter un format » en bas du détail en crée un nouveau, vierge, pour cette recette.", searchTerm)}</li>
                                         </ul>
-                                        <p className="mt-2">{highlightText("Vous pouvez aussi ajouter un nouveau format directement depuis l'onglet Recettes et produits (fenêtre « Ajouter un format »), et copier une section de la fiche recette (ingrédients, étapes de production...) d'un format à un autre sans dupliquer le format en entier — voir la section suivante.", searchTerm)}</p>
+                                        <p className="mt-2">{highlightText("Vous pouvez aussi ajouter un nouveau format directement depuis l'onglet Production (fenêtre « Ajouter un format »), et copier une section de la fiche recette (ingrédients, étapes de production...) d'un format à un autre sans dupliquer le format en entier — voir la section suivante.", searchTerm)}</p>
                                         <p className="mt-2">{highlightText("Navigation dans la liste : utilisez les filtres (nom, activité, catégorie) et les contrôles de pagination sous la liste de gauche pour retrouver un produit parmi un grand nombre de recettes. Ajouter un produit ou un duplicata le sélectionne automatiquement pour en afficher tout de suite le détail.", searchTerm)}</p>
                                     </div>
                                     <div id="guide-param-import-pos" className="space-y-2 mt-4">
@@ -328,7 +328,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                 </section>
                                 <section id="guide-frais-fixes">
                                     <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 5: État des résultats", searchTerm)}</h3>
-                                    <p>{highlightText("Votre état des résultats réel — revenus et frais fixes, tels qu'ils apparaissent dans votre vraie comptabilité — distinct du modèle théorique de vos recettes (Recettes et produits).", searchTerm)}</p>
+                                    <p>{highlightText("Votre état des résultats réel — revenus et frais fixes, tels qu'ils apparaissent dans votre vraie comptabilité — distinct du modèle théorique de vos recettes (Production).", searchTerm)}</p>
                                     <div id="guide-ff-periode" className="space-y-2 mt-4">
                                         <h4 className="text-lg font-semibold">{highlightText("Période de référence", searchTerm)}</h4>
                                         <p>{highlightText("Tout en haut de l'onglet, avant Revenus : la période sur laquelle les revenus et frais fixes ci-dessous sont basés (semaine, mois, etc.). L'assistant d'import (bouton « Importer l'état des résultats ») la détecte et la renseigne automatiquement à partir des dates du fichier importé, quand elles y figurent — sinon, choisissez-la manuellement, y compris une période personnalisée avec dates de début et de fin.", searchTerm)}</p>
@@ -354,7 +354,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </div>
                                 </section>
                                 <section id="guide-recette">
-                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 6: Recettes et produits", searchTerm)}</h3>
+                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 6: Production", searchTerm)}</h3>
                                     <p>{highlightText("C'est le cœur de l'application, où vous assemblez la fiche de coût détaillée de chaque plat. Chaque modification ici met à jour les coûts en temps réel.", searchTerm)}</p>
 
                                     <div className="space-y-4 mt-4">

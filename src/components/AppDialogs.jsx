@@ -193,7 +193,7 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-section-labor-db', content: "Ici, vous pouvez définir les différents postes (Cuisinier, Commis...) et y assigner des employés avec leurs salaires et charges.", tab: 'labor' },
     { selector: '#tutorial-section-labor-rapport', content: "Ce rapport compare les heures de travail prévues à celles réellement nécessaires, vous donnant un aperçu de votre productivité.", tab: 'labor' },
     // Onglet Recette
-    { selector: '#tab-recipe', content: "Allons maintenant au cœur du calculateur : l'onglet 'Recettes et produits'.", tab: 'labor' },
+    { selector: '#tab-recipe', content: "Allons maintenant au cœur du calculateur : l'onglet 'Production'.", tab: 'labor' },
     { selector: '#tutorial-section-recipe-header', content: "Commencez par définir ici les informations de base de votre recette, comme le nombre de portions qu'elle produit.", tab: 'recipe' },
     { selector: '#tutorial-section-recipe-ingredients', content: "Ensuite, construisez la fiche de coût en y ajoutant les ingrédients.", tab: 'recipe' },
     { selector: '#tutorial-section-recipe-labor', content: "Détaillez les étapes de production. Le coût de la main-d'œuvre sera calculé automatiquement.", tab: 'recipe' },

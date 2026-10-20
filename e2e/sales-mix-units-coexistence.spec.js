@@ -17,20 +17,23 @@ test('mix des ventes : un format passé aux unités ne touche pas au % manuel de
 
     const menuSection = page.locator('#tutorial-section-info-menu');
     await menuSection.scrollIntoViewIfNeeded();
-    const allSections = menuSection.locator('[id^="product-section-"]');
-    const sectionNames = await allSections.evaluateAll(els => els.map(el => el.querySelector('input[type="text"]').value));
+
+    // Vue maître-détail (refonte du 19/10) : un seul produit affiché à la fois dans le panneau de
+    // droite — on sélectionne l'un, on note sa valeur, on sélectionne l'autre, on le modifie, puis
+    // on revient sur le premier pour vérifier qu'il n'a pas bougé.
 
     // Note le % manuel actuel d'un autre plat du menu démo (seul format du projet démo resté sans
     // aucune unité saisie — voir initialState.js), avant toute manipulation.
-    const otherSection = allSections.nth(sectionNames.indexOf('Sauce à spaghetti maison'));
+    await menuSection.getByText('Sauce à spaghetti maison', { exact: true }).click();
+    const detailPane = menuSection.locator('#product-detail-pane');
     // .nth(2) : portionSize (0), PDS (1, ajouté le 15/10), Mix des ventes (2).
-    const otherSalesMixInput = otherSection.locator('tbody tr').first().locator('input[inputmode="decimal"]').nth(2);
+    const otherSalesMixInput = detailPane.locator('tbody tr').first().locator('input[inputmode="decimal"]').nth(2);
     const otherSalesMixBefore = await otherSalesMixInput.inputValue();
     await expect(otherSalesMixInput).toBeEnabled();
 
     // Rattache une unité réelle à TOUS les canaux du format d'un autre plat (Poulet général Tao).
-    const targetSection = allSections.nth(sectionNames.indexOf('Poulet général Tao, riz et légumes'));
-    const formatRow = targetSection.locator('tbody tr').first();
+    await menuSection.getByText('Poulet général Tao, riz et légumes', { exact: true }).click();
+    const formatRow = detailPane.locator('tbody tr').first();
     await formatRow.locator('button').first().click();
     const detailRow = formatRow.locator('xpath=following-sibling::tr[1]');
     const volumeInputs = detailRow.locator('input[placeholder="Volume (u.)"]');
@@ -40,14 +43,16 @@ test('mix des ventes : un format passé aux unités ne touche pas au % manuel de
     }
     await page.waitForTimeout(300);
 
-    // Le % manuel de l'AUTRE plat n'a pas bougé.
-    await expect(otherSalesMixInput).toHaveValue(otherSalesMixBefore);
-
     // Le champ % du format qui vient de recevoir une unité devient désactivé (mode automatique).
     const targetSalesMixInput = formatRow.locator('input[inputmode="decimal"]').nth(2);
     await expect(targetSalesMixInput).toBeDisabled();
 
+    // Le % manuel de l'AUTRE plat n'a pas bougé — revient dessus pour vérifier.
+    await menuSection.getByText('Sauce à spaghetti maison', { exact: true }).click();
+    await expect(otherSalesMixInput).toHaveValue(otherSalesMixBefore);
+
     // Retirer les unités (sur tous les canaux) redonne la main sur le % (repasse en manuel, réactivé).
+    await menuSection.getByText('Poulet général Tao, riz et légumes', { exact: true }).click();
     for (let i = 0; i < volumeCount; i++) {
         await volumeInputs.nth(i).fill('0');
     }

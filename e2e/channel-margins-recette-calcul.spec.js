@@ -18,11 +18,12 @@ test('Recette & Calcul : le récapitulatif reflète le canal sélectionné, sans
     await channelsSection.getByText('Ajouter un canal').click();
     await channelsSection.locator('.space-y-3 > div').nth(1).locator('input[type="text"]').first().fill('Grande distribution');
 
-    // Nouveau produit, prix net sur les deux canaux.
+    // Nouveau produit, prix net sur les deux canaux — sélectionné automatiquement, son détail
+    // s'affiche directement dans le panneau de droite (vue maître-détail, refonte du 19/10).
     const menuSection = page.locator('#tutorial-section-info-menu');
-    await menuSection.getByText('Ajouter un item').click();
+    await menuSection.getByRole('button', { name: 'Ajouter un item' }).click();
     await page.waitForTimeout(300);
-    const section = menuSection.locator('[id^="product-section-"]').first();
+    const section = menuSection.locator('#product-detail-pane');
     await section.locator('input[type="text"]').first().fill('Produit Multi');
     const formatRow = section.locator('tbody tr').first();
     await formatRow.locator('button').first().click();

@@ -31,7 +31,8 @@ test("une sous-recette sélectionnée via le sélecteur d'ingrédient coûte cor
     // non nul : 2 x 2.50 $ = 5.00 $).
     await page.locator('button:has-text("Paramètres")').click();
     await page.locator('#tutorial-add-item').click();
-    const section1 = page.locator('#tutorial-section-info-menu [id^="product-section-"]').first();
+    // Sélectionné automatiquement (vue maître-détail, refonte du 19/10).
+    const section1 = page.locator('#product-detail-pane');
     await section1.locator('input[type="text"]').first().fill('Sauce Base');
 
     await page.locator('#tab-recipe').click();
@@ -48,7 +49,7 @@ test("une sous-recette sélectionnée via le sélecteur d'ingrédient coûte cor
     // Produit 2 : "Plat Final", utilise "Sauce Base" comme ingrédient via le même sélecteur.
     await page.locator('button:has-text("Paramètres")').click();
     await page.locator('#tutorial-add-item').click();
-    const section2 = page.locator('#tutorial-section-info-menu [id^="product-section-"]').first();
+    const section2 = page.locator('#product-detail-pane');
     await section2.locator('input[type="text"]').first().fill('Plat Final');
 
     await page.locator('#tab-recipe').click();

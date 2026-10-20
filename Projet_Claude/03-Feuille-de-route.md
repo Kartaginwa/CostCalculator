@@ -2559,3 +2559,91 @@ de repasser sur ces écrans après coup) :
   dérivées des % réels des canaux du projet démo), `e2e/sales-mix-units-coexistence.spec.js`
   corrigé (décalage d'index d'un `input[inputmode="decimal"]` causé par la nouvelle colonne PDS).
   **189/189 tests unitaires inchangés**, **40/40 tests e2e**, lint propre, `npx vite build` propre.
+
+## Refonte UI du 19/10 — Produits et SKUs en vue maître-détail
+
+Retour utilisateur : la section « Produits et SKUs » (Paramètres) prenait trop de place — chaque
+produit était une carte avec son propre `<table>` complet (en-tête de colonnes répété à chaque
+produit), rendant la navigation difficile dès qu'il y avait plus de quelques produits. Plusieurs
+propositions explorées (panneau latéral/drawer, modale avec navigation précédent/suivant, vue
+maître-détail), présentées avec des maquettes ASCII comparatives. **Accordéon explicitement
+écarté par l'utilisateur** ("seulement en dernier recours") — voir la mémoire persistante
+`feedback_ui_density_preference` : pour tout futur écran liste + détail imbriqué dans ce projet,
+privilégier modale/drawer/maître-détail plutôt que l'accordéon comme première proposition.
+
+**Direction retenue : vue maître-détail à deux colonnes.** Une liste compacte de tous les produits
+à gauche (nom, catégorie, nombre de formats — une ligne par produit, pas de tableau), scroll
+indépendant ; le détail complet du produit sélectionné à droite (même contenu qu'avant : en-tête
+du produit, tableau des formats, prix par canal repliables), scroll indépendant lui aussi. La
+hauteur de la liste de gauche ne grandit plus jamais avec le détail d'un produit — c'est ce qui
+réglait le problème de place. Patron déjà présent dans l'app (`InstructionModal.jsx`, nav + contenu
+en deux colonnes) et dans l'esprit de « Recettes et produits » (un seul plat affiché à la fois, via
+un sélecteur) — ici avec une vraie liste visible à la place d'un simple menu déroulant.
+
+**Simplification de state, bénéfice inattendu de la refonte** : `src/features/ProductInfo.jsx`
+gérait un mécanisme élaboré (`newlyAddedId`, `isSortDisabled`, `prevProductsLength`,
+`handleBlurRow`, 2 `useEffect`) pour garder la ligne d'un produit fraîchement ajouté visible et
+épinglée le temps que le tri alphabétique la déplace dans la liste à plat. Avec une sélection par
+**id** (`selectedProductId`, nouveau state local) plutôt que par position, ce bricolage n'est plus
+nécessaire : un seul `useEffect` générique détecte tout id apparu dans `products` (comparaison
+d'ensembles avant/après) et le sélectionne directement — couvre à la fois l'ajout d'un item, la
+duplication d'un produit (qui s'insère APRÈS l'original, pas en tête — l'ancien mécanisme ne
+l'aurait de toute façon pas géré), et même la restauration via « Annuler » une suppression (bonus
+non demandé, qui découle naturellement du même mécanisme). Un second `useEffect` garde la
+sélection valide : si le produit sélectionné disparaît de la liste filtrée/triée actuelle (supprimé,
+ou masqué par un filtre), retombe sur le premier produit visible. `selectedProductId` est
+volontairement **local à `ProductInfo`**, jamais partagé avec `editingProductIndex`/
+`editingFormatIndex` d'`App.jsx` (qui pilotent l'onglet Recette & Calcul, réinitialisés par
+plusieurs chemins non liés à cet écran) — éviter un couplage surprenant entre les deux onglets.
+
+**Comportement responsive** : en dessous du breakpoint `md`, les deux colonnes ne peuvent pas être
+côte à côte — un booléen local `mobileShowDetail` bascule l'affichage (liste OU détail, avec un
+bouton « Retour à la liste »), ignoré à partir de `md` où les deux restent toujours visibles.
+Profitée de cette passe pour corriger un débordement pré-existant du bandeau d'en-tête
+(titre + boutons « Importer un rapport de ventes »/« Ajouter un item ») sur petit écran, repéré
+lors de la vérification visuelle (empilement `flex-col`/`sm:flex-row` au lieu d'un `flex
+justify-between` rigide).
+
+**Portée volontairement limitée** : seul le contenu de `#tutorial-section-info-menu` a changé —
+Informations sur l'entreprise, Objectifs stratégiques, Activités de production et Canaux de vente
+(reste de l'onglet Paramètres) sont inchangés. Le `<table>` des formats et le détail repliable des
+prix par canal, à l'intérieur du panneau de droite, sont repris quasi verbatim de l'ancienne version
+— seule la structure EXTÉRIEURE (carte par produit répétée) a disparu.
+
+**Décidé et différé pendant cette même conversation** (gardés en mémoire persistante, pas d'action
+ce jour-là) :
+- Renommer la case « Au Menu » en « Actif/Inactif » + réflexion sur où afficher ce statut ailleurs
+  dans l'app (`deferred_onmenu_rename`) — l'utilisateur avait d'abord demandé de la supprimer,
+  croyant à tort qu'elle ne servait qu'à `menuRevenuePercentage` (déjà retiré) ; clarifié qu'elle
+  pilote en réalité `format.onMenu`, lu dans tout le moteur (coût de revient, matrice BCG, mix des
+  ventes, point mort) — pas touchée.
+- Recherche par SKU (le filtre « nom » ne cherche pas dans le SKU), lien direct vers la recette
+  depuis cette liste, indice plus visible sur le bouton « Générer » désactivé
+  (`deferred_productinfo_ux_ideas`).
+
+**Fichiers touchés** : `src/features/ProductInfo.jsx` (cœur du changement — uniquement le bloc
+`#tutorial-section-info-menu` et son state associé) ; `src/components/AppDialogs.jsx` (reformulation
+de l'étape de tutoriel ciblant cette section) ; `src/components/InstructionModal.jsx`
+(reformulation de la section `guide-param-menu` : liste + détail au lieu d'« une section par
+recette ») ; 11 fichiers e2e adaptés au nouveau modèle d'interaction (sélectionner le produit dans
+la liste de gauche avant d'interagir avec son détail — les interactions À L'INTÉRIEUR du panneau de
+détail, elles, gardent exactement les mêmes locators qu'avant) :
+`channel-prices-produits-skus.spec.js`, `format-pds-generate-net-price.spec.js`,
+`channel-margins-recette-calcul.spec.js`, `channel-filter-resume.spec.js`,
+`sales-mix-units-coexistence.spec.js` (devait lire deux produits : sélectionner l'un, lire sa
+valeur, sélectionner l'autre, revenir vérifier), `sales-report-import.spec.js`,
+`product-duplication.spec.js` (simplifié : plus besoin de retrouver le duplicata par un id généré,
+la sélection automatique s'en charge), `smoke.spec.js`, `subrecipe-ingredient-picker.spec.js`,
+`summary-format-navigation.spec.js`, `unit-type-quantity.spec.js`. Découverte en cours de route :
+le texte d'état vide (« cliquez sur « Ajouter un item » ») entrait en collision avec
+`getByText('Ajouter un item')` ambigu dans 2 de ces fichiers — corrigé par
+`getByRole('button', { name: ... })`, plus précis.
+
+Sauvegarde Git faite avant de commencer cette refonte (commit `31bdb2e`, demandé explicitement par
+l'utilisateur comme filet de sécurité) — voir plan complet archivé si besoin de retracer le
+raisonnement détaillé des choix de design.
+
+- Tests : 209/209 unitaires (inchangés — cet écran n'a pas de couverture unitaire, tout vit dans
+  `src/engine`/`src/state`), 46/46 e2e (après les 11 fichiers adaptés), vérification visuelle
+  (desktop + mobile 390px, script Playwright temporaire supprimé après usage) confirmant le
+  comportement liste/détail et le repli mobile, lint et `npx vite build` propres.

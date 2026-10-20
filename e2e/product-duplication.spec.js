@@ -11,13 +11,19 @@ test('dupliquer un produit du projet démo ne plante pas et crée une copie', as
     await page.goto('/');
     await page.getByText('Explorer un projet démo').click();
 
+    // Vue maître-détail (refonte du 19/10) : sélectionne le premier produit de la liste de
+    // gauche, son détail s'affiche à droite.
     const menuSection = page.locator('#tutorial-section-info-menu');
-    const firstProductSection = menuSection.locator('[id^="product-section-"]').first();
-    const firstRowName = await firstProductSection.locator('input[type="text"]').first().inputValue();
+    await menuSection.locator('[id^="product-list-item-"]').first().click();
+    const detailPane = menuSection.locator('#product-detail-pane');
+    const firstRowName = await detailPane.locator('input[type="text"]').first().inputValue();
 
-    await firstProductSection.locator('button[title="Dupliquer le plat"]').click();
+    await detailPane.locator('button[title="Dupliquer le plat"]').click();
+    await page.waitForTimeout(300);
 
-    await expect(menuSection.locator(`input[value="${firstRowName} (Copie)"]`)).toBeVisible();
+    // Le duplicata est sélectionné automatiquement : son détail s'affiche directement dans le
+    // panneau de droite.
+    await expect(detailPane.locator('input[type="text"]').first()).toHaveValue(`${firstRowName} (Copie)`);
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
 
@@ -38,23 +44,18 @@ test('le SKU d\'un produit dupliqué se régénère au renommage de la copie', a
     }
     await page.waitForTimeout(300);
 
-    const allSections = menuSection.locator('[id^="product-section-"]');
-    const sectionNames = await allSections.evaluateAll(els => els.map(el => el.querySelector('input[type="text"]').value));
-    const target = allSections.nth(sectionNames.indexOf('Saumon teriyaki, riz et légumes'));
-    await target.locator('button[title="Dupliquer le plat"]').click();
+    // Vue maître-détail (refonte du 19/10) : sélectionne le produit dans la liste de gauche.
+    await menuSection.getByText('Saumon teriyaki, riz et légumes', { exact: true }).click();
+    const detailPane = menuSection.locator('#product-detail-pane');
+    await detailPane.locator('button[title="Dupliquer le plat"]').click();
     await page.waitForTimeout(300);
 
-    // Repère la copie par la valeur exacte de son champ nom (pas par index : la liste se retrie
-    // alphabétiquement après l'insertion, un indexOf+nth recalculé serait fragile), puis fige la
-    // section par son id — un filtre par contenu resterait vivant et cesserait de matcher dès que
-    // le nom change (justement ce que le test s'apprête à faire).
-    const copySectionId = await allSections.filter({ has: page.locator('input[value="Saumon teriyaki, riz et légumes (Copie)"]') }).getAttribute('id');
-    // Attribut-égal plutôt que sélecteur #id : l'id du produit contient un point (Date.now() +
-    // Math.random()), invalide en syntaxe #id CSS sans échappement.
-    const copySection = menuSection.locator(`[id="${copySectionId}"]`);
-    const skuInput = copySection.locator('tbody tr').first().locator('input[type="text"]').nth(1);
+    // Le duplicata est sélectionné automatiquement (plus besoin de le retrouver dans la liste par
+    // un id généré, voir handleDuplicateProduct — simplification directe de la vue maître-détail).
+    await expect(detailPane.locator('input[type="text"]').first()).toHaveValue('Saumon teriyaki, riz et légumes (Copie)');
+    const skuInput = detailPane.locator('tbody tr').first().locator('input[type="text"]').nth(1);
 
-    await copySection.locator('input[type="text"]').first().fill('Thon teriyaki, riz et légumes');
+    await detailPane.locator('input[type="text"]').first().fill('Thon teriyaki, riz et légumes');
     await page.waitForTimeout(300);
     await expect(skuInput).not.toHaveValue(/copie/i);
     await expect(skuInput).toHaveValue(/thon/i);
@@ -72,9 +73,9 @@ test('le SKU d\'un format dupliqué se régénère proprement si on en change la
     }
     await page.waitForTimeout(300);
 
-    const allSections = menuSection.locator('[id^="product-section-"]');
-    const sectionNames = await allSections.evaluateAll(els => els.map(el => el.querySelector('input[type="text"]').value));
-    const target = allSections.nth(sectionNames.indexOf('Saumon teriyaki, riz et légumes'));
+    // Vue maître-détail (refonte du 19/10) : sélectionne le produit dans la liste de gauche.
+    await menuSection.getByText('Saumon teriyaki, riz et légumes', { exact: true }).click();
+    const target = menuSection.locator('#product-detail-pane');
     await target.locator('button[title="Dupliquer ce format"]').click();
     await page.waitForTimeout(300);
 

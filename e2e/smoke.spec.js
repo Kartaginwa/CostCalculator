@@ -27,8 +27,9 @@ test.describe('Parcours projet vierge', () => {
         // Ajouter un produit
         await page.locator('button:has-text("Paramètres")').click();
         await page.locator('#tutorial-add-item').click();
-        // Le nouveau plat est prépendu en tête de liste (tri en pause) : sa section est la première.
-        const newProductSection = page.locator('#tutorial-section-info-menu [id^="product-section-"]').first();
+        // Le nouveau plat est sélectionné automatiquement (vue maître-détail, refonte du 19/10) :
+        // son détail s'affiche directement dans le panneau de droite.
+        const newProductSection = page.locator('#product-detail-pane');
         await newProductSection.locator('input[type="text"]').first().fill('Plat Test');
         await newProductSection.locator('table input[inputmode="decimal"]').first().fill('15');
 

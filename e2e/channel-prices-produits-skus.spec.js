@@ -20,11 +20,13 @@ test('prix par canal dans Produits et SKUs : ajout, canal principal, retrait, fo
     const channelCards = channelsSection.locator('.space-y-3 > div');
     await channelCards.nth(1).locator('input[type="text"]').first().fill('Grande distribution');
 
-    // Ajoute un nouveau produit (un seul format, rattaché au canal par défaut).
+    // Ajoute un nouveau produit (un seul format, rattaché au canal par défaut) — sélectionné
+    // automatiquement, son détail s'affiche directement dans le panneau de droite (vue
+    // maître-détail, refonte du 19/10).
     const menuSection = page.locator('#tutorial-section-info-menu');
-    await menuSection.getByText('Ajouter un item').click();
+    await menuSection.getByRole('button', { name: 'Ajouter un item' }).click();
     await page.waitForTimeout(300);
-    const newSection = menuSection.locator('[id^="product-section-"]').first();
+    const newSection = menuSection.locator('#product-detail-pane');
     await newSection.locator('input[type="text"]').first().fill('Nouveau produit test');
 
     const formatRow = newSection.locator('tbody tr').first();

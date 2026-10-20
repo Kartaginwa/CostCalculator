@@ -21,9 +21,10 @@ test("Produits et SKUs : le bouton « Générer » calcule le prix net d'un cana
 
     const menuSection = page.locator('#tutorial-section-info-menu');
     await menuSection.scrollIntoViewIfNeeded();
-    const allSections = menuSection.locator('[id^="product-section-"]');
-    const sectionNames = await allSections.evaluateAll(els => els.map(el => el.querySelector('input[type="text"]').value));
-    const section = allSections.nth(sectionNames.indexOf('Chili con carne mijoté'));
+    // Sélectionne le produit dans la liste de gauche (vue maître-détail, refonte du 19/10) : son
+    // détail s'affiche dans le panneau de droite.
+    await menuSection.getByText('Chili con carne mijoté', { exact: true }).click();
+    const section = menuSection.locator('#product-detail-pane');
     const formatRow = section.locator('tbody tr').first();
 
     await formatRow.locator('button').first().click();

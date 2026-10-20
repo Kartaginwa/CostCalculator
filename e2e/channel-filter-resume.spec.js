@@ -26,9 +26,9 @@ test('Rapport : Vue d\'ensemble (matrice de marges nettes par canal), Par SKU (c
 
     const menuSection = page.locator('#tutorial-section-info-menu');
     await menuSection.scrollIntoViewIfNeeded();
-    const allSections = menuSection.locator('[id^="product-section-"]');
-    const sectionNames = await allSections.evaluateAll(els => els.map(el => el.querySelector('input[type="text"]').value));
-    const targetSection = allSections.nth(sectionNames.indexOf('Poulet général Tao, riz et légumes'));
+    // Sélectionne le produit dans la liste de gauche (vue maître-détail, refonte du 19/10).
+    await menuSection.getByText('Poulet général Tao, riz et légumes', { exact: true }).click();
+    const targetSection = menuSection.locator('#product-detail-pane');
     const formatRow = targetSection.locator('tbody tr').first();
     await formatRow.locator('button').first().click();
     const detailRow = formatRow.locator('xpath=following-sibling::tr[1]');

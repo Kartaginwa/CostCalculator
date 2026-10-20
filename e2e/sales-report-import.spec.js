@@ -49,9 +49,9 @@ test('import d\'un rapport de ventes : crée un canal, met à jour le prix net +
     // Le format du produit porte maintenant 4 canaux (les 3 du projet démo + le nouveau), avec le
     // bon prix net et le bon volume.
     await menuSection.scrollIntoViewIfNeeded();
-    const allSections = menuSection.locator('[id^="product-section-"]');
-    const sectionNames = await allSections.evaluateAll(els => els.map(el => el.querySelector('input[type="text"]').value));
-    const targetSection = allSections.nth(sectionNames.indexOf('Chili con carne mijoté'));
+    // Sélectionne le produit dans la liste de gauche (vue maître-détail, refonte du 19/10).
+    await menuSection.getByText('Chili con carne mijoté', { exact: true }).click();
+    const targetSection = menuSection.locator('#product-detail-pane');
     const formatRow = targetSection.locator('tbody tr').first();
     await expect(formatRow.locator('button').first()).toHaveText(/4 canaux/);
     await formatRow.locator('button').first().click();

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { ArrowUpDown, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
+import { ArrowUpDown, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
 import { parseLocaleNumber, isValidNumber, isValidPositiveNumber, isValidPercentage, isNotEmpty } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
@@ -34,13 +34,22 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     const [filterCategory, setFilterCategory] = useState('all');
     const [filterActivity, setFilterActivity] = useState('all');
     const [sortConfig, setSortConfig] = useState({ key: 'platName', direction: 'ascending' });
-    const [newlyAddedId, setNewlyAddedId] = useState(null);
-    const prevProductsLength = useRef(products.length);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isSortDisabled, setIsSortDisabled] = useState(false);
     // Phase 3.2 : détail "prix par canal" repliable par format — évite d'alourdir le tableau
     // Produits et SKUs quand on n'a pas besoin de voir ce détail (voir discussion méthodologique).
     const [expandedFormatIds, setExpandedFormatIds] = useState(new Set());
+
+    // Vue maître-détail (refonte du 19/10, retour utilisateur — l'ancienne vue en liste à plat,
+    // une carte par produit avec son propre tableau complet, prenait trop de place et rendait la
+    // navigation difficile) : `selectedProductId` est le SEUL état de sélection, propre à cet
+    // écran — volontairement PAS partagé avec `editingProductIndex`/`editingFormatIndex` d'App.jsx
+    // (qui pilotent l'onglet Recette & Calcul ; les réutiliser ici créerait un couplage surprenant
+    // entre les deux onglets, l'un n'ayant pas à changer ce que l'autre affiche).
+    const [selectedProductId, setSelectedProductId] = useState(null);
+    // Sur petit écran, les deux colonnes ne peuvent pas être côte à côte : bascule entre la liste
+    // et le détail. Ignoré à partir du breakpoint md (les deux restent toujours visibles).
+    const [mobileShowDetail, setMobileShowDetail] = useState(false);
+    const prevProductIdsRef = useRef(new Set(products.map(p => p.id)));
 
     const uniqueCategories = useMemo(() => ['all', ...new Set(products.map(p => p.category).filter(Boolean))], [products]);
     // Options du sélecteur de catégorie par produit (voir plus bas), sous la forme attendue par
@@ -76,17 +85,15 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             items = items.filter(({ product }) => product.activityId === filterActivity);
         }
 
-        if (!isSortDisabled) {
-            items.sort((a, b) => {
-                const aValue = a.product[sortConfig.key];
-                const bValue = b.product[sortConfig.key];
-                const comparison = String(aValue || '').localeCompare(String(bValue || ''), 'fr', { sensitivity: 'base' });
-                return sortConfig.direction === 'ascending' ? comparison : -comparison;
-            });
-        }
+        items.sort((a, b) => {
+            const aValue = a.product[sortConfig.key];
+            const bValue = b.product[sortConfig.key];
+            const comparison = String(aValue || '').localeCompare(String(bValue || ''), 'fr', { sensitivity: 'base' });
+            return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        });
 
         return items;
-    }, [products, filterName, filterCategory, filterActivity, sortConfig, isSortDisabled]);
+    }, [products, filterName, filterCategory, filterActivity, sortConfig]);
 
     const displayedProducts = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -108,56 +115,49 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         return sortConfig.direction === 'ascending' ? '▲' : '▼';
     };
 
-    const handleBlurRow = (event) => {
-        const currentRow = event.currentTarget;
-        setTimeout(() => {
-            if (!currentRow.contains(document.activeElement)) {
-                setIsSortDisabled(false);
-                setNewlyAddedId(null);
-            }
-        }, 0);
-    };
-
     useEffect(() => {
         // Revient à la page 1 si on change les filtres
         setCurrentPage(1);
     }, [filterName, filterCategory, filterActivity]);
 
-    // Detect new product addition
+    // Sélectionne automatiquement tout produit qui vient d'apparaître dans `products` (ajout d'un
+    // item, duplicata, ou restauration via "Annuler" une suppression) — détecté par comparaison
+    // d'ids avec le rendu précédent, peu importe à quel index il atterrit (un ajout va en tête,
+    // un duplicata juste après l'original). Remplace l'ancien mécanisme newlyAddedId/
+    // isSortDisabled/scroll-to-row : plus besoin de "mettre le tri en pause" pour garder la
+    // nouvelle ligne visible dans une liste à plat — ici, sélectionner par id suffit, le panneau
+    // de détail affiche le bon produit qu'il soit trié/filtré visible ou non dans la liste.
     useEffect(() => {
-        // Si un produit a été ajouté (longueur augmentée) et que le tri est en pause
-        if (products.length > prevProductsLength.current && isSortDisabled) {
-            const newProduct = products[0]; // Le nouveau produit est toujours en haut de la liste
-            const newFormat = newProduct?.formats?.[0];
-            if (newFormat) {
-                setNewlyAddedId(newFormat.id);
-            }
+        const currentIds = new Set(products.map(p => p.id));
+        const addedProduct = products.find(p => !prevProductIdsRef.current.has(p.id));
+        if (addedProduct) {
+            setSelectedProductId(addedProduct.id);
+            setCurrentPage(1);
+            setMobileShowDetail(true);
         }
-        // Met à jour la référence pour la prochaine fois
-        prevProductsLength.current = products.length;
-    }, [products, isSortDisabled]);
+        prevProductIdsRef.current = currentIds;
+    }, [products]);
 
+    // Garde la sélection valide : si le produit sélectionné disparaît de la liste filtrée/triée
+    // actuelle (supprimé, ou simplement masqué par un filtre), retombe sur le premier produit
+    // visible plutôt que de laisser le panneau de droite vide ou périmé.
     useEffect(() => {
-        // Gère la mise au point et le défilement sur la nouvelle ligne ajoutée
-        if (newlyAddedId) {
-            setTimeout(() => {
-                const newRowElement = document.getElementById(`format-row-${newlyAddedId}`);
-                if (newRowElement) {
-                    // Fait défiler la vue pour centrer la nouvelle ligne à l'écran
-                    newRowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    const input = newRowElement.querySelector('input');
-                    // Place le curseur dans le premier champ de la nouvelle ligne
-                    if (input) input.focus();
-                }
-            }, 100); // Léger délai pour s'assurer que l'élément est bien dans le DOM
+        if (filteredAndSortedProducts.length === 0) {
+            if (selectedProductId !== null) setSelectedProductId(null);
+            return;
         }
-    }, [newlyAddedId]);
+        const stillVisible = filteredAndSortedProducts.some(({ product }) => product.id === selectedProductId);
+        if (!stillVisible) {
+            setSelectedProductId(filteredAndSortedProducts[0].product.id);
+        }
+    }, [filteredAndSortedProducts, selectedProductId]);
 
     const handleAddItem = () => {
-        setIsSortDisabled(true); // Met le tri en pause
-        setCurrentPage(1);      // Va à la première page
-        onNewProduct();         // Appelle la fonction parente pour créer le plat
+        onNewProduct();
     };
+
+    const selectedProductIndex = products.findIndex(p => p.id === selectedProductId);
+    const selectedProduct = selectedProductIndex >= 0 ? products[selectedProductIndex] : null;
 
     const handleLogoFileChange = (event) => {
         const file = event.target.files[0];
@@ -464,56 +464,15 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             </div>
 
             <div id="tutorial-section-info-menu" className="p-4 bg-gray-100 rounded-lg">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
                     <h2 className="text-2xl font-semibold text-gray-800">Produits et SKUs</h2>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <button onClick={onOpenSalesImport} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700">
                             <Upload className="h-5 w-5 mr-2" /> Importer un rapport de ventes
                         </button>
                         <button id="tutorial-add-item" onClick={handleAddItem} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                             Ajouter un item
                         </button>
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
-                    <div>
-                        <label htmlFor="filterPlatName" className="block text-sm font-medium text-gray-700">Filtrer par nom</label>
-                        <input
-                            type="text"
-                            id="filterPlatName"
-                            value={filterName}
-                            onChange={e => setFilterName(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                            placeholder="Rechercher un plat..."
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="filterActivity" className="block text-sm font-medium text-gray-700">Filtrer par activité de production</label>
-                        <select
-                            id="filterActivity"
-                            value={filterActivity}
-                            onChange={e => setFilterActivity(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                        >
-                            <option value="all">Toutes les activités</option>
-                            {productionActivities.map(activity => (
-                                <option key={activity.id} value={activity.id}>{activity.name || 'Sans nom'}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="filterCategory" className="block text-sm font-medium text-gray-700">Filtrer par catégorie</label>
-                        <select
-                            id="filterCategory"
-                            value={filterCategory}
-                            onChange={e => setFilterCategory(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                        >
-                            {uniqueCategories.map(cat => (
-                                <option key={cat} value={cat}>{cat === 'all' ? 'Toutes les catégories' : cat}</option>
-                            ))}
-                        </select>
                     </div>
                 </div>
                 
@@ -524,16 +483,112 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                     </div>
                 )}
 
-                <div className="flex items-center gap-4 mb-3 px-1">
-                    <button onClick={() => requestSort('platName')} className="flex items-center text-xs font-medium text-gray-500 uppercase">Trier par nom {getSortIcon('platName')}</button>
-                    <button onClick={() => requestSort('category')} className="flex items-center text-xs font-medium text-gray-500 uppercase">Trier par catégorie {getSortIcon('category')}</button>
-                </div>
+                {/* Vue maître-détail (refonte du 19/10) : liste compacte de tous les produits à
+                    gauche (scroll indépendant, sa hauteur ne grandit jamais avec le détail d'un
+                    produit), détail complet du produit sélectionné à droite (scroll indépendant).
+                    Empilées l'une sous l'autre en dessous du breakpoint md (une seule des deux
+                    visible à la fois, voir mobileShowDetail), côte à côte au-dessus. */}
+                <div className="flex flex-col md:flex-row gap-4 md:max-h-[75vh]">
+                    <div className={`${mobileShowDetail ? 'hidden' : 'flex'} md:flex flex-col md:w-72 lg:w-80 flex-shrink-0 md:max-h-[75vh]`}>
+                        <div className="flex-shrink-0 space-y-2 mb-3">
+                            <div>
+                                <label htmlFor="filterPlatName" className="sr-only">Filtrer par nom</label>
+                                <input
+                                    type="text"
+                                    id="filterPlatName"
+                                    value={filterName}
+                                    onChange={e => setFilterName(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm"
+                                    placeholder="Rechercher un plat..."
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="filterActivity" className="sr-only">Filtrer par activité de production</label>
+                                <select
+                                    id="filterActivity"
+                                    value={filterActivity}
+                                    onChange={e => setFilterActivity(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm"
+                                >
+                                    <option value="all">Toutes les activités</option>
+                                    {productionActivities.map(activity => (
+                                        <option key={activity.id} value={activity.id}>{activity.name || 'Sans nom'}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor="filterCategory" className="sr-only">Filtrer par catégorie</label>
+                                <select
+                                    id="filterCategory"
+                                    value={filterCategory}
+                                    onChange={e => setFilterCategory(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm"
+                                >
+                                    {uniqueCategories.map(cat => (
+                                        <option key={cat} value={cat}>{cat === 'all' ? 'Toutes les catégories' : cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex items-center flex-wrap gap-x-3 gap-y-1 px-1">
+                                <button onClick={() => requestSort('platName')} className="flex items-center text-xs font-medium text-gray-500 uppercase">Trier par nom {getSortIcon('platName')}</button>
+                                <button onClick={() => requestSort('category')} className="flex items-center text-xs font-medium text-gray-500 uppercase">Trier par catégorie {getSortIcon('category')}</button>
+                            </div>
+                        </div>
 
-                <div className="space-y-4">
-                    {displayedProducts.map(({ product, productIndex }) => {
-                        const formats = product.formats || [];
-                        return (
-                        <div key={product.id} id={`product-section-${product.id}`} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                        <div className="flex-1 min-h-0 overflow-y-auto space-y-1 border border-gray-200 rounded-lg bg-white p-2">
+                            {displayedProducts.length === 0 && (
+                                <p className="text-sm text-gray-500 p-2">Aucun produit ne correspond à ces filtres.</p>
+                            )}
+                            {displayedProducts.map(({ product }) => {
+                                const formatCount = product.formats?.length || 1;
+                                const isSelected = product.id === selectedProductId;
+                                return (
+                                    <button
+                                        key={product.id}
+                                        id={`product-list-item-${product.id}`}
+                                        onClick={() => { setSelectedProductId(product.id); setMobileShowDetail(true); }}
+                                        className={`w-full text-left px-3 py-2 rounded-md border-l-4 transition-colors ${isSelected ? 'bg-blue-50 border-blue-500' : 'border-transparent hover:bg-gray-50'}`}
+                                    >
+                                        <div className={`font-medium truncate ${!isNotEmpty(product.platName) ? 'text-red-600' : 'text-gray-800'}`}>
+                                            {product.platName || 'Sans nom'}
+                                        </div>
+                                        <div className="text-xs text-gray-500 truncate">
+                                            {product.category || 'Sans catégorie'} · {formatCount} format{formatCount > 1 ? 's' : ''}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex-shrink-0 mt-2">
+                            <Pagination
+                                totalItems={filteredAndSortedProducts.length}
+                                itemsPerPage={itemsPerPage}
+                                currentPage={currentPage}
+                                onPageChange={setCurrentPage}
+                                onItemsPerPageChange={onItemsPerPageChange}
+                            />
+                        </div>
+                    </div>
+
+                    <div className={`${mobileShowDetail ? 'flex' : 'hidden'} md:flex flex-col flex-1 min-w-0 md:max-h-[75vh]`}>
+                        <button onClick={() => setMobileShowDetail(false)} className="md:hidden flex-shrink-0 mb-3 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 self-start">
+                            <ArrowLeft size={16} /> Retour à la liste
+                        </button>
+
+                        <div className="flex-1 min-h-0 overflow-y-auto">
+                        {!selectedProduct ? (
+                            <div className="flex items-center justify-center h-40 text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg bg-white">
+                                {products.length === 0
+                                    ? <>Aucun produit — cliquez sur « Ajouter un item » pour commencer.</>
+                                    : <>Sélectionnez un produit dans la liste à gauche.</>}
+                            </div>
+                        ) : (() => {
+                            const productIndex = selectedProductIndex;
+                            const product = selectedProduct;
+                            const formats = product.formats || [];
+                            return (
+                        <div id="product-detail-pane" className="border border-gray-200 rounded-lg overflow-hidden bg-white">
                             <div className="bg-gray-50 p-3 flex flex-wrap items-end gap-3 border-b border-gray-200">
                                 <div className="flex-1 min-w-[200px]">
                                     <label className="block text-xs font-medium text-gray-500 uppercase">Nom du plat</label>
@@ -617,7 +672,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                         const isSalesMixAuto = formatTotalVolume > 0;
                                         return (
                                         <React.Fragment key={format.id}>
-                                        <tr id={`format-row-${format.id}`} className={format.id === newlyAddedId ? 'new-row' : ''} onBlur={handleBlurRow} tabIndex={-1}>
+                                        <tr id={`format-row-${format.id}`}>
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-1">
                                                     <input type="text" inputMode="decimal" value={format.portionSize || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionSize', e.target.value)} className={`w-16 p-1 border rounded text-right ${!isValidNumber(format.portionSize) ? 'border-red-500' : 'border-gray-300'}`} />
@@ -756,16 +811,11 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 </button>
                             </div>
                         </div>
-                    )})}
+                            );
+                        })()}
+                        </div>
+                    </div>
                 </div>
-
-                <Pagination
-                    totalItems={filteredAndSortedProducts.length}
-                    itemsPerPage={itemsPerPage}
-                    currentPage={currentPage}
-                    onPageChange={setCurrentPage}
-                    onItemsPerPageChange={onItemsPerPageChange}
-                />
             </div>
         </div>
     );

@@ -3060,3 +3060,49 @@ d'utilisation après les lots seuls, avant la correction des heures du personnel
   temporaires à chaque étape (production par lot seule, puis heures du personnel, puis
   revenus/charges réels — un audit complet relancé après chacune pour confirmer la direction avant
   de poursuivre), lint et `npx vite build` propres.
+
+## Point mort : main-d'œuvre traitée comme un coût fixe pour la période (20/10)
+
+Suite à l'audit ci-dessus, discussion avec l'utilisateur sur le traitement de la main-d'œuvre dans
+le calcul du point mort. Clarification importante actée dans l'échange : le point mort reste
+TOUJOURS défini comme « tout est payé » (revenu = coûts totaux) — ce n'est jamais la définition
+qui change selon le traitement fixe/variable d'un coût, seulement l'exactitude du résultat. Un
+coût fixe reste le même $ TOTAL peu importe le volume ; un coût variable reste le même $ PAR UNITÉ.
+La main-d'œuvre de l'utilisateur vient de personnel à heures prévues (payé qu'il soit utilisé ou
+non) — donc fixe pour la période, pas variable. L'inclure dans la marge brute (comme avant) la
+traite à tort comme si elle disparaissait en ne produisant pas une unité, ce qui donne un point
+mort trop optimiste (démonstration numérique faite dans la conversation : un point mort calculé
+avec MO variable peut indiquer un seuil atteint alors qu'une perte subsiste réellement à ce volume).
+Décision utilisateur : corriger directement la formule plutôt qu'ajouter une deuxième ligne
+« point mort prudent » à côté de l'actuelle — une seule main-d'œuvre, fixe pour la période, un
+seul point mort.
+
+**Formule révisée** : Numérateur = Frais fixes Général + Activité + Canal (propre à chaque canal)
++ main-d'œuvre totale du format pour la période (`costLaborPerPortion × portionsSold`).
+Dénominateur = marge de CONTRIBUTION sans la main-d'œuvre (`margeBruteDollar` + main-d'œuvre par
+unité rajoutée). Ne touche QUE le point mort — la marge brute/nette affichée ailleurs dans l'app
+reste inchangée (la main-d'œuvre y reste un coût direct normal).
+
+**Bénéfice collatéral découvert en implémentant** : l'ancienne formule du numérateur
+(`totalIndirects × salesMix brut`, jamais normalisée par le total du mix ACTIF) ne se recoupait
+pas avec la ventilation Général/Activité déjà affichée dans le même tableau (Résumé → Par SKU) —
+une incohérence silencieuse, maintenant éliminée en réutilisant directement
+`costIndirectGeneralPerPortion`/`costIndirectActivityPerPortion` (déjà calculés, déjà affichés).
+La part Canal (pool Phase 4.6), elle, était carrément ABSENTE du numérateur avant cette révision —
+désormais ajoutée, par canal, à partir du volume réel de CE canal.
+- Fichiers touchés : `src/engine/calculateCosts.js` (`computeChannelBreakdown` : paramètre renommé
+  `fixedCostForBreakEven`, dénominateur excluant la MO, ajout de la part Canal), `src/engine/analysisData.js`
+  (numérateur reconstruit depuis Général+Activité+MO déjà calculés ; `globalBreakEven` même
+  révision à l'échelle du menu), `src/features/RecipeCalculator.jsx` (reverse-dérivation du point
+  mort simulé mise à jour pour rester cohérente), `src/engine/calculateCosts.test.js` et
+  `src/engine/analysisData.test.js` (tests adaptés + 2 nouveaux tests ciblant spécifiquement le
+  traitement MO fixe et l'ajout de la part Canal), `src/components/InstructionModal.jsx` (3
+  tooltips Point mort mentionnant désormais le traitement MO fixe).
+- Portée délibérément exclue : le point mort du PDF/Excel (`exportToExcel.js`/`generatePdf.js`)
+  garde encore l'ancienne formule simple (sans canal, sans MO fixe) — l'utilisateur a demandé
+  explicitement « Production et Rapport », pas les exports ; à revisiter séparément si souhaité.
+- Tests : 227/227 unitaires (2 nouveaux dans calculateCosts.test.js ; 2 tests existants adaptés aux
+  nouvelles valeurs attendues), 46/46 e2e, vérification fonctionnelle par script Playwright
+  temporaire (Chili con carne : point mort Production 795 unités = exactement la valeur du canal
+  principal dans Rapport → Par SKU ; simulation de prix à 9,00 $ recalcule correctement à 608
+  unités), lint et `npx vite build` propres.

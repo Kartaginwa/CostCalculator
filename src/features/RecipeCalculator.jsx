@@ -168,21 +168,28 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
     const breakEvenUnits = analysisChannelEntry?.breakEvenUnits ?? null;
 
     // Point mort en mode simulation (retour utilisateur du 19/10 : ne doit plus s'effacer pendant
-    // la simulation, comme les autres tuiles). `allocatedIndirects` (la part $ des frais fixes
-    // allouée à CE format) ne dépend pas du prix — identique au prix réel ou simulé — donc on la
-    // déduit du canal PRINCIPAL déjà calculé par analysisData (même baseline que `costs`/
-    // `simulatedCosts`, qui ne portent eux-mêmes que sur le canal principal pendant une
+    // la simulation, comme les autres tuiles). Les frais fixes alloués à CE format (Général +
+    // Activité + Canal + main-d'œuvre, cette dernière traitée comme fixe pour la période depuis
+    // le 20/10 — voir calculateCosts.js) ne dépendent pas du prix — identiques au prix réel ou
+    // simulé — donc on les déduit du canal PRINCIPAL déjà calculé par analysisData (même baseline
+    // que `costs`/`simulatedCosts`, qui ne portent eux-mêmes que sur le canal principal pendant une
     // simulation — voir plus bas, sélecteur de canal masqué). Pas de ré-implémentation de
-    // l'allocation elle-même (Général/Activité/Canal, Phase 4.6) : seule la division finale
-    // (allocatedIndirects ÷ marge brute du prix simulé) est recalculée, exactement comme
-    // `computeChannelBreakdown` le fait déjà pour le prix réel.
+    // l'allocation elle-même (Général/Activité/Canal, Phase 4.6) : seule la division finale (frais
+    // fixes implicites ÷ marge de contribution SANS main-d'œuvre du prix simulé) est recalculée,
+    // exactement comme `computeChannelBreakdown` le fait déjà pour le prix réel. La main-d'œuvre
+    // par unité ne change pas avec le prix (`simulatedCosts.costLaborPerPortion` égale
+    // `costs.costLaborPerPortion`) — reprise telle quelle pour rajouter ce même montant au
+    // numérateur implicite ET au dénominateur simulé.
     const primaryAnalysisChannelEntry = analysisFormatEntry?.channelBreakdown?.[0] || null;
     const realBreakEvenUnitsForSim = primaryAnalysisChannelEntry?.breakEvenUnits ?? null;
-    const impliedAllocatedIndirects = (primaryAnalysisChannelEntry && realBreakEvenUnitsForSim != null)
-        ? primaryAnalysisChannelEntry.margeBruteDollar * realBreakEvenUnitsForSim
+    const impliedFixedCostForSim = (primaryAnalysisChannelEntry && realBreakEvenUnitsForSim != null)
+        ? (primaryAnalysisChannelEntry.margeBruteDollar + parseLocaleNumber(costs?.costLaborPerPortion)) * realBreakEvenUnitsForSim
         : null;
-    const simulatedBreakEvenUnits = (simulatedCosts && impliedAllocatedIndirects != null && simulatedCosts.margeBruteDollar > 0)
-        ? Math.ceil(impliedAllocatedIndirects / simulatedCosts.margeBruteDollar)
+    const simulatedContributionExcludingLabor = simulatedCosts
+        ? simulatedCosts.margeBruteDollar + parseLocaleNumber(simulatedCosts.costLaborPerPortion)
+        : null;
+    const simulatedBreakEvenUnits = (simulatedContributionExcludingLabor != null && impliedFixedCostForSim != null && simulatedContributionExcludingLabor > 0)
+        ? Math.ceil(impliedFixedCostForSim / simulatedContributionExcludingLabor)
         : null;
 
     if (!product || !format) return <div className="text-center p-8">Veuillez d'abord sélectionner ou ajouter un plat.</div>;

@@ -445,11 +445,19 @@ export const computeMarginsForPrice = (prixVente, costs) => {
 // leçon tirée du chiffrier SymbiOse de l'utilisateur (voir 06-Analyse-Chiffrier-SymbiOse.md) :
 // une grille produit × canal avec des canaux non utilisés à 0 $ génère des divisions par zéro en
 // cascade ; une valeur absente (canal non vendu ici) doit rester absente, jamais un calcul forcé.
-// `allocatedIndirects` (optionnel, $ — la part des frais indirects déjà allouée à CE format,
-// peu importe le canal) : quand fourni, chaque entrée reçoit aussi `breakEvenUnits`, le point
-// mort pour CE canal (mêmes frais indirects alloués, divisés par la marge brute propre à ce
-// canal — donc un point mort différent par canal, uniquement parce que le prix diffère). Même
-// formule que l'ancien point mort de Recette & Calcul, déplacé le 06/10 vers Résumé → Par SKU.
+// `fixedCostForBreakEven` (optionnel, $ — Général + Activité + main-d'œuvre totale déjà alloués à
+// CE format, peu importe le canal — voir analysisData.js) : quand fourni, chaque entrée reçoit
+// aussi `breakEvenUnits`, le point mort pour CE canal. Révisé le 20/10 (retour utilisateur,
+// confirmé après discussion) : la main-d'œuvre directe est traitée comme un coût FIXE pour la
+// période, pas variable — le personnel de production est à heures prévues, payé qu'il soit
+// utilisé ou non (le mécanisme `kitchenProductivity`, App.jsx, absorbe déjà la masse salariale
+// payée comme un bloc fixe à l'échelle du menu ; le point mort doit rester cohérent avec ça).
+// Numérateur = `fixedCostForBreakEven` (Général+Activité+MO, communs à tous les canaux) + la part
+// Canal propre à CE canal (ajoutée ci-dessous, à partir de SON volume réel — avant cette révision,
+// elle en était absente, une incohérence avec « Frais fixes totaux par unité » qui l'inclut déjà).
+// Dénominateur = marge de CONTRIBUTION sans la main-d'œuvre (`margeBruteDollar` + main-d'œuvre par
+// unité rajoutée, puisqu'elle sort du calcul variable) — jamais la marge brute habituelle, qui
+// resterait inchangée partout ailleurs dans l'app (cette révision ne touche QUE le point mort).
 // `channelPools` (Phase 4.6, optionnel — `{ [channelId]: { amount, driverTotal } }`) : pool de
 // frais fixes propre à CE canal (voir engine/analysisData.js, computeIndirectCostDriverTotals).
 // Quand fourni, chaque entrée ajoute, EN PLUS de `costs.costIndirectPerPortion` (Général + Activité,
@@ -468,7 +476,7 @@ export const computeMarginsForPrice = (prixVente, costs) => {
 // exactement par construction (le coût de production du produit s'annule dans la somme). Un canal
 // sans volume réel saisi ou sans pool configuré reste simplement sans part de canal (jamais un 0
 // inventé) — seuls Général/Activité s'appliquent alors.
-export const computeChannelBreakdown = (costs, channelPrices = [], salesChannels = [], allocatedIndirects = null, channelPools = null) => {
+export const computeChannelBreakdown = (costs, channelPrices = [], salesChannels = [], fixedCostForBreakEven = null, channelPools = null) => {
     return channelPrices
         .map(cp => {
             const channel = salesChannels.find(c => c.id === cp.channelId);
@@ -491,8 +499,12 @@ export const computeChannelBreakdown = (costs, channelPrices = [], salesChannels
             }
 
             const margins = computeMarginsForPrice(netPrice, channelCosts);
-            const breakEvenUnits = (allocatedIndirects != null && margins.margeBruteDollar > 0)
-                ? Math.ceil(allocatedIndirects / margins.margeBruteDollar)
+            const contributionExcludingLabor = margins.margeBruteDollar + parseLocaleNumber(costs.costLaborPerPortion);
+            const fixedCostForThisChannel = fixedCostForBreakEven != null
+                ? fixedCostForBreakEven + (costIndirectChannelPerPortion * volume)
+                : null;
+            const breakEvenUnits = (fixedCostForThisChannel != null && contributionExcludingLabor > 0)
+                ? Math.ceil(fixedCostForThisChannel / contributionExcludingLabor)
                 : null;
             return {
                 channelId: channel.id,

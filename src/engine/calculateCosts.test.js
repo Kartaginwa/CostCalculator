@@ -665,15 +665,57 @@ describe('computeChannelBreakdown (Phase 3.3)', () => {
             }],
         });
         const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
-        const breakdown = computeChannelBreakdown(costs, product.formats[0].channelPrices, salesChannels, 100 /* $ alloués */);
+        // Aucune main-d'œuvre dans ce produit (`productionSteps: []` par défaut) : le dénominateur
+        // (marge de contribution sans MO) reste donc égal à la marge brute, comportement inchangé
+        // par la révision du 20/10 (voir analysisData.js pour un cas AVEC main-d'œuvre).
+        const breakdown = computeChannelBreakdown(costs, product.formats[0].channelPrices, salesChannels, 100 /* $ fixes alloués */);
         expect(breakdown[0].breakEvenUnits).toBe(17); // ceil(100 / 6)
         expect(breakdown[1].breakEvenUnits).toBe(25); // ceil(100 / 4)
     });
 
-    it("breakEvenUnits est null quand allocatedIndirects n'est pas fourni (comportement par défaut)", () => {
+    it("breakEvenUnits est null quand fixedCostForBreakEven n'est pas fourni (comportement par défaut)", () => {
         const costs = calculateCosts(baseProduct(), baseGeneralInfo(), baseIngredients, [baseProduct()], []);
         const breakdown = computeChannelBreakdown(costs, [{ id: 'cp1', channelId: 'c_direct', netPrice: 15, volume: 10 }], salesChannels);
         expect(breakdown[0].breakEvenUnits).toBeNull();
+    });
+
+    it("traite la main-d'œuvre comme un coût FIXE pour le point mort (20/10, retour utilisateur) : exclue du dénominateur, pas l'inverse", () => {
+        const laborDatabase = [{ postName: 'Cuisinier', employees: [{ hourlyRate: 10, socialCharges: 0, vacationPercentage: 0, workedHours: 10 }] }];
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, prixVente: 20, indirectCosts: {},
+                ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+                productionSteps: [{ duration: 3600, personnel: [{ postId: 'Cuisinier' }] }],
+                channelPrices: [{ id: 'cp1', channelId: 'c_direct', netPrice: 20, volume: 10 }],
+            }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], laborDatabase);
+        // Coût matière 4 $ + MO 10 $ (1h × 10 $/h) = coût de production 14 $ ; marge brute = 20-14 = 6 $.
+        expect(costs.costLaborPerPortion).toBeCloseTo(10);
+        expect(costs.margeBruteDollar).toBeCloseTo(6);
+
+        const breakdown = computeChannelBreakdown(costs, product.formats[0].channelPrices, salesChannels, 90 /* $ fixes, MO déjà incluse par l'appelant */);
+        // Dénominateur = marge brute (6$) + MO par unité (10$) rajoutée = 16$ de contribution SANS
+        // la main-d'œuvre (jamais 6$ seuls, qui la traiteraient à tort comme variable).
+        expect(breakdown[0].breakEvenUnits).toBe(6); // ceil(90 / 16)
+    });
+
+    it("ajoute la part de frais fixes propre au CANAL (pool Phase 4.6) au numérateur du point mort — absente avant la révision du 20/10", () => {
+        const product = baseProduct({
+            formats: [{
+                id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {},
+                ingredients: [{ id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+                channelPrices: [{ id: 'cp1', channelId: 'c_direct', netPrice: 20, volume: 10 }],
+            }],
+        });
+        const costs = calculateCosts(product, baseGeneralInfo(), baseIngredients, [product], []);
+        // totalDirectCostPerPortion = 4$ (farine seule, aucune MO) ; pool canal : taux = 28/56 = 0.5
+        // -> costIndirectChannelPerPortion = 4×0.5 = 2$/unité -> ×10 unités (volume du canal) = 20$.
+        const channelPools = { c_direct: { amount: 28, driverTotal: 56 } };
+        const breakdown = computeChannelBreakdown(costs, product.formats[0].channelPrices, salesChannels, 90 /* Général+Activité+MO, hors Canal */, channelPools);
+        // Numérateur total = 90 (Général+Activité+MO) + 20 (Canal, propre à ce canal) = 110 ;
+        // dénominateur = marge brute 16$ (20-4) — aucune MO ici, donc inchangée.
+        expect(breakdown[0].breakEvenUnits).toBe(7); // ceil(110 / 16)
     });
 });
 

@@ -663,14 +663,25 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
                 };
             }
 
-            // Frais indirects alloués à CE format (même formule que l'ancien point mort de
-            // Recette & Calcul) : part du pool total au prorata de son mix des ventes. Transmis à
-            // computeChannelBreakdown pour un point mort PAR CANAL (06/10, Résumé → Par SKU).
-            const allocatedIndirects = parseLocaleNumber(generalInfo.totalIndirects) * (parseLocaleNumber(fmt.salesMix) / 100);
+            // Point mort (20/10, retour utilisateur) : la main-d'œuvre directe est traitée comme un
+            // coût FIXE pour la période (personnel à heures prévues, payé qu'il soit utilisé ou
+            // non — voir kitchenProductivity, App.jsx, qui absorbe déjà la masse salariale payée
+            // comme un bloc fixe à l'échelle du menu), jamais comme un coût variable. Remplace
+            // l'ancienne formule plus simple (`totalIndirects × % du mix des ventes`), qui ne se
+            // recoupait pas avec la ventilation plus fine Général/Activité déjà dans `costs`
+            // (affichée dans le même tableau, « Frais fixes — Général/Activité », Résumé → Par
+            // SKU) : les deux désignaient la même chose avec des valeurs différentes. La part
+            // Canal, elle, est ajoutée PAR CANAL à l'intérieur de computeChannelBreakdown (varie
+            // d'un canal à l'autre, contrairement à Général/Activité/MO ci-dessous). Absent
+            // (jamais 0) sans volume réel pour ce format — comme Général/Activité eux-mêmes dans
+            // ce cas (voir calculateCosts.js).
+            const fixedCostForBreakEven = costs.portionsSold > 0
+                ? (parseLocaleNumber(costs.costIndirectGeneralPerPortion) + parseLocaleNumber(costs.costIndirectActivityPerPortion) + parseLocaleNumber(costs.costLaborPerPortion)) * costs.portionsSold
+                : null;
             // Phase 4.6 : `channelPools` ajoute, PAR CANAL, la part du pool de CE canal précis — en
             // plus de Général+Activité déjà dans `costs` (identiques pour tous les canaux de ce
             // format). Une marge nette différente par canal, pas seulement à cause du prix.
-            const channelBreakdown = computeChannelBreakdown(costs, fmt.channelPrices, salesChannels, allocatedIndirects, indirectPools?.channelPools);
+            const channelBreakdown = computeChannelBreakdown(costs, fmt.channelPrices, salesChannels, fixedCostForBreakEven, indirectPools?.channelPools);
 
             // Phase 4.6 — Canal (vue agrégée pour CE format, « toutes ventes confondues ») : moyenne
             // pondérée par le volume réel des parts de canal déjà calculées par canal ci-dessus
@@ -785,16 +796,20 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
         }
 
         // Point mort global en CHIFFRE D'AFFAIRES : coûts fixes / taux de marge pondéré par le
-        // REVENU (dollars de vente), et non par les unités. Hypothèse : matière + main-d'œuvre =
-        // variables (MO semi-variable), frais indirects = seuls coûts fixes. (Le point mort en
-        // UNITÉS est calculé par plat dans RecipeCalculator : part de frais indirects allouée /
-        // marge brute par unité.) Marge « tous canaux » ici aussi (06/10).
+        // REVENU (dollars de vente), et non par les unités. Révisé le 20/10 (retour utilisateur,
+        // même principe que computeChannelBreakdown ci-dessus) : la main-d'œuvre directe est
+        // traitée comme un coût FIXE pour la période (personnel à heures prévues), pas variable —
+        // retirée du taux de marge (dénominateur) et sa valeur $ totale ajoutée aux frais fixes
+        // (numérateur), au lieu de l'hypothèse « MO semi-variable » tenue jusqu'ici. (Le point mort
+        // en UNITÉS est calculé par plat dans RecipeCalculator/Par SKU, voir calculateCosts.js.)
+        // Marge « tous canaux » ici aussi (06/10).
         const totalMarginDollar = activeProducts.reduce((s, p) => s + p.blended.margeBruteDollar * (unitsSoldById[p.id] || 0), 0);
-        const revenueWeightedMarginRatio = menuRevenue > 0 ? totalMarginDollar / menuRevenue : 0;
+        const totalLaborDollar = activeProducts.reduce((s, p) => s + parseLocaleNumber(p.costs.costLaborPerPortion) * (unitsSoldById[p.id] || 0), 0);
+        const revenueWeightedContributionRatio = menuRevenue > 0 ? (totalMarginDollar + totalLaborDollar) / menuRevenue : 0;
         // Plus de multiplicateur "part menu" (menuRevenuePercentage, retiré le 18/10) :
         // `totalIndirects` est déjà le pool correctement scopé par les Frais fixes (Phase 4.6).
         const indirectsMenu = parseLocaleNumber(generalInfo.totalIndirects);
-        globalBreakEven = revenueWeightedMarginRatio > 0 ? indirectsMenu / revenueWeightedMarginRatio : 0;
+        globalBreakEven = revenueWeightedContributionRatio > 0 ? (indirectsMenu + totalLaborDollar) / revenueWeightedContributionRatio : 0;
     }
 
     // 5 & 6. Rapport d'Achats + Analyse ABC — ingrédients, puis packaging (Phase 2.3) selon la

@@ -444,12 +444,16 @@ describe('computeAnalysisData - channelBreakdown par ligne (Phase 3.3)', () => {
         expect(row.channelBreakdown[1].margeNetteDollar).toBeCloseTo(10);
     });
 
-    it("calcule un point mort par canal (06/10) à partir des frais indirects alloués à ce format", () => {
+    it("calcule un point mort par canal (06/10, révisé le 20/10) à partir des frais fixes alloués à ce format (Général/Activité/MO)", () => {
         const salesChannels = [
             { id: 'c_direct', name: 'Vente directe', links: [] },
             { id: 'c_distrib', name: 'Grande distribution', links: [] },
         ];
         const product = baseProduct({
+            // `salesMix` doit être posé ET au niveau produit (lu par `sumActiveMix`, le % du mix
+            // ACTIF total) ET au niveau format (lu par `fmt.salesMix` dans calculateCosts.js) —
+            // les deux doivent rester synchronisés pour un produit à un seul format.
+            salesMix: 50,
             formats: [{
                 id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {}, ingredients: [], salesMix: 50,
                 channelPrices: [
@@ -458,13 +462,20 @@ describe('computeAnalysisData - channelBreakdown par ligne (Phase 3.3)', () => {
                 ],
             }],
         });
-        const generalInfo = baseGeneralInfo({ totalIndirects: 200 }); // alloué à ce format : 200 * 50% = 100$
+        // Seul produit actif (salesMix 50 %, mais 100 % du mix ACTIF puisqu'il est seul) : la part
+        // Général normalisée (même calcul que calculateCosts.js, salesAllocation) lui alloue donc
+        // la totalité du pool (200 $), pas 200×50 %=100 $ comme l'ancienne formule naïve
+        // (totalIndirects × salesMix brut) — les deux ne se recoupaient pas en général, une
+        // incohérence corrigée le 20/10 (voir « Frais fixes — Général » dans Résumé → Par SKU, qui
+        // utilise déjà ce même calcul normalisé). portionsSold = 10+40 = 50 ; indirectCostTotal =
+        // (200/50)×1 = 4 $/portion ; × 50 portions = 200 $ (aucune main-d'œuvre, aucune activité ici).
+        const generalInfo = baseGeneralInfo({ totalIndirects: 200 });
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
         const result = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], salesChannels);
         const [row] = result.productsWithCosts;
-        expect(row.channelBreakdown[0].breakEvenUnits).toBe(5);  // ceil(100 / 20)
-        expect(row.channelBreakdown[1].breakEvenUnits).toBe(10); // ceil(100 / 10)
+        expect(row.channelBreakdown[0].breakEvenUnits).toBe(10); // ceil(200 / 20)
+        expect(row.channelBreakdown[1].breakEvenUnits).toBe(20); // ceil(200 / 10)
     });
 
     it('tableau vide sans salesChannels (comportement par défaut, rétrocompatible)', () => {

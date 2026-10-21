@@ -2,7 +2,7 @@
 // Fonction pure "données -> classeur" : reçoit tout son contexte via l'objet `deps`. XLSX est
 // fourni en global via scripts/copy-libs. Le contenu des feuilles est intentionnellement un
 // export de données brutes (handoff spécialiste), volontairement distinct de l'analyse du PDF.
-import { formatCurrency, parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS } from '../utils.js';
+import { parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS } from '../utils.js';
 import { indirectCostMethodLabels, periodTranslations } from '../state/initialState.js';
 
 export const exportToExcel = (deps) => {
@@ -307,14 +307,15 @@ export const exportToExcel = (deps) => {
                     sheetData.push(['Marge Brute', { t: 'n', v: Number(costs.margeBruteDollar), z: currencyFormat }, { t: 'n', v: Number(costs.margeBrutePercent), z: percentFormat }]);
                     sheetData.push(['Marge Nette', { t: 'n', v: Number(costs.margeNetteDollar), z: currencyFormat }, { t: 'n', v: Number(costs.margeNettePercent), z: percentFormat }]);
                     
-                    const breakEvenInfo = (() => {
-                        if (costs.margeBruteDollar <= 0) return { text: "Marge brute négative.", value: "N/A" };
-                        const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-                        if (['fixed', 'percentSales', 'percentDirect'].includes(method)) return { text: `Rentable si marge nette positive.`, value: formatCurrency(costs.margeNetteDollar) };
-                        if (salesMixPercent <= 0) return { text: "Mix des ventes nul.", value: "N/A" };
-                        const allocatedIndirects = calculatedGeneralInfo.totalIndirects * salesMixPercent;
-                        return { text: "Unités à vendre pour couvrir les frais indirects.", value: `${Math.ceil(allocatedIndirects / costs.margeBruteDollar)} unités` };
-                    })();
+                    // Point mort (20/10, retour utilisateur) : repris TEL QUEL depuis
+                    // `channelBreakdown` (analysisData.js → calculateCosts.js, computeChannelBreakdown),
+                    // jamais recalculé ici séparément — même valeur que Production et Rapport → Par
+                    // SKU, y compris le traitement de la main-d'œuvre comme un coût fixe pour la
+                    // période. Canal PRINCIPAL (le premier), comme la tuile de Production.
+                    const primaryChannelEntry = (product.channelBreakdown || [])[0] || null;
+                    const breakEvenInfo = (primaryChannelEntry && primaryChannelEntry.breakEvenUnits != null)
+                        ? { text: `Unités à vendre dans le canal "${primaryChannelEntry.channelName}" pour couvrir les frais fixes alloués (y compris la main-d'œuvre, traitée comme fixe pour la période).`, value: `${primaryChannelEntry.breakEvenUnits} unités` }
+                        : { text: "Point mort indéfini (aucun canal rattaché à ce format, ou marge de contribution nulle ou négative).", value: "N/A" };
                     sheetData.push([], ["Point Mort du Produit"], [breakEvenInfo.text, breakEvenInfo.value]);
 
                     const ws_product = XLSX.utils.aoa_to_sheet(sheetData, { cellStyles: true });

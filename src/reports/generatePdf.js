@@ -826,14 +826,22 @@ export const generatePdf = (options, deps) => {
                     margin: { left: 14 }
                 });
 
-                // Section 5: Point Mort et Classification
+                // Section 5: Point Mort et Classification — repris TEL QUEL depuis
+                // `channelBreakdown` (analysisData.js → calculateCosts.js, computeChannelBreakdown),
+                // jamais recalculé ici séparément (20/10, retour utilisateur) : même valeur que
+                // Production et Rapport → Par SKU, y compris le traitement de la main-d'œuvre
+                // comme un coût fixe pour la période. Canal PRINCIPAL (le premier), comme la tuile
+                // de Production.
                 const breakEvenInfo = (() => {
-                    if (costs.margeBruteDollar <= 0) return { title: "Point Mort", value: "N/A", description: "Marge brute négative." };
-                    const salesMixPercent = parseLocaleNumber(product.salesMix) / 100;
-                    if (salesMixPercent <= 0) return { title: "Point Mort", value: "N/A", description: "Mix des ventes nul." };
-                    const allocatedIndirects = calculatedGeneralInfo.totalIndirects * salesMixPercent;
-                    const breakEvenUnits = Math.ceil(allocatedIndirects / costs.margeBruteDollar);
-                    return { title: "Point Mort du Produit", value: `${breakEvenUnits} unités`, description: "Unités à vendre pour couvrir la part des frais indirects allouée." };
+                    const primaryChannelEntry = (product.channelBreakdown || [])[0] || null;
+                    if (!primaryChannelEntry || primaryChannelEntry.breakEvenUnits == null) {
+                        return { title: "Point Mort", value: "N/A", description: "Aucun canal rattaché à ce format, ou marge de contribution nulle ou négative." };
+                    }
+                    return {
+                        title: "Point Mort du Produit",
+                        value: `${primaryChannelEntry.breakEvenUnits} unités`,
+                        description: `Unités à vendre dans le canal "${primaryChannelEntry.channelName}" pour couvrir les frais fixes alloués (y compris la main-d'œuvre, traitée comme fixe pour la période).`,
+                    };
                 })();
                 
                 const classificationRaw = Object.keys(menuEngineeringData).find(key => menuEngineeringData[key].some(p => p.id === product.id)) || 'N/A';

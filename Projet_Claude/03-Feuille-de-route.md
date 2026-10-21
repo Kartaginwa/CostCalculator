@@ -3106,3 +3106,23 @@ désormais ajoutée, par canal, à partir du volume réel de CE canal.
   temporaire (Chili con carne : point mort Production 795 unités = exactement la valeur du canal
   principal dans Rapport → Par SKU ; simulation de prix à 9,00 $ recalcule correctement à 608
   unités), lint et `npx vite build` propres.
+
+## Point mort des exports PDF/Excel : branché sur `channelBreakdown`, plus de calcul séparé (20/10)
+
+Retour utilisateur immédiat après la correction précédente : les exports PDF/Excel avaient leur
+propre mini-calcul de point mort, séparé de `computeChannelBreakdown` et donc pas mis à jour par
+la révision main-d'œuvre-fixe — en plus d'être déjà incohérent AVANT cette révision (ancienne
+formule `totalIndirects × salesMix` non normalisée, sans canal, avec une branche `method` sur des
+valeurs ('fixed', 'percentSales', 'percentDirect') qui n'existent plus dans `indirectCostMethod`
+depuis longtemps). Remplacé par une lecture directe de `product.channelBreakdown[0].breakEvenUnits`
+— `product`, dans la boucle `productsWithCosts.forEach` des deux fichiers d'export, EST déjà une
+ligne de `analysisData.js` avec son `channelBreakdown` tout calculé ; aucune donnée à recalculer,
+seulement à lire. Canal PRINCIPAL (le premier), comme la tuile de Production.
+- Fichiers touchés : `src/reports/exportToExcel.js` (+ import `formatCurrency` retiré, devenu
+  inutilisé), `src/reports/generatePdf.js`.
+- Tests : 227/227 unitaires (inchangés, aucune logique de calcul nouvelle, seulement une lecture),
+  46/46 e2e (confirment que l'export continue de fonctionner sans erreur), vérification
+  fonctionnelle par script Playwright temporaire (export Excel du projet démo téléchargé et relu
+  avec `openpyxl` : la feuille « Chili con carne mijoté » affiche bien « 795 unités » dans le canal
+  « Vente directe » — exactement la valeur de Production et de Rapport → Par SKU), lint et
+  `npx vite build` propres.

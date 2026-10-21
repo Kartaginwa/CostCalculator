@@ -119,6 +119,16 @@ export function computeIndirectCostDriverTotals(productsWithCosts, productionAct
     const activityDriverTotals = {};
     productionActivities.forEach((a) => { activityDriverTotals[a.id] = { directCost: 0, laborTime: 0 }; });
 
+    // Général (20/10, retour utilisateur) : même mécanisme que ci-dessus, mais à l'échelle du menu
+    // ENTIER plutôt que par activité — tout produit vendu y contribue, peu importe son activité
+    // (contrairement à `activityDriverTotals`, scopé par `activityId`). Remplace l'ancien calcul
+    // interne à calculateCosts.js (« au prorata des ventes » ou « temps de MO » appliqué
+    // directement sur le pool déjà réduit) : « au prorata des ventes » s'y réduisait
+    // mathématiquement toujours à un partage égal à l'unité dès que le mix des ventes reflète
+    // fidèlement les volumes réels (ce qui est précisément son rôle) — voir
+    // Projet_Claude/03-Feuille-de-route.md, 21/10, pour la démonstration complète.
+    const generalDriverTotals = { directCost: 0, laborTime: 0 };
+
     // Un seul total par canal (pas un par driver) : le dénominateur de la majoration, toujours la
     // valeur totale (au coût de production) de ce qui transite par ce canal.
     const channelDriverTotals = {};
@@ -129,6 +139,11 @@ export function computeIndirectCostDriverTotals(productsWithCosts, productionAct
         if (!costs) continue;
         const nbPortions = parseLocaleNumber(costs.nbPortions) || 1;
         const portionsSold = parseLocaleNumber(costs.portionsSold);
+
+        if (portionsSold > 0) {
+            generalDriverTotals.directCost += parseLocaleNumber(costs.totalDirectCostPerPortion) * portionsSold;
+            generalDriverTotals.laborTime += (parseLocaleNumber(costs.productionTimeSeconds) / 3600) * (portionsSold / nbPortions);
+        }
 
         if (row.activityId && activityDriverTotals[row.activityId] && portionsSold > 0) {
             activityDriverTotals[row.activityId].directCost += parseLocaleNumber(costs.totalDirectCostPerPortion) * portionsSold;
@@ -142,7 +157,7 @@ export function computeIndirectCostDriverTotals(productsWithCosts, productionAct
         });
     }
 
-    return { activityDriverTotals, channelDriverTotals };
+    return { activityDriverTotals, generalDriverTotals, channelDriverTotals };
 }
 
 // Rapport d'achats (quantités/coûts nets + pertes par fournisseur) ET analyse ABC (Pareto
@@ -618,20 +633,28 @@ export function computeMenuEngineeringQuadrants(rows) {
 // `basePackaging`/`salesChannels` ci-dessus, pour ne jamais casser un appel existant, y compris les
 // ~30 appels positionnels de analysisData.test.js) : vient de `computeExpensePoolTotals` +
 // `computeIndirectCostDriverTotals` (calculés par l'appelant, voir App.jsx, à partir d'un premier
-// appel « brouillon » à cette même fonction SANS pools — Général seul, comme avant 4.6 — pour en
-// tirer les volumes/coûts directs nécessaires à l'agrégation). Forme attendue :
-// `{ generalPoolAmount, activityPools: { [activityId]: { amount, driver, driverTotal } },
-// channelPools: { [channelId]: { amount, driver, driverTotal } } }`. Absent (ou `null`) :
-// comportement strictement identique à avant 4.6 (un seul pool Général, `totalIndirects` tel quel,
-// aucun coût Activité/Canal) — c'est le cas de tout appel qui ne le fournit pas encore
-// (CostShockSimulator.jsx, par exemple, pas encore mis à jour pour cette phase).
+// appel « brouillon » à cette même fonction SANS pools — pour en tirer les volumes/coûts directs
+// nécessaires à l'agrégation). Forme attendue : `{ generalPool: { amount, driver, driverTotal },
+// activityPools: { [activityId]: { amount, driver, driverTotal } },
+// channelPools: { [channelId]: { amount, driverTotal } } }`. Absent (ou `null`) : comportement
+// strictement identique à avant 4.6 (Général calculé par le repli historique de calculateCosts.js
+// — voir plus bas —, aucun coût Activité/Canal) — c'est le cas de tout appel qui ne le fournit pas
+// encore (CostShockSimulator.jsx, par exemple, pas encore mis à jour pour cette phase).
+// `generalPool` (révisé le 21/10, retour utilisateur) : Général utilise désormais EXACTEMENT le
+// même mécanisme qu'Activité ci-dessous (driver au choix, coût direct ou temps de MO) — mais à
+// l'échelle du menu ENTIER plutôt que par activité, puisque Général concerne tous les produits
+// sans exception. Remplace l'ancien calcul interne à calculateCosts.js (« au prorata des ventes »
+// appliqué sur le pool déjà réduit), qui se réduisait mathématiquement toujours à un partage égal
+// à l'unité dès que le mix des ventes reflète fidèlement les volumes réels — voir
+// Projet_Claude/03-Feuille-de-route.md, 21/10.
 export function computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging = [], salesChannels = [], indirectPools = null) {
-    // Pool Général (Phase 4.6) : remplace `totalIndirects` par la part Général SEULEMENT, si un
-    // `indirectPools` est fourni — tout le reste de `calculatedGeneralInfo` (totalDirectLaborHoursNeeded
-    // notamment) reste le dénominateur MENU ENTIER inchangé, requis par les deux méthodes existantes
-    // (ventes/temps de MO) pour se réconcilier exactement.
+    // Quand `indirectPools` est fourni, Général est entièrement calculé par le merge ci-dessous
+    // (comme Activité) — `totalIndirects` est donc mis à 0 pour que le repli historique de
+    // calculateCosts.js (voir plus bas, méthode GLOBALE interne) ne compte rien en double. Sans
+    // `indirectPools` (callers antérieurs à la Phase 4.6, pas encore mis à jour), ce repli reste
+    // seul responsable de Général, comportement strictement inchangé pour ces appels.
     const calculatedGeneralInfoForCosts = indirectPools
-        ? { ...calculatedGeneralInfo, totalIndirects: indirectPools.generalPoolAmount }
+        ? { ...calculatedGeneralInfo, totalIndirects: 0 }
         : calculatedGeneralInfo;
 
     // 1. Calcul initial des coûts (une seule passe, memo partagé)
@@ -641,6 +664,26 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
         const formatsList = (p.formats && p.formats.length > 0) ? p.formats : [p];
         formatsList.forEach((fmt, formatIndex) => {
             let costs = calculateCosts(p, calculatedGeneralInfoForCosts, baseIngredients, products, laborDatabase, null, costsMemo, new Set(), fmt, basePackaging);
+
+            // Général (révisé le 21/10) : même mécanisme que la part Activité ci-dessous, mais avec
+            // un seul pool PARTAGÉ par tous les produits (`indirectPools.generalPool`), pas un pool
+            // par activité. Un produit sans volume réel reste simplement sans cette part — jamais
+            // un 0 inventé, même principe que partout ailleurs dans ce fichier.
+            const generalPool = indirectPools?.generalPool;
+            if (generalPool && generalPool.amount > 0 && generalPool.driverTotal > 0 && costs.portionsSold > 0) {
+                const generalDriverValueTotal = generalPool.driver === 'laborTime'
+                    ? (costs.productionTimeSeconds / 3600) * (costs.portionsSold / (costs.nbPortions || 1))
+                    : costs.totalDirectCostPerPortion * costs.portionsSold;
+                const costIndirectGeneralPerPortion = (generalPool.amount * (generalDriverValueTotal / generalPool.driverTotal)) / costs.portionsSold;
+                const newCostIndirectPerPortionGeneral = costs.costIndirectPerPortion + costIndirectGeneralPerPortion;
+                costs = {
+                    ...costs,
+                    costIndirectGeneralPerPortion,
+                    costIndirectPerPortion: newCostIndirectPerPortionGeneral,
+                    totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortionGeneral + (costs.costAgingPerPortion || 0),
+                    ...computeMarginsForPrice(fmt.prixVente, { ...costs, costIndirectPerPortion: newCostIndirectPerPortionGeneral, totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortionGeneral + (costs.costAgingPerPortion || 0) }),
+                };
+            }
 
             // Phase 4.6 — Activité : ajoute, en plus du Général déjà dans `costs` ci-dessus, la part
             // du pool de l'activité de CE produit (driver choisi pour cette activité — voir

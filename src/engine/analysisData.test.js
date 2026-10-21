@@ -854,9 +854,9 @@ describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
         // Driver total (coût direct × unités) = 2×10 + 4×10 = 60 — pool choisi à 60 pour un
-        // rapprochement net.
+        // rapprochement net. Général absent (pool vide) : seule l'Activité est sous test ici.
         const indirectPools = {
-            generalPoolAmount: 0,
+            generalPool: { amount: 0, driver: 'directCost', driverTotal: 0 },
             activityPools: { act1: { amount: 60, driver: 'directCost', driverTotal: 60 } },
             channelPools: {},
         };
@@ -903,8 +903,9 @@ describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
 
         // Dénominateur de chaque canal = coût de production (1$) × son propre volume : 10 pour
         // c_direct, 5 pour c_distrib (indépendant des ventes en $, contrairement à l'ancien modèle).
+        // Général absent (pool vide) : seul le Canal est sous test ici.
         const indirectPools = {
-            generalPoolAmount: 0,
+            generalPool: { amount: 0, driver: 'directCost', driverTotal: 0 },
             activityPools: {},
             channelPools: {
                 c_direct: { amount: 30, driverTotal: 10 },
@@ -930,16 +931,62 @@ describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
         expect(distrib.costIndirectChannelPerPortion * distrib.volume).toBeCloseTo(10);
     });
 
-    it('sans indirectPools (ou avec un pool vide) : comportement strictement inchangé — aucun coût Activité/Canal ajouté', () => {
-        const product = baseProduct({ id: 'A', activityId: 'act1', prixVente: 20, salesMix: 100 });
+    it("répartit le pool GÉNÉRAL au prorata du coût direct, à l'échelle du menu entier plutôt que par activité (révisé le 21/10, retour utilisateur) — même mécanisme qu'Activité, un seul pool partagé", () => {
+        const baseIngredients = [{ id: 'ing1', unit: 'unité', unitPrice: 1, lossPercentage: 0 }];
+        // A et B dans deux activités DIFFÉRENTES (contrairement au test Activité ci-dessus) : le
+        // pool Général doit tout de même les traiter ensemble, puisqu'il n'est jamais scopé par
+        // activité — seul le driver (coût direct × volume) compte, peu importe qui produit quoi.
+        const productA = baseProduct({ id: 'A', activityId: 'act1', prixVente: 10, salesMix: 50, channelPrices: channelPrice(10, 10), ingredients: [{ id: 'ing1', quantity: 2, recipeUnit: 'unité' }] });
+        const productB = baseProduct({ id: 'B', activityId: 'act2', prixVente: 20, salesMix: 50, channelPrices: channelPrice(20, 10), ingredients: [{ id: 'ing1', quantity: 4, recipeUnit: 'unité' }] });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        // Driver total (coût direct × unités) = 2×10 + 4×10 = 60, EXACTEMENT comme le test Activité
+        // ci-dessus — démontre que Général suit la même formule, juste à l'échelle du menu entier.
+        const indirectPools = {
+            generalPool: { amount: 60, driver: 'directCost', driverTotal: 60 },
+            activityPools: {},
+            channelPools: {},
+        };
+
+        const result = computeAnalysisData([productA, productB], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels, indirectPools);
+        const rowA = result.productsWithCosts.find(r => r.id === 'A');
+        const rowB = result.productsWithCosts.find(r => r.id === 'B');
+
+        // A : 60 × (20/60) / 10 unités = 2$/portion ; B : 60 × (40/60) / 10 unités = 4$/portion —
+        // mêmes valeurs que le test Activité, sur `costIndirectGeneralPerPortion` cette fois.
+        expect(rowA.costs.costIndirectGeneralPerPortion).toBeCloseTo(2);
+        expect(rowB.costs.costIndirectGeneralPerPortion).toBeCloseTo(4);
+        const totalAllocated = rowA.costs.costIndirectGeneralPerPortion * result.unitsSoldById['A']
+            + rowB.costs.costIndirectGeneralPerPortion * result.unitsSoldById['B'];
+        expect(totalAllocated).toBeCloseTo(60);
+        expect(rowA.costs.costIndirectPerPortion).toBeCloseTo(2);
+        expect(rowA.costs.totalCostPerPortion).toBeCloseTo(rowA.costs.totalDirectCostPerPortion + 2);
+    });
+
+    it('sans indirectPools : repli historique de calculateCosts.js (comportement antérieur à la Phase 4.6, inchangé)', () => {
+        const product = baseProduct({ id: 'A', activityId: 'act1', prixVente: 20, salesMix: 100, channelPrices: channelPrice(20, 10) });
         const generalInfo = baseGeneralInfo({ totalIndirects: 50 });
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
 
         const withoutPools = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo);
-        const withEmptyPools = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], [], { generalPoolAmount: 50, activityPools: {}, channelPools: {} });
 
         expect(withoutPools.productsWithCosts[0].costs.costIndirectActivityPerPortion).toBeUndefined();
+        // Repli « directCost » par défaut (calculateCosts.js) retombe sur l'ancien calcul au
+        // prorata du mix des ventes (seul produit actif, 100 % du mix, 10 unités réelles) :
+        // 50 × (100/100) / 10 = 5 $/portion.
+        expect(withoutPools.productsWithCosts[0].costs.costIndirectPerPortion).toBeCloseTo(5);
+    });
+
+    it('avec indirectPools mais des pools entièrement vides : aucun coût Général/Activité/Canal ajouté (jamais un 0 inventé par le repli historique, qui est désactivé dès que indirectPools existe)', () => {
+        const product = baseProduct({ id: 'A', activityId: 'act1', prixVente: 20, salesMix: 100, channelPrices: channelPrice(20, 10) });
+        const generalInfo = baseGeneralInfo({ totalIndirects: 50 });
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        const withEmptyPools = computeAnalysisData([product], [], [], generalInfo, calculatedGeneralInfo, [], [], { generalPool: { amount: 0, driver: 'directCost', driverTotal: 0 }, activityPools: {}, channelPools: {} });
+
         expect(withEmptyPools.productsWithCosts[0].costs.costIndirectActivityPerPortion).toBeUndefined();
-        expect(withoutPools.productsWithCosts[0].costs.costIndirectPerPortion).toBeCloseTo(withEmptyPools.productsWithCosts[0].costs.costIndirectPerPortion);
+        expect(withEmptyPools.productsWithCosts[0].costs.costIndirectGeneralPerPortion).toBeCloseTo(0);
+        expect(withEmptyPools.productsWithCosts[0].costs.costIndirectPerPortion).toBeCloseTo(0);
     });
 });

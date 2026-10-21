@@ -225,13 +225,20 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         totalSubcontractingCost = (fmt.subcontracting.items || []).reduce((sum, item) => sum + parseLocaleNumber(item.cost), 0);
     }
 
-    // Frais indirects — méthode GLOBALE (generalInfo.indirectCostMethod), appliquée à tous les
-    // plats. Deux méthodes, toutes deux normalisées pour répartir EXACTEMENT la part menu du pool
-    // de frais indirects (elles se réconcilient par construction). Chaque plat (y compris une
-    // sous-recette vendue seule) absorbe ses propres frais indirects ; l'exclusion pour éviter le
-    // double comptage se fait uniquement à l'usage (coût direct de la sous-recette côté parent).
+    // Frais indirects Général — REPLI HISTORIQUE uniquement (révisé le 21/10, retour utilisateur) :
+    // tant qu'un `indirectPools` est fourni à `computeAnalysisData` (analysisData.js, le chemin
+    // normal de toute l'app), Général est entièrement calculé là-bas, par le même mécanisme de
+    // pool/driver qu'Activité (`totalIndirects` y est alors mis à 0, ce qui désactive tout ce bloc
+    // — voir analysisData.js). Ce bloc ne reste actif que pour les appelants directs de
+    // `calculateCosts` SANS pools (RecipeCalculator.jsx, qui n'affiche pas ce champ ; la passe
+    // « brouillon » de analysisData.js, dont ce champ n'est pas lu non plus) : conservé tel quel
+    // pour ne rien casser, mais plus jamais ce qui produit le résultat affiché à l'utilisateur.
+    // « salesAllocation » (branche `else` ci-dessous) n'est plus une méthode sélectionnable dans
+    // l'UI (retirée le 21/10 : elle se réduisait mathématiquement toujours à un partage égal à
+    // l'unité dès que le mix des ventes reflète fidèlement les volumes réels — voir
+    // Projet_Claude/03-Feuille-de-route.md) — gardée ici seulement comme comportement de repli.
     let indirectCostTotal = 0;
-    const method = generalInfo.indirectCostMethod || 'salesAllocation';
+    const method = generalInfo.indirectCostMethod || 'directCost';
     const totalIndirectsParsed = parseLocaleNumber(generalInfo.totalIndirects);
 
     // Temps de production total du format (Phase 4.6) : calculé UNE FOIS, exposé dans le résultat
@@ -284,10 +291,10 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             indirectCostTotal = (productionTimeSeconds / 3600) * rate;
         }
     } else {
-        // salesAllocation (défaut) : au prorata du mix des ventes, normalisé sur la somme des mix
-        // actifs → répartit exactement le pool, même si les mix ne totalisent pas 100 %.
-        // Dénominateur "portions vendues" : saisi si disponible, sinon le volume réel par canal
-        // (voir ci-dessus).
+        // Repli « salesAllocation » (voir le commentaire au-dessus de ce bloc) : au prorata du mix
+        // des ventes, normalisé sur la somme des mix actifs → répartit exactement le pool, même si
+        // les mix ne totalisent pas 100 %. Dénominateur "portions vendues" : saisi si disponible,
+        // sinon le volume réel par canal (voir ci-dessus).
         //
         // Population agrégée (allProducts) lue depuis les champs "à plat" du produit, pas depuis
         // formats[] : tant que chaque produit n'a qu'un seul format (Phases 1.4-1.5), ces champs

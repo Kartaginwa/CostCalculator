@@ -759,7 +759,7 @@ export const getDefaultState = () => {
         // cohérent si cette liste change, plutôt qu'un chiffre recopié à la main.
         totalRevenue: demoRevenueLines.reduce((sum, line) => sum + sumAmountsMap(line.amounts), 0),
         foodCostTarget: 32, packagingCostTarget: 8, laborCostTarget: 22, menuRevenuePercentage: 100,
-        indirectCostMethod: 'salesAllocation',
+        indirectCostMethod: 'directCost',
     };
 
     // --- DONNÉES FINALES ---
@@ -826,7 +826,7 @@ export const getEmptyState = () => ({
         packagingCostTarget: '',
         laborCostTarget: '',
         menuRevenuePercentage: 100,
-        indirectCostMethod: 'salesAllocation',
+        indirectCostMethod: 'directCost',
     },
     ingredientsList: [],
     basePackaging: [],
@@ -841,13 +841,22 @@ export const getEmptyState = () => ({
     },
 });
 
-// Méthodes d'attribution des frais indirects retenues : une seule est choisie globalement (dans
-// les Paramètres) et s'applique à tous les plats. Les deux répartissent exactement le pool de
-// frais indirects (elles se réconcilient par construction) :
-//   - salesAllocation : au prorata du mix des ventes ;
+// Méthode d'attribution de Général (renommée le 21/10, retour utilisateur — « Méthode
+// d'attribution de Général » dans État des résultats, sous le tableau Frais fixes) : choisie
+// globalement, s'applique à tous les plats sans exception — mêmes options et même mécanisme que
+// le CICI d'une activité (voir `indirectCostDriver`, Phase 4.6), mais à l'échelle du menu entier.
+// Les deux répartissent exactement le pool de frais indirects Général (elles se réconcilient par
+// construction) :
+//   - directCost : au prorata du coût direct ($) — le plus défendable par défaut, voir
+//     04-Conception-Modele.md section Phase 4.6 (même raisonnement que pour une activité) ;
 //   - laborTime : au prorata du temps de production (taux = frais indirects / total heures MO).
+// « salesAllocation » (au prorata du mix des ventes) a été retirée le 21/10 : elle se réduisait
+// mathématiquement toujours à un partage égal à l'unité dès que le mix des ventes reflète
+// fidèlement les volumes réels (ce qui est précisément son rôle) — voir
+// Projet_Claude/03-Feuille-de-route.md pour la démonstration complète. Un projet sauvegardé avec
+// cette ancienne valeur est migré vers `directCost` au chargement (projectSerialization.js).
 export const indirectCostMethodLabels = {
-    salesAllocation: 'Au prorata des ventes',
+    directCost: 'Au prorata des coûts directs',
     laborTime: 'Au prorata du temps de production',
 };
 

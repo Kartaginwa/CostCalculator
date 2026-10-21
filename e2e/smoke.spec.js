@@ -33,11 +33,12 @@ test.describe('Parcours projet vierge', () => {
         await newProductSection.locator('input[type="text"]').first().fill('Plat Test');
         await newProductSection.locator('table input[inputmode="decimal"]').first().fill('15');
 
-        // Méthode d'attribution des frais indirects : réglage GLOBAL (les deux méthodes) —
-        // déplacé dans État des résultats le 18/10 (section Frais fixes, ex-Paramètres).
+        // Méthode d'attribution de Général : réglage GLOBAL (les deux méthodes) — déplacé dans
+        // État des résultats le 18/10 (section Frais fixes, ex-Paramètres), puis unifié avec le
+        // mécanisme CICI d'Activité le 21/10 (salesAllocation retiré, voir initialState.js).
         await page.locator('#tab-income-statement').click();
         await page.locator('#indirectCostMethod').selectOption('laborTime');
-        await page.locator('#indirectCostMethod').selectOption('salesAllocation');
+        await page.locator('#indirectCostMethod').selectOption('directCost');
 
         // Ajouter un poste et un employé
         await page.locator('#tab-labor').click();

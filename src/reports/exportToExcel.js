@@ -186,10 +186,10 @@ export const exportToExcel = (deps) => {
                         [{ v: 'Méthode des Frais Indirects', s: { font: { bold: true, sz: 12 } } }],
                     ];
 
-                    // Méthode d'attribution globale (paramètre général), commune à tous les plats.
-                    const method = calculatedGeneralInfo.indirectCostMethod || 'salesAllocation';
-                    const methodLabel = indirectCostMethodLabels[method] || indirectCostMethodLabels.salesAllocation;
-                    const methodValueCell = (method === 'salesAllocation' && product.indirectCosts?.portionsSold)
+                    // Méthode d'attribution de Général (globale, renommée le 21/10), commune à tous les plats.
+                    const method = calculatedGeneralInfo.indirectCostMethod || 'directCost';
+                    const methodLabel = indirectCostMethodLabels[method] || indirectCostMethodLabels.directCost;
+                    const methodValueCell = product.indirectCosts?.portionsSold
                         ? { v: `${product.indirectCosts.portionsSold} portions` }
                         : { v: '' };
 

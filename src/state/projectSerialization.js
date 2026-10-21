@@ -31,6 +31,14 @@ export function parseProjectData(data, emptyState) {
     if (data.generalInfo && data.generalInfo.menuRevenuePercentage === undefined) {
         generalInfo.menuRevenuePercentage = 100;
     }
+    // Migration (21/10) : « salesAllocation » retiré des méthodes d'attribution de Général — se
+    // réduisait mathématiquement toujours à un partage égal à l'unité (voir initialState.js,
+    // indirectCostMethodLabels). Un projet antérieur qui l'avait choisi retombe sur le nouveau
+    // défaut, « directCost » — jamais une valeur orpheline qui ne correspondrait plus à aucune
+    // option du sélecteur.
+    if (generalInfo.indirectCostMethod === 'salesAllocation') {
+        generalInfo.indirectCostMethod = 'directCost';
+    }
 
     // Migration (Phase 4.1) : l'ancien `generalInfo.totalIndirects` saisi à plat devient une liste
     // de lignes de dépense catégorisées. Un projet antérieur reçoit une seule ligne migrée (son

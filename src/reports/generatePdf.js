@@ -758,7 +758,7 @@ export const generatePdf = (options, deps) => {
                 yPos += 8;
                 
                 const indirectsBody = [[
-                    `Méthode d'attribution: ${indirectCostMethodLabels[calculatedGeneralInfo.indirectCostMethod] || indirectCostMethodLabels.salesAllocation}`,
+                    `Méthode d'attribution de Général: ${indirectCostMethodLabels[calculatedGeneralInfo.indirectCostMethod] || indirectCostMethodLabels.directCost}`,
                     `Montant par portion: ${formatCurrency(costs.costIndirectPerPortion)} $`
                 ]];
                 doc.autoTable({

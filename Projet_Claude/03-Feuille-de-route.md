@@ -3126,3 +3126,68 @@ seulement à lire. Canal PRINCIPAL (le premier), comme la tuile de Production.
   avec `openpyxl` : la feuille « Chili con carne mijoté » affiche bien « 795 unités » dans le canal
   « Vente directe » — exactement la valeur de Production et de Rapport → Par SKU), lint et
   `npx vite build` propres.
+
+## Général : driver d'attribution unifié avec Activité, « au prorata des ventes » retiré (21/10)
+
+Discussion partie d'une question CPA sur la méthode d'attribution de Général : l'infobulle du
+rapport Par SKU affirmait que Général se répartissait « selon un driver choisi », mais aucun
+sélecteur n'existait pour Général — seulement le CICI d'Activité (Paramètres → Activités de
+production) et le markup de Canal. En creusant le chiffre observé (0,75 $/unité IDENTIQUE sur les
+12 SKU démo), découverte du vrai problème : le sélecteur `#indirectCostMethod`, déplacé dans État
+des résultats le 18/10 sans jamais être présenté comme celui de Général, proposait encore « Au
+prorata des ventes » (`salesAllocation`) — une méthode mathématiquement dégénérée. Sa formule
+(`totalIndirects × (salesMix/totalActiveSalesMix) / portionsSold`) se réduit TOUJOURS à une
+constante identique pour tout le menu dès que `salesMix` reflète fidèlement les volumes réels — ce
+qui est sa définition même, pas une coïncidence du projet démo. L'utilisateur n'avait jamais vu ni
+demandé ce sélecteur ; décision : le reprendre entièrement, avec exactement les mêmes options que
+le CICI d'Activité (plus de « au prorata des ventes »), le renommer « Méthode d'attribution de
+Général » et le repositionner sous le tableau Frais fixes, avant la Réconciliation.
+
+**Mise en œuvre** :
+1. **Moteur** (`analysisData.js`) : nouveau `generalDriverTotals = { directCost, laborTime }`
+   (`computeIndirectCostDriverTotals`), accumulé à l'échelle du MENU ENTIER (pas par activité,
+   contrairement à `activityDriverTotals`). Nouveau merge dans `computeAnalysisData`, juste avant
+   celui d'Activité, réutilisant EXACTEMENT la même forme de formule
+   (`costIndirectGeneralPerPortion = generalPool.amount × (driverValue/driverTotal) / portionsSold`)
+   — Général devient donc un cas « Activité à l'échelle du menu » plutôt qu'un mécanisme séparé.
+2. **`indirectPools`** (`App.jsx`) : `generalPoolAmount` (nombre nu) remplacé par
+   `generalPool: { amount, driver, driverTotal }`, miroir de `activityPools`/`channelPools`.
+   `generalInfo` ajouté aux dépendances du `useMemo` (manquait).
+3. **`calculateCosts.js`** : `calculatedGeneralInfoForCosts.totalIndirects` forcé à 0 quand
+   `indirectPools` est fourni, pour désactiver son calcul interne — celui-ci redevient un repli
+   purement LEGACY, utilisé seulement par `RecipeCalculator.jsx`/`CostShockSimulator.jsx` (confirmé
+   par grep : ni l'un ni l'autre n'affiche `costIndirectPerPortion`) et par le pass `analysisDataDraft`
+   (bootstrap, jamais affiché). Défaut de ce repli changé de `'salesAllocation'` à `'directCost'`.
+4. **État/migration** (`initialState.js`, `projectSerialization.js`) : `indirectCostMethodLabels`
+   perd `salesAllocation`, gagne `directCost: 'Au prorata des coûts directs'` ; défauts démo/projet
+   vierge passés à `directCost` ; migration explicite (`parseProjectData`) ramène tout projet
+   sauvegardé avec `salesAllocation` vers `directCost` — jamais une valeur orpheline ne
+   correspondant plus à aucune option du sélecteur.
+5. **UI** (`IncomeStatementTab.jsx`) : ancien sélecteur retiré de l'en-tête « Frais fixes » ; nouveau
+   bloc autonome « Méthode d'attribution de Général », placé HORS de la zone à défilement horizontal
+   (comme la Réconciliation), juste avant elle — reste donc visible sans dépendre du scroll des 3
+   tableaux Revenus/Charges/Frais fixes. Infobulle réécrite pour expliquer le mécanisme CICI
+   partagé avec Activité, à l'échelle du menu. Infobulle « Frais fixes — Général » du rapport Par
+   SKU (`SummaryTable.jsx`) corrigée (ne pointait plus vers le bon endroit).
+6. **Exports** (`exportToExcel.js`, `generatePdf.js`) : référence à `.salesAllocation` remplacée par
+   `.directCost` (la clé n'existant plus, `indirectCostMethodLabels.salesAllocation` serait devenu
+   `undefined`).
+7. **Guide utilisateur** (`InstructionModal.jsx`) : 2 passages mis à jour (emplacement/options du
+   sélecteur ; mention du driver de Général aux côtés de celui d'Activité dans le récapitulatif de
+   Production — Canal précisé comme n'ayant toujours aucun driver, un markup seulement).
+- **Résultat** : Général varie désormais réellement par SKU selon son coût direct (démo : 0,00 $ à
+  1,68 $, corrélé à l'ampleur du coût direct de chaque SKU) au lieu d'un montant UNIFORME de 0,75 $
+  sur les 12 SKU — ex. Chili con carne mijoté passe de 0,75 $ à 0,68 $, cohérent avec son coût
+  direct relatif au reste du menu.
+- Fichiers touchés : `src/engine/analysisData.js`, `src/engine/calculateCosts.js`, `src/App.jsx`,
+  `src/state/initialState.js`, `src/state/projectSerialization.js`,
+  `src/features/IncomeStatementTab.jsx`, `src/features/SummaryTable.jsx`,
+  `src/reports/exportToExcel.js`, `src/reports/generatePdf.js`, `src/components/InstructionModal.jsx`,
+  `src/engine/analysisData.test.js` (2 fixtures corrigées, 1 test scindé en 2 + 1 nouveau test
+  dédié à Général à l'échelle du menu), `e2e/smoke.spec.js` et `e2e/channel-filter-resume.spec.js`
+  (`salesAllocation` retiré ; valeurs Général démo mises à jour : 0,75 $ → 0,68 $, 2,60/2,32/1,95 $
+  → 2,53/2,25/1,88 $ pour le total par unité).
+- Tests : 229/229 unitaires, 46/46 e2e, vérification fonctionnelle par script Playwright temporaire
+  (Général varie bien par SKU au lieu d'être uniforme ; sélecteur affiche exactement les 2 options
+  attendues avec `directCost` comme valeur courante ; libellé « Méthode d'attribution de Général »
+  présent une seule fois sur la page), lint et `npx vite build` propres.

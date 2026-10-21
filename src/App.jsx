@@ -395,10 +395,15 @@ const App = () => {
             bucketTotals, directCostBucketTotals,
         });
         const { activityPoolTotals, channelPoolTotals } = computeExpensePoolTotals(expenseLines, effectiveAllocations, activityBuckets, salesChannels);
-        const { activityDriverTotals, channelDriverTotals } = computeIndirectCostDriverTotals(analysisDataDraft.productsWithCosts, productionActivities, salesChannels);
+        const { activityDriverTotals, generalDriverTotals, channelDriverTotals } = computeIndirectCostDriverTotals(analysisDataDraft.productsWithCosts, productionActivities, salesChannels);
 
+        // Général (révisé le 21/10, retour utilisateur) : même mécanisme qu'Activité ci-dessous —
+        // un driver au choix (« Méthode d'attribution de Général », État des résultats), mais à
+        // l'échelle du menu ENTIER (`generalDriverTotals`, pas par activité). Remplace l'ancien
+        // calcul interne à calculateCosts.js — voir ce fichier et analysisData.js pour le détail.
+        const generalDriver = generalInfo.indirectCostMethod || 'directCost';
         return {
-            generalPoolAmount: activityPoolTotals.general || 0,
+            generalPool: { amount: activityPoolTotals.general || 0, driver: generalDriver, driverTotal: generalDriverTotals[generalDriver] || 0 },
             activityPools: Object.fromEntries(productionActivities.map((a) => {
                 const driver = a.indirectCostDriver || 'directCost';
                 return [a.id, { amount: activityPoolTotals[a.id] || 0, driver, driverTotal: activityDriverTotals[a.id]?.[driver] || 0 }];
@@ -409,7 +414,7 @@ const App = () => {
                 [c.id, { amount: channelPoolTotals[c.id] || 0, driverTotal: channelDriverTotals[c.id] || 0 }]
             ))),
         };
-    }, [expenseLines, repartitionKeys, revenueLines, directCostLines, activityBuckets, productionActivities, salesChannels, analysisDataDraft.productsWithCosts]);
+    }, [expenseLines, repartitionKeys, revenueLines, directCostLines, activityBuckets, productionActivities, salesChannels, analysisDataDraft.productsWithCosts, generalInfo]);
 
     const analysisData = useMemo(
         () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels, indirectPools),

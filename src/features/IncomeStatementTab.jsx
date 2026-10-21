@@ -1068,19 +1068,8 @@ export const IncomeStatementTab = () => {
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                     <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
                         Frais fixes
-                        <Tooltip text="Listez ici chaque poste de dépense qui n'est pas directement lié à la production d'un plat précis (loyer, électricité, marketing, salaires administratifs, assurances, frais bancaires...), avec sa catégorie. Le total alimente le calcul des frais indirects par plat, selon la méthode d'attribution choisie ci-contre." />
+                        <Tooltip text="Listez ici chaque poste de dépense qui n'est pas directement lié à la production d'un plat précis (loyer, électricité, marketing, salaires administratifs, assurances, frais bancaires...), avec sa catégorie. Le total (contenant « Général », non rattaché à une activité ou un canal précis) alimente le calcul des frais indirects par plat, selon la méthode d'attribution de Général choisie plus bas." />
                     </h2>
-                    <div className="flex items-center gap-2">
-                        <label htmlFor="indirectCostMethod" className="flex items-center text-sm font-medium text-gray-700">
-                            Méthode d'attribution
-                            <Tooltip text="S'applique à tous les plats. Les deux méthodes répartissent l'intégralité des frais indirects (elles se réconcilient avec le pool). « Au prorata des ventes » : selon le mix des ventes. « Au prorata du temps de production » : selon les heures de main-d'œuvre de chaque plat." />
-                        </label>
-                        <select id="indirectCostMethod" value={generalInfo.indirectCostMethod || 'salesAllocation'} onChange={(e) => onUpdateGeneralInfo('indirectCostMethod', e.target.value)} className="p-2 border border-gray-300 rounded-md text-sm">
-                            {Object.entries(indirectCostMethodLabels).map(([value, label]) => (
-                                <option key={value} value={value}>{label}</option>
-                            ))}
-                        </select>
-                    </div>
                 </div>
                 {expenseLines.length > 0 ? (
                         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
@@ -1307,6 +1296,30 @@ export const IncomeStatementTab = () => {
                 showSalesChannels={false}
             />
             </div>
+            </div>
+
+            {/* Méthode d'attribution de Général (renommée et déplacée ici le 21/10, retour
+                utilisateur) : vivait auparavant dans l'en-tête de la section Frais fixes plus
+                haut, sans jamais mentionner « Général » — facile à confondre avec les clés de
+                répartition par ligne (qui dimensionnent le pool de Général) alors qu'elle choisit
+                plutôt COMMENT ce pool déjà dimensionné se répartit ensuite entre les SKU,
+                exactement comme le CICI d'une activité (Paramètres → Activités de production),
+                mais à l'échelle du menu entier. Placée ici — après Frais fixes/Bénéfice net, avant
+                la Réconciliation — plutôt que dans Paramètres → Activités (Général n'est pas une
+                activité, l'y mélanger laisserait croire qu'on peut la renommer ou la supprimer).
+                Hors du conteneur de défilement horizontal unique ci-dessus (c'est un simple
+                sélecteur, pas un tableau large) : reste toujours visible, jamais caché en
+                défilant vers les colonnes de droite des tableaux. */}
+            <div className="p-4 bg-gray-100 rounded-lg flex items-center justify-between flex-wrap gap-2">
+                <label htmlFor="indirectCostMethod" className="flex items-center text-sm font-medium text-gray-700">
+                    Méthode d'attribution de Général
+                    <Tooltip text="Général (frais de structure non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) se répartit entre vos SKU selon ce driver, à l'échelle du menu entier — exactement le même choix et le même mécanisme que le CICI d'une activité (Paramètres → Activités de production), mais partagé par tous les produits plutôt que par activité. « Au prorata des coûts directs » (par défaut) : un SKU qui coûte plus cher à produire absorbe une part proportionnellement plus grande de Général. « Au prorata du temps de production » : selon les heures de main-d'œuvre de chaque SKU. Les deux répartissent l'intégralité du pool (elles se réconcilient par construction)." />
+                </label>
+                <select id="indirectCostMethod" value={generalInfo.indirectCostMethod || 'directCost'} onChange={(e) => onUpdateGeneralInfo('indirectCostMethod', e.target.value)} className="p-2 border border-gray-300 rounded-md text-sm">
+                    {Object.entries(indirectCostMethodLabels).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                    ))}
+                </select>
             </div>
 
             <div id="tutorial-section-reconciliation" className="p-4 bg-gray-100 rounded-lg">

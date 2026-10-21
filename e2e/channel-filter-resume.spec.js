@@ -107,17 +107,17 @@ test("Rapport : Par SKU détaille les frais fixes par Général/Activité/Canal 
     // Général et Activité ne varient JAMAIS par canal (même ligne de frais fixes, peu importe où le
     // produit est vendu) — 3 colonnes de canal dans la démo, donc 3 occurrences de chaque valeur.
     await expect(bySku.getByText('0.75 $', { exact: true })).toHaveCount(3);
-    await expect(bySku.getByText('0.78 $', { exact: true })).toHaveCount(3);
+    await expect(bySku.getByText('0.76 $', { exact: true })).toHaveCount(3);
     // Canal, lui, varie réellement selon le canal (volume réel différent par canal).
-    await expect(bySku.getByText('1.11 $', { exact: true })).toHaveCount(1);
-    await expect(bySku.getByText('0.83 $', { exact: true })).toHaveCount(1);
-    await expect(bySku.getByText('0.45 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('1.09 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0.81 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0.44 $', { exact: true })).toHaveCount(1);
     // Total par unité = Général + Activité + Canal — varie donc avec le canal, contrairement à
     // Général/Activité pris séparément.
     const totalRow = bySku.locator('tr', { hasText: 'Frais fixes totaux par unité' });
-    await expect(totalRow.getByText('2.63 $', { exact: true })).toHaveCount(1);
-    await expect(totalRow.getByText('2.36 $', { exact: true })).toHaveCount(1);
-    await expect(totalRow.getByText('1.98 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('2.60 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('2.32 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('1.95 $', { exact: true })).toHaveCount(1);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

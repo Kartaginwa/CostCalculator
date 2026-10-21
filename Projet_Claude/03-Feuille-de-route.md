@@ -2990,3 +2990,73 @@ Deux retours utilisateur sur la section « PDS et frais de mise en marché » du
   script Playwright temporaire (ordre des lignes confirmé ; total des maillons 0,00 $/2,55 $/
   3,34 $ pour Vente directe/Épiceries/Grandes surfaces — 3,34 $ retrouvant exactement la somme de
   ses 2 maillons, 0,62 $ + 2,72 $ ; fond `bg-indigo-50` confirmé), lint et `npx vite build` propres.
+
+## Audit du 20/10 : marges négatives sur le projet démo, recalibration complète
+
+Retour utilisateur inquiet des résultats affichés dans l'Exemple après les nombreuses corrections
+des jours précédents. Demande d'un audit en profondeur du moteur de calcul avant toute
+modification — rapport livré en premier, confirmant qu'**aucune formule n'était en cause** : le
+moteur était sain, mais les données du projet démo combinaient deux défauts qui s'additionnaient.
+
+**Cause n°1 — `nbPortions: 1` sur 12 des 13 SKU vendables** (confirmé exactement le soupçon de
+l'utilisateur) : chaque recette était traitée comme produisant UNE SEULE unité, empêchant de
+démontrer le levier le plus efficace de l'app (diluer le temps de main-d'œuvre sur un lot).
+
+**Cause n°2 — PDS trop proche du coût de revient** (coût/PDS ≈ 55-95 % sur la plupart des SKU)
+pour une structure de commissions de canaux par ailleurs réaliste (épicier 30 %, grande surface
+12 % + 32 % cumulés ≈ 44 %) — ne laissait pas assez de marge pour absorber ces commissions.
+
+**Découverte en cours de correction** (pas anticipée dans le rapport) : simplement augmenter
+`nbPortions` sans toucher à la main-d'œuvre payée ne change RIEN au coût affiché. `kitchenProductivity`
+(App.jsx) absorbe la totalité de la masse salariale payée (`rate × heures disponibles`) dans les
+produits réellement fabriqués, peu importe la taille des lots — une production plus efficace
+libère de la capacité, mais cette capacité libérée reste payée et doit être absorbée quelque part.
+Démonstration algébrique : pour un gain d'efficacité `f` appliqué UNIFORMÉMENT à tout le menu, le
+coût par unité après absorption est mathématiquement INVARIANT (le `f` s'annule exactement dans la
+formule). Le bénéfice de la production par lot ne se matérialise dans les coûts affichés QUE si la
+taille de l'équipe payée est elle-même ajustée à la baisse pour refléter le besoin réellement
+réduit — sans quoi on observe l'inverse : le taux d'utilisation (`Rapport de productivité`, Main-
+d'œuvre) s'effondre et le coût par unité peut même AUGMENTER (vérifié : passait de ~53 % à ~21 %
+d'utilisation après les lots seuls, avant la correction des heures du personnel ci-dessous).
+
+**Mise en œuvre** :
+1. Production par lot réaliste pour 10 formats (Chili, Pâté chinois ×2, Poulet Tao, Saumon,
+   Sauté thaï ×2, Potage, Sauce à spaghetti, Purée) : `nbPortions` passé de 1 à 10-20 selon le
+   volume réel du produit (lots familiaux plus petits). Ingrédients et emballage multipliés par la
+   taille du lot (coût matière/emballage par portion INCHANGÉ — aucune économie attendue là, un
+   ingrédient ne coûte pas moins cher par unité parce qu'on en achète plus à la fois dans ce
+   modèle). Temps de production volontairement NON linéaire (mijoter 20 portions ne prend pas 20×
+   le temps d'une seule) — c'est tout l'effet de levier recherché.
+2. Heures du personnel (`labor`, initialState.js) réduites pour refléter une équipe à la bonne
+   taille pour cette production plus efficace (~86 % d'utilisation visé, vérifié dans le Rapport
+   de productivité) plutôt qu'une équipe majoritairement inoccupée — sans ce correctif, le point 1
+   seul aurait empiré les chiffres (voir découverte ci-dessus). Mireille (Responsable de
+   production, jamais assignée à aucune étape d'aucune recette) particulièrement réduite — son
+   rôle est la supervision, pas la production directe.
+3. Revenus/Charges directes réels de l'État des résultats (`demoRevenueLines`/`demoDirectCostLines`)
+   recalibrés : l'ancien écart de +112 %/+113 % avec le théorique (reconstruit SKU par SKU) n'avait
+   plus rien d'un écart réaliste. Nouveau total réel dans un écart plausible (+2 % à +13 %) du
+   nouveau théorique, proportions entre catégories de coût alignées sur la nouvelle structure
+   (main-d'œuvre, écrasante avant correction, ne pèse plus que ~17 % des charges directes).
+4. `weightedGrossMargin`/`weightedMaterialCost`/`weightedPackagingCost`/`weightedLaborCost`
+   (`computeAnalysisData`) : pondération changée du % du mix des ventes au $ de revenu réel — même
+   base que `globalBreakEven`, pour éliminer le risque de paradoxe de Simpson déjà observé (la
+   tuile affichait -2,86 % de marge pondérée alors que le Point Mort du Menu, positif et fini,
+   racontait implicitement une histoire contraire). Repli sur le % du mix des ventes si aucun
+   revenu réel par canal n'existe encore (projet neuf).
+- **Résultat** : Marge Brute Moyenne Pondérée passée de **-2,86 % à +36,30 %** ; Point Mort du Menu
+  de **877 203 $ à 74 191 $** ; Coût Main-d'œuvre Moyen Pondéré de **47,86 % à 11,11 %** ; marges
+  brutes positives dans les 3 canaux pour la quasi-totalité des SKU (seuls Chili/Soupe-repas/Purée
+  restent négatifs en marge NETTE sur Grandes surfaces, le canal à la commission la plus lourde —
+  une tension commerciale réaliste, pas un artefact). Réconciliation réel/théorique dans un écart
+  plausible partout (Revenus +6,1 %, Charges directes +2,3 %, Bénéfice brut +12,5 %), Bénéfice net
+  théorique redevenu positif (443,38 $, était -25 594,34 $).
+- Fichiers touchés : `src/state/initialState.js` (production par lot, personnel, revenus/charges
+  directes réels), `src/engine/analysisData.js` (pondération $ des 4 KPIs globaux),
+  `src/engine/analysisData.test.js` (test adapté à la nouvelle pondération),
+  `e2e/income-statement-params.spec.js` et `e2e/channel-filter-resume.spec.js` (montants démo
+  mis à jour).
+- Tests : 225/225 unitaires, 46/46 e2e, vérification fonctionnelle par scripts Playwright
+  temporaires à chaque étape (production par lot seule, puis heures du personnel, puis
+  revenus/charges réels — un audit complet relancé après chacune pour confirmer la direction avant
+  de poursuivre), lint et `npx vite build` propres.

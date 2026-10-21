@@ -233,11 +233,18 @@ export const getDefaultState = () => {
     // `generalInfo.totalRevenue` ci-dessous en reste la somme exacte, pour rester cohérent si cette
     // liste change, mais n'est lui-même lu par aucun calcul de coût (voir addendum du 19/10 de
     // Projet_Claude/03-Feuille-de-route.md : le moteur théorique ne doit jamais lire ce total réel).
+    // Montants recalibrés le 20/10 (retour utilisateur) : avant la correction de la production par
+    // lot ci-dessus, les Revenus/Charges directes réels (160 000 $ / 100 000 $) étaient 2 à 3 fois
+    // plus élevés que ce que le modèle théorique (reconstruit SKU par SKU) prédisait — un écart de
+    // +112 % qui n'avait plus rien d'un écart réaliste entre la comptabilité réelle et le modèle de
+    // recette. Recalibrés pour rester dans un écart plausible (quelques % à ~10 %, jamais nul : la
+    // Réconciliation doit encore avoir quelque chose à montrer) du nouveau théorique (voir
+    // Projet_Claude/03-Feuille-de-route.md). Proportions entre lignes conservées à l'identique.
     const demoRevenueLines = [
-        { id: 'rev_plats', label: 'Ventes — Plats principaux surgelés', repartition: 'act_plats', amounts: { act_plats: 90000 } },
-        { id: 'rev_soupes', label: 'Ventes — Soupes et potages', repartition: 'act_soupes', amounts: { act_soupes: 40000 } },
-        { id: 'rev_sauces', label: 'Ventes — Sauces et accompagnements', repartition: 'act_sauces', amounts: { act_sauces: 25000 } },
-        { id: 'rev_divers', label: 'Revenus divers (non rattachés à une activité)', repartition: 'general', amounts: { general: 5000 } },
+        { id: 'rev_plats', label: 'Ventes — Plats principaux surgelés', repartition: 'act_plats', amounts: { act_plats: 45000 } },
+        { id: 'rev_soupes', label: 'Ventes — Soupes et potages', repartition: 'act_soupes', amounts: { act_soupes: 20000 } },
+        { id: 'rev_sauces', label: 'Ventes — Sauces et accompagnements', repartition: 'act_sauces', amounts: { act_sauces: 12500 } },
+        { id: 'rev_divers', label: 'Revenus divers (non rattachés à une activité)', repartition: 'general', amounts: { general: 2500 } },
     ];
 
     // --- FRAIS FIXES (Phase 4.1, allocation Phase 4.5) : état de résultats catégorisé, remplace
@@ -275,10 +282,11 @@ export const getDefaultState = () => {
     ];
 
     // Clé de répartition personnalisée de démonstration (Phase 4.5bis, 14/10) : part réelle de
-    // chaque canal dans les ventes totalisables par canal (155 000 $ sur 160 000 $ — exclut les
-    // 5 000 $ de « Revenus divers » saisis en Général, qui n'ont par construction aucune
-    // information de canal). Pourcentages figés ici (valeurs exactes calculées une fois, pas une
-    // formule — une clé personnalisée est un gabarit réutilisable, pas une valeur recalculée à
+    // chaque canal dans les ventes totalisables par canal — calculée depuis les volumes/prix nets
+    // réels par canal de chaque SKU (`channelPrices`), un jeu de données entièrement indépendant du
+    // total de `demoRevenueLines` ci-dessus (une clé de répartition par canal n'a pas besoin que
+    // ces deux totaux se recoupent). Pourcentages figés ici (valeurs exactes calculées une fois, pas
+    // une formule — une clé personnalisée est un gabarit réutilisable, pas une valeur recalculée à
     // chaque usage, contrairement à « Selon les ventes »/« Selon les charges directes »).
     const demoRepartitionKeys = [
         { id: 'rk_ventes_canal', name: 'Ventes par canal (hors Général)', activityShares: {}, channelShares: { channel_direct: 16.01, channel_epiceries: 25.52, channel_gs: 58.47 } },
@@ -286,16 +294,20 @@ export const getDefaultState = () => {
 
     // --- CHARGES DIRECTES RÉELLES (Phase 4.3) : même patron que les frais fixes, mais catégorisées
     // par TYPE DE COÛT (voir utils.js, DIRECT_COST_TYPES) plutôt que par fonction d'entreprise —
-    // vocabulaire de calculateCosts.js. Données plausibles pour un chiffre d'affaires de 160 000 $
-    // (demoRevenueLines). Consommées par la clé de répartition « Selon les charges directes »
-    // (Phase 4.5bis, voir exp_elec ci-dessous) et par le côté réel de la Réconciliation
-    // réel/théorique (Phase 4.4) — jamais par le calcul de coût de revient lui-même (ces montants
-    // réels catégorisés n'ont pas vocation à remplacer le modèle de recette).
+    // vocabulaire de calculateCosts.js. Montants recalibrés le 20/10 (retour utilisateur) pour
+    // rester dans un écart plausible du théorique une fois la main-d'œuvre par lot corrigée
+    // ci-dessus (la main-d'œuvre directe théorique, écrasante avant la correction, ne pèse plus
+    // qu'environ 11 % du prix de vente pondéré — la ligne « Main-d'œuvre de production » ci-dessous
+    // est réduite dans les mêmes proportions, plutôt que de rester à son ancien poids disproportionné).
+    // Consommées par la clé de répartition « Selon les charges directes » (Phase 4.5bis, voir
+    // exp_elec ci-dessous) et par le côté réel de la Réconciliation réel/théorique (Phase 4.4) —
+    // jamais par le calcul de coût de revient lui-même (ces montants réels catégorisés n'ont pas
+    // vocation à remplacer le modèle de recette).
     const demoDirectCostLines = [
-        { id: 'dc_matiere', label: 'Achats de matières premières', category: 'Matière première', amount: 54000 },
-        { id: 'dc_mo_prod', label: "Main-d'œuvre de production (plancher)", category: "Main-d'œuvre directe", amount: 32000 },
-        { id: 'dc_emballage', label: "Achats d'emballage", category: 'Emballage', amount: 9500 },
-        { id: 'dc_soustraitance', label: 'Sous-traitance — surgélation', category: 'Sous-traitance', amount: 4500 },
+        { id: 'dc_matiere', label: 'Achats de matières premières', category: 'Matière première', amount: 31000 },
+        { id: 'dc_mo_prod', label: "Main-d'œuvre de production (plancher)", category: "Main-d'œuvre directe", amount: 8000 },
+        { id: 'dc_emballage', label: "Achats d'emballage", category: 'Emballage', amount: 7500 },
+        { id: 'dc_soustraitance', label: 'Sous-traitance — surgélation', category: 'Sous-traitance', amount: 1500 },
     ];
 
     // --- INGRÉDIENTS (18 références, 5 fournisseurs) ---
@@ -334,22 +346,34 @@ export const getDefaultState = () => {
     ];
 
     // --- MAIN-D'ŒUVRE (4 postes, dont 2 avec plusieurs employés — ligne de production réelle) ---
+    // Heures ajustées le 20/10 (retour utilisateur, voir Projet_Claude/03-Feuille-de-route.md) :
+    // la production par lot ci-dessus réduit mécaniquement les heures RÉELLEMENT nécessaires
+    // (`totalDirectLaborHoursNeeded`) pour produire les mêmes volumes réels — mais le moteur
+    // absorbe le coût de la main-d'œuvre PAYÉE ET INUTILISÉE dans le coût des produits
+    // (`kitchenProductivity`, App.jsx), peu importe la taille des lots. Avec les heures d'origine
+    // (pensées pour une recette = 1 portion), le taux d'utilisation serait tombé à ~21 % une fois
+    // les lots appliqués, annulant presque tout le bénéfice attendu. Heures réduites pour refléter
+    // une équipe à la bonne taille pour une production par lot efficace (~86 % d'utilisation,
+    // vérifié dans Main-d'œuvre → Rapport de productivité) plutôt qu'une équipe en grande partie
+    // inoccupée. Mireille (Responsable de production) n'est assignée à aucune étape d'aucune
+    // recette — son rôle est la supervision, pas la production directe — ses heures sont donc
+    // réduites au minimum pour qu'elle ne domine plus le calcul d'utilisation à elle seule.
     const labor = [
         { id: 'post_resp', postName: 'Responsable de production', employees: [
-            { id: 'emp_resp', employeeName: 'Mireille', hourlyRate: 32, socialCharges: 16, vacationPercentage: 6, productiveTimePercentage: 85, workedHours: 160 },
+            { id: 'emp_resp', employeeName: 'Mireille', hourlyRate: 32, socialCharges: 16, vacationPercentage: 6, productiveTimePercentage: 85, workedHours: 20 },
         ] },
         { id: 'post_cuisinier', postName: 'Cuisinier de production', employees: [
-            { id: 'emp_cuisinier_1', employeeName: 'Hugo', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 180 },
-            { id: 'emp_cuisinier_2', employeeName: 'Félix', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 180 },
-            { id: 'emp_cuisinier_3', employeeName: 'Sarah', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 170 },
+            { id: 'emp_cuisinier_1', employeeName: 'Hugo', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 60 },
+            { id: 'emp_cuisinier_2', employeeName: 'Félix', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 60 },
+            { id: 'emp_cuisinier_3', employeeName: 'Sarah', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 55 },
         ] },
         { id: 'post_emballage', postName: "Opérateur d'emballage", employees: [
-            { id: 'emp_emballage_1', employeeName: 'Chantal', hourlyRate: 19, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 95, workedHours: 180 },
-            { id: 'emp_emballage_2', employeeName: 'Nadia', hourlyRate: 19, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 94, workedHours: 180 },
-            { id: 'emp_emballage_3', employeeName: 'Patrick', hourlyRate: 18, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 93, workedHours: 170 },
+            { id: 'emp_emballage_1', employeeName: 'Chantal', hourlyRate: 19, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 95, workedHours: 42 },
+            { id: 'emp_emballage_2', employeeName: 'Nadia', hourlyRate: 19, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 94, workedHours: 42 },
+            { id: 'emp_emballage_3', employeeName: 'Patrick', hourlyRate: 18, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 93, workedHours: 40 },
         ] },
         { id: 'post_qualite', postName: 'Contrôleur qualité', employees: [
-            { id: 'emp_qualite', employeeName: 'David', hourlyRate: 24, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 140 },
+            { id: 'emp_qualite', employeeName: 'David', hourlyRate: 24, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 10 },
         ] },
     ];
 
@@ -379,219 +403,239 @@ export const getDefaultState = () => {
                 ],
             }],
         },
-        // Sous-recette hybride : vendue seule (accompagnement) ET utilisée comme ingrédient (Pâté chinois).
+        // Sous-recette hybride : vendue seule (accompagnement) ET utilisée comme ingrédient (Pâté
+        // chinois). Production par lot de 20 portions (20/10) — le bénéfice se répercute aussi
+        // dans le coût matière du Pâté chinois (qui l'utilise comme ingrédient), sans rien changer
+        // à cette logique de sous-recette elle-même (voir calculateCosts.js).
         {
             id: 'sub_puree', platName: 'Purée de pommes de terre maison', category: 'Accompagnement', activityId: 'act_plats',
-            isIngredient: true, onMenu: true, salesMix: 5.36, prixVente: 4.94, nbPortions: 1, portionSize: 250, portionUnit: 'g',
+            isIngredient: true, onMenu: true, salesMix: 5.36, prixVente: 4.94, nbPortions: 20, portionSize: 250, portionUnit: 'g',
             formats: [{
-                id: 'fmt_sub_puree', sku: 'ACC-PUREE-250G', prixVente: 4.94, nbPortions: 1, portionSize: 250, portionUnit: 'g',
+                id: 'fmt_sub_puree', sku: 'ACC-PUREE-250G', prixVente: 4.94, nbPortions: 20, portionSize: 250, portionUnit: 'g',
                 salesMix: 5.36, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
                 ...demoFormatPricing(5.49, { volumeDirect: 90, volumeEpi: 160, volumeGs: 420 }),
                 ingredients: [
-                    { rowId: 'r_pu_1', id: 'ing_pdt_flocons', quantity: 200, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_pu_2', id: 'ing_beurre', quantity: 15, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_pu_3', id: 'ing_creme', quantity: 20, recipeUnit: 'ml', yieldPercentage: 100 },
-                    { rowId: 'r_pu_4', id: 'ing_epices', quantity: 3, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_pu_1', id: 'ing_pdt_flocons', quantity: 4000, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_pu_2', id: 'ing_beurre', quantity: 300, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_pu_3', id: 'ing_creme', quantity: 400, recipeUnit: 'ml', yieldPercentage: 100 },
+                    { rowId: 'r_pu_4', id: 'ing_epices', quantity: 60, recipeUnit: 'g', yieldPercentage: 100 },
                 ],
                 packagingItems: [
-                    { rowId: 'p_pu_1', id: 'pkg_barq_s', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_pu_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_pu_3', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                    { rowId: 'p_pu_1', id: 'pkg_barq_s', quantity: 20, recipeUnit: 'unité' },
+                    { rowId: 'p_pu_2', id: 'pkg_pellicule', quantity: 20, recipeUnit: 'unité' },
+                    { rowId: 'p_pu_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_pu_1', stepName: 'Cuisson et pilage', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 90 },
-                    { stepId: 's_pu_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 90, duration: 30 },
+                    { stepId: 's_pu_1', stepName: 'Cuisson et pilage (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 400 },
+                    { stepId: 's_pu_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 400, duration: 315 },
                 ],
             }],
         },
 
         // Pâté chinois traditionnel — 2 formats (simple + familial, familial avec vieillissement).
+        // Production par lot (20/10) : 20 portions pour le format simple, 10 pour le familial
+        // (plus petit lot, cohérent avec son volume réel plus faible) — même principe que le
+        // Chili ci-dessus (quantités d'ingrédients/emballage × taille du lot, temps de
+        // production NON linéaire).
         {
             id: 'prod_pate', platName: 'Pâté chinois traditionnel', category: 'Plat principal', activityId: 'act_plats',
-            isIngredient: false, onMenu: true, salesMix: 11.21, prixVente: 8.09, nbPortions: 1, portionSize: 340, portionUnit: 'g',
+            isIngredient: false, onMenu: true, salesMix: 11.21, prixVente: 8.09, nbPortions: 20, portionSize: 340, portionUnit: 'g',
             formats: [
                 {
-                    id: 'fmt_pate_s', sku: 'PP-PATECHINOIS-340G', prixVente: 8.09, nbPortions: 1, portionSize: 340, portionUnit: 'g',
+                    id: 'fmt_pate_s', sku: 'PP-PATECHINOIS-340G', prixVente: 8.09, nbPortions: 20, portionSize: 340, portionUnit: 'g',
                     salesMix: 11.21, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
                     ...demoFormatPricing(8.99, { volumeDirect: 180, volumeEpi: 320, volumeGs: 900 }),
                     ingredients: [
-                        { rowId: 'r_pa_1', id: 'ing_boeuf', quantity: 150, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_pa_2', id: 'ing_mais', quantity: 90, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_pa_3', id: 'sub_puree', quantity: 90, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_pa_4', id: 'ing_oignon', quantity: 10, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_pa_5', id: 'ing_epices', quantity: 2, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_pa_1', id: 'ing_boeuf', quantity: 3000, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_pa_2', id: 'ing_mais', quantity: 1800, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_pa_3', id: 'sub_puree', quantity: 1800, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_pa_4', id: 'ing_oignon', quantity: 200, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_pa_5', id: 'ing_epices', quantity: 40, recipeUnit: 'g', yieldPercentage: 100 },
                     ],
                     packagingItems: [
-                        { rowId: 'p_pa_1', id: 'pkg_barq_s', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_pa_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_pa_3', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                        { rowId: 'p_pa_1', id: 'pkg_barq_s', quantity: 20, recipeUnit: 'unité' },
+                        { rowId: 'p_pa_2', id: 'pkg_pellicule', quantity: 20, recipeUnit: 'unité' },
+                        { rowId: 'p_pa_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                     ],
                     productionSteps: [
-                        { stepId: 's_pa_1', stepName: 'Cuisson du bœuf et assemblage', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 90 },
-                        { stepId: 's_pa_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 90, duration: 45 },
+                        { stepId: 's_pa_1', stepName: 'Cuisson du bœuf et assemblage (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 400 },
+                        { stepId: 's_pa_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 400, duration: 470 },
                     ],
                 },
                 {
-                    id: 'fmt_pate_f', sku: 'PP-PATECHINOIS-900G', prixVente: 19.79, nbPortions: 1, portionSize: 900, portionUnit: 'g',
+                    id: 'fmt_pate_f', sku: 'PP-PATECHINOIS-900G', prixVente: 19.79, nbPortions: 10, portionSize: 900, portionUnit: 'g',
                     salesMix: 4.96, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
                     ...demoFormatPricing(21.99, { volumeDirect: 60, volumeEpi: 140, volumeGs: 420 }),
                     aging: { enabled: true, interestRate: 7, months: 1.5 },
                     ingredients: [
-                        { rowId: 'r_paf_1', id: 'ing_boeuf', quantity: 400, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_paf_2', id: 'ing_mais', quantity: 240, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_paf_3', id: 'sub_puree', quantity: 240, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_paf_4', id: 'ing_oignon', quantity: 25, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_paf_5', id: 'ing_epices', quantity: 5, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_paf_1', id: 'ing_boeuf', quantity: 4000, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_paf_2', id: 'ing_mais', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_paf_3', id: 'sub_puree', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_paf_4', id: 'ing_oignon', quantity: 250, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_paf_5', id: 'ing_epices', quantity: 50, recipeUnit: 'g', yieldPercentage: 100 },
                     ],
                     packagingItems: [
-                        { rowId: 'p_paf_1', id: 'pkg_barq_f', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_paf_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_paf_3', id: 'pkg_boite', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_paf_4', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                        { rowId: 'p_paf_1', id: 'pkg_barq_f', quantity: 10, recipeUnit: 'unité' },
+                        { rowId: 'p_paf_2', id: 'pkg_pellicule', quantity: 10, recipeUnit: 'unité' },
+                        { rowId: 'p_paf_3', id: 'pkg_boite', quantity: 10, recipeUnit: 'unité' },
+                        { rowId: 'p_paf_4', id: 'pkg_etiquette', quantity: 10, recipeUnit: 'unité' },
                     ],
                     productionSteps: [
-                        { stepId: 's_paf_1', stepName: 'Cuisson du bœuf et assemblage (lot familial)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 150 },
-                        { stepId: 's_paf_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 150, duration: 90 },
-                        { stepId: 's_paf_3', stepName: 'Contrôle qualité', personnel: [{ postId: 'Contrôleur qualité' }], startTime: 240, duration: 30 },
+                        { stepId: 's_paf_1', stepName: 'Cuisson du bœuf et assemblage (lot familial de 10 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 470 },
+                        { stepId: 's_paf_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 470, duration: 570 },
+                        { stepId: 's_paf_3', stepName: 'Contrôle qualité', personnel: [{ postId: 'Contrôleur qualité' }], startTime: 1040, duration: 240 },
                     ],
                 },
             ],
         },
 
-        // Poulet général Tao, riz et légumes.
+        // Poulet général Tao, riz et légumes. Production par lot de 20 portions (20/10).
         {
             id: 'prod_tao', platName: 'Poulet général Tao, riz et légumes', category: 'Plat principal', activityId: 'act_plats',
-            isIngredient: false, onMenu: true, salesMix: 11.21, prixVente: 8.54, nbPortions: 1, portionSize: 400, portionUnit: 'g',
+            isIngredient: false, onMenu: true, salesMix: 11.21, prixVente: 8.54, nbPortions: 20, portionSize: 400, portionUnit: 'g',
             formats: [{
-                id: 'fmt_tao', sku: 'PP-GENERALTAO-400G', prixVente: 8.54, nbPortions: 1, portionSize: 400, portionUnit: 'g',
+                id: 'fmt_tao', sku: 'PP-GENERALTAO-400G', prixVente: 8.54, nbPortions: 20, portionSize: 400, portionUnit: 'g',
                 salesMix: 11.21, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
                 ...demoFormatPricing(9.49, { volumeDirect: 150, volumeEpi: 300, volumeGs: 950 }),
                 ingredients: [
-                    { rowId: 'r_tao_1', id: 'ing_poulet', quantity: 180, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_tao_2', id: 'ing_riz', quantity: 120, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_tao_3', id: 'ing_brocoli', quantity: 60, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_tao_4', id: 'ing_epices_asiat', quantity: 25, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_tao_5', id: 'ing_epices', quantity: 2, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_tao_1', id: 'ing_poulet', quantity: 3600, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_tao_2', id: 'ing_riz', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_tao_3', id: 'ing_brocoli', quantity: 1200, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_tao_4', id: 'ing_epices_asiat', quantity: 500, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_tao_5', id: 'ing_epices', quantity: 40, recipeUnit: 'g', yieldPercentage: 100 },
                 ],
                 packagingItems: [
-                    { rowId: 'p_tao_1', id: 'pkg_barq_s', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_tao_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_tao_3', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                    { rowId: 'p_tao_1', id: 'pkg_barq_s', quantity: 20, recipeUnit: 'unité' },
+                    { rowId: 'p_tao_2', id: 'pkg_pellicule', quantity: 20, recipeUnit: 'unité' },
+                    { rowId: 'p_tao_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_tao_1', stepName: 'Cuisson du poulet et de la sauce', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 150 },
-                    { stepId: 's_tao_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Cuisinier de production' }], startTime: 150, duration: 120 },
-                    { stepId: 's_tao_3', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 270, duration: 60 },
+                    { stepId: 's_tao_1', stepName: 'Cuisson du poulet et de la sauce (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 670 },
+                    { stepId: 's_tao_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Cuisinier de production' }], startTime: 670, duration: 540 },
+                    { stepId: 's_tao_3', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 1210, duration: 630 },
                 ],
             }],
         },
 
-        // Saumon teriyaki, riz et légumes — item premium.
+        // Saumon teriyaki, riz et légumes — item premium. Production par lot de 15 portions (20/10,
+        // plus petit lot que les 20 ci-dessus, cohérent avec son volume réel plus faible).
         {
             id: 'prod_saumon', platName: 'Saumon teriyaki, riz et légumes', category: 'Plat principal', activityId: 'act_plats',
-            isIngredient: false, onMenu: true, salesMix: 7.93, prixVente: 12.59, nbPortions: 1, portionSize: 380, portionUnit: 'g',
+            isIngredient: false, onMenu: true, salesMix: 7.93, prixVente: 12.59, nbPortions: 15, portionSize: 380, portionUnit: 'g',
             formats: [{
                 // SKU auto-généré (pas un code manuel comme les autres formats) : un seul produit du
                 // menu démo reste volontairement dans ce mode, pour illustrer la régénération
                 // automatique du SKU au renommage/changement de quantité (voir isAutoGeneratedSku,
                 // App.jsx).
-                id: 'fmt_saumon', sku: buildFormatSku('Saumon teriyaki, riz et légumes', 380, 'g', 'fmt_saumon'), prixVente: 12.59, nbPortions: 1, portionSize: 380, portionUnit: 'g',
+                id: 'fmt_saumon', sku: buildFormatSku('Saumon teriyaki, riz et légumes', 380, 'g', 'fmt_saumon'), prixVente: 12.59, nbPortions: 15, portionSize: 380, portionUnit: 'g',
                 salesMix: 7.93, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['fish', 'soy'],
                 ...demoFormatPricing(13.99, { volumeDirect: 140, volumeEpi: 250, volumeGs: 600 }),
                 ingredients: [
-                    { rowId: 'r_sa_1', id: 'ing_saumon', quantity: 180, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_sa_2', id: 'ing_riz', quantity: 110, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_sa_3', id: 'ing_brocoli', quantity: 50, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_sa_4', id: 'ing_pois', quantity: 40, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_sa_5', id: 'ing_epices_asiat', quantity: 15, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_sa_1', id: 'ing_saumon', quantity: 2700, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_sa_2', id: 'ing_riz', quantity: 1650, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_sa_3', id: 'ing_brocoli', quantity: 750, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_sa_4', id: 'ing_pois', quantity: 600, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_sa_5', id: 'ing_epices_asiat', quantity: 225, recipeUnit: 'g', yieldPercentage: 100 },
                 ],
                 packagingItems: [
-                    { rowId: 'p_sa_1', id: 'pkg_barq_s', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_sa_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_sa_3', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                    { rowId: 'p_sa_1', id: 'pkg_barq_s', quantity: 15, recipeUnit: 'unité' },
+                    { rowId: 'p_sa_2', id: 'pkg_pellicule', quantity: 15, recipeUnit: 'unité' },
+                    { rowId: 'p_sa_3', id: 'pkg_etiquette', quantity: 15, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_sa_1', stepName: 'Cuisson du saumon', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 120 },
-                    { stepId: 's_sa_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Cuisinier de production' }], startTime: 120, duration: 120 },
-                    { stepId: 's_sa_3', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 240, duration: 60 },
+                    { stepId: 's_sa_1', stepName: 'Cuisson du saumon (lot de 15 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 465 },
+                    { stepId: 's_sa_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Cuisinier de production' }], startTime: 465, duration: 465 },
+                    { stepId: 's_sa_3', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 930, duration: 510 },
                 ],
             }],
         },
 
         // Sauté de poulet thaï — 2 formats, familial sous-traité (cuisson sous vide) + vieillissement.
+        // Production par lot (20/10) : 20 portions pour le format simple, 10 pour le familial. Le
+        // coût de sous-traitance (facturé par le tiers À L'UNITÉ, « cost » = coût du LOT comme les
+        // ingrédients) est multiplié par 10 pour le format familial — un sous-traitant qui facture
+        // par portion ne donne pas de rabais de volume dans ce modèle, contrairement au temps de
+        // MO interne, qui lui profite de l'effet de lot.
         {
             id: 'prod_thai', platName: 'Sauté de poulet thaï, riz et légumes', category: 'Plat principal', activityId: 'act_plats',
-            isIngredient: false, onMenu: true, salesMix: 8.73, prixVente: 8.36, nbPortions: 1, portionSize: 350, portionUnit: 'g',
+            isIngredient: false, onMenu: true, salesMix: 8.73, prixVente: 8.36, nbPortions: 20, portionSize: 350, portionUnit: 'g',
             formats: [
                 {
-                    id: 'fmt_thai_s', sku: 'PP-POULETTHAI-350G', prixVente: 8.36, nbPortions: 1, portionSize: 350, portionUnit: 'g',
+                    id: 'fmt_thai_s', sku: 'PP-POULETTHAI-350G', prixVente: 8.36, nbPortions: 20, portionSize: 350, portionUnit: 'g',
                     salesMix: 8.73, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
                     ...demoFormatPricing(9.29, { volumeDirect: 130, volumeEpi: 260, volumeGs: 700 }),
                     ingredients: [
-                        { rowId: 'r_th_1', id: 'ing_poulet', quantity: 170, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_th_2', id: 'ing_riz', quantity: 110, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_th_3', id: 'ing_brocoli', quantity: 50, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_th_4', id: 'ing_epices_asiat', quantity: 28, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_th_1', id: 'ing_poulet', quantity: 3400, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_th_2', id: 'ing_riz', quantity: 2200, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_th_3', id: 'ing_brocoli', quantity: 1000, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_th_4', id: 'ing_epices_asiat', quantity: 560, recipeUnit: 'g', yieldPercentage: 100 },
                     ],
                     packagingItems: [
-                        { rowId: 'p_th_1', id: 'pkg_barq_s', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_th_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_th_3', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                        { rowId: 'p_th_1', id: 'pkg_barq_s', quantity: 20, recipeUnit: 'unité' },
+                        { rowId: 'p_th_2', id: 'pkg_pellicule', quantity: 20, recipeUnit: 'unité' },
+                        { rowId: 'p_th_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                     ],
                     productionSteps: [
-                        { stepId: 's_th_1', stepName: 'Cuisson du poulet et des légumes', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 150 },
-                        { stepId: 's_th_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 150, duration: 60 },
+                        { stepId: 's_th_1', stepName: 'Cuisson du poulet et des légumes (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 670 },
+                        { stepId: 's_th_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 670, duration: 630 },
                     ],
                 },
                 {
-                    id: 'fmt_thai_f', sku: 'PP-POULETTHAI-900G', prixVente: 20.69, nbPortions: 1, portionSize: 900, portionUnit: 'g',
+                    id: 'fmt_thai_f', sku: 'PP-POULETTHAI-900G', prixVente: 20.69, nbPortions: 10, portionSize: 900, portionUnit: 'g',
                     salesMix: 4.4, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
                     ...demoFormatPricing(22.99, { volumeDirect: 50, volumeEpi: 120, volumeGs: 380 }),
-                    subcontracting: { enabled: true, items: [{ id: 'sub_thai_item_1', name: 'Cuisine Sous-Vide Boréal', operation: 'Cuisson sous vide du poulet et des légumes (lot familial)', cost: 2.60 }] },
+                    subcontracting: { enabled: true, items: [{ id: 'sub_thai_item_1', name: 'Cuisine Sous-Vide Boréal', operation: 'Cuisson sous vide du poulet et des légumes (lot familial de 10 portions)', cost: 26.00 }] },
                     aging: { enabled: true, interestRate: 8, months: 1 },
                     ingredients: [
-                        { rowId: 'r_thf_1', id: 'ing_poulet', quantity: 440, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_thf_2', id: 'ing_riz', quantity: 280, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_thf_3', id: 'ing_brocoli', quantity: 130, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_thf_4', id: 'ing_epices_asiat', quantity: 65, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_thf_1', id: 'ing_poulet', quantity: 4400, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_thf_2', id: 'ing_riz', quantity: 2800, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_thf_3', id: 'ing_brocoli', quantity: 1300, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_thf_4', id: 'ing_epices_asiat', quantity: 650, recipeUnit: 'g', yieldPercentage: 100 },
                     ],
                     packagingItems: [
-                        { rowId: 'p_thf_1', id: 'pkg_barq_f', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_thf_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_thf_3', id: 'pkg_boite', quantity: 1, recipeUnit: 'unité' },
-                        { rowId: 'p_thf_4', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                        { rowId: 'p_thf_1', id: 'pkg_barq_f', quantity: 10, recipeUnit: 'unité' },
+                        { rowId: 'p_thf_2', id: 'pkg_pellicule', quantity: 10, recipeUnit: 'unité' },
+                        { rowId: 'p_thf_3', id: 'pkg_boite', quantity: 10, recipeUnit: 'unité' },
+                        { rowId: 'p_thf_4', id: 'pkg_etiquette', quantity: 10, recipeUnit: 'unité' },
                     ],
                     productionSteps: [
-                        { stepId: 's_thf_1', stepName: 'Portionnement familial (cuisson reçue du sous-traitant)', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 0, duration: 90 },
-                        { stepId: 's_thf_2', stepName: 'Contrôle qualité', personnel: [{ postId: 'Contrôleur qualité' }], startTime: 90, duration: 30 },
+                        { stepId: 's_thf_1', stepName: 'Portionnement familial de 10 portions (cuisson reçue du sous-traitant)', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 0, duration: 715 },
+                        { stepId: 's_thf_2', stepName: 'Contrôle qualité', personnel: [{ postId: 'Contrôleur qualité' }], startTime: 715, duration: 240 },
                     ],
                 },
             ],
         },
 
         // Chili con carne mijoté — haut volume, marge correcte (« vache à lait »).
+        // Production par lot de 20 portions (20/10, retour utilisateur) : les quantités
+        // d'ingrédients/emballage sont multipliées par 20 (coût matière/emballage par portion
+        // inchangé — aucune économie attendue là, le coût d'un ingrédient ne baisse pas parce
+        // qu'on en achète plus à la fois dans ce modèle). Le temps de production, lui, NE scale
+        // PAS linéairement avec la taille du lot (mijoter 20 portions à la fois ne prend pas 20x
+        // le temps d'une seule) — même mijotage, plus long, dilué sur bien plus d'unités : c'est
+        // précisément le levier que l'ancien `nbPortions: 1` empêchait de démontrer.
         {
             id: 'prod_chili', platName: 'Chili con carne mijoté', category: 'Plat principal', activityId: 'act_plats',
-            isIngredient: false, onMenu: true, salesMix: 13.13, prixVente: 7.64, nbPortions: 1, portionSize: 400, portionUnit: 'g',
+            isIngredient: false, onMenu: true, salesMix: 13.13, prixVente: 7.64, nbPortions: 20, portionSize: 400, portionUnit: 'g',
             formats: [{
-                id: 'fmt_chili', sku: 'PP-CHILICONCARNE-400G', prixVente: 7.64, nbPortions: 1, portionSize: 400, portionUnit: 'g',
+                id: 'fmt_chili', sku: 'PP-CHILICONCARNE-400G', prixVente: 7.64, nbPortions: 20, portionSize: 400, portionUnit: 'g',
                 salesMix: 13.13, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
                 ...demoFormatPricing(8.49, { volumeDirect: 160, volumeEpi: 380, volumeGs: 1100 }),
                 ingredients: [
-                    { rowId: 'r_ch_1', id: 'ing_boeuf', quantity: 160, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_ch_2', id: 'ing_haricots', quantity: 120, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_ch_3', id: 'ing_tomates', quantity: 150, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_ch_4', id: 'ing_oignon', quantity: 30, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_ch_5', id: 'ing_epices', quantity: 3, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ch_1', id: 'ing_boeuf', quantity: 3200, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ch_2', id: 'ing_haricots', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ch_3', id: 'ing_tomates', quantity: 3000, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ch_4', id: 'ing_oignon', quantity: 600, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ch_5', id: 'ing_epices', quantity: 60, recipeUnit: 'g', yieldPercentage: 100 },
                 ],
                 packagingItems: [
-                    { rowId: 'p_ch_1', id: 'pkg_barq_s', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_ch_2', id: 'pkg_pellicule', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_ch_3', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                    { rowId: 'p_ch_1', id: 'pkg_barq_s', quantity: 20, recipeUnit: 'unité' },
+                    { rowId: 'p_ch_2', id: 'pkg_pellicule', quantity: 20, recipeUnit: 'unité' },
+                    { rowId: 'p_ch_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_ch_1', stepName: 'Mijotage du chili', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 150 },
-                    { stepId: 's_ch_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 150, duration: 60 },
+                    { stepId: 's_ch_1', stepName: 'Mijotage du chili (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 670 },
+                    { stepId: 's_ch_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 670, duration: 630 },
                 ],
             }],
         },
@@ -632,59 +676,65 @@ export const getDefaultState = () => {
         },
 
         // Potage à la courge musquée — item délibérément sous-performant (« poids mort »), recette
-        // trop riche (crème) pour son prix de vente : négatif dans les 3 canaux.
+        // trop riche (crème) pour son prix de vente. Production par lot de 15 portions (20/10) comme
+        // les autres plats — mais contrairement à eux, reste négatif même après correction : sa
+        // contre-performance vient du COÛT DE LA CRÈME (poste dominant du coût matière), pas d'un
+        // artefact de lot, donc le statut « poids mort » voulu par le commentaire ci-dessus persiste
+        // à juste titre.
         {
             id: 'prod_potage', platName: 'Potage à la courge musquée', category: 'Soupe', activityId: 'act_soupes',
-            isIngredient: false, onMenu: true, salesMix: 5.53, prixVente: 6.74, nbPortions: 1, portionSize: 0.75, portionUnit: 'L',
+            isIngredient: false, onMenu: true, salesMix: 5.53, prixVente: 6.74, nbPortions: 15, portionSize: 0.75, portionUnit: 'L',
             formats: [{
-                id: 'fmt_potage', sku: 'SO-COURGEMUSQUEE-750ML', prixVente: 6.74, nbPortions: 1, portionSize: 0.75, portionUnit: 'L',
+                id: 'fmt_potage', sku: 'SO-COURGEMUSQUEE-750ML', prixVente: 6.74, nbPortions: 15, portionSize: 0.75, portionUnit: 'L',
                 salesMix: 5.53, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
                 ...demoFormatPricing(7.49, { volumeDirect: 90, volumeEpi: 180, volumeGs: 420 }),
                 ingredients: [
-                    { rowId: 'r_po_1', id: 'ing_courge', quantity: 350, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_po_2', id: 'ing_creme', quantity: 150, recipeUnit: 'ml', yieldPercentage: 100 },
-                    { rowId: 'r_po_3', id: 'sub_bouillon', quantity: 250, recipeUnit: 'ml', yieldPercentage: 100 },
-                    { rowId: 'r_po_4', id: 'ing_beurre', quantity: 20, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_po_5', id: 'ing_farine', quantity: 15, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_po_6', id: 'ing_oignon', quantity: 30, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_po_7', id: 'ing_epices', quantity: 3, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_po_1', id: 'ing_courge', quantity: 5250, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_po_2', id: 'ing_creme', quantity: 2250, recipeUnit: 'ml', yieldPercentage: 100 },
+                    { rowId: 'r_po_3', id: 'sub_bouillon', quantity: 3750, recipeUnit: 'ml', yieldPercentage: 100 },
+                    { rowId: 'r_po_4', id: 'ing_beurre', quantity: 300, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_po_5', id: 'ing_farine', quantity: 225, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_po_6', id: 'ing_oignon', quantity: 450, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_po_7', id: 'ing_epices', quantity: 45, recipeUnit: 'g', yieldPercentage: 100 },
                 ],
                 packagingItems: [
-                    { rowId: 'p_po_1', id: 'pkg_sac_soupe', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_po_2', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                    { rowId: 'p_po_1', id: 'pkg_sac_soupe', quantity: 15, recipeUnit: 'unité' },
+                    { rowId: 'p_po_2', id: 'pkg_etiquette', quantity: 15, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_po_1', stepName: 'Mijotage et velouté', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 420 },
-                    { stepId: 's_po_2', stepName: 'Mise en sac et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 420, duration: 60 },
+                    { stepId: 's_po_1', stepName: 'Mijotage et velouté (lot de 15 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 1630 },
+                    { stepId: 's_po_2', stepName: 'Mise en sac et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 1630, duration: 510 },
                 ],
             }],
         },
 
         // Sauce à spaghetti maison — gros volume, marge correcte en direct, mince en épiceries/GS.
+        // Production par lot de 15 portions (20/10) — même principe que les autres recettes
+        // maison ; les volumes à 0 restent inchangés (voir note ci-dessous).
         {
             id: 'prod_sauce_spag', platName: 'Sauce à spaghetti maison', category: 'Sauce', activityId: 'act_sauces',
-            isIngredient: false, onMenu: true, salesMix: 12, prixVente: 7.19, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
+            isIngredient: false, onMenu: true, salesMix: 12, prixVente: 7.19, nbPortions: 15, portionSize: 500, portionUnit: 'ml',
             formats: [{
-                id: 'fmt_sauce_spag', sku: 'SA-SPAGHETTI-500ML', prixVente: 7.19, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
+                id: 'fmt_sauce_spag', sku: 'SA-SPAGHETTI-500ML', prixVente: 7.19, nbPortions: 15, portionSize: 500, portionUnit: 'ml',
                 // Volumes à 0 (délibérément) : seul format du menu démo resté en mode « % manuel »
                 // du mix des ventes, pour illustrer la coexistence avec les formats « unités »
                 // (tous les autres) — voir salesMixFromChannels.js.
                 salesMix: 12, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
                 ...demoFormatPricing(7.99, { volumeDirect: 0, volumeEpi: 0, volumeGs: 0 }),
                 ingredients: [
-                    { rowId: 'r_ss_1', id: 'ing_tomates', quantity: 350, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_ss_2', id: 'ing_boeuf', quantity: 100, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_ss_3', id: 'ing_oignon', quantity: 40, recipeUnit: 'g', yieldPercentage: 100 },
-                    { rowId: 'r_ss_4', id: 'ing_epices', quantity: 5, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ss_1', id: 'ing_tomates', quantity: 5250, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ss_2', id: 'ing_boeuf', quantity: 1500, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ss_3', id: 'ing_oignon', quantity: 600, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_ss_4', id: 'ing_epices', quantity: 75, recipeUnit: 'g', yieldPercentage: 100 },
                 ],
                 packagingItems: [
-                    { rowId: 'p_ss_1', id: 'pkg_pot_verre', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_ss_2', id: 'pkg_couvercle', quantity: 1, recipeUnit: 'unité' },
-                    { rowId: 'p_ss_3', id: 'pkg_etiquette', quantity: 1, recipeUnit: 'unité' },
+                    { rowId: 'p_ss_1', id: 'pkg_pot_verre', quantity: 15, recipeUnit: 'unité' },
+                    { rowId: 'p_ss_2', id: 'pkg_couvercle', quantity: 15, recipeUnit: 'unité' },
+                    { rowId: 'p_ss_3', id: 'pkg_etiquette', quantity: 15, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_ss_1', stepName: 'Mijotage de la sauce', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 240 },
-                    { stepId: 's_ss_2', stepName: 'Mise en pot et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 240, duration: 60 },
+                    { stepId: 's_ss_1', stepName: 'Mijotage de la sauce (lot de 15 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 930 },
+                    { stepId: 's_ss_2', stepName: 'Mise en pot et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 930, duration: 510 },
                 ],
             }],
         },

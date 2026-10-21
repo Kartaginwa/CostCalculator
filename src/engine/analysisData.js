@@ -753,7 +753,7 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
     );
 
     // 4. KPIs globaux + point mort GLOBAL (en chiffre d'affaires $)
-    let weightedGrossMargin = 0;   // pondéré par la popularité (unités) — cohérent avec l'affichage
+    let weightedGrossMargin = 0;
     let globalBreakEven = 0;
     let weightedMaterialCost = 0;
     let weightedPackagingCost = 0;
@@ -761,7 +761,18 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
 
     if (totalSalesMix > 0) {
         for (const p of activeProducts) {
-            const weight = parseLocaleNumber(p.salesMix) / totalSalesMix;
+            // Révision du 20/10 (retour utilisateur) : pondéré par le $ de revenu réel de ce SKU
+            // (même base que `revenueWeightedMarginRatio`/`globalBreakEven` ci-dessous), pas par son
+            // % du mix des ventes comme avant. Moyenner des POURCENTAGES avec un poids en UNITÉS
+            // (le mix des ventes) peut produire un signe contraire à la même moyenne pondérée en
+            // DOLLARS (paradoxe de Simpson) — observé concrètement sur le projet démo avant cette
+            // correction : cette tuile affichait une marge pondérée négative alors que le Point Mort
+            // du Menu, lui, restait positif et fini, deux indicateurs du même tableau de bord se
+            // contredisant sur la question la plus simple (le menu est-il profitable en moyenne).
+            // Repli sur le $ mix des ventes quand aucun revenu réel par canal n'existe encore (projet
+            // neuf, salesMix seul renseigné) — jamais un 0 % qui masquerait la seule donnée disponible.
+            const productRevenue = (p.channelBreakdown || []).reduce((s, cb) => s + parseLocaleNumber(cb.netPrice) * parseLocaleNumber(cb.volume), 0);
+            const weight = menuRevenue > 0 ? productRevenue / menuRevenue : parseLocaleNumber(p.salesMix) / totalSalesMix;
 
             // 06/10 : les 4 KPIs pondérés utilisent la vue « tous canaux » (p.blended), pas
             // seulement le canal principal — sinon un changement de prix sur un canal secondaire

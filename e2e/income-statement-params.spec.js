@@ -80,17 +80,17 @@ test("gestion des charges directes réelles dans l'onglet État des résultats (
     const section = page.locator('#tutorial-section-direct-costs');
     await expect(section).toBeVisible();
     await expect(section.getByRole('heading', { name: 'Charges directes réelles' })).toBeVisible();
-    // Démo : 4 lignes pré-remplies (une par type de coût), total 100 000 $.
+    // Démo : 4 lignes pré-remplies (une par type de coût), total 48 000 $.
     const rows = section.locator('input[placeholder="Poste de charge directe (ex. Achats de matières premières)"]');
     await expect(rows).toHaveCount(4);
-    await expect(section.getByText('100 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('48 000.00 $', { exact: true })).toBeVisible();
 
     // Phase 4.3bis : Activités de production et Canaux de vente ventilés INDICATIVEMENT (dérivé du
     // coût théorique du modèle de recette, apparié au type de coût de chaque ligne) — jamais saisi.
     await expect(section.getByText('Activités de production (indicatif)', { exact: true })).toBeVisible();
     await expect(section.getByText('Canaux de vente (indicatif)', { exact: true })).toBeVisible();
     // La rangée Sous-total ventile chaque type de coût par activité : la somme des 4 colonnes
-    // d'activité (incluant Général) reconstitue exactement le total réel de 100 000 $.
+    // d'activité (incluant Général) reconstitue exactement le total réel de 48 000 $.
     const subtotalRow = section.locator('tfoot tr');
     await expect(subtotalRow.getByText('Sous-total', { exact: true })).toBeVisible();
 
@@ -104,7 +104,7 @@ test("gestion des charges directes réelles dans l'onglet État des résultats (
     await section.locator('select').nth(4).selectOption('Sous-traitance');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).fill('2000');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).blur();
-    await expect(section.getByText('102 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('50 000.00 $', { exact: true })).toBeVisible();
     // La nouvelle ligne affiche son montant intégral (2000$) dans UNE colonne d'activité indicative
     // (pas de valeur saisie — purement dérivée du même coût théorique que la ligne démo).
     await expect(newRow.getByText('2 000.00 $', { exact: true })).toBeVisible();
@@ -113,7 +113,7 @@ test("gestion des charges directes réelles dans l'onglet État des résultats (
     await section.locator('button[title="Supprimer cette charge directe"]').last().click();
     await expect(rows).toHaveCount(4);
     await expect(page.getByText('a été supprimée')).toBeVisible();
-    await expect(section.getByText('100 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('48 000.00 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
@@ -130,11 +130,11 @@ test("gestion des revenus dans l'onglet État des résultats, avec répartition 
     const section = page.locator('#tutorial-section-revenue');
     await expect(section).toBeVisible();
     await expect(section.getByRole('heading', { name: 'Revenus' })).toBeVisible();
-    // Démo : 4 lignes pré-remplies, total 160 000 $.
+    // Démo : 4 lignes pré-remplies, total 80 000 $.
     const rows = section.locator('input[placeholder="Poste de revenu"]');
     await expect(rows).toHaveCount(4);
     // Le total n'est affiché qu'une fois, dans la rangée « Sous-total » du tableau.
-    await expect(section.getByText('160 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('80 000.00 $', { exact: true })).toBeVisible();
 
     // Une ligne rattachée à une activité affiche une ventilation par canal indicative.
     await expect(section.getByText('Canaux de vente', { exact: false }).first()).toBeVisible();
@@ -146,7 +146,7 @@ test("gestion des revenus dans l'onglet État des résultats, avec répartition 
     await section.locator('select').nth(4).selectOption('general');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).fill('1000');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).blur();
-    await expect(section.getByText('161 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('81 000.00 $', { exact: true })).toBeVisible();
 
     // Suppression avec annulation
     await section.locator('button[title="Supprimer ce revenu"]').last().click();
@@ -168,9 +168,9 @@ test("Revenus : colonnes par contenant (Général + activités) avant les colonn
     const firstRow = section.locator('tbody tr').first();
 
     // Colonnes "Activités de production" (Général + 3 activités) avant les colonnes "canal" — la
-    // 1re ligne (Plats principaux surgelés, 90 000 $) affiche son montant dans SA colonne seulement.
+    // 1re ligne (Plats principaux surgelés, 45 000 $) affiche son montant dans SA colonne seulement.
     await expect(section.getByText('Activités de production', { exact: true })).toBeVisible();
-    await expect(firstRow.getByText('90 000.00 $', { exact: true })).toBeVisible();
+    await expect(firstRow.getByText('45 000.00 $', { exact: true })).toBeVisible();
     await expect(firstRow.locator('td').nth(5)).toHaveText('—'); // colonne Général : non applicable (0=Poste, 1=Catégorie placeholder, 2=Clé de répartition, 3=Montant, 4=écart décoratif, 5=Général)
 
     // Bascule la 1re ligne en Saisie manuelle : Montant devient un total en lecture seule, et les
@@ -178,7 +178,7 @@ test("Revenus : colonnes par contenant (Général + activités) avant les colonn
     await firstRow.locator('select').first().selectOption('manual');
     const bucketInputs = firstRow.locator('td input[inputmode="decimal"]');
     await expect(bucketInputs).toHaveCount(4); // plus de champ Montant éditable en mode manuel
-    await expect(firstRow.getByText('90 000.00 $', { exact: true })).toBeVisible(); // total inchangé
+    await expect(firstRow.getByText('45 000.00 $', { exact: true })).toBeVisible(); // total inchangé
 
     // Ventile manuellement sur 2 contenants à la fois (Général + une 2e activité) — le total se
     // recalcule comme la somme des cellules, pas comme un seul montant.
@@ -186,17 +186,17 @@ test("Revenus : colonnes par contenant (Général + activités) avant les colonn
     await bucketInputs.nth(0).blur();
     await bucketInputs.nth(2).fill('20000'); // Soupes et potages (3e colonne de contenant)
     await bucketInputs.nth(2).blur();
-    // Plats principaux (90000, déjà présent) + Général (10000) + Soupes et potages (20000) = 120000
-    await expect(firstRow.getByText('120 000.00 $', { exact: true })).toBeVisible();
-    // Total global : 120000 (ligne 1) + 40000 (Soupes) + 25000 (Sauces) + 5000 (Général) = 190000
-    await expect(section.getByText('190 000.00 $', { exact: true })).toBeVisible();
+    // Plats principaux (45000, déjà présent) + Général (10000) + Soupes et potages (20000) = 75000
+    await expect(firstRow.getByText('75 000.00 $', { exact: true })).toBeVisible();
+    // Total global : 75000 (ligne 1) + 20000 (Soupes) + 12500 (Sauces) + 2500 (Général) = 110000
+    await expect(section.getByText('110 000.00 $', { exact: true })).toBeVisible();
 
     // Rangée « Sous-total » : un sous-total par colonne de contenant, pas seulement le total global —
     // « Soupes et potages » cumule la contribution de 2 lignes (20000 saisis manuellement sur la
-    // ligne 1 + 40000 déjà présents sur la ligne 2) = 60000.
+    // ligne 1 + 20000 déjà présents sur la ligne 2) = 40000.
     const subtotalRow = section.locator('tfoot tr');
     await expect(subtotalRow.getByText('Sous-total', { exact: true })).toBeVisible();
-    await expect(subtotalRow.getByText('60 000.00 $', { exact: true })).toBeVisible();
+    await expect(subtotalRow.getByText('40 000.00 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
@@ -214,7 +214,7 @@ test("réconciliation réel/théorique dans l'onglet État des résultats (Phase
     await expect(section).toBeVisible();
     await expect(section.getByRole('heading', { name: 'Réconciliation réel / théorique' })).toBeVisible();
 
-    // Démo : revenus réels (160 000 $, lignes de revenus réels) vs théorique — corrigé le 18/10,
+    // Démo : revenus réels (80 000 $, lignes de revenus réels) vs théorique — corrigé le 18/10,
     // confirmé le 19/10 (voir Projet_Claude/03-Feuille-de-route.md, addendum du 19/10) : le
     // théorique vient UNIQUEMENT du volume RÉEL par canal (prix net × volume), jamais de
     // generalInfo.totalRevenue (réel) — ce serait mélanger les deux jeux de données que cette
@@ -222,26 +222,26 @@ test("réconciliation réel/théorique dans l'onglet État des résultats (Phase
     // construction, les canaux réels ne couvrant qu'un sous-ensemble des revenus totaux de
     // l'entreprise.
     const revenueRow = section.locator('tbody tr', { hasText: 'Revenus' });
-    await expect(revenueRow.getByText('160 000.00 $', { exact: true }).first()).toBeVisible();
+    await expect(revenueRow.getByText('80 000.00 $', { exact: true }).first()).toBeVisible();
     await expect(revenueRow.getByText('75 366.10 $', { exact: true })).toBeVisible();
-    await expect(revenueRow.getByText('+112.3 %', { exact: true })).toBeVisible();
+    await expect(revenueRow.getByText('+6.1 %', { exact: true })).toBeVisible();
 
-    // Charges directes : réel (100 000 $, saisi) vs théorique (dérivé du modèle de recette, sur
+    // Charges directes : réel (48 000 $, saisi) vs théorique (dérivé du modèle de recette, sur
     // le même volume réel par canal) — un écart non nul, comme pour les revenus.
     const directCostsRow = section.locator('tbody tr', { hasText: 'Charges directes' });
-    await expect(directCostsRow.getByText('100 000.00 $', { exact: true })).toBeVisible();
-    await expect(directCostsRow.getByText('72 960.44 $', { exact: true })).toBeVisible();
+    await expect(directCostsRow.getByText('48 000.00 $', { exact: true })).toBeVisible();
+    await expect(directCostsRow.getByText('46 922.72 $', { exact: true })).toBeVisible();
 
     // Bénéfice brut = Revenus - Charges directes, des deux côtés (réel ET théorique).
     const grossProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice brut' });
-    await expect(grossProfitRow.getByText('60 000.00 $', { exact: true })).toBeVisible();
-    await expect(grossProfitRow.getByText('2 405.66 $', { exact: true })).toBeVisible();
+    await expect(grossProfitRow.getByText('32 000.00 $', { exact: true })).toBeVisible();
+    await expect(grossProfitRow.getByText('28 443.38 $', { exact: true })).toBeVisible();
 
     // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo), même total
     // soustrait des deux côtés.
     const netProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice net' });
-    await expect(netProfitRow.getByText('32 000.00 $', { exact: true })).toBeVisible();
-    await expect(netProfitRow.getByText('-25 594.34 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('4 000.00 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('443.38 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
@@ -257,8 +257,8 @@ test("Revenus : la colonne Montant tient 99 999 999.99 $ sur une seule ligne, sa
 
     const section = page.locator('#tutorial-section-revenue');
     const firstMontantInput = section.locator('input[placeholder="Montant ($)"]').first();
-    // 99 929 999.99 + 40 000 + 25 000 + 5 000 (autres lignes démo inchangées) = 99 999 999.99 $.
-    await firstMontantInput.fill('99929999.99');
+    // 99 964 999.99 + 20 000 + 12 500 + 2 500 (autres lignes démo inchangées) = 99 999 999.99 $.
+    await firstMontantInput.fill('99964999.99');
     await firstMontantInput.blur();
 
     // Le sous-total doit s'afficher en un seul nœud de texte (pas de saut de ligne au milieu).

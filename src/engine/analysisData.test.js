@@ -32,10 +32,13 @@ const defaultSalesChannels = [{ id: 'c1', name: 'Défaut', links: [] }];
 const channelPrice = (netPrice, volume, channelId = 'c1') => [{ id: `cp_${channelId}_${netPrice}_${volume}`, channelId, netPrice, volume }];
 
 describe('computeAnalysisData - moyennes pondérées et point mort global', () => {
-    it('pondère la marge et les coûts par le mix des ventes de chaque produit actif', () => {
-        // weightedGrossMargin/weightedMaterialCost restent pondérés par salesMix (indépendant du
-        // volume réel) ; globalBreakEven dépend maintenant du volume RÉEL par canal (70/30 unités,
-        // mêmes proportions que l'ancien salesMix, pour un calcul attendu identique).
+    it('pondère la marge et les coûts par le $ de revenu réel de chaque produit actif (20/10)', () => {
+        // Révision du 20/10 (retour utilisateur) : weightedGrossMargin/weightedMaterialCost sont
+        // désormais pondérés par le $ de REVENU RÉEL de chaque produit (prix net × volume réel),
+        // la même base que globalBreakEven — plus par le % du mix des ventes, qui pouvait donner un
+        // signe contraire à une moyenne pondérée en dollars (paradoxe de Simpson, voir le commentaire
+        // dans analysisData.js). Volumes 70/30, mais prix différents (20 $ vs 10 $) : le poids en $
+        // (1400$/300$, soit 82,35 %/17,65 %) diffère donc du poids en unités (70/30).
         const productA = baseProduct({ id: 'A', isResaleProduct: true, purchaseCost: 10, prixVente: 20, salesMix: 70, channelPrices: channelPrice(20, 70) });
         const productB = baseProduct({ id: 'B', isResaleProduct: true, purchaseCost: 2, prixVente: 10, salesMix: 30, channelPrices: channelPrice(10, 30) });
         const products = [productA, productB];
@@ -44,15 +47,17 @@ describe('computeAnalysisData - moyennes pondérées et point mort global', () =
 
         const result = computeAnalysisData(products, [], [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels);
 
-        // A : marge 10$/20$ = 0.5, B : marge 8$/10$ = 0.8 -> pondéré 70/30 = 0.59
-        expect(result.weightedGrossMargin).toBeCloseTo(0.59);
-        // A : coût matière 10/20 = 0.5, B : 2/10 = 0.2 -> pondéré 70/30 = 0.41
-        expect(result.weightedMaterialCost).toBeCloseTo(0.41);
+        // Revenu A = 20×70 = 1400 $, revenu B = 10×30 = 300 $, total = 1700 $.
+        // A : marge 10$/20$ = 0.5, B : marge 8$/10$ = 0.8 -> pondéré (0.5×1400 + 0.8×300)/1700 ≈ 0.5529
+        expect(result.weightedGrossMargin).toBeCloseTo(940 / 1700);
+        // A : coût matière 10/20 = 0.5, B : 2/10 = 0.2 -> pondéré (0.5×1400 + 0.2×300)/1700 ≈ 0.4471
+        expect(result.weightedMaterialCost).toBeCloseTo(760 / 1700);
         expect(result.weightedLaborCost).toBeCloseTo(0);
         // Point mort GLOBAL en chiffre d'affaires ($) = frais indirects fixes / taux de marge
-        // pondéré par le REVENU réel (prix net × volume réel de chaque canal) : revenu = 20×70 +
-        // 10×30 = 1700 ; marge $ = 10×70 + 8×30 = 940 ; taux = 940/1700 = 9.4/17. Point mort =
-        // 1000 / (9.4/17) ≈ 1808,5 $.
+        // pondéré par le REVENU réel (prix net × volume réel de chaque canal) : revenu = 1700 ;
+        // marge $ = 10×70 + 8×30 = 940 ; taux = 940/1700 = 9.4/17. Point mort = 1000 / (9.4/17) ≈
+        // 1808,5 $. Même ratio que weightedGrossMargin ci-dessus — maintenant cohérents par
+        // construction (même base de pondération).
         expect(result.globalBreakEven).toBeCloseTo(1000 / (9.4 / 17));
     });
 

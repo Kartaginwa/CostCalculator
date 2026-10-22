@@ -36,8 +36,8 @@ test("État des résultats : Période de référence tout en haut (avant Revenus
     await expect(periodSection.locator('#startDate')).toBeVisible();
     await expect(periodSection.locator('#endDate')).toBeVisible();
 
-    // Méthode d'attribution des frais indirects : relocalisée dans Frais fixes (plus dans
-    // Paramètres).
+    // CICI de Général (Coefficient d'imputation des charges indirectes) : centralisé ici, pas
+    // dans Paramètres.
     await expect(page.locator('#indirectCostMethod')).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);

@@ -3228,3 +3228,49 @@ d'abord.
   e2e, vérification fonctionnelle par script Playwright temporaire (section Période du projet
   démo : aucun sélecteur, seulement « Date de début »/« Date de fin », vides — jamais une date
   inventée par défaut), lint et `npx vite build` propres.
+
+## CICI centralisé : nouvelle section « Coefficient d'imputation des charges indirectes » (22/10)
+
+Retour utilisateur sur la révision du 21/10 (Général unifié avec Activité) : malaise légitime
+d'avoir le choix du driver éclaté entre deux onglets — celui de Général dans État des résultats,
+celui de chaque activité dans Paramètres → Activités de production, au même endroit que son nom
+et sa suppression. Deux natures de décision différentes mélangées dans un même écran : Paramètres
+définit des entités structurelles (quelles activités existent), alors que le driver est une
+décision de méthode comptable (comment répartir un coût) — qui n'a pas sa place au même endroit.
+Nom retenu : « Coefficient d'imputation des charges indirectes » (CICI), la terminologie déjà
+établie dans les infobulles du rapport Par SKU, plutôt que « Méthode d'attribution » (jugé trop
+vague et redondant avec « Clé de répartition », qui vit dans le même onglet mais dimensionne le
+pool plutôt que de choisir comment il se répartit ensuite).
+
+**Mise en œuvre** :
+1. `ProductInfo.jsx` (Paramètres → Activités de production) : sélecteur de driver et sa tooltip
+   retirés de chaque ligne d'activité — ne reste que le nom et le bouton de suppression, une
+   section désormais purement structurelle. `handleActivityDriverChange` déplacée dans
+   `IncomeStatementTab.jsx`, seul endroit qui en a encore besoin.
+2. `IncomeStatementTab.jsx` : nouvelle section `#tutorial-section-cici`, à l'emplacement exact de
+   l'ancien bloc « Méthode d'attribution de Général » (après Frais fixes/Bénéfice net, avant la
+   Réconciliation, hors du conteneur de défilement horizontal). Une ligne « Général »
+   (`generalInfo.indirectCostMethod`) suivie d'une ligne par activité réelle du projet
+   (`productionActivities`, `indirectCostDriver`) — même liste `indirectCostMethodLabels`
+   réutilisée pour les deux (mêmes libellés « Au prorata des coûts directs »/« Au prorata du
+   temps de production » partout, plutôt que les anciens « Selon les charges directes »/« Selon
+   le temps de main-d'œuvre » propres à l'ancien sélecteur d'activité — un seul vocabulaire).
+   Canal n'y figure PAS : aucun CICI, seulement un pourcentage de majoration (Paramètres → Canaux
+   de vente) — une notion différente, pas un oubli.
+3. `SummaryTable.jsx` (tooltips « Frais fixes — Général »/« Frais fixes — Activité », rapport Par
+   SKU) et `InstructionModal.jsx` (4 passages : Activités de production, Frais fixes, nouvelle
+   sous-section dédiée « Coefficient d'imputation des charges indirectes (CICI) » insérée entre
+   Bénéfice net et Réconciliation — avec son lien dans le sommaire — et Récapitulatif de
+   Production) : toutes les mentions de l'ancien emplacement éclaté corrigées vers la nouvelle
+   section unique.
+- Fichiers touchés : `src/features/ProductInfo.jsx`, `src/features/IncomeStatementTab.jsx`,
+  `src/features/SummaryTable.jsx`, `src/components/InstructionModal.jsx`,
+  `e2e/production-activities.spec.js` (test du driver dans Paramètres remplacé par un test
+  confirmant l'absence de sélecteur + nouveau test dédié à la section CICI dans État des
+  résultats), `e2e/income-statement-period.spec.js` et `e2e/smoke.spec.js` (commentaires mis à
+  jour, aucun changement de comportement testé).
+- Tests : 229/229 unitaires (inchangés, purement UI — `indirectCostDriver`/`indirectCostMethod`
+  restent les mêmes champs d'état, seul leur point d'édition déplace), 47/47 e2e (46 existants +
+  1 nouveau), vérification fonctionnelle par script Playwright temporaire (section CICI du projet
+  démo : Général + les 3 activités réelles, chacune avec ses 2 options ; section Activités de
+  production de Paramètres : plus aucun sélecteur), lint et `npx vite build` propres.

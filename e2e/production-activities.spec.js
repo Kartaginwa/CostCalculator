@@ -39,15 +39,44 @@ test('gestion des activités de production dans Paramètres', async ({ page }) =
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
 
-test("Activités de production : driver de conversion des frais fixes (Phase 4.6), par défaut « Selon les charges directes »", async ({ page }) => {
+test("Activités de production : le CICI (driver de conversion des frais fixes, Phase 4.6) ne se choisit plus ici — centralisé dans État des résultats le 22/10", async ({ page }) => {
     await page.goto('/');
     await page.getByText('Créer un nouveau projet').click();
     const skip = page.getByText('Explorer par moi-même');
     if (await skip.count() > 0) await skip.click();
 
+    // Plus aucun sélecteur dans cette section : seulement le nom et le bouton de suppression.
     const section = page.locator('#tutorial-section-info-activites');
-    const driverSelect = section.locator('select').first();
-    await expect(driverSelect).toHaveValue('directCost');
-    await driverSelect.selectOption('laborTime');
-    await expect(driverSelect).toHaveValue('laborTime');
+    await expect(section.locator('select')).toHaveCount(0);
+});
+
+test("État des résultats : Coefficient d'imputation des charges indirectes (CICI) centralise Général et chaque activité (22/10)", async ({ page }) => {
+    await page.goto('/');
+    await page.getByText('Explorer un projet démo').click();
+    await page.locator('#tab-income-statement').click();
+
+    const section = page.locator('#tutorial-section-cici');
+    await expect(section).toBeVisible();
+    await expect(section.getByText("Coefficient d'imputation des charges indirectes")).toBeVisible();
+
+    // Une ligne « Général » (générée via generalInfo.indirectCostMethod) et une ligne par
+    // activité réelle du projet démo (act_plats/act_soupes/act_sauces, voir initialState.js) — un
+    // seul sélecteur par ligne, même options pour les deux.
+    await expect(section.getByText('Général', { exact: true })).toBeVisible();
+    await expect(section.getByText('Plats principaux surgelés')).toBeVisible();
+    await expect(section.locator('select')).toHaveCount(4);
+
+    const generalSelect = section.locator('#indirectCostMethod');
+    await expect(generalSelect).toHaveValue('directCost');
+    await generalSelect.selectOption('laborTime');
+    await expect(generalSelect).toHaveValue('laborTime');
+
+    const activityRow = section.locator('div', { hasText: 'Plats principaux surgelés' }).last();
+    const activitySelect = activityRow.locator('select');
+    await expect(activitySelect).toHaveValue('directCost');
+    await activitySelect.selectOption('laborTime');
+    await expect(activitySelect).toHaveValue('laborTime');
+
+    // Canal n'y figure jamais : pas de CICI pour Canal (markup seulement, Paramètres).
+    await expect(section.getByText('Épiceries indépendantes')).toHaveCount(0);
 });

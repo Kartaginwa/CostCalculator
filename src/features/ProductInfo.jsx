@@ -169,13 +169,6 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         onUpdateProductionActivities(productionActivities.map(a => a.id === id ? { ...a, name } : a));
     };
 
-    // Phase 4.6 — driver choisi pour convertir le pool de frais fixes de CETTE activité en taux par
-    // produit (voir l'infobulle ci-dessous pour le guide de décision). Propre à chaque activité :
-    // deux activités peuvent choisir des drivers différents sans que la réconciliation en souffre
-    // (chaque pool se normalise contre ses propres produits — voir 04-Conception-Modele.md).
-    const handleActivityDriverChange = (id, indirectCostDriver) => {
-        onUpdateProductionActivities(productionActivities.map(a => a.id === id ? { ...a, indirectCostDriver } : a));
-    };
 
     const handleRemoveActivity = (id) => {
         if (productionActivities.length <= 1) {
@@ -366,7 +359,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
                         Activités de production
-                        <Tooltip text="Une activité de production regroupe les produits qui partagent un même procédé de fabrication (ex. Confitures, Produits séchés). Elle servira à répartir vos frais indirects par activité dans l'onglet État des résultats." />
+                        <Tooltip text="Une activité de production regroupe les produits qui partagent un même procédé de fabrication (ex. Confitures, Produits séchés). Son coefficient d'imputation des charges indirectes (CICI) — le driver utilisé pour répartir ses frais indirects — se choisit dans État des résultats, pas ici." />
                     </h2>
                     <button onClick={handleAddActivity} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                         <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une activité
@@ -382,16 +375,6 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 placeholder="Nom de l'activité de production"
                                 className={`flex-1 p-1 border rounded ${!isNotEmpty(activity.name) ? 'border-red-500' : 'border-gray-300'}`}
                             />
-                            <select
-                                value={activity.indirectCostDriver || 'directCost'}
-                                onChange={(e) => handleActivityDriverChange(activity.id, e.target.value)}
-                                className="p-1 border rounded text-sm border-gray-300"
-                                title="Driver de conversion des frais fixes de cette activité en taux par produit"
-                            >
-                                <option value="directCost">Selon les charges directes</option>
-                                <option value="laborTime">Selon le temps de main-d'œuvre</option>
-                            </select>
-                            <Tooltip text="Driver utilisé pour convertir les frais fixes rattachés à CETTE activité (onglet État des résultats) en un taux $ par produit — propre à chaque activité, sans effet sur les autres. « Selon les charges directes » (matière + emballage + main-d'œuvre + sous-traitance combinés) : choix par défaut, approprié quand le coût indirect suit globalement la valeur des intrants consommés (supervision, gestion des stocks) — capture à la fois le volume et la complexité d'un produit. « Selon le temps de main-d'œuvre » : plus précis si le coût indirect suit plutôt la CADENCE/le temps machine (supervision horaire, chauffage pendant les heures de production) qu'une pure valeur d'intrants — utile si deux produits de cette activité ont un coût matière très différent mais un temps de production similaire, sinon le produit à ingrédient cher absorberait injustement plus de frais fixes." />
                             <button onClick={() => handleRemoveActivity(activity.id)} title="Supprimer l'activité de production" className="text-red-500 hover:text-red-700 p-1 rounded-full">
                                 <Trash2 size={20} />
                             </button>

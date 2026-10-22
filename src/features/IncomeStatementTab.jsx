@@ -335,7 +335,7 @@ export const IncomeStatementTab = () => {
         expenseLines, onUpdateExpenseLines, revenueLines, onUpdateRevenueLines,
         directCostLines, onUpdateDirectCostLines,
         repartitionKeys, onUpdateRepartitionKeys,
-        productionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification,
+        productionActivities, onUpdateProductionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification,
     } = useProject();
     const [showRepartitionKeysModal, setShowRepartitionKeysModal] = useState(false);
     const [showImportWizard, setShowImportWizard] = useState(false);
@@ -478,6 +478,17 @@ export const IncomeStatementTab = () => {
     // Colonnes « Activités de production » — partagées par Revenus et Charges directes réelles
     // (même liste : Général + chaque activité), d'où le nom générique.
     const activityBuckets = useMemo(() => buildActivityBuckets(productionActivities), [productionActivities]);
+
+    // CICI par activité (centralisé ici le 22/10, retour utilisateur — vivait auparavant dans
+    // Paramètres → Activités de production, au même endroit que le nom/la suppression de
+    // l'activité ; mélangeait une décision structurelle (qu'est-ce qui existe) avec une décision
+    // de méthode comptable (comment répartir un coût), voir section Coefficient d'imputation des
+    // charges indirectes plus bas). Propre à chaque activité : deux activités peuvent choisir des
+    // drivers différents sans que la réconciliation en souffre (chaque pool se normalise contre
+    // ses propres produits — voir 04-Conception-Modele.md).
+    const handleActivityDriverChange = (id, indirectCostDriver) => {
+        onUpdateProductionActivities(productionActivities.map(a => a.id === id ? { ...a, indirectCostDriver } : a));
+    };
 
     // Sous-totaux par colonne (bas du tableau Revenus) : un sous-total par contenant (Général +
     // chaque activité) et, indicativement, un sous-total par canal — distinct du total global
@@ -1286,28 +1297,50 @@ export const IncomeStatementTab = () => {
             </div>
             </div>
 
-            {/* Méthode d'attribution de Général (renommée et déplacée ici le 21/10, retour
-                utilisateur) : vivait auparavant dans l'en-tête de la section Frais fixes plus
-                haut, sans jamais mentionner « Général » — facile à confondre avec les clés de
-                répartition par ligne (qui dimensionnent le pool de Général) alors qu'elle choisit
-                plutôt COMMENT ce pool déjà dimensionné se répartit ensuite entre les SKU,
-                exactement comme le CICI d'une activité (Paramètres → Activités de production),
-                mais à l'échelle du menu entier. Placée ici — après Frais fixes/Bénéfice net, avant
-                la Réconciliation — plutôt que dans Paramètres → Activités (Général n'est pas une
-                activité, l'y mélanger laisserait croire qu'on peut la renommer ou la supprimer).
-                Hors du conteneur de défilement horizontal unique ci-dessus (c'est un simple
-                sélecteur, pas un tableau large) : reste toujours visible, jamais caché en
-                défilant vers les colonnes de droite des tableaux. */}
-            <div className="p-4 bg-gray-100 rounded-lg flex items-center justify-between flex-wrap gap-2">
-                <label htmlFor="indirectCostMethod" className="flex items-center text-sm font-medium text-gray-700">
-                    Méthode d'attribution de Général
-                    <Tooltip text="Général (frais de structure non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) se répartit entre vos SKU selon ce driver, à l'échelle du menu entier — exactement le même choix et le même mécanisme que le CICI d'une activité (Paramètres → Activités de production), mais partagé par tous les produits plutôt que par activité. « Au prorata des coûts directs » (par défaut) : un SKU qui coûte plus cher à produire absorbe une part proportionnellement plus grande de Général. « Au prorata du temps de production » : selon les heures de main-d'œuvre de chaque SKU. Les deux répartissent l'intégralité du pool (elles se réconcilient par construction)." />
-                </label>
-                <select id="indirectCostMethod" value={generalInfo.indirectCostMethod || 'directCost'} onChange={(e) => onUpdateGeneralInfo('indirectCostMethod', e.target.value)} className="p-2 border border-gray-300 rounded-md text-sm">
-                    {Object.entries(indirectCostMethodLabels).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
+            {/* Coefficient d'imputation des charges indirectes (CICI) — centralisé ici le 22/10,
+                retour utilisateur. Avant cette révision, le driver de Général (renommé « Méthode
+                d'attribution de Général » le 21/10) vivait ici tout seul, tandis que le driver de
+                chaque activité vivait dans Paramètres → Activités de production, au même endroit
+                que son nom/sa suppression — une décision de méthode comptable mélangée avec une
+                décision structurelle, et une même notion de CICI éclatée entre deux onglets.
+                Désormais, Général et chaque activité partagent UNE seule liste, ici : même
+                libellé « CICI » que la terminologie déjà établie dans les infobulles du rapport
+                Par SKU, même mécanisme pour les deux (voir analysisData.js). Canal n'y figure
+                PAS : il n'a pas de CICI, seulement un pourcentage de majoration (Paramètres →
+                Canaux de vente) — une notion différente, pas un oubli. Placée après Frais
+                fixes/Bénéfice net, avant la Réconciliation — hors du conteneur de défilement
+                horizontal unique ci-dessus (une simple liste de sélecteurs, pas un tableau large) :
+                reste toujours visible, jamais caché en défilant vers les colonnes de droite des
+                tableaux. */}
+            <div id="tutorial-section-cici" className="p-4 bg-gray-100 rounded-lg">
+                <h2 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
+                    Coefficient d'imputation des charges indirectes
+                    <Tooltip text="Le CICI est le driver utilisé pour convertir un pool de frais fixes déjà dimensionné (par la clé de répartition, ci-dessus) en un taux $ par produit — propre à chaque ligne ci-dessous, sans effet sur les autres : Général (frais de structure non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) se répartit à l'échelle du menu entier ; chaque activité se répartit seulement entre ses propres produits. « Selon les charges directes » (matière + emballage + main-d'œuvre + sous-traitance combinés) : choix par défaut, approprié quand le coût indirect suit globalement la valeur des intrants consommés — capture à la fois le volume et la complexité d'un produit. « Selon le temps de main-d'œuvre » : plus précis si le coût indirect suit plutôt la CADENCE/le temps machine qu'une pure valeur d'intrants. Canal n'a pas de CICI : son coût indirect est toujours un pourcentage de majoration (Paramètres → Canaux de vente)." />
+                </h2>
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2 bg-white p-2 rounded-md shadow-sm">
+                        <label htmlFor="indirectCostMethod" className="flex-1 font-medium text-gray-700">Général</label>
+                        <select id="indirectCostMethod" value={generalInfo.indirectCostMethod || 'directCost'} onChange={(e) => onUpdateGeneralInfo('indirectCostMethod', e.target.value)} className="p-1 border rounded text-sm border-gray-300">
+                            {Object.entries(indirectCostMethodLabels).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                            ))}
+                        </select>
+                    </div>
+                    {productionActivities.map((activity) => (
+                        <div key={activity.id} className="flex items-center gap-2 bg-white p-2 rounded-md shadow-sm">
+                            <span className="flex-1 text-gray-700">{activity.name}</span>
+                            <select
+                                value={activity.indirectCostDriver || 'directCost'}
+                                onChange={(e) => handleActivityDriverChange(activity.id, e.target.value)}
+                                className="p-1 border rounded text-sm border-gray-300"
+                            >
+                                {Object.entries(indirectCostMethodLabels).map(([value, label]) => (
+                                    <option key={value} value={value}>{label}</option>
+                                ))}
+                            </select>
+                        </div>
                     ))}
-                </select>
+                </div>
             </div>
 
             <div id="tutorial-section-reconciliation" className="p-4 bg-gray-100 rounded-lg">

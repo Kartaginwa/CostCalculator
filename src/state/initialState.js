@@ -753,7 +753,7 @@ export const getDefaultState = () => {
     ];
 
     const generalInfo = {
-        period: 'monthly', totalIndirects: sumLineAmounts(demoExpenseLines),
+        period: 'custom', totalIndirects: sumLineAmounts(demoExpenseLines),
         // `totalRevenue` : jamais lu par le moteur de coût (voir addendum du 19/10 ci-dessus) —
         // gardé ici comme simple total d'affichage, dérivé de `demoRevenueLines` pour rester
         // cohérent si cette liste change, plutôt qu'un chiffre recopié à la main.
@@ -816,7 +816,7 @@ export const getEmptyState = () => ({
     directCostLines: [],
     repartitionKeys: [],
     generalInfo: {
-        period: 'monthly',
+        period: 'custom',
         totalIndirects: 0,
         totalRevenue: 0,
         totalKitchenLaborCost: 0,
@@ -860,10 +860,10 @@ export const indirectCostMethodLabels = {
     laborTime: 'Au prorata du temps de production',
 };
 
-export const periodTranslations = {
-    monthly: 'Mensuelle',
-    weekly: 'Hebdomadaire',
-    quarterly: 'Trimestrielle',
-    yearly: 'Annuelle',
-    custom: 'Personnalisée'
-};
+// Période de référence (22/10) : toujours personnalisée désormais — le sélecteur
+// semaine/mois/trimestre/année a été retiré (voir IncomeStatementTab.jsx, section Période de
+// référence) ; `generalInfo.period` vaut maintenant systématiquement 'custom', y compris pour un
+// projet antérieur (migré au chargement, voir projectSerialization.js), mais ce champ n'est plus
+// lu nulle part (`startDate`/`endDate` suffisent) — `periodTranslations`, qui ne faisait que
+// traduire ses anciennes valeurs pour l'affichage, est donc retirée plutôt que réduite à une
+// unique entrée que plus aucun code n'aurait besoin de regarder.

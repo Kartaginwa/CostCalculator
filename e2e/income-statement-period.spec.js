@@ -3,6 +3,8 @@
 // Projet_Claude/03-Feuille-de-route.md. L'assistant d'import de l'état des résultats la détecte
 // automatiquement depuis une colonne Date (fichier structuré CSV/Excel), même patron que
 // l'assistant d'import de rapport de ventes (App.jsx::handleSalesReportImport).
+// Toujours personnalisée depuis le 22/10 (sélecteur semaine/mois/trimestre/année retiré) : les
+// dates de début/fin sont désormais toujours visibles, sans sélecteur `#period` à manipuler.
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
@@ -30,8 +32,7 @@ test("État des résultats : Période de référence tout en haut (avant Revenus
     const revenueBox = await page.locator('#tutorial-section-revenue').boundingBox();
     expect(periodBox.y).toBeLessThan(revenueBox.y);
 
-    // Personnalisée : affiche les dates de début/fin.
-    await periodSection.locator('#period').selectOption('custom');
+    // Toujours personnalisée : les dates de début/fin sont visibles sans sélecteur à manipuler.
     await expect(periodSection.locator('#startDate')).toBeVisible();
     await expect(periodSection.locator('#endDate')).toBeVisible();
 
@@ -54,15 +55,16 @@ test("État des résultats : l'import détecte automatiquement la période depui
 
     await page.locator('#tab-income-statement').click();
     const periodSection = page.locator('#tutorial-section-income-statement-period');
-    await expect(periodSection.locator('#period')).toHaveValue('monthly');
+    await expect(periodSection.locator('#startDate')).toHaveValue('');
+    await expect(periodSection.locator('#endDate')).toHaveValue('');
 
     await page.getByText("Importer l'état des résultats").click();
     const modal = page.locator('div.fixed.inset-0.bg-black');
     const fixturePath = path.join(process.cwd(), 'e2e', 'fixtures', 'income-statement-sample.csv');
     await modal.locator('input[type="file"]').setInputFiles(fixturePath);
     await expect(modal.getByText('Étape 2: Correspondance des colonnes')).toBeVisible();
-    // Pas de colonne Date dans cette fixture (voir income-statement-import.spec.js) : la période
-    // ne doit PAS changer après cet import — vérifié ci-dessous après confirmation.
+    // Pas de colonne Date dans cette fixture (voir income-statement-import.spec.js) : les dates
+    // ne doivent PAS changer après cet import — vérifié ci-dessous après confirmation.
     await modal.getByRole('button', { name: 'Suivant' }).click();
     await expect(modal.getByText('Étape 3: Prévisualisation et résolution')).toBeVisible();
     await modal.getByRole('button', { name: 'Suivant' }).click();
@@ -70,13 +72,13 @@ test("État des résultats : l'import détecte automatiquement la période depui
     await modal.getByText('Confirmer et Importer').click();
     await expect(page.getByText(/importé\(s\)\./)).toBeVisible();
 
-    await expect(periodSection.locator('#period')).toHaveValue('monthly');
-    await expect(periodSection.locator('#startDate')).toHaveCount(0);
+    await expect(periodSection.locator('#startDate')).toHaveValue('');
+    await expect(periodSection.locator('#endDate')).toHaveValue('');
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
 
-test("État des résultats : une colonne Date mappée bascule la période en Personnalisée avec les bonnes dates min/max", async ({ page }) => {
+test("État des résultats : une colonne Date mappée renseigne les bonnes dates de début/fin min/max", async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -104,7 +106,6 @@ test("État des résultats : une colonne Date mappée bascule la période en Per
     // tel quel (pas un bug introduit ici) : peut décaler d'un jour selon le fuseau horaire local.
     // On vérifie donc l'écart réel (26 jours), pas une date absolue dépendante du fuseau.
     const periodSection = page.locator('#tutorial-section-income-statement-period');
-    await expect(periodSection.locator('#period')).toHaveValue('custom');
     const startValue = await periodSection.locator('#startDate').inputValue();
     const endValue = await periodSection.locator('#endDate').inputValue();
     const daysBetween = (new Date(endValue) - new Date(startValue)) / (1000 * 60 * 60 * 24);

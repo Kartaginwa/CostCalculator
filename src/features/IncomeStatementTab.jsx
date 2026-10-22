@@ -470,11 +470,8 @@ export const IncomeStatementTab = () => {
         // ligne, voir IncomeStatementImportWizardModal.jsx), même patron que l'import de rapport
         // de ventes (App.jsx::handleSalesReportImport). N'écrase rien si le fichier n'a pas de
         // date reconnue.
-        if (newStartDate || newEndDate) {
-            onUpdateGeneralInfo('period', 'custom');
-            if (newStartDate) onUpdateGeneralInfo('startDate', newStartDate);
-            if (newEndDate) onUpdateGeneralInfo('endDate', newEndDate);
-        }
+        if (newStartDate) onUpdateGeneralInfo('startDate', newStartDate);
+        if (newEndDate) onUpdateGeneralInfo('endDate', newEndDate);
         showNotification({ message: `${newRevenueLines.length} revenu(s) et ${newExpenseLines.length} dépense(s) importé(s).`, type: 'success' });
     };
 
@@ -641,33 +638,24 @@ export const IncomeStatementTab = () => {
             </div>
             {/* Période de référence (déplacée de Paramètres le 18/10 — voir
                 Projet_Claude/03-Feuille-de-route.md) : tout en haut, avant Revenus — ce que
-                couvrent les lignes ci-dessous dépend de cette période, pas l'inverse. */}
+                couvrent les lignes ci-dessous dépend de cette période, pas l'inverse. Toujours
+                personnalisée depuis le 22/10 (sélecteur semaine/mois/trimestre/année retiré) :
+                une seule plage de dates, jamais une étiquette approximative qui ne correspond à
+                aucune date précise — `generalInfo.period` reste 'custom' en interne (voir
+                initialState.js), mais ce choix n'est plus exposé à l'utilisateur. */}
             <div id="tutorial-section-income-statement-period" className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 p-4 bg-gray-100 rounded-lg">
-                <div className={generalInfo.period === 'custom' ? '' : 'md:col-span-2'}>
-                    <label htmlFor="period" className="flex items-center text-sm font-medium text-gray-700">
-                        Période de référence
-                        <Tooltip text="La période sur laquelle vos revenus et frais fixes ci-dessous sont basés (semaine, mois, etc.). L'assistant d'import (bouton ci-dessus) la détecte et la renseigne automatiquement à partir des dates du fichier, quand elles y figurent." />
-                    </label>
-                    <select id="period" value={generalInfo.period} onChange={(e) => onUpdateGeneralInfo('period', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                        <option value="weekly">Hebdomadaire</option>
-                        <option value="monthly">Mensuelle</option>
-                        <option value="quarterly">Trimestrielle</option>
-                        <option value="yearly">Annuelle</option>
-                        <option value="custom">Personnalisée</option>
-                    </select>
+                <div className="md:col-span-2 flex items-center text-sm font-medium text-gray-700">
+                    Période de référence
+                    <Tooltip text="La plage de dates précise sur laquelle vos revenus et frais fixes ci-dessous sont basés. L'assistant d'import (bouton ci-dessus) la détecte et la renseigne automatiquement à partir des dates du fichier, quand elles y figurent." />
                 </div>
-                {generalInfo.period === 'custom' && (
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Date de début</label>
-                            <input type="date" id="startDate" value={generalInfo.startDate || ''} onChange={(e) => onUpdateGeneralInfo('startDate', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
-                        </div>
-                        <div>
-                            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">Date de fin</label>
-                            <input type="date" id="endDate" value={generalInfo.endDate || ''} onChange={(e) => onUpdateGeneralInfo('endDate', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
-                        </div>
-                    </div>
-                )}
+                <div>
+                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Date de début</label>
+                    <input type="date" id="startDate" value={generalInfo.startDate || ''} onChange={(e) => onUpdateGeneralInfo('startDate', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+                </div>
+                <div>
+                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">Date de fin</label>
+                    <input type="date" id="endDate" value={generalInfo.endDate || ''} onChange={(e) => onUpdateGeneralInfo('endDate', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+                </div>
             </div>
             {showImportWizard && (
                 <Suspense fallback={null}>

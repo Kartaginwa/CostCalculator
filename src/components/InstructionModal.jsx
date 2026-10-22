@@ -338,7 +338,7 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     <p>{highlightText("Votre état des résultats réel — revenus et frais fixes, tels qu'ils apparaissent dans votre vraie comptabilité — distinct du modèle théorique de vos recettes (Production).", searchTerm)}</p>
                                     <div id="guide-ff-periode" className="space-y-2 mt-4">
                                         <h4 className="text-lg font-semibold">{highlightText("Période de référence", searchTerm)}</h4>
-                                        <p>{highlightText("Tout en haut de l'onglet, avant Revenus : la période sur laquelle les revenus et frais fixes ci-dessous sont basés (semaine, mois, etc.). L'assistant d'import (bouton « Importer l'état des résultats ») la détecte et la renseigne automatiquement à partir des dates du fichier importé, quand elles y figurent — sinon, choisissez-la manuellement, y compris une période personnalisée avec dates de début et de fin.", searchTerm)}</p>
+                                        <p>{highlightText("Tout en haut de l'onglet, avant Revenus : la plage de dates précise (date de début, date de fin) sur laquelle les revenus et frais fixes ci-dessous sont basés. L'assistant d'import (bouton « Importer l'état des résultats ») la détecte et la renseigne automatiquement à partir des dates du fichier importé, quand elles y figurent — sinon, saisissez-la manuellement.", searchTerm)}</p>
                                     </div>
                                     <div id="guide-ff-revenus" className="space-y-2 mt-4">
                                         <h4 className="text-lg font-semibold">{highlightText("Revenus", searchTerm)}</h4>

@@ -2,7 +2,7 @@
 // Fonction pure "données -> document" : reçoit tout son contexte via l'objet `deps`, ne lit
 // aucun état React. jsPDF/autoTable sont fournis en global (window.jspdf) via scripts/copy-libs.
 import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS, MAJOR_ALLERGENS } from '../utils.js';
-import { indirectCostMethodLabels, periodTranslations } from '../state/initialState.js';
+import { indirectCostMethodLabels } from '../state/initialState.js';
     const getGlobalKpiDataForPdf = (trackingPoints) => {
         return trackingPoints.map(point => {
             const activeProducts = point.productsWithCosts.filter(p => p.onMenu);
@@ -295,7 +295,9 @@ export const generatePdf = (options, deps) => {
             // l'État des résultats (section Revenus), pas ici.
             const paramsBody = [
                 [
-                    'Période:', `${periodTranslations[calculatedGeneralInfo.period] || 'N/A'} ${calculatedGeneralInfo.period === 'custom' ? `(${calculatedGeneralInfo.startDate} au ${calculatedGeneralInfo.endDate})` : ''}`,
+                    // Toujours personnalisée depuis le 22/10 (sélecteur semaine/mois/trimestre/
+                    // année retiré, voir IncomeStatementTab.jsx) : une seule plage de dates.
+                    'Période:', `${calculatedGeneralInfo.startDate} au ${calculatedGeneralInfo.endDate}`,
                     'Frais Indirects:', `${formatCurrency(calculatedGeneralInfo.totalIndirects)} $`
                 ],
                 [

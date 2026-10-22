@@ -39,6 +39,11 @@ export function parseProjectData(data, emptyState) {
     if (generalInfo.indirectCostMethod === 'salesAllocation') {
         generalInfo.indirectCostMethod = 'directCost';
     }
+    // Migration (22/10) : la Période de référence est désormais TOUJOURS personnalisée — le
+    // sélecteur semaine/mois/trimestre/année a été retiré (voir IncomeStatementTab.jsx). Un projet
+    // antérieur retombe sur 'custom' ; ses dates de début/fin déjà saisies (ou leur absence) ne
+    // sont jamais touchées par cette migration.
+    generalInfo.period = 'custom';
 
     // Migration (Phase 4.1) : l'ancien `generalInfo.totalIndirects` saisi à plat devient une liste
     // de lignes de dépense catégorisées. Un projet antérieur reçoit une seule ligne migrée (son

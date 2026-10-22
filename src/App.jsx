@@ -191,7 +191,6 @@ const App = () => {
         setProducts(finalProducts);
         setGeneralInfo(prev => ({
             ...prev,
-            period: 'custom',
             startDate: newStartDate || prev.startDate,
             endDate: newEndDate || prev.endDate,
         }));

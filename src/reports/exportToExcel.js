@@ -3,7 +3,7 @@
 // fourni en global via scripts/copy-libs. Le contenu des feuilles est intentionnellement un
 // export de données brutes (handoff spécialiste), volontairement distinct de l'analyse du PDF.
 import { parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS } from '../utils.js';
-import { indirectCostMethodLabels, periodTranslations } from '../state/initialState.js';
+import { indirectCostMethodLabels } from '../state/initialState.js';
 
 export const exportToExcel = (deps) => {
     const {
@@ -56,7 +56,9 @@ export const exportToExcel = (deps) => {
                     // section « Frais et revenus » de Paramètres — plus aucune donnée réelle
                     // derrière ces champs (voir Projet_Claude/03-Feuille-de-route.md). Le revenu
                     // réel figure maintenant dans l'État des résultats (section Revenus), pas ici.
-                    ["Période:", `${generalInfo.period === 'custom' ? `Personnalisée (${generalInfo.startDate} au ${generalInfo.endDate})` : (periodTranslations[generalInfo.period] || 'N/A')}`],
+                    // Toujours personnalisée depuis le 22/10 (sélecteur semaine/mois/trimestre/
+                    // année retiré, voir IncomeStatementTab.jsx) : une seule plage de dates.
+                    ["Période:", `${generalInfo.startDate} au ${generalInfo.endDate}`],
                     ["Frais Indirects Totaux:", { t: 'n', v: Number(calculatedGeneralInfo.totalIndirects), z: currencyFormat }],
                     ["Coût M-O Cuisine:", { t: 'n', v: Number(calculatedGeneralInfo.totalKitchenLaborCost), z: currencyFormat }],
                     [],

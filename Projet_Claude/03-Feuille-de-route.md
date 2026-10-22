@@ -3191,3 +3191,40 @@ Général » et le repositionner sous le tableau Frais fixes, avant la Réconcil
   (Général varie bien par SKU au lieu d'être uniforme ; sélecteur affiche exactement les 2 options
   attendues avec `directCost` comme valeur courante ; libellé « Méthode d'attribution de Général »
   présent une seule fois sur la page), lint et `npx vite build` propres.
+
+## Période de référence : toujours personnalisée, sélecteur retiré (22/10)
+
+Retour utilisateur : le sélecteur Hebdomadaire/Mensuelle/Trimestrielle/Annuelle/Personnalisée de la
+Période de référence (État des résultats) n'ajoutait rien — seule la plage de dates (début/fin)
+est réellement utilisée ailleurs dans l'app (export, étiquette), les 4 autres valeurs n'étant que
+des libellés jamais branchés sur un calcul. Décision : la période est désormais TOUJOURS
+personnalisée — les deux champs de date s'affichent sans condition, sans sélecteur à choisir
+d'abord.
+
+**Mise en œuvre** :
+1. `IncomeStatementTab.jsx` : `<select id="period">` retiré ; les deux `<input type="date">`
+   (Date de début/Date de fin) s'affichent désormais sans condition, dans la même grille à 2
+   colonnes. Infobulle réécrite (ne mentionne plus « semaine, mois, etc. »).
+2. `initialState.js` : défauts démo et projet vierge passés de `period: 'monthly'` à
+   `period: 'custom'`. `periodTranslations` (table de traduction des 5 anciennes valeurs) retirée
+   entièrement — `generalInfo.period` reste à `'custom'` en interne par cohérence avec le reste du
+   code qui le lit encore, mais plus aucun code n'a besoin de traduire une valeur variable.
+3. `projectSerialization.js` : nouvelle migration forçant `generalInfo.period` à `'custom'` au
+   chargement de tout projet antérieur — ses dates de début/fin existantes (ou leur absence) ne
+   sont jamais touchées.
+4. `exportToExcel.js`/`generatePdf.js` : affichage de la Période simplifié à
+   `${startDate} au ${endDate}` directement, sans plus passer par `periodTranslations` (import
+   retiré, devenu inutile).
+5. `App.jsx`/`IncomeStatementTab.jsx` : les deux endroits qui forçaient explicitement
+   `period: 'custom'` après une importation (rapport de ventes, état des résultats) simplifiés —
+   devenu un no-op maintenant que la valeur ne change jamais.
+6. `InstructionModal.jsx` : passage du guide mis à jour (« la plage de dates précise » plutôt que
+   « semaine, mois, etc. »).
+- Fichiers touchés : `src/features/IncomeStatementTab.jsx`, `src/state/initialState.js`,
+  `src/state/projectSerialization.js`, `src/reports/exportToExcel.js`, `src/reports/generatePdf.js`,
+  `src/App.jsx`, `src/components/InstructionModal.jsx`, `e2e/income-statement-period.spec.js` (3
+  tests adaptés : sélecteur `#period` retiré, dates toujours visibles sans le choisir au préalable).
+- Tests : 229/229 unitaires (inchangés, `period` n'était lu par aucune logique de calcul), 46/46
+  e2e, vérification fonctionnelle par script Playwright temporaire (section Période du projet
+  démo : aucun sélecteur, seulement « Date de début »/« Date de fin », vides — jamais une date
+  inventée par défaut), lint et `npx vite build` propres.

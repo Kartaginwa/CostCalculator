@@ -3274,3 +3274,46 @@ pool plutôt que de choisir comment il se répartit ensuite).
   1 nouveau), vérification fonctionnelle par script Playwright temporaire (section CICI du projet
   démo : Général + les 3 activités réelles, chacune avec ses 2 options ; section Activités de
   production de Paramètres : plus aucun sélecteur), lint et `npx vite build` propres.
+
+## Suivi : retrait de la volatilité du coût direct par format, emballage ajouté aux graphiques (22/10)
+
+Deux retours utilisateur sur l'onglet Suivi :
+
+1. **Retrait de « Volatilité du coût direct par format »** (section « Analyse par format ») —
+   redondante avec le détail matière/emballage/main-d'œuvre déjà visible juste au-dessus dans le
+   même écran (le graphique d'évolution des coûts du format), sans y ajouter d'information neuve.
+2. **Graphiques globaux et par produit mis à jour** pour refléter les changements récents de la
+   session — notamment l'ajout du coût d'emballage comme poste séparé, déjà présent dans le moteur
+   (`costPackagingPercent`/`costPackagingPerPortion`, calculateCosts.js) mais jamais affiché dans
+   ces deux graphiques (seuls Matière et Main-d'œuvre y figuraient).
+
+**Mise en œuvre** :
+1. `engine/priceVolatility.js` : `computeFormatCostVolatility` retirée (plus aucun appelant) ;
+   `computeCatalogVolatility`, la fonction commune, documentée comme ne servant plus que les
+   ingrédients et l'emballage.
+2. `TrackingTab.jsx` : bloc « Volatilité du coût direct par format » et son `formatVolatility`
+   retirés. `VolatilityTable` simplifiée en retirant `showProvider`/`priceColumnLabel` — ces deux
+   props n'existaient que pour ce bloc (un format n'a pas de fournisseur) ; sans lui, le composant
+   n'a plus qu'un seul comportement (toujours avec fournisseur), donc plus besoin de les
+   paramétrer.
+3. Graphique global (« Évolution des marges et coûts moyens ») : nouvelle série « Coût Emballage
+   Moyen » (`weightedPackagingCost`, pondéré par le mix des ventes, même calcul que Matière/MO).
+   Corrigé au passage : la branche de repli (`totalSalesMix === 0`, aucun produit actif avec un mix
+   connu) retournait des clés qui ne correspondaient à AUCUNE des séries réellement affichées par
+   le graphique (`weightedGrossMargin` vs `"Marge Brute Moyenne"`, etc. — un bogue préexistant,
+   silencieux) et forçait `0` plutôt que de laisser la donnée absente (contraire au principe
+   établi, voir CLAUDE.md) ; corrigée en `null` sous les bons noms de clé — un vrai trou dans la
+   ligne, jamais une fausse valeur nulle.
+4. Graphique par format (« Analyse par format ») : nouvelle série « Coût emballage (%) »/« Coût
+   emballage ($/u.) » selon que le format a un prix de vente ou non — même paire de variantes déjà
+   utilisée pour Matière/MO.
+- Fichiers touchés : `src/engine/priceVolatility.js`, `src/engine/priceVolatility.test.js`,
+  `src/features/TrackingTab.jsx`, `e2e/tracking-volatility-packaging-format.spec.js` (renommé
+  `tracking-volatility-packaging.spec.js`, assertions sur le coût direct par format retirées),
+  `e2e/production-activities.spec.js`/`e2e/income-statement-period.spec.js`/`e2e/smoke.spec.js`
+  (aucun changement, déjà à jour de la session précédente).
+- Tests : 227/227 unitaires (229 − 2, les deux tests de `computeFormatCostVolatility` retirés avec
+  la fonction), 47/47 e2e, vérification fonctionnelle par script Playwright temporaire (légendes
+  des deux graphiques confirmant « Coût Emballage Moyen »/« Coût emballage ($/u.) » présentes ;
+  section « Analyse par format » du projet démo ne contient plus que le graphique, sans bloc de
+  volatilité en dessous), lint et `npx vite build` propres.

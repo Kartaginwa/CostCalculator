@@ -10,10 +10,12 @@ import { parseLocaleNumber } from '../utils.js';
 export const VOLATILE_THRESHOLD = 10; // % d'amplitude à partir duquel le prix est jugé volatil (modéré+)
 export const HIGH_THRESHOLD = 20;     // % d'amplitude pour la volatilité « élevée »
 
-// Fonction pure commune aux 3 dimensions suivies (ingrédients, emballage, coût direct par format)
-// — seule la façon d'extraire {id, name, provider, price} d'un point de référence change entre
-// elles (Phase 6, 15/10 : généralisée depuis l'ancienne computeIngredientVolatility, qui ne lisait
-// que `pt.baseIngredients`, pour éviter de dupliquer cette logique trois fois).
+// Fonction pure commune aux dimensions suivies (ingrédients, emballage) — seule la façon
+// d'extraire {id, name, provider, price} d'un point de référence change entre elles (Phase 6,
+// 15/10 : généralisée depuis l'ancienne computeIngredientVolatility, qui ne lisait que
+// `pt.baseIngredients`, pour éviter de dupliquer cette logique). Portait aussi le coût direct par
+// format jusqu'au 22/10 (retiré, retour utilisateur — redondant avec le détail matière/
+// emballage/MO déjà visible ailleurs dans Suivi, voir TrackingTab.jsx).
 function computeCatalogVolatility(trackingPoints, extractItems) {
     const points = [...(trackingPoints || [])]
         .filter(p => p && p.timestamp)
@@ -77,18 +79,5 @@ export function computeIngredientVolatility(trackingPoints) {
 export function computePackagingVolatility(trackingPoints) {
     return computeCatalogVolatility(trackingPoints, pt => (pt.basePackaging || []).map(pkg => ({
         id: pkg.id, name: pkg.name, provider: pkg.provider, price: parseLocaleNumber(pkg.unitPrice),
-    })));
-}
-
-// Coût direct par FORMAT (Phase 6, 15/10) : pas un prix d'achat comme les deux précédentes, mais le
-// `totalDirectCostPerPortion` déjà calculé et figé dans chaque snapshot (`pt.productsWithCosts`,
-// une ligne par format) — matière + emballage + main-d'œuvre + sous-traitance, l'ensemble des coûts
-// variables de CE format. Révèle si un format est devenu sensible aux variations de prix de ses
-// intrants, sans recalculer quoi que ce soit (chaque snapshot a déjà figé son propre coût à sa
-// date). `provider` n'a pas de sens ici — toujours absent (jamais une valeur inventée).
-export function computeFormatCostVolatility(trackingPoints) {
-    return computeCatalogVolatility(trackingPoints, pt => (pt.productsWithCosts || []).map(row => ({
-        id: row.id, name: row.displayName || row.platName, provider: undefined,
-        price: parseLocaleNumber(row.costs?.totalDirectCostPerPortion),
     })));
 }

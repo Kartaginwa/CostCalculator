@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { Camera, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency } from '../utils.js';
 import { useProject } from '../state/ProjectContext.jsx';
-import { computeIngredientVolatility, computePackagingVolatility, computeFormatCostVolatility } from '../engine/priceVolatility.js';
+import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
 import { buildTrackableProducts } from '../engine/trackingAnalysis.js';
 import { Pagination, Tooltip } from '../components/common.jsx';
 
@@ -15,11 +15,9 @@ const VOLATILITY_TIERS = {
 };
 
 // Tableau de volatilité générique (Phase 6, 15/10) : extrait de l'ancien bloc « Volatilité des
-// prix d'achat » (ingrédients seulement) pour le réutiliser tel quel sur l'emballage et le coût
-// direct par format — même tri/filtre/pagination, même visuel (badge de palier). `showProvider`
-// désactivé pour les formats (un format n'a pas de fournisseur). `priceColumnLabel` distingue un
-// PRIX d'achat (ingrédient/emballage) d'un COÛT calculé (format).
-const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceholder, showProvider = true, priceColumnLabel = 'Prix actuel' }) => {
+// prix d'achat » (ingrédients seulement) pour le réutiliser tel quel sur l'emballage — même
+// tri/filtre/pagination, même visuel (badge de palier).
+const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceholder }) => {
     const [sort, setSort] = useState({ key: 'amplitudePercent', direction: 'descending' });
     const [filterName, setFilterName] = useState('');
     const [filterProvider, setFilterProvider] = useState('all');
@@ -36,14 +34,14 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
             const q = filterName.toLowerCase();
             list = list.filter(v => (v.name || '').toLowerCase().includes(q));
         }
-        if (showProvider && filterProvider !== 'all') list = list.filter(v => v.provider === filterProvider);
+        if (filterProvider !== 'all') list = list.filter(v => v.provider === filterProvider);
         const dir = sort.direction === 'ascending' ? 1 : -1;
         return [...list].sort((a, b) => {
             const av = a[sort.key], bv = b[sort.key];
             if (typeof av === 'string' || typeof bv === 'string') return String(av).localeCompare(String(bv)) * dir;
             return ((av || 0) - (bv || 0)) * dir;
         });
-    }, [volatility, filterName, filterProvider, sort, showProvider]);
+    }, [volatility, filterName, filterProvider, sort]);
     useEffect(() => { setPage(1); }, [filterName, filterProvider, perPage]);
     const paged = useMemo(() => filtered.slice((page - 1) * perPage, (page - 1) * perPage + perPage), [filtered, page, perPage]);
     const requestSort = (key) => setSort(prev => ({
@@ -56,8 +54,8 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
 
     const columns = [
         { key: 'name', label: nameColumnLabel, align: 'left' },
-        ...(showProvider ? [{ key: 'provider', label: 'Fournisseur', align: 'left' }] : []),
-        { key: 'currentPrice', label: priceColumnLabel, align: 'right', tip: showProvider ? "Dernier prix unitaire connu (point de référence le plus récent)." : "Dernier coût direct par portion connu (point de référence le plus récent)." },
+        { key: 'provider', label: 'Fournisseur', align: 'left' },
+        { key: 'currentPrice', label: 'Prix actuel', align: 'right', tip: "Dernier prix unitaire connu (point de référence le plus récent)." },
         { key: 'trendPercent', label: 'Tendance', align: 'right', tip: "Variation entre le premier et le dernier point de référence (hausse ▲ / baisse ▼)." },
         { key: 'amplitudePercent', label: 'Volatilité (amplitude)', align: 'right', tip: "Amplitude = écart entre la valeur la plus basse et la plus haute, en % de la moyenne. Mesure l'instabilité." },
     ];
@@ -72,11 +70,9 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
                     placeholder={filterPlaceholder}
                     className="p-2 border rounded-md text-sm w-56"
                 />
-                {showProvider && (
-                    <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)} className="p-2 border rounded-md text-sm">
-                        {providers.map(p => <option key={p} value={p}>{p === 'all' ? 'Tous les fournisseurs' : p}</option>)}
-                    </select>
-                )}
+                <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)} className="p-2 border rounded-md text-sm">
+                    {providers.map(p => <option key={p} value={p}>{p === 'all' ? 'Tous les fournisseurs' : p}</option>)}
+                </select>
             </div>
             <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
@@ -101,7 +97,7 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
                             return (
                                 <tr key={v.id} className={`border-b border-gray-100 ${v.tier === 'elevee' ? 'bg-orange-50' : ''}`}>
                                     <td className="py-2 px-3">{v.name}</td>
-                                    {showProvider && <td className="py-2 px-3 text-gray-500">{v.provider || '—'}</td>}
+                                    <td className="py-2 px-3 text-gray-500">{v.provider || '—'}</td>
                                     <td className="py-2 px-3 text-right text-gray-600">{formatCurrency(v.currentPrice)} $</td>
                                     <td className={`py-2 px-3 text-right ${v.trendPercent > 0.5 ? 'text-red-600' : v.trendPercent < -0.5 ? 'text-green-600' : 'text-gray-500'}`}>
                                         {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {Math.abs(v.trendPercent).toFixed(0)} %
@@ -286,12 +282,11 @@ const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
 export const TrackingTab = () => {
     const { trackingPoints, setTrackingPoints, generalInfo, showNotification, setNotification, baseIngredients, basePackaging, analysisData } = useProject();
     const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
-    // Phase 6 (15/10) : même analyse sur l'emballage (prix d'achat) et sur le coût direct par
-    // format (matière + emballage + MO + sous-traitance déjà figés dans chaque snapshot) — voir
-    // VolatilityTable, qui porte désormais tout le tri/filtre/pagination (auparavant dupliqué ici
-    // pour les ingrédients seulement).
+    // Phase 6 (15/10) : même analyse sur l'emballage (prix d'achat) — voir VolatilityTable, qui
+    // porte désormais tout le tri/filtre/pagination (auparavant dupliqué ici pour les ingrédients
+    // seulement). Portait aussi le coût direct par format jusqu'au 22/10 (retiré, retour
+    // utilisateur).
     const packagingVolatility = useMemo(() => computePackagingVolatility(trackingPoints), [trackingPoints]);
-    const formatVolatility = useMemo(() => computeFormatCostVolatility(trackingPoints), [trackingPoints]);
 
     // Tri / filtre / pagination de la table de gestion des points de référence.
     const [snapSort, setSnapSort] = useState({ key: 'timestamp', direction: 'descending' });
@@ -434,12 +429,19 @@ export const TrackingTab = () => {
             const activeProducts = point.productsWithCosts.filter(p => p.onMenu);
             const totalSalesMix = activeProducts.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix), 0);
 
+            // Aucun produit actif avec un mix des ventes connu à cette date : les KPI pondérés
+            // n'ont pas de sens (division par un mix total nul) — données ABSENTES (null, un trou
+            // dans la ligne), jamais forcées à 0 (qui laisserait croire à une vraie valeur nulle).
             if (totalSalesMix === 0) {
-                return { name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note, globalBreakEven: 0, weightedGrossMargin: 0, weightedMaterialCost: 0, weightedLaborCost: 0 };
+                return {
+                    name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note,
+                    "Point Mort Global": null, "Marge Brute Moyenne": null, "Coût Matière Moyen": null, "Coût Emballage Moyen": null, "Coût M-O Moyen": null,
+                };
             }
 
             const weightedGrossMargin = activeProducts.reduce((sum, p) => sum + (p.costs.margeBrutePercent * (parseLocaleNumber(p.salesMix) / totalSalesMix)), 0);
             const weightedMaterialCost = activeProducts.reduce((sum, p) => sum + (p.costs.costMatierePercent * (parseLocaleNumber(p.salesMix) / totalSalesMix)), 0);
+            const weightedPackagingCost = activeProducts.reduce((sum, p) => sum + (p.costs.costPackagingPercent * (parseLocaleNumber(p.salesMix) / totalSalesMix)), 0);
             const weightedLaborCost = activeProducts.reduce((sum, p) => sum + (p.costs.costLaborPercent * (parseLocaleNumber(p.salesMix) / totalSalesMix)), 0);
             const globalBreakEven = weightedGrossMargin > 0 ? parseLocaleNumber(point.generalInfo.totalIndirects) / weightedGrossMargin : 0;
 
@@ -450,6 +452,7 @@ export const TrackingTab = () => {
                 "Point Mort Global": globalBreakEven,
                 "Marge Brute Moyenne": weightedGrossMargin * 100,
                 "Coût Matière Moyen": weightedMaterialCost * 100,
+                "Coût Emballage Moyen": weightedPackagingCost * 100,
                 "Coût M-O Moyen": weightedLaborCost * 100,
             };
         });
@@ -466,10 +469,12 @@ export const TrackingTab = () => {
                     label: point.name,
                     note: point.note,
                     "Coût matière (%)": null,
+                    "Coût emballage (%)": null,
                     "Coût main-d'oeuvre (%)": null,
                     "Coût frais indirects (%)": null,
                     "Marge nette (%)": null,
                     "Coût matière ($/u.)": null,
+                    "Coût emballage ($/u.)": null,
                     "Coût main-d'oeuvre ($/u.)": null,
                     "Coût de revient ($/u.)": null,
                 };
@@ -479,10 +484,12 @@ export const TrackingTab = () => {
                 label: point.name,
                 note: point.note,
                 "Coût matière (%)": productData.costs.costMatierePercent * 100,
+                "Coût emballage (%)": productData.costs.costPackagingPercent * 100,
                 "Coût main-d'oeuvre (%)": productData.costs.costLaborPercent * 100,
                 "Coût frais indirects (%)": productData.costs.costIndirectPercent * 100,
                 "Marge nette (%)": productData.costs.margeNettePercent * 100,
                 "Coût matière ($/u.)": productData.costs.costMatierePerPortion,
+                "Coût emballage ($/u.)": productData.costs.costPackagingPerPortion,
                 "Coût main-d'oeuvre ($/u.)": productData.costs.costLaborPerPortion,
                 "Coût de revient ($/u.)": productData.costs.totalCostPerPortion,
             };
@@ -597,6 +604,7 @@ export const TrackingTab = () => {
                             lines={[
                                 { dataKey: "Marge Brute Moyenne", color: "#82ca9d", unit: '%' },
                                 { dataKey: "Coût Matière Moyen", color: "#ffc658", unit: '%' },
+                                { dataKey: "Coût Emballage Moyen", color: "#db2777", unit: '%' },
                                 { dataKey: "Coût M-O Moyen", color: "#ff7300", unit: '%' },
                             ]}
                             yAxisLabel="Pourcentage (%)"
@@ -625,6 +633,7 @@ export const TrackingTab = () => {
                                 data={productKpiData}
                                 lines={[
                                     { dataKey: "Coût matière (%)", color: "#82ca9d", unit: '%' },
+                                    { dataKey: "Coût emballage (%)", color: "#db2777", unit: '%' },
                                     { dataKey: "Coût main-d'oeuvre (%)", color: "#ffc658", unit: '%' },
                                     { dataKey: "Coût frais indirects (%)", color: "#8884d8", unit: '%' },
                                     { dataKey: "Marge nette (%)", color: "#ff7300", unit: '%' },
@@ -636,33 +645,13 @@ export const TrackingTab = () => {
                                 data={productKpiData}
                                 lines={[
                                     { dataKey: "Coût matière ($/u.)", color: "#82ca9d", unit: ' $' },
+                                    { dataKey: "Coût emballage ($/u.)", color: "#db2777", unit: ' $' },
                                     { dataKey: "Coût main-d'oeuvre ($/u.)", color: "#ffc658", unit: ' $' },
                                     { dataKey: "Coût de revient ($/u.)", color: "#ff7300", unit: ' $' },
                                 ]}
                                 yAxisLabel="Coût ($ / unité)"
                             />
                         )}
-
-                        {/* Volatilité du coût direct par format (Phase 6, 15/10) : matière + emballage +
-                            MO + sous-traitance déjà figés dans chaque point de référence — révèle si un
-                            format est devenu sensible aux variations de prix de ses intrants, tous
-                            combinés (pas seulement les ingrédients ou l'emballage pris séparément). */}
-                        <div className="mt-6 pt-4 border-t">
-                            <h3 className="text-lg font-semibold text-gray-700 mb-1">Volatilité du coût direct par format</h3>
-                            <p className="text-sm text-gray-500 mb-4">
-                                Amplitude du coût direct par portion (matière + emballage + main-d'œuvre + sous-traitance)
-                                {formatVolatility.hasEnoughData ? ` sur vos ${formatVolatility.pointCount} points de référence` : ''}.
-                                Un format très volatil mérite une attention particulière sur son prix de vente ou ses marges.
-                            </p>
-                            <VolatilityTable
-                                volatility={formatVolatility}
-                                itemLabel="du coût direct par format"
-                                nameColumnLabel="Format"
-                                filterPlaceholder="Filtrer par format…"
-                                showProvider={false}
-                                priceColumnLabel="Coût direct actuel"
-                            />
-                        </div>
                     </div>
                     {/* Graphique de suivi des prix des ingrédients */}
                     <div id="tutorial-section-tracking-ingredient" className="p-4 bg-gray-50 rounded-lg">

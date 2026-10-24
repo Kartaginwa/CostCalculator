@@ -130,7 +130,7 @@ function buildTrackingHistory(ingredients, labor, products, generalInfo, packagi
         const memo = {};
         // Une entrée par FORMAT, pas par produit (Phase 1.6) — mêmes règles que analysisData.js, pour
         // que les relevés historiques générés ici aient exactement la même forme que ceux produits en
-        // temps réel par computeAnalysisData (voir TrackingTab.jsx).
+        // temps réel par computeAnalysisData (voir SummaryTable.jsx).
         const productsWithCosts = products.flatMap((p) => {
             const formatsList = (p.formats && p.formats.length > 0) ? p.formats : [p];
             return formatsList.map((fmt, formatIndex) => ({

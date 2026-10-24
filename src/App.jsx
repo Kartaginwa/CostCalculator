@@ -1,7 +1,7 @@
 import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import {
     Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
-    PlusCircle, TrendingUp, Settings, Package, Receipt,
+    PlusCircle, Settings, Package, Receipt,
 } from 'lucide-react';
 
 import { parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, sumAmountsMap } from './utils.js';
@@ -30,11 +30,11 @@ import { LaborDatabaseTab } from './features/LaborDatabaseTab.jsx';
 import { IncomeStatementTab } from './features/IncomeStatementTab.jsx';
 
 // Code-splitting : ces vues/wizards sont chargés à la demande (chunks séparés). Cela sort du
-// bundle initial les dépendances lourdes qu'ils tirent — notamment recharts (SummaryTable,
-// TrackingTab) — et le code volumineux de RecipeCalculator et des assistants d'import.
+// bundle initial les dépendances lourdes qu'ils tirent — notamment recharts (SummaryTable, qui a
+// absorbé l'ex-TrackingTab.jsx le 24/10) — et le code volumineux de RecipeCalculator et des
+// assistants d'import.
 const RecipeCalculator = lazy(() => import('./features/RecipeCalculator.jsx').then(m => ({ default: m.RecipeCalculator })));
 const SummaryTable = lazy(() => import('./features/SummaryTable.jsx').then(m => ({ default: m.SummaryTable })));
-const TrackingTab = lazy(() => import('./features/TrackingTab.jsx').then(m => ({ default: m.TrackingTab })));
 const SalesReportImportWizardModal = lazy(() => import('./features/SalesReportImportWizardModal.jsx').then(m => ({ default: m.SalesReportImportWizardModal })));
 
 const App = () => {
@@ -120,6 +120,16 @@ const App = () => {
 
     const [openPostIds, setOpenPostIds] = useState(new Set());
     const [openRecipeSections, setOpenRecipeSections] = useState(new Set(['ingredients', 'packaging', 'labor', 'indirects', 'recap']));
+
+    // Position de l'utilisateur dans Rapport et suivi (24/10, retour utilisateur) : sous-onglet actif
+    // et sélections (SKU/ingrédient/emballage), levées ici plutôt qu'en useState local de
+    // SummaryTable — même patron que editingProductIndex/openRecipeSections ci-dessus pour
+    // Production — pour que ça survive à une navigation vers un autre onglet puis un retour ici
+    // (ex. vérifier un ingrédient, puis revenir exactement sur le même sous-onglet et le même SKU).
+    const [reportActiveSubTab, setReportActiveSubTab] = useState('overview');
+    const [reportSelectedSkuId, setReportSelectedSkuId] = useState(null);
+    const [reportSelectedIngredientId, setReportSelectedIngredientId] = useState('');
+    const [reportSelectedPackagingId, setReportSelectedPackagingId] = useState('');
 
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
     const [pdfOptions, setPdfOptions] = useState({ title: '', subtitle: '' });
@@ -364,7 +374,7 @@ const App = () => {
     // Source unique de vérité pour les coûts : computeAnalysisData calcule productsWithCosts une
     // seule fois (avec un memo partagé) puis en dérive tous les KPIs. Défini ici, avant
     // ingredientsList, pour que ce dernier — comme les autres consommateurs (RecipeCalculator,
-    // TrackingTab, rapports) — réutilise ces coûts au lieu de relancer un calcul redondant.
+    // Rapport et suivi) — réutilise ces coûts au lieu de relancer un calcul redondant.
     //
     // Phase 4.6 — Conversion des frais fixes (Général/Activité/Canal) en taux par produit : calcul
     // en DEUX passes, nécessaire parce que les pools Activité/Canal ont besoin des coûts directs et
@@ -993,8 +1003,7 @@ const App = () => {
                     <button id="tab-labor" onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
                     <button id="tab-income-statement" onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Receipt className="h-5 w-5 mr-2" /> État des résultats</button>
                     <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Production</button>
-                    <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><Table className="h-5 w-5 mr-2" /> Rapport</button>
-                    <button id="tab-tracking" onClick={() => setActiveTab('tracking')} className={getTabClasses('tracking')}><TrendingUp className="h-5 w-5 mr-2" /> Suivi</button>
+                    <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><Table className="h-5 w-5 mr-2" /> Rapport et suivi</button>
                 </div>
             </div>
         );
@@ -1064,9 +1073,16 @@ const App = () => {
                         exportToExcel={exportToExcel}
                         itemsPerPage={uiSettings.summaryItemsPerPage}
                         onItemsPerPageChange={(value) => handleUiSettingsChange('summaryItemsPerPage', value)}
+                        activeSubTab={reportActiveSubTab}
+                        onActiveSubTabChange={setReportActiveSubTab}
+                        selectedSkuId={reportSelectedSkuId}
+                        onSelectedSkuIdChange={setReportSelectedSkuId}
+                        selectedIngredientId={reportSelectedIngredientId}
+                        onSelectedIngredientIdChange={setReportSelectedIngredientId}
+                        selectedPackagingId={reportSelectedPackagingId}
+                        onSelectedPackagingIdChange={setReportSelectedPackagingId}
                     />;
 
-                case 'tracking': return <TrackingTab />;
                 default: return null;
             }
         }
@@ -1148,6 +1164,8 @@ const App = () => {
                         onEnd={handleEndTutorial}
                         setActiveTab={setActiveTab}
                         activeTab={activeTab}
+                        reportActiveSubTab={reportActiveSubTab}
+                        setReportActiveSubTab={setReportActiveSubTab}
                     />
 
                     <InstructionModal

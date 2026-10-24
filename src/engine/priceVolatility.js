@@ -15,7 +15,7 @@ export const HIGH_THRESHOLD = 20;     // % d'amplitude pour la volatilité « é
 // 15/10 : généralisée depuis l'ancienne computeIngredientVolatility, qui ne lisait que
 // `pt.baseIngredients`, pour éviter de dupliquer cette logique). Portait aussi le coût direct par
 // format jusqu'au 22/10 (retiré, retour utilisateur — redondant avec le détail matière/
-// emballage/MO déjà visible ailleurs dans Suivi, voir TrackingTab.jsx).
+// emballage/MO déjà visible ailleurs dans Rapport et suivi, voir SummaryTable.jsx).
 function computeCatalogVolatility(trackingPoints, extractItems) {
     const points = [...(trackingPoints || [])]
         .filter(p => p && p.timestamp)
@@ -74,7 +74,7 @@ export function computeIngredientVolatility(trackingPoints) {
     })));
 }
 
-// Emballage : toujours un suivi SÉPARÉ de celui des ingrédients (voir TrackingTab.jsx), même
+// Emballage : toujours un suivi SÉPARÉ de celui des ingrédients (voir SummaryTable.jsx), même
 // principe que la Phase 2 (coût d'emballage comme poste distinct du coût matière).
 export function computePackagingVolatility(trackingPoints) {
     return computeCatalogVolatility(trackingPoints, pt => (pt.basePackaging || []).map(pkg => ({

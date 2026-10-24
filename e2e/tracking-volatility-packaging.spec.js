@@ -4,10 +4,10 @@
 // de prix réalistes (initialState.js, PACKAGING_PRICE_PROFILES) — largement assez pour exercer ce
 // tableau. Portait aussi la volatilité du coût direct par format jusqu'au 22/10 (retiré, retour
 // utilisateur — redondant avec le détail matière/emballage/MO déjà visible dans « Analyse par
-// format », voir TrackingTab.jsx).
+// format »). Vivait dans l'ex-onglet Suivi, fusionné dans Rapport (sous-onglet Intrants) le 24/10.
 import { test, expect } from '@playwright/test';
 
-test('Suivi : volatilité étendue à l\'emballage (Phase 6, 15/10)', async ({ page }) => {
+test('Rapport et suivi, Intrants : volatilité étendue à l\'emballage (Phase 6, 15/10)', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -15,7 +15,8 @@ test('Suivi : volatilité étendue à l\'emballage (Phase 6, 15/10)', async ({ p
     await page.goto('/');
     await page.getByText('Explorer un projet démo').click();
     await page.waitForTimeout(500);
-    await page.locator('#tab-tracking').click();
+    await page.locator('#tab-summary').click();
+    await page.getByText('Intrants', { exact: true }).click();
     await page.waitForTimeout(300);
 
     // Volatilité — Emballage : tableau distinct de celui des ingrédients, colonnes Emballage/

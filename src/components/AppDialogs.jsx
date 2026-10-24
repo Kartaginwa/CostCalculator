@@ -171,7 +171,7 @@ export const OnboardingModal = ({ isOpen, onStart, onSkip }) => {
 };
 
 // --- COMPOSANT DU TUTORIEL (VERSION FINALE) ---
-export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTab, activeTab }) => {
+export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTab, activeTab, reportActiveSubTab, setReportActiveSubTab }) => {
     const [position, setPosition] = useState(null);
 
     const steps = [
@@ -180,7 +180,7 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-tab-bar', content: "La navigation se fait via ces onglets. Nous allons les parcourir un par un pour explorer les fonctionnalités de l'application.", tab: 'info' },
     // Onglet Paramètres
     { selector: '#tutorial-section-info-entreprise', content: "L'onglet 'Paramètres' est le point de départ. Cette première section vous permet de définir les informations de base de votre entreprise pour les rapports.", tab: 'info' },
-    { selector: '#tutorial-section-info-objectifs', content: "Vous pouvez définir ici des objectifs de coûts. L'application vous indiquera si vous les respectez dans l'onglet 'Résumé'.", tab: 'info' },
+    { selector: '#tutorial-section-info-objectifs', content: "Vous pouvez définir ici des objectifs de coûts. L'application vous indiquera si vous les respectez dans l'onglet 'Rapport et suivi'.", tab: 'info' },
     { selector: '#tutorial-section-info-activites', content: "Définissez ici vos activités de production (ex. Confitures, Produits séchés) — elles serviront à répartir vos frais indirects par activité dans l'onglet État des résultats.", tab: 'info' },
     { selector: '#tutorial-section-info-menu', content: "Enfin, retrouvez ici tous vos produits (SKU) : sélectionnez-en un dans la liste à gauche pour afficher et modifier son détail complet à droite (formats, prix par canal...). Pour ce tour, nous avons pré-rempli un exemple.", tab: 'info' },
     // Onglet Ingrédients
@@ -198,17 +198,16 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-section-recipe-ingredients', content: "Ensuite, construisez la fiche de coût en y ajoutant les ingrédients.", tab: 'recipe' },
     { selector: '#tutorial-section-recipe-labor', content: "Détaillez les étapes de production. Le coût de la main-d'œuvre sera calculé automatiquement.", tab: 'recipe' },
     { selector: '#recap-section', content: "Et voici le résultat ! Cette section récapitule votre coût de production et calcule vos marges de contribution et brute en temps réel — les frais fixes (Général/Activité/Canal) se retrouvent dans l'onglet Rapport, par SKU.", tab: 'recipe' },
-    // Onglet Résumé
-    { selector: '#tab-summary', content: "L'onglet 'Résumé' vous donne une vue d'ensemble de la performance de votre menu.", tab: 'recipe' },
-    { selector: '#tutorial-section-summary-table', content: "Ce tableau vous permet de comparer rapidement la rentabilité de tous vos plats.", tab: 'summary' },
-    { selector: '#tutorial-contribution-chart', content: "Ce graphique classe vos plats selon leur contribution réelle en dollars à votre profit, vous montrant vos piliers financiers.", tab: 'summary' },
-    { selector: '#strategic-analysis', content: "L'analyse stratégique classe automatiquement vos plats (Étoiles, Vaches à lait...) pour vous aider à prendre des décisions éclairées.", tab: 'summary' },
-    // Onglet Suivi
-    { selector: '#tab-tracking', content: "Enfin, l'onglet 'Suivi' vous permet de sauvegarder des 'photos' de votre projet à différents moments.", tab: 'summary' },
-    { selector: '#tutorial-section-tracking-global', content: "Vous pouvez suivre l'évolution de vos indicateurs globaux sur ce graphique.", tab: 'tracking' },
-    { selector: '#tutorial-section-tracking-product', content: "Ou analyser en détail l'évolution des coûts pour un produit spécifique.", tab: 'tracking' },
-    { selector: '#tutorial-section-tracking-ingredient', content: "Ce graphique vous permet de suivre l'évolution du prix de vos ingrédients clés dans le temps.", tab: 'tracking' },
-    { selector: '#tutorial-section-tracking-management', content: "Gérez vos points de référence ici. En créer un sauvegardera l'état actuel de votre projet. C'est la fin du tour !", tab: 'tracking' },
+    // Onglet Rapport et suivi (fusion du 24/10, retour utilisateur — l'ex-onglet Suivi, séparé
+    // avant cette date, vit maintenant ici comme sous-onglets supplémentaires).
+    { selector: '#tab-summary', content: "L'onglet 'Rapport et suivi' vous donne une vue d'ensemble de la performance de votre menu, et vous permet d'en suivre l'évolution dans le temps.", tab: 'recipe' },
+    { selector: '#tutorial-section-tracking-global', content: "L'évolution de vos indicateurs globaux, d'un point de référence à l'autre.", tab: 'summary', subTab: 'overview' },
+    { selector: '#tutorial-section-summary-table', content: "Ce tableau vous permet de comparer rapidement la rentabilité de tous vos plats.", tab: 'summary', subTab: 'overview' },
+    { selector: '#tutorial-contribution-chart', content: "Ce graphique classe vos plats selon leur contribution réelle en dollars à votre profit, vous montrant vos piliers financiers.", tab: 'summary', subTab: 'overview' },
+    { selector: '#strategic-analysis', content: "L'analyse stratégique classe automatiquement vos plats (Étoiles, Vaches à lait...) pour vous aider à prendre des décisions éclairées.", tab: 'summary', subTab: 'overview' },
+    { selector: '#tutorial-section-summary-bysku', content: "Le sous-onglet 'Par SKU' détaille un seul plat à travers ses canaux de vente, et comment ses coûts ont évolué dans le temps.", tab: 'summary', subTab: 'bySku' },
+    { selector: '#tutorial-section-tracking-ingredient', content: "Le sous-onglet 'Intrants' suit l'évolution du prix de vos ingrédients et de votre emballage dans le temps.", tab: 'summary', subTab: 'intrants' },
+    { selector: '#tutorial-snapshot', content: "Créez un point de référence pour sauvegarder une 'photo' de votre projet, ou gérez ceux déjà créés, depuis ce menu — à tout moment, peu importe le sous-onglet. C'est la fin du tour !", tab: 'summary', subTab: 'overview' },
 ];
 
     useEffect(() => {
@@ -219,6 +218,12 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
         const currentStep = steps[stepIndex];
         if (activeTab !== currentStep.tab) {
             setActiveTab(currentStep.tab);
+        }
+        // Rapport et suivi (24/10) : certaines étapes vivent dans un sous-onglet précis, dont la
+        // sélection est désormais levée dans App.jsx (voir reportActiveSubTab) plutôt qu'un
+        // useState local de SummaryTable — ce qui permet justement au tour de le piloter ici.
+        if (currentStep.subTab && reportActiveSubTab !== currentStep.subTab) {
+            setReportActiveSubTab(currentStep.subTab);
         }
         const updatePosition = () => {
             const targetElement = document.querySelector(currentStep.selector);
@@ -241,7 +246,7 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
             window.removeEventListener('resize', updatePosition);
             window.removeEventListener('scroll', updatePosition, true);
         };
-    }, [run, stepIndex, activeTab, setActiveTab]);
+    }, [run, stepIndex, activeTab, setActiveTab, reportActiveSubTab, setReportActiveSubTab]);
 
     if (!run || !position || !steps[stepIndex]) return null;
 

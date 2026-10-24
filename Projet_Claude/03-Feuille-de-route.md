@@ -3386,3 +3386,81 @@ adoption, actées après discussion avec l'utilisateur :
   sélecteur de famille apparaît avec « Masse »/« Volume » après avoir choisi « volume » ; Frais
   fixes — Général du Chili con carne passe de 0,68 $ à 0,93 $ après avoir choisi la famille
   « Masse », sans erreur console), lint et `npx vite build` propres.
+
+## Reconfiguration d'ampleur : fusion de Rapport et Suivi en un seul onglet (24/10)
+
+Retour utilisateur en 5 points, demandant une réorganisation majeure de deux onglets jusqu'ici
+séparés. Avant toute autre chose, les 5 commits en attente depuis la session précédente (CICI
+volume, centralisation CICI, période toujours personnalisée, retrait de la volatilité du coût
+direct par format) ont été poussés sur GitHub comme backup, à la demande explicite de
+l'utilisateur.
+
+**Décisions de portée pour le point 5 (persistance de la position)** : la demande, illustrée par un
+exemple centré sur le nouvel onglet fusionné (consulter un SKU dans Par SKU, aller vérifier un
+ingrédient, revenir exactement au même sous-onglet et au même SKU), a été implémentée en LEVANT
+l'état de « position » de Rapport et suivi dans App.jsx — même patron déjà établi pour Production
+(`editingProductIndex`/`openRecipeSections`) — plutôt qu'en empêchant TOUS les onglets de
+l'application de se démonter au changement d'onglet (ce qui aurait été une réécriture beaucoup plus
+risquée du mécanisme de rendu de App.jsx, avec des implications de performance et de récupération
+d'erreur non demandées explicitement). Les autres onglets (filtres d'Ingrédients, etc.) continuent
+de se réinitialiser au changement d'onglet, comme avant.
+
+**Mise en œuvre** :
+1. **Déplacement du graphique d'évolution des KPI globaux** (`src/features/SummaryTable.jsx`,
+   composant `StrategicAnalysis`) : repositionné juste au-dessus de « Matrice d'ingénierie de
+   menu », dans le sous-onglet Vue d'ensemble — vérifié par script Playwright temporaire (position
+   DOM de l'un strictement avant l'autre).
+2. **« Analyse par format » déplacée dans Par SKU** : l'ancien sélecteur de produit séparé
+   (`selectedProductId`, ex-Suivi) est retiré — le graphique d'évolution des coûts réutilise
+   désormais le MÊME sélecteur que « Par SKU » (`selectedSkuId`), placé sous le tableau
+   récapitulatif du coût de revient par canal (`BySkuWaterfall`). Un seul sélecteur de SKU dans ce
+   sous-onglet plutôt que deux pouvant diverger — une source de confusion éliminée au passage.
+   `buildTrackableProducts`/`engine/trackingAnalysis.js` devenus inutiles, supprimés avec leurs
+   tests (6 tests).
+3. **Nouveau sous-onglet « Intrants »** : évolution du prix + volatilité des ingrédients, puis de
+   l'emballage — contenu de l'ex-onglet Suivi, non lié à un SKU précis (à la différence de « Par
+   SKU »).
+4. **Bouton « Créer un point de référence » remplacé par un menu déroulant « Point de référence »**,
+   déplacé sous les boutons d'export (Excel/PDF) : « Nouveau point de référence » (même modale de
+   création qu'avant) et « Gérer les points de référence » (nouvelle modale `ManagePointsModal`,
+   contenant le tableau de gestion auparavant toujours visible en bas de l'ex-onglet Suivi — tri,
+   filtre, pagination restent LOCAUX à cette modale ; `selectedSnapshotIds`, qui contrôle quels
+   points alimentent les graphiques, reste lui à l'échelle de tout l'onglet, pas de la modale).
+5. **Persistance de la position** (voir décision de portée ci-dessus) : `activeSubTab`,
+   `selectedSkuId`, `selectedIngredientId`, `selectedPackagingId` deviennent des props contrôlées
+   depuis `App.jsx` (nouveaux `reportActiveSubTab`/`reportSelectedSkuId`/
+   `reportSelectedIngredientId`/`reportSelectedPackagingId`) plutôt que des `useState` locaux à
+   `SummaryTable` — survivent donc à un aller-retour vers un autre onglet. Repli robuste ajouté au
+   passage : un id qui ne correspond PLUS à aucune option actuelle (changement de projet, SKU
+   supprimé) retombe sur la première option disponible, pas seulement un id vide — l'ancienne
+   condition (`!selectedSkuId`) ne couvrait pas ce second cas, qui aurait laissé « Par SKU » figé
+   sur « Aucun SKU dans le menu » après un changement de projet.
+6. **`TrackingTab.jsx` supprimé** : tous ses composants (`VolatilityTable`, `SimpleLineChart`,
+   `SnapshotDetailsModal`, etc.) repris tels quels dans `SummaryTable.jsx`, qui absorbe désormais
+   tout l'ex-onglet Suivi. Onglet top-niveau « Suivi » (`tab-tracking`) retiré de `App.jsx` ; bouton
+   « Rapport » renommé « Rapport et suivi ».
+7. **Tour guidé** (`AppDialogs.jsx`, `TutorialGuide`) : les 4 étapes de l'ex-onglet Suivi
+   remplacées par des étapes pointant vers les nouveaux emplacements (sous-onglets Vue d'ensemble/
+   Par SKU/Intrants, menu Point de référence). Le tour pilote maintenant AUSSI le sous-onglet actif
+   (nouveau champ `subTab` par étape, nouveaux props `reportActiveSubTab`/`setReportActiveSubTab`)
+   — rendu possible précisément parce que cet état est désormais levé dans App.jsx (point 5).
+8. **Guide utilisateur** (`InstructionModal.jsx`) : sections « Onglet 7: Rapport » et « Onglet 8:
+   Suivi » fusionnées en une seule « Onglet 7: Rapport et suivi », avec une sous-section par
+   sous-onglet (dont les deux nouvelles, Par SKU et Intrants, et Point de référence renommée/
+   repositionnée).
+- Fichiers touchés : `src/App.jsx`, `src/features/SummaryTable.jsx` (quasi-réécrit, ~1300 lignes),
+  `src/components/AppDialogs.jsx`, `src/components/InstructionModal.jsx`,
+  `src/engine/priceVolatility.js`/`src/state/initialState.js` (commentaires mis à jour, aucun
+  changement de comportement) — supprimés : `src/features/TrackingTab.jsx`,
+  `src/engine/trackingAnalysis.js`, `src/engine/trackingAnalysis.test.js`.
+  `e2e/smoke.spec.js`, `e2e/packaging-tracking-totals.spec.js`,
+  `e2e/tracking-volatility-packaging.spec.js` (navigation mise à jour vers le nouvel onglet/
+  sous-onglet).
+- Tests : 225/225 unitaires (231 − 6, les tests de `buildTrackableProducts` retirés avec la
+  fonction), 47/47 e2e (inchangés dans leur intention, navigation mise à jour), vérification
+  fonctionnelle par scripts Playwright temporaires : (a) ordre KPI-évolution/BCG confirmé, graphique
+  par SKU présent, position (sous-onglet + SKU) conservée après un aller-retour vers Ingrédients,
+  Intrants affiche les 4 blocs attendus, menu Point de référence affiche ses 2 options et ouvre la
+  bonne modale, zéro erreur console ; (b) tour guidé complet (26 étapes, projet vierge) jusqu'à
+  « Terminer » sans jamais rester bloqué sur un sélecteur introuvable, zéro erreur console. Lint et
+  `npx vite build` propres.

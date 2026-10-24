@@ -156,19 +156,16 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="#guide-resume" onClick={(e) => handleLinkClick(e, '#guide-resume')} className="font-bold text-blue-700 hover:underline">Onglet 7: Rapport</a>
+                                    <a href="#guide-resume" onClick={(e) => handleLinkClick(e, '#guide-resume')} className="font-bold text-blue-700 hover:underline">Onglet 7: Rapport et suivi</a>
                                      <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
-                                        <li><a href="#guide-resume-tableau" onClick={(e) => handleLinkClick(e, '#guide-resume-tableau')} className="text-gray-600 hover:underline">Tableau comparatif</a></li>
-                                        <li><a href="#guide-resume-contribution" onClick={(e) => handleLinkClick(e, '#guide-resume-contribution')} className="text-gray-600 hover:underline">Classement par contribution</a></li>
-                                        <li><a href="#guide-resume-strategie" onClick={(e) => handleLinkClick(e, '#guide-resume-strategie')} className="text-gray-600 hover:underline">Analyse stratégique</a></li>
+                                        <li><a href="#guide-resume-tableau" onClick={(e) => handleLinkClick(e, '#guide-resume-tableau')} className="text-gray-600 hover:underline">Vue d'ensemble : tableau comparatif</a></li>
+                                        <li><a href="#guide-resume-evolution-kpi" onClick={(e) => handleLinkClick(e, '#guide-resume-evolution-kpi')} className="text-gray-600 hover:underline">Vue d'ensemble : évolution des KPI globaux</a></li>
+                                        <li><a href="#guide-resume-contribution" onClick={(e) => handleLinkClick(e, '#guide-resume-contribution')} className="text-gray-600 hover:underline">Vue d'ensemble : classement par contribution</a></li>
+                                        <li><a href="#guide-resume-strategie" onClick={(e) => handleLinkClick(e, '#guide-resume-strategie')} className="text-gray-600 hover:underline">Vue d'ensemble : analyse stratégique</a></li>
+                                        <li><a href="#guide-resume-bysku" onClick={(e) => handleLinkClick(e, '#guide-resume-bysku')} className="text-gray-600 hover:underline">Par SKU</a></li>
+                                        <li><a href="#guide-resume-intrants" onClick={(e) => handleLinkClick(e, '#guide-resume-intrants')} className="text-gray-600 hover:underline">Intrants</a></li>
+                                        <li><a href="#guide-resume-points" onClick={(e) => handleLinkClick(e, '#guide-resume-points')} className="text-gray-600 hover:underline">Point de référence</a></li>
                                         <li><a href="#guide-exports" onClick={(e) => handleLinkClick(e, '#guide-exports')} className="text-gray-600 hover:underline">Exports (PDF & Excel)</a></li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a href="#guide-suivi" onClick={(e) => handleLinkClick(e, '#guide-suivi')} className="font-bold text-blue-700 hover:underline">Onglet 8: Suivi</a>
-                                     <ul className="pl-4 list-disc list-inside mt-1 space-y-1">
-                                        <li><a href="#guide-suivi-points" onClick={(e) => handleLinkClick(e, '#guide-suivi-points')} className="text-gray-600 hover:underline">Points de référence</a></li>
-                                        <li><a href="#guide-suivi-graphiques" onClick={(e) => handleLinkClick(e, '#guide-suivi-graphiques')} className="text-gray-600 hover:underline">Graphiques d'évolution</a></li>
                                     </ul>
                                 </li>
                                 <li><a href="#guide-definitions" onClick={(e) => handleLinkClick(e, '#guide-definitions')} className="font-bold text-blue-700 hover:underline">Glossaire : Dictionnaire des termes clés</a></li>
@@ -445,19 +442,23 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                     </div>
                                 </section>
                                 <section id="guide-resume">
-                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 7: Rapport", searchTerm)}</h3>
-                                    <p>{highlightText("Cet onglet transforme vos données en intelligence d'affaires, vous donnant une vue d'ensemble stratégique de votre menu.", searchTerm)}</p>
+                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 7: Rapport et suivi", searchTerm)}</h3>
+                                    <p>{highlightText("Cet onglet transforme vos données en intelligence d'affaires — une vue d'ensemble stratégique de votre menu (sous-onglet Vue d'ensemble), le détail d'un seul SKU (Par SKU), l'évolution de vos ingrédients et emballages (Intrants), ou un suivi dynamique de vos performances dans le temps grâce aux points de référence (fusionné ici le 24/10, auparavant un onglet Suivi séparé — voir Projet_Claude/03-Feuille-de-route.md).", searchTerm)}</p>
                                      <div className="space-y-4 mt-4">
                                         <div id="guide-resume-tableau" className="space-y-2">
-                                            <h4 className="text-lg font-semibold">{highlightText("Tableau comparatif", searchTerm)}</h4>
+                                            <h4 className="text-lg font-semibold">{highlightText("Vue d'ensemble : tableau comparatif", searchTerm)}</h4>
                                             <p>{highlightText("Comparez la performance de tous vos plats d'un seul coup d'œil. Les codes de couleur pour les marges vous aident à identifier instantanément les bons et les mauvais élèves. Un produit vendu sous plusieurs formats (ex. confiture en pot de 250 ml et de 500 ml) apparaît comme autant de lignes distinctes, chacune désambiguïsée par son format entre parenthèses (ex. « Confiture de fraises (250 ml) ») — chaque format a sa propre fiche recette et ses propres coûts, donc sa propre ligne d'analyse.", searchTerm)}</p>
                                         </div>
+                                        <div id="guide-resume-evolution-kpi" className="space-y-2 mt-4">
+                                            <h4 className="text-lg font-semibold">{highlightText("Vue d'ensemble : évolution des KPI globaux", searchTerm)}</h4>
+                                            <p>{highlightText("Juste au-dessus de la matrice d'ingénierie de menu ci-dessous : un graphique de l'évolution de vos coûts moyens et de votre marge brute pondérée, d'un point de référence à l'autre — pour voir si vos décisions (changement de fournisseur, ajustement de prix...) portent leurs fruits dans le temps. Vide tant qu'aucun point de référence n'existe (voir « Point de référence » plus bas).", searchTerm)}</p>
+                                        </div>
                                         <div id="guide-resume-contribution" className="space-y-2 mt-4">
-                                            <h4 className="text-lg font-semibold">{highlightText("Classement par contribution totale", searchTerm)}</h4>
+                                            <h4 className="text-lg font-semibold">{highlightText("Vue d'ensemble : classement par contribution totale", searchTerm)}</h4>
                                             <p>{highlightText("Ce graphique à barres classe vos plats non pas sur leur pourcentage de marge, mais sur le montant total en dollars qu'ils génèrent pour payer vos frais fixes (`Marge Brute $` x `Unités Vendues`). Il révèle vos véritables 'piliers financiers'.", searchTerm)}</p>
                                         </div>
                                         <div id="guide-resume-strategie" className="space-y-2 mt-4">
-                                            <h4 className="text-lg font-semibold">{highlightText("Analyse stratégique (Menu Engineering)", searchTerm)}</h4>
+                                            <h4 className="text-lg font-semibold">{highlightText("Vue d'ensemble : analyse stratégique (Menu Engineering)", searchTerm)}</h4>
                                             <p>{highlightText("Cet outil puissant, basé sur la matrice du Boston Consulting Group (BCG), vous aide à prendre des décisions stratégiques sur votre menu. Il classe chaque plat en croisant deux axes :", searchTerm)}</p>
                                             <ul className="list-disc list-inside space-y-2 pl-4">
                                                 <li><strong>{highlightText("L'axe de la popularité :", searchTerm)}</strong> {highlightText("Un plat est 'populaire' si son mix des ventes est supérieur à la moyenne de tous vos plats.", searchTerm)}</li>
@@ -471,6 +472,18 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                                 <li><strong>{highlightText('Poids morts (Peu populaires, peu rentables) :', searchTerm)}</strong> {highlightText("Ces plats ne contribuent que très peu à votre succès. Pensez à les réinventer complètement ou à les retirer du menu pour simplifier vos opérations.", searchTerm)}</li>
                                             </ul>
                                         </div>
+                                        <div id="guide-resume-bysku" className="space-y-2 mt-4">
+                                            <h4 className="text-lg font-semibold">{highlightText("Par SKU", searchTerm)}</h4>
+                                            <p>{highlightText("Le détail d'UN SEUL SKU à travers chacun de ses canaux de vente (cascade de coûts façon chiffrier SymbiOse de l'utilisateur) : PDS et frais de mise en marché, marge brute, répartition des charges fixes (Général/Activité/Canal), coût net, marge nette et point mort. Sous ce tableau récapitulatif (fusionné ici le 24/10) : l'évolution des coûts de CE SKU d'un point de référence à l'autre, pour ce même SKU — aucun second sélecteur.", searchTerm)}</p>
+                                        </div>
+                                        <div id="guide-resume-intrants" className="space-y-2 mt-4">
+                                            <h4 className="text-lg font-semibold">{highlightText("Intrants", searchTerm)}</h4>
+                                            <p>{highlightText("L'évolution du prix de vos ingrédients et de vos emballages (poste SÉPARÉ, jamais fusionné aux ingrédients) dans le temps, d'un point de référence à l'autre — idéal pour suivre l'inflation et l'impact de vos négociations avec les fournisseurs. Chaque tableau de volatilité (amplitude, tendance, palier) se croise avec la classe ABC (onglets Ingrédients/Packaging) pour prioriser vos efforts d'approvisionnement.", searchTerm)}</p>
+                                        </div>
+                                        <div id="guide-resume-points" className="space-y-2 mt-4">
+                                            <h4 className="text-lg font-semibold">{highlightText("Point de référence", searchTerm)}</h4>
+                                            <p>{highlightText("Le bouton « Point de référence », sous les boutons d'export (déplacé le 24/10), ouvre un menu à deux choix. « Nouveau point de référence » crée une 'photo' de votre projet à cet instant (ex: avant et après un changement de fournisseur), sauvegardant l'état de vos coûts, de vos prix et de vos marges. « Gérer les points de référence » ouvre une fenêtre pour renommer, annoter, supprimer ou choisir lesquels alimentent les graphiques d'évolution ci-dessus (les 15 plus récents par défaut). Si un produit a plusieurs formats, chacun est suivi séparément — ses points de référence antérieurs à la création d'un nouveau format n'affichent simplement aucune donnée avant cette date.", searchTerm)}</p>
+                                        </div>
                                          <div id="guide-exports" className="space-y-2 mt-4">
                                             <h4 className="text-lg font-semibold">{highlightText("Exports (PDF & Excel)", searchTerm)}</h4>
                                             <p className="mb-4">{highlightText("L'application vous permet d'exporter vos données dans deux formats professionnels, accessibles depuis cet onglet. Chaque format a un usage spécifique :", searchTerm)}</p>
@@ -478,20 +491,6 @@ export const InstructionModal = ({ isOpen, onClose }) => {
                                                 <li><strong>{highlightText("Générer un rapport PDF :", searchTerm)}</strong> {highlightText("Crée un rapport de plusieurs pages, visuellement soigné, idéal pour les présentations, l'archivage ou le partage avec des partenaires. Il inclut des tableaux de bord, des analyses stratégiques, des graphiques et une fiche de coût détaillée par FORMAT — un produit vendu en plusieurs formats génère donc une fiche distincte pour chacun, désambiguïsée dans son titre.", searchTerm)}</li>
                                                 <li><strong>{highlightText("Exporter vers Excel :", searchTerm)}</strong> {highlightText("Génère un fichier .xlsx contenant toutes vos données brutes (tableau de bord, listes d'ingrédients et de main-d'œuvre, une feuille de coût détaillée par FORMAT). Ce format est parfait si vous souhaitez effectuer des analyses plus poussées, créer vos propres graphiques ou intégrer les données dans d'autres systèmes comptables.", searchTerm)}</li>
                                             </ul>
-                                        </div>
-                                    </div>
-                                </section>
-                                <section id="guide-suivi">
-                                    <h3 className="text-2xl font-bold mb-4 border-b pb-2">{highlightText("Onglet 8: Suivi", searchTerm)}</h3>
-                                    <p>{highlightText("Cet onglet transforme votre analyse statique en un suivi dynamique de vos performances dans le temps.", searchTerm)}</p>
-                                     <div className="space-y-4 mt-4">
-                                        <div id="guide-suivi-points" className="space-y-2">
-                                            <h4 className="text-lg font-semibold">{highlightText("Points de référence", searchTerm)}</h4>
-                                            <p>{highlightText("En créant des 'photos' de votre projet à différents moments (ex: avant et après un changement de fournisseur), vous pouvez sauvegarder l'état de vos coûts, de vos prix, et de vos marges.", searchTerm)}</p>
-                                        </div>
-                                        <div id="guide-suivi-graphiques" className="space-y-2 mt-4">
-                                            <h4 className="text-lg font-semibold">{highlightText("Graphiques d'évolution", searchTerm)}</h4>
-                                            <p>{highlightText("L'application génère automatiquement des graphiques interactifs pour suivre l'évolution de vos indicateurs clés globaux, des coûts d'un FORMAT spécifique (« Analyse par format »), ou même du prix d'un ingrédient, vous permettant de mesurer concrètement l'impact de vos décisions. Si un produit a plusieurs formats, chacun apparaît séparément dans la liste déroulante, désambiguïsé par son nom (ex. « Confiture de fraises (500 ml) ») — ses points de référence antérieurs à la création de ce format n'affichent simplement aucune donnée avant cette date.", searchTerm)}</p>
                                         </div>
                                     </div>
                                 </section>

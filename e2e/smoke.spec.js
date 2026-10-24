@@ -76,9 +76,9 @@ test.describe('Parcours projet vierge', () => {
             confirmBtn.click(),
         ]);
 
-        // Suivi : créer un point de référence
-        await page.locator('#tab-tracking').click();
-        await page.getByText('Créer un point de référence').click();
+        // Rapport et suivi (fusion du 24/10) : créer un point de référence via le menu déroulant.
+        await page.locator('#tutorial-snapshot').click();
+        await page.getByText('Nouveau point de référence').click();
         const saveBtn = page.getByText('Enregistrer');
         if (await saveBtn.count() > 0) await saveBtn.click();
 
@@ -96,13 +96,14 @@ test.describe('Projet démo', () => {
         await page.getByText('Explorer un projet démo').click();
         await expect(page.getByText('Projet d\'exemple chargé avec succès')).toBeVisible();
 
-        for (const tabId of ['tab-ingredients', 'tab-labor', 'tab-recipe', 'tab-summary', 'tab-tracking']) {
+        for (const tabId of ['tab-ingredients', 'tab-labor', 'tab-recipe', 'tab-summary']) {
             await page.locator(`#${tabId}`).click();
         }
 
         // Volatilité des prix (dérivée des points de référence du projet démo).
-        // Onglet Suivi : le tableau de volatilité s'affiche avec des données.
-        await page.locator('#tab-tracking').click();
+        // Rapport et suivi, sous-onglet Intrants (fusion du 24/10) : le tableau de volatilité
+        // s'affiche avec des données.
+        await page.getByText('Intrants', { exact: true }).click();
         await expect(page.getByRole('heading', { name: 'Volatilité des prix d\'achat', exact: true })).toBeVisible();
         // Onglet Ingrédients : au moins un ingrédient (le saumon, prix variable) est marqué « volatile ».
         await page.locator('#tab-ingredients').click();

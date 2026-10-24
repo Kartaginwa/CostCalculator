@@ -43,7 +43,7 @@ test('section Emballage de Recette & Calcul : totaux complets (base, perte stock
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
 
-test('Suivi : évolution du prix des emballages, séparée de celle des ingrédients', async ({ page }) => {
+test('Rapport et suivi, Intrants : évolution du prix des emballages, séparée de celle des ingrédients', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -52,7 +52,8 @@ test('Suivi : évolution du prix des emballages, séparée de celle des ingrédi
     await page.getByText('Explorer un projet démo').click();
     await page.waitForTimeout(500);
 
-    await page.locator('#tab-tracking').click();
+    await page.locator('#tab-summary').click();
+    await page.getByText('Intrants', { exact: true }).click();
     await page.waitForTimeout(300);
 
     await expect(page.getByText("Évolution du prix des ingrédients")).toBeVisible();

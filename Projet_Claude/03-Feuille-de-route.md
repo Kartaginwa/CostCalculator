@@ -2525,6 +2525,13 @@ place :
 - **Consolidation pédagogique du guide d'utilisation** (`InstructionModal`) : passe finale pour
   s'assurer que le guide explique le pourquoi (pas seulement où cliquer) et couvre l'ensemble des
   nouvelles fonctionnalités.
+- **Revoir la portée de la persistance de position (24/10)** : la fusion Rapport et suivi a levé la
+  position (sous-onglet, SKU, ingrédient, emballage) dans `App.jsx` pour CET onglet seulement,
+  plutôt que d'empêcher tous les onglets de se démonter au changement (portée volontairement
+  réduite à ce moment, acceptée par l'utilisateur « pour le moment ») — décider ici si les autres
+  onglets (filtres d'Ingrédients, etc., qui se réinitialisent encore aujourd'hui) méritent le même
+  traitement, une fois toutes les fonctionnalités en place et le comportement final de chaque écran
+  stabilisé.
 - Rapport final de fin de projet (programmation, UI, UX, méthodologie).
 
 ---
@@ -3464,3 +3471,29 @@ de se réinitialiser au changement d'onglet, comme avant.
   bonne modale, zéro erreur console ; (b) tour guidé complet (26 étapes, projet vierge) jusqu'à
   « Terminer » sans jamais rester bloqué sur un sélecteur introuvable, zéro erreur console. Lint et
   `npx vite build` propres.
+
+## Ajustements du 24/10 (suite) : icônes d'onglet échangées, ordre des sous-onglets
+
+Trois retouches ponctuelles après la fusion ci-dessus :
+
+1. **Icônes d'onglet échangées** : « Rapport et suivi » reprend l'icône de l'ex-onglet Suivi
+   (`TrendingUp`, une flèche ascendante — plus représentative du SUIVI dans le temps que `Table`,
+   qui ne l'était déjà qu'à moitié pour un onglet qui combine maintenant rapport et évolution
+   historique) ; « État des résultats » récupère l'ancienne icône de Rapport (`Table`, plus
+   représentative d'un tableau de revenus/dépenses que `Receipt`, un simple reçu). `Receipt` devenu
+   inutilisé, retiré des imports.
+2. **Ordre des sous-onglets** : « Intrants » déplacé entre « Par SKU » et « Simulation » (était
+   après « Simulation », en dernière position) — aucun changement de contenu, uniquement l'ordre
+   des boutons.
+3. **Portée de la persistance de position (point 5, 24/10) notée comme provisoire** : l'utilisateur
+   a accepté la portée réduite à Rapport et suivi seulement (« Ok pour le moment ») — ajouté comme
+   point à trancher à la Phase 7 (une fois toutes les fonctionnalités en place) si les autres
+   onglets méritent le même traitement. Voir aussi la mémoire inter-session
+   `deferred_tab_persistence_scope`.
+- Fichiers touchés : `src/App.jsx` (icônes), `src/features/SummaryTable.jsx` (ordre des boutons de
+  sous-onglet).
+- Tests : 225/225 unitaires (inchangés, purement UI), 47/47 e2e (inchangés, aucune assertion sur
+  l'icône ou l'ordre des sous-onglets), vérification fonctionnelle par script Playwright temporaire
+  (icône `lucide-trending-up` confirmée sur le bouton Rapport et suivi, `lucide-table` sur État des
+  résultats ; ordre des sous-onglets confirmé : Vue d'ensemble, Par SKU, Intrants, Simulation),
+  lint et `npx vite build` propres.

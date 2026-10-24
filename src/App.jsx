@@ -1,7 +1,7 @@
 import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import {
     Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
-    PlusCircle, Settings, Package, Receipt,
+    PlusCircle, Settings, Package, TrendingUp,
 } from 'lucide-react';
 
 import { parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, sumAmountsMap } from './utils.js';
@@ -1001,9 +1001,9 @@ const App = () => {
                     <button id="tab-ingredients" onClick={() => setActiveTab('ingredients')} className={getTabClasses('ingredients')}><ShoppingCart className="h-5 w-5 mr-2" /> Ingrédients</button>
                     <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Packaging</button>
                     <button id="tab-labor" onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
-                    <button id="tab-income-statement" onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Receipt className="h-5 w-5 mr-2" /> État des résultats</button>
+                    <button id="tab-income-statement" onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Table className="h-5 w-5 mr-2" /> État des résultats</button>
                     <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Production</button>
-                    <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><Table className="h-5 w-5 mr-2" /> Rapport et suivi</button>
+                    <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><TrendingUp className="h-5 w-5 mr-2" /> Rapport et suivi</button>
                 </div>
             </div>
         );

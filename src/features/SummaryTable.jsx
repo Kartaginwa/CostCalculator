@@ -1269,16 +1269,16 @@ export const SummaryTable = ({
                     Par SKU
                 </button>
                 <button
-                    onClick={() => onActiveSubTabChange('simulation')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'simulation' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                >
-                    Simulation
-                </button>
-                <button
                     onClick={() => onActiveSubTabChange('intrants')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'intrants' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     Intrants
+                </button>
+                <button
+                    onClick={() => onActiveSubTabChange('simulation')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'simulation' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    Simulation
                 </button>
             </div>
 

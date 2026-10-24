@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals } from './analysisData.js';
+import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -988,5 +988,93 @@ describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
         expect(withEmptyPools.productsWithCosts[0].costs.costIndirectActivityPerPortion).toBeUndefined();
         expect(withEmptyPools.productsWithCosts[0].costs.costIndirectGeneralPerPortion).toBeCloseTo(0);
         expect(withEmptyPools.productsWithCosts[0].costs.costIndirectPerPortion).toBeCloseTo(0);
+    });
+
+    it("répartit le pool d'une activité au prorata du volume physique (driver 'volume', 22/10, inspiré de l'Agro-Calculateur du MAPAQ), pour des formats de la même famille physique", () => {
+        const baseIngredients = [{ id: 'ing1', unit: 'unité', unitPrice: 1, lossPercentage: 0 }];
+        // A : format de 250 g, B : format de 500 g — même activité, même famille physique (masse, 'g').
+        const productA = baseProduct({ id: 'A', activityId: 'act1', prixVente: 10, salesMix: 50, portionSize: 250, portionUnit: 'g', channelPrices: channelPrice(10, 10), ingredients: [{ id: 'ing1', quantity: 2, recipeUnit: 'unité' }] });
+        const productB = baseProduct({ id: 'B', activityId: 'act1', prixVente: 20, salesMix: 50, portionSize: 500, portionUnit: 'g', channelPrices: channelPrice(20, 10), ingredients: [{ id: 'ing1', quantity: 4, recipeUnit: 'unité' }] });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        // Driver total (volume physique × unités vendues) = 250×10 + 500×10 = 7500 g.
+        const indirectPools = {
+            generalPool: { amount: 0, driver: 'directCost', driverTotal: 0 },
+            activityPools: { act1: { amount: 750, driver: 'volume', driverTotal: 7500, volumeUnit: 'g' } },
+            channelPools: {},
+        };
+
+        const result = computeAnalysisData([productA, productB], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels, indirectPools);
+        const rowA = result.productsWithCosts.find(r => r.id === 'A');
+        const rowB = result.productsWithCosts.find(r => r.id === 'B');
+
+        // A : 750 × (2500/7500) / 10 unités = 25 $/portion ; B : 750 × (5000/7500) / 10 = 50 $/portion.
+        expect(rowA.costs.costIndirectActivityPerPortion).toBeCloseTo(25);
+        expect(rowB.costs.costIndirectActivityPerPortion).toBeCloseTo(50);
+        const totalAllocated = rowA.costs.costIndirectActivityPerPortion * result.unitsSoldById['A']
+            + rowB.costs.costIndirectActivityPerPortion * result.unitsSoldById['B'];
+        expect(totalAllocated).toBeCloseTo(750);
+    });
+
+    it("le pool au prorata du volume physique exclut un format d'une famille physique différente (jamais une conversion masse/volume inventée)", () => {
+        const baseIngredients = [{ id: 'ing1', unit: 'unité', unitPrice: 1, lossPercentage: 0 }];
+        // A : 250 g (masse) — inclus, seul format de la famille choisie pour ce pool ('g').
+        // C : 500 ml (volume) — famille différente, doit rester absent plutôt que converti.
+        const productA = baseProduct({ id: 'A', activityId: 'act1', prixVente: 10, salesMix: 50, portionSize: 250, portionUnit: 'g', channelPrices: channelPrice(10, 10), ingredients: [{ id: 'ing1', quantity: 2, recipeUnit: 'unité' }] });
+        const productC = baseProduct({ id: 'C', activityId: 'act1', prixVente: 10, salesMix: 50, portionSize: 500, portionUnit: 'ml', channelPrices: channelPrice(10, 10), ingredients: [{ id: 'ing1', quantity: 2, recipeUnit: 'unité' }] });
+        const generalInfo = baseGeneralInfo();
+        const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
+
+        // Driver total ne compte QUE A (famille 'g') : 250×10 = 2500 — C (en 'ml') n'y contribue jamais.
+        const indirectPools = {
+            generalPool: { amount: 0, driver: 'directCost', driverTotal: 0 },
+            activityPools: { act1: { amount: 250, driver: 'volume', driverTotal: 2500, volumeUnit: 'g' } },
+            channelPools: {},
+        };
+
+        const result = computeAnalysisData([productA, productC], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], defaultSalesChannels, indirectPools);
+        const rowA = result.productsWithCosts.find(r => r.id === 'A');
+        const rowC = result.productsWithCosts.find(r => r.id === 'C');
+
+        // A : 250 × (2500/2500) / 10 = 25 $/portion — reçoit TOUT le pool (seul format compatible).
+        expect(rowA.costs.costIndirectActivityPerPortion).toBeCloseTo(25);
+        // C : absent, jamais un 0 inventé (famille physique différente, pas de conversion masse/volume).
+        expect(rowC.costs.costIndirectActivityPerPortion).toBeUndefined();
+    });
+});
+
+describe('computeIndirectCostDriverTotals — driver « volume » (22/10)', () => {
+    it("agrège le volume physique total vendu (portionSize converti vers la famille choisie × portionsSold) pour Général et pour l'activité, en excluant les formats d'une autre famille physique", () => {
+        const productsWithCosts = [
+            // A : 250 g, 10 vendues → 2500 g.
+            { id: 'A', activityId: 'act1', portionUnit: 'g', costs: { portionSize: 250, portionsSold: 10, nbPortions: 1, totalDirectCostPerPortion: 2, productionTimeSeconds: 0 } },
+            // B : 1 kg (= 1000 g), 5 vendues → 5000 g — unité DIFFÉRENTE mais MÊME famille physique.
+            { id: 'B', activityId: 'act1', portionUnit: 'kg', costs: { portionSize: 1, portionsSold: 5, nbPortions: 1, totalDirectCostPerPortion: 3, productionTimeSeconds: 0 } },
+            // C : 500 ml, 20 vendues — famille 'ml' ≠ 'g' choisie pour ce pool : EXCLU.
+            { id: 'C', activityId: 'act1', portionUnit: 'ml', costs: { portionSize: 500, portionsSold: 20, nbPortions: 1, totalDirectCostPerPortion: 1, productionTimeSeconds: 0 } },
+        ];
+        const productionActivities = [{ id: 'act1', name: 'Act 1', indirectCostVolumeUnit: 'g' }];
+        const generalInfo = { indirectCostVolumeUnit: 'g' };
+
+        const { generalDriverTotals, activityDriverTotals } = computeIndirectCostDriverTotals(productsWithCosts, productionActivities, [], generalInfo);
+
+        // A (2500 g) + B (5000 g) = 7500 g ; C exclu (famille différente) — même total pour Général
+        // (menu entier) et pour l'activité (un seul produit, une seule activité ici).
+        expect(generalDriverTotals.volume).toBeCloseTo(7500);
+        expect(activityDriverTotals.act1.volume).toBeCloseTo(7500);
+    });
+
+    it("n'agrège rien pour le driver « volume » tant qu'aucune famille physique n'est choisie pour ce pool (jamais une famille devinée)", () => {
+        const productsWithCosts = [
+            { id: 'A', activityId: 'act1', portionUnit: 'g', costs: { portionSize: 250, portionsSold: 10, nbPortions: 1, totalDirectCostPerPortion: 2, productionTimeSeconds: 0 } },
+        ];
+        const productionActivities = [{ id: 'act1', name: 'Act 1' }]; // indirectCostVolumeUnit absent
+        const generalInfo = {}; // indirectCostVolumeUnit absent
+
+        const { generalDriverTotals, activityDriverTotals } = computeIndirectCostDriverTotals(productsWithCosts, productionActivities, [], generalInfo);
+
+        expect(generalDriverTotals.volume).toBe(0);
+        expect(activityDriverTotals.act1.volume).toBe(0);
     });
 });

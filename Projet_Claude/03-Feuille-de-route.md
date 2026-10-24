@@ -3317,3 +3317,72 @@ Deux retours utilisateur sur l'onglet Suivi :
   des deux graphiques confirmant « Coût Emballage Moyen »/« Coût emballage ($/u.) » présentes ;
   section « Analyse par format » du projet démo ne contient plus que le graphique, sans bloc de
   volatilité en dessous), lint et `npx vite build` propres.
+
+## Nouveau CICI « Au prorata du volume physique », inspiré de l'Agro-Calculateur du MAPAQ (22/10)
+
+Discussion partie d'une question sur un CICI « volume » repéré dans l'Agro-Calculateur du MAPAQ
+(après une confusion initiale avec le chiffrier SymbiOse, dont le « volume » s'est avéré être
+l'ancien « au prorata des ventes » déjà retiré — mathématiquement dégénéré, le dénominateur
+s'annulant toujours avec le numérateur). Le CICI volume de l'Agro-Calculateur, lui, est
+authentiquement différent : `I36 = C7 × C8 × L36`, où `C7` = unités produites, `C8` = volume/poids
+physique par unité, `L36` = pool ÷ volume physique total de l'activité — le volume par unité ne
+s'annule PAS, puisqu'il varie réellement d'un format à l'autre (un format 4 L ≠ un format 250 ml à
+nombre d'unités égal). Deux corrections apportées à la méthodologie de l'Agro-Calculateur avant
+adoption, actées après discussion avec l'utilisateur :
+
+1. **Ancré sur le volume RÉELLEMENT VENDU (`portionsSold`), pas sur la taille d'un lot de
+   production (`C7`/`nbPortions`)** — `nbPortions` est un paramètre de recette arbitraire (combien
+   d'unités UN lot produit), pas une mesure du volume réel qui transite dans l'entreprise sur la
+   période. Cohérent avec les deux CICI existants, qui utilisent déjà `portionsSold`.
+2. **Total agrégé automatiquement, jamais ressaisi à la main** — vérification directe des cellules
+   de l'Agro-Calculateur (`J339`/`J340`, type `'n'`, valeur `None`) : son dénominateur « Quantité
+   vendue ou surface utilisée » est un nombre TAPÉ MANUELLEMENT par activité, sans aucune case de
+   vérification qui le confronte à la somme réelle des volumes individuels des recettes — alors que
+   ses deux autres CICI (charges directes, main-d'œuvre) ont, eux, un dénominateur `=SUM(...)`
+   automatique. Notre version élimine cette incohérence : le total se recalcule automatiquement à
+   partir des mêmes données (`portionSize`/`portionsSold`) qui alimentent déjà tout le reste du
+   rapport — ne peut jamais dériver de la réalité, contrairement à un chiffre ressaisi à la main.
+
+**Mise en œuvre** :
+1. `analysisData.js` — nouvelle fonction pure partagée `computeIndirectDriverValue(driver, ctx,
+   volumeUnit)`, appelée à la fois par `computeIndirectCostDriverTotals` (agrégation du total d'un
+   pool) ET par le merge de `computeAnalysisData` (part d'un format précis) : les deux DOIVENT
+   utiliser exactement la même formule, sans quoi la somme des parts ne reconstituerait plus le
+   pool (voir l'historique de bogues de ce fichier, ex. Général à 0,75 $ uniforme le 21/10).
+   `driver === 'volume'` : `portionSize` (converti vers l'unité de base `g`/`ml` choisie POUR CE
+   POOL) × `portionsSold` ; renvoie `null` (jamais 0) si l'unité du format n'appartient pas à la
+   MÊME FAMILLE physique (masse vs volume) que celle choisie pour ce pool — un format vendu « à
+   l'unité », ou en mL si la famille choisie est la masse, reste simplement ABSENT de ce driver
+   pour ce pool, jamais une conversion masse/volume inventée (aucune densité connue). La famille se
+   choisit INDÉPENDAMMENT par pool (Général a la sienne, chaque activité la sienne) — jamais une
+   3e famille générique partagée.
+2. `computeIndirectCostDriverTotals` : `volume: 0` ajouté à `generalDriverTotals` et à chaque
+   `activityDriverTotals[id]`, accumulé via la fonction partagée ci-dessus. Nouveau paramètre
+   `generalInfo` (4e argument) pour lire `generalInfo.indirectCostVolumeUnit`.
+3. `App.jsx` : `generalInfo` passé à `computeIndirectCostDriverTotals` ; `volumeUnit` ajouté à
+   `generalPool` et à chaque entrée de `activityPools`.
+4. État (`initialState.js`) : `indirectCostMethodLabels` gagne `volume: 'Au prorata du volume
+   physique'`. Nouveau champ `indirectCostVolumeUnit` ('g' ou 'ml', voir `CONVERSION_FACTORS`),
+   absent par défaut (tant que « volume » n'a pas été choisi pour CE pool) — sur
+   `generalInfo.indirectCostVolumeUnit` pour Général, sur
+   `productionActivities[i].indirectCostVolumeUnit` pour une activité.
+5. UI (`IncomeStatementTab.jsx`, section CICI) : un second sélecteur (Masse/Volume, réutilisant
+   `UNIT_BASE_FAMILY_LABELS` déjà défini pour la modale des unités) apparaît à côté du sélecteur de
+   driver, uniquement quand « Au prorata du volume physique » est choisi pour cette ligne (Général
+   ou une activité) — jamais une famille devinée automatiquement. Infobulle de la section et guide
+   utilisateur (`InstructionModal.jsx`) mis à jour pour expliquer ce 3e driver et la contrainte de
+   famille.
+- Portée délibérément exclue : aucun lien avec l'unité d'un INGRÉDIENT — seul `format.portionUnit`
+  (la taille du format vendu) entre en jeu, jamais `ingredient.unit` (confirmé avant d'implémenter,
+  à la demande explicite de l'utilisateur).
+- Fichiers touchés : `src/engine/analysisData.js`, `src/App.jsx`, `src/state/initialState.js`,
+  `src/features/IncomeStatementTab.jsx`, `src/components/InstructionModal.jsx`,
+  `src/engine/analysisData.test.js` (4 nouveaux tests : répartition par volume pour une activité,
+  exclusion d'une famille différente — via `computeAnalysisData` ET directement via
+  `computeIndirectCostDriverTotals`).
+- Tests : 231/231 unitaires (227 + 4 nouveaux), 47/47 e2e (inchangés, le nouveau sélecteur de
+  famille n'apparaît que si « volume » est choisi — jamais affiché par défaut), vérification
+  fonctionnelle par script Playwright temporaire (3 options du sélecteur Général confirmées ;
+  sélecteur de famille apparaît avec « Masse »/« Volume » après avoir choisi « volume » ; Frais
+  fixes — Général du Chili con carne passe de 0,68 $ à 0,93 $ après avoir choisi la famille
+  « Masse », sans erreur console), lint et `npx vite build` propres.

@@ -394,18 +394,20 @@ const App = () => {
             bucketTotals, directCostBucketTotals,
         });
         const { activityPoolTotals, channelPoolTotals } = computeExpensePoolTotals(expenseLines, effectiveAllocations, activityBuckets, salesChannels);
-        const { activityDriverTotals, generalDriverTotals, channelDriverTotals } = computeIndirectCostDriverTotals(analysisDataDraft.productsWithCosts, productionActivities, salesChannels);
+        const { activityDriverTotals, generalDriverTotals, channelDriverTotals } = computeIndirectCostDriverTotals(analysisDataDraft.productsWithCosts, productionActivities, salesChannels, generalInfo);
 
         // Général (révisé le 21/10, retour utilisateur) : même mécanisme qu'Activité ci-dessous —
         // un driver au choix (« Méthode d'attribution de Général », État des résultats), mais à
         // l'échelle du menu ENTIER (`generalDriverTotals`, pas par activité). Remplace l'ancien
         // calcul interne à calculateCosts.js — voir ce fichier et analysisData.js pour le détail.
+        // `volumeUnit` (22/10) : famille physique ('g'/'ml') du driver « volume », ignorée pour les
+        // deux autres drivers — voir computeIndirectDriverValue (analysisData.js).
         const generalDriver = generalInfo.indirectCostMethod || 'directCost';
         return {
-            generalPool: { amount: activityPoolTotals.general || 0, driver: generalDriver, driverTotal: generalDriverTotals[generalDriver] || 0 },
+            generalPool: { amount: activityPoolTotals.general || 0, driver: generalDriver, driverTotal: generalDriverTotals[generalDriver] || 0, volumeUnit: generalInfo.indirectCostVolumeUnit },
             activityPools: Object.fromEntries(productionActivities.map((a) => {
                 const driver = a.indirectCostDriver || 'directCost';
-                return [a.id, { amount: activityPoolTotals[a.id] || 0, driver, driverTotal: activityDriverTotals[a.id]?.[driver] || 0 }];
+                return [a.id, { amount: activityPoolTotals[a.id] || 0, driver, driverTotal: activityDriverTotals[a.id]?.[driver] || 0, volumeUnit: a.indirectCostVolumeUnit }];
             })),
             // Canal (corrigé le 14/10) : aucun driver au choix — toujours une majoration sur le
             // coût de production déjà établi à l'activité (voir computeIndirectCostDriverTotals).

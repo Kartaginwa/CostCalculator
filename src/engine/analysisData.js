@@ -97,15 +97,43 @@ export function computeExpensePoolTotals(expenseLines, effectiveAllocations, act
     return { activityPoolTotals, channelPoolTotals };
 }
 
-// Phase 4.6 — Totaux agrégés des deux drivers possibles (coût direct, temps de main-d'œuvre) pour
-// les pools Activité, et des trois drivers possibles (ventes, coût direct, temps de MO) pour les
-// pools Canal — calculés sur TOUS les formats actifs, au prorata du volume VENDU (reconstruit menu
-// entier pour Activité via `costs.portionsSold` ; volume RÉEL par canal via `format.channelPrices`
-// pour Canal, plus précis). Les DEUX/TROIS drivers sont toujours calculés, pas seulement celui
-// choisi pour cette activité/ce canal — chacun peut choisir indépendamment sans recalcul global.
-// Un produit dont l'activité a été supprimée depuis, ou un canal sans aucun volume réel saisi nulle
-// part, reste simplement absent (jamais une part forcée à 0) — voir 04-Conception-Modele.md,
-// section Phase 4.6.
+// Valeur du driver choisi pour UN format précis — fonction pure PARTAGÉE entre
+// `computeIndirectCostDriverTotals` (agrégation du total d'un pool) et le merge de
+// `computeAnalysisData` (part de CE format) : les deux DOIVENT impérativement utiliser la même
+// formule, sans quoi la somme des parts individuelles ne reconstituerait plus exactement le pool
+// (voir l'historique de bogues de ce fichier — Général à 0,75 $ uniforme pour tout le menu, 21/10 —
+// causé précisément par deux calculs du même nombre qui avaient divergé).
+// « volume » (22/10, retour utilisateur, inspiré du CICI du même nom dans l'Agro-Calculateur du
+// MAPAQ — voir Projet_Claude/03-Feuille-de-route.md) : le volume/poids physique total VENDU de ce
+// format (`portionSize` converti vers l'unité de base choisie pour CE pool, × `portionsSold`) —
+// pertinent quand le frais indirect suit l'encombrement physique (entreposage réfrigéré, capacité
+// d'entrepôt) plutôt que la valeur des intrants ou le temps de main-d'œuvre. Contrairement à
+// `directCost`/`laborTime`, peut renvoyer `null` (jamais 0) : un format dont l'unité n'appartient
+// pas à la MÊME FAMILLE physique que celle choisie pour ce pool (masse 'g' vs volume 'ml' — ex. un
+// format vendu « à l'unité », ou en mL alors que le pool est en masse) reste simplement ABSENT de
+// ce driver, pour ce pool — convertir du kg en mL sans densité serait une donnée inventée, jamais
+// un vrai 0.
+function computeIndirectDriverValue(driver, { portionUnit, portionSize, portionsSold, productionTimeSeconds, nbPortions, totalDirectCostPerPortion }, volumeUnit) {
+    if (driver === 'laborTime') {
+        return (parseLocaleNumber(productionTimeSeconds) / 3600) * (portionsSold / (parseLocaleNumber(nbPortions) || 1));
+    }
+    if (driver === 'volume') {
+        const factorInfo = CONVERSION_FACTORS[portionUnit];
+        if (!factorInfo || factorInfo.base !== volumeUnit) return null;
+        return (parseLocaleNumber(portionSize) || 0) * factorInfo.factor * portionsSold;
+    }
+    return parseLocaleNumber(totalDirectCostPerPortion) * portionsSold;
+}
+
+// Phase 4.6 — Totaux agrégés des trois drivers possibles (coût direct, temps de main-d'œuvre,
+// volume physique) pour les pools Activité, et des trois drivers possibles (ventes, coût direct,
+// temps de MO) pour les pools Canal — calculés sur TOUS les formats actifs, au prorata du volume
+// VENDU (reconstruit menu entier pour Activité via `costs.portionsSold` ; volume RÉEL par canal via
+// `format.channelPrices` pour Canal, plus précis). Les TROIS drivers sont toujours calculés, pas
+// seulement celui choisi pour cette activité/ce canal — chacun peut choisir indépendamment sans
+// recalcul global. Un produit dont l'activité a été supprimée depuis, ou un canal sans aucun volume
+// réel saisi nulle part, reste simplement absent (jamais une part forcée à 0) — voir
+// 04-Conception-Modele.md, section Phase 4.6.
 // Canal (corrigé le 14/10, suite à un retour utilisateur) : AUCUN driver au choix — contrairement à
 // Activité. Vérification formule par formule de l'Agro-Calculateur (feuille `Synthèse`, matrice
 // « Coût de revient complet ») : `E27 = D27 + (D27 × (Pool_circuit / SOMMEPROD(coût_production ×
@@ -115,9 +143,13 @@ export function computeExpensePoolTotals(expenseLines, effectiveAllocations, act
 // méthode traditionnelle « majoration sur coût de production » (percentage of production cost),
 // qui hérite automatiquement de la fidélité déjà obtenue au niveau de l'activité — voir
 // 04-Conception-Modele.md, section Phase 4.6, pour la validation complète.
-export function computeIndirectCostDriverTotals(productsWithCosts, productionActivities = [], salesChannels = []) {
+export function computeIndirectCostDriverTotals(productsWithCosts, productionActivities = [], salesChannels = [], generalInfo = {}) {
     const activityDriverTotals = {};
-    productionActivities.forEach((a) => { activityDriverTotals[a.id] = { directCost: 0, laborTime: 0 }; });
+    productionActivities.forEach((a) => { activityDriverTotals[a.id] = { directCost: 0, laborTime: 0, volume: 0 }; });
+    // Famille physique (masse 'g' / volume 'ml') choisie PAR ACTIVITÉ pour son propre driver
+    // « volume » — indépendante de celle de Général et de celle des autres activités (chacune peut
+    // choisir sa propre famille, exactement comme chacune choisit déjà son propre driver).
+    const activityVolumeUnitById = Object.fromEntries(productionActivities.map((a) => [a.id, a.indirectCostVolumeUnit]));
 
     // Général (20/10, retour utilisateur) : même mécanisme que ci-dessus, mais à l'échelle du menu
     // ENTIER plutôt que par activité — tout produit vendu y contribue, peu importe son activité
@@ -127,7 +159,8 @@ export function computeIndirectCostDriverTotals(productsWithCosts, productionAct
     // mathématiquement toujours à un partage égal à l'unité dès que le mix des ventes reflète
     // fidèlement les volumes réels (ce qui est précisément son rôle) — voir
     // Projet_Claude/03-Feuille-de-route.md, 21/10, pour la démonstration complète.
-    const generalDriverTotals = { directCost: 0, laborTime: 0 };
+    const generalDriverTotals = { directCost: 0, laborTime: 0, volume: 0 };
+    const generalVolumeUnit = generalInfo?.indirectCostVolumeUnit;
 
     // Un seul total par canal (pas un par driver) : le dénominateur de la majoration, toujours la
     // valeur totale (au coût de production) de ce qui transite par ce canal.
@@ -137,17 +170,24 @@ export function computeIndirectCostDriverTotals(productsWithCosts, productionAct
     for (const row of (productsWithCosts || [])) {
         const costs = row.costs;
         if (!costs) continue;
-        const nbPortions = parseLocaleNumber(costs.nbPortions) || 1;
-        const portionsSold = parseLocaleNumber(costs.portionsSold);
+        const driverCtx = {
+            portionUnit: row.portionUnit, portionSize: costs.portionSize, portionsSold: parseLocaleNumber(costs.portionsSold),
+            productionTimeSeconds: costs.productionTimeSeconds, nbPortions: costs.nbPortions, totalDirectCostPerPortion: costs.totalDirectCostPerPortion,
+        };
+        const portionsSold = driverCtx.portionsSold;
 
         if (portionsSold > 0) {
-            generalDriverTotals.directCost += parseLocaleNumber(costs.totalDirectCostPerPortion) * portionsSold;
-            generalDriverTotals.laborTime += (parseLocaleNumber(costs.productionTimeSeconds) / 3600) * (portionsSold / nbPortions);
+            generalDriverTotals.directCost += computeIndirectDriverValue('directCost', driverCtx);
+            generalDriverTotals.laborTime += computeIndirectDriverValue('laborTime', driverCtx);
+            const generalVolumeValue = computeIndirectDriverValue('volume', driverCtx, generalVolumeUnit);
+            if (generalVolumeValue !== null) generalDriverTotals.volume += generalVolumeValue;
         }
 
         if (row.activityId && activityDriverTotals[row.activityId] && portionsSold > 0) {
-            activityDriverTotals[row.activityId].directCost += parseLocaleNumber(costs.totalDirectCostPerPortion) * portionsSold;
-            activityDriverTotals[row.activityId].laborTime += (parseLocaleNumber(costs.productionTimeSeconds) / 3600) * (portionsSold / nbPortions);
+            activityDriverTotals[row.activityId].directCost += computeIndirectDriverValue('directCost', driverCtx);
+            activityDriverTotals[row.activityId].laborTime += computeIndirectDriverValue('laborTime', driverCtx);
+            const activityVolumeValue = computeIndirectDriverValue('volume', driverCtx, activityVolumeUnitById[row.activityId]);
+            if (activityVolumeValue !== null) activityDriverTotals[row.activityId].volume += activityVolumeValue;
         }
 
         (row.format?.channelPrices || []).forEach((cp) => {
@@ -634,9 +674,10 @@ export function computeMenuEngineeringQuadrants(rows) {
 // ~30 appels positionnels de analysisData.test.js) : vient de `computeExpensePoolTotals` +
 // `computeIndirectCostDriverTotals` (calculés par l'appelant, voir App.jsx, à partir d'un premier
 // appel « brouillon » à cette même fonction SANS pools — pour en tirer les volumes/coûts directs
-// nécessaires à l'agrégation). Forme attendue : `{ generalPool: { amount, driver, driverTotal },
-// activityPools: { [activityId]: { amount, driver, driverTotal } },
-// channelPools: { [channelId]: { amount, driverTotal } } }`. Absent (ou `null`) : comportement
+// nécessaires à l'agrégation). Forme attendue : `{ generalPool: { amount, driver, driverTotal,
+// volumeUnit }, activityPools: { [activityId]: { amount, driver, driverTotal, volumeUnit } },
+// channelPools: { [channelId]: { amount, driverTotal } } }` — `volumeUnit` ('g' ou 'ml', voir
+// `computeIndirectDriverValue`) n'a de sens que si `driver === 'volume'`, ignoré sinon. Absent (ou `null`) : comportement
 // strictement identique à avant 4.6 (Général calculé par le repli historique de calculateCosts.js
 // — voir plus bas —, aucun coût Activité/Canal) — c'est le cas de tout appel qui ne le fournit pas
 // encore (CostShockSimulator.jsx, par exemple, pas encore mis à jour pour cette phase).
@@ -671,18 +712,24 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             // un 0 inventé, même principe que partout ailleurs dans ce fichier.
             const generalPool = indirectPools?.generalPool;
             if (generalPool && generalPool.amount > 0 && generalPool.driverTotal > 0 && costs.portionsSold > 0) {
-                const generalDriverValueTotal = generalPool.driver === 'laborTime'
-                    ? (costs.productionTimeSeconds / 3600) * (costs.portionsSold / (costs.nbPortions || 1))
-                    : costs.totalDirectCostPerPortion * costs.portionsSold;
-                const costIndirectGeneralPerPortion = (generalPool.amount * (generalDriverValueTotal / generalPool.driverTotal)) / costs.portionsSold;
-                const newCostIndirectPerPortionGeneral = costs.costIndirectPerPortion + costIndirectGeneralPerPortion;
-                costs = {
-                    ...costs,
-                    costIndirectGeneralPerPortion,
-                    costIndirectPerPortion: newCostIndirectPerPortionGeneral,
-                    totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortionGeneral + (costs.costAgingPerPortion || 0),
-                    ...computeMarginsForPrice(fmt.prixVente, { ...costs, costIndirectPerPortion: newCostIndirectPerPortionGeneral, totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortionGeneral + (costs.costAgingPerPortion || 0) }),
-                };
+                const generalDriverValueTotal = computeIndirectDriverValue(generalPool.driver, {
+                    portionUnit: fmt.portionUnit, portionSize: costs.portionSize, portionsSold: costs.portionsSold,
+                    productionTimeSeconds: costs.productionTimeSeconds, nbPortions: costs.nbPortions, totalDirectCostPerPortion: costs.totalDirectCostPerPortion,
+                }, generalPool.volumeUnit);
+                // `null` (driver « volume », format d'une autre famille physique que celle choisie
+                // pour ce pool) : ce format reste simplement SANS part Générale — jamais une
+                // conversion masse/volume inventée pour éviter un trou dans le tableau.
+                if (generalDriverValueTotal !== null) {
+                    const costIndirectGeneralPerPortion = (generalPool.amount * (generalDriverValueTotal / generalPool.driverTotal)) / costs.portionsSold;
+                    const newCostIndirectPerPortionGeneral = costs.costIndirectPerPortion + costIndirectGeneralPerPortion;
+                    costs = {
+                        ...costs,
+                        costIndirectGeneralPerPortion,
+                        costIndirectPerPortion: newCostIndirectPerPortionGeneral,
+                        totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortionGeneral + (costs.costAgingPerPortion || 0),
+                        ...computeMarginsForPrice(fmt.prixVente, { ...costs, costIndirectPerPortion: newCostIndirectPerPortionGeneral, totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortionGeneral + (costs.costAgingPerPortion || 0) }),
+                    };
+                }
             }
 
             // Phase 4.6 — Activité : ajoute, en plus du Général déjà dans `costs` ci-dessus, la part
@@ -692,18 +739,22 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             // simplement sans cette part — jamais un 0 inventé.
             const activityPool = indirectPools?.activityPools?.[p.activityId];
             if (activityPool && activityPool.amount > 0 && activityPool.driverTotal > 0 && costs.portionsSold > 0) {
-                const driverValueTotal = activityPool.driver === 'laborTime'
-                    ? (costs.productionTimeSeconds / 3600) * (costs.portionsSold / (costs.nbPortions || 1))
-                    : costs.totalDirectCostPerPortion * costs.portionsSold;
-                const costIndirectActivityPerPortion = (activityPool.amount * (driverValueTotal / activityPool.driverTotal)) / costs.portionsSold;
-                const newCostIndirectPerPortion = costs.costIndirectPerPortion + costIndirectActivityPerPortion;
-                costs = {
-                    ...costs,
-                    costIndirectActivityPerPortion,
-                    costIndirectPerPortion: newCostIndirectPerPortion,
-                    totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortion + (costs.costAgingPerPortion || 0),
-                    ...computeMarginsForPrice(fmt.prixVente, { ...costs, costIndirectPerPortion: newCostIndirectPerPortion, totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortion + (costs.costAgingPerPortion || 0) }),
-                };
+                const driverValueTotal = computeIndirectDriverValue(activityPool.driver, {
+                    portionUnit: fmt.portionUnit, portionSize: costs.portionSize, portionsSold: costs.portionsSold,
+                    productionTimeSeconds: costs.productionTimeSeconds, nbPortions: costs.nbPortions, totalDirectCostPerPortion: costs.totalDirectCostPerPortion,
+                }, activityPool.volumeUnit);
+                // `null` (driver « volume », famille physique différente) : voir Général ci-dessus.
+                if (driverValueTotal !== null) {
+                    const costIndirectActivityPerPortion = (activityPool.amount * (driverValueTotal / activityPool.driverTotal)) / costs.portionsSold;
+                    const newCostIndirectPerPortion = costs.costIndirectPerPortion + costIndirectActivityPerPortion;
+                    costs = {
+                        ...costs,
+                        costIndirectActivityPerPortion,
+                        costIndirectPerPortion: newCostIndirectPerPortion,
+                        totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortion + (costs.costAgingPerPortion || 0),
+                        ...computeMarginsForPrice(fmt.prixVente, { ...costs, costIndirectPerPortion: newCostIndirectPerPortion, totalCostPerPortion: costs.totalDirectCostPerPortion + newCostIndirectPerPortion + (costs.costAgingPerPortion || 0) }),
+                    };
+                }
             }
 
             // Point mort (20/10, retour utilisateur) : la main-d'œuvre directe est traitée comme un

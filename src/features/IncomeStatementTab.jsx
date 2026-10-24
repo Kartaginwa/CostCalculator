@@ -1,6 +1,6 @@
 import React, { useMemo, useState, lazy, Suspense } from 'react';
 import { Trash2, CheckCircle2, AlertCircle, X, Plus, Lock } from 'lucide-react';
-import { parseLocaleNumber, isValidNumber, isNotEmpty, formatCurrency, sumLineAmounts, sumAmountsMap, round2, EXPENSE_CATEGORIES, DIRECT_COST_TYPES } from '../utils.js';
+import { parseLocaleNumber, isValidNumber, isNotEmpty, formatCurrency, sumLineAmounts, sumAmountsMap, round2, EXPENSE_CATEGORIES, DIRECT_COST_TYPES, UNIT_BASE_FAMILY_LABELS } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { indirectCostMethodLabels } from '../state/initialState.js';
@@ -36,6 +36,10 @@ const PlaceholderCell = () => <span className="text-gray-300">—</span>;
 // aurait faussé l'agrégation en Phase 4.6. Jamais un blocage, uniquement informatif (certaines
 // lignes ne s'appliquent naturellement qu'à un sous-ensemble de contenants).
 const ALLOCATION_EPSILON = 0.005;
+// Familles physiques offertes au CICI « volume » (22/10) : seulement masse/volume — jamais
+// 'unité' (discrète, un comptage, aucune taille physique à convertir). Voir
+// `computeIndirectDriverValue`, engine/analysisData.js.
+const VOLUME_CICI_FAMILIES = ['g', 'ml'];
 const AllocationCheckBadge = ({ diff }) => {
     if (Math.abs(diff) < ALLOCATION_EPSILON) {
         return <CheckCircle2 size={14} className="text-green-600 shrink-0" title="Répartition complète : la somme des contenants (Activités + Canaux) égale le Montant." />;
@@ -488,6 +492,14 @@ export const IncomeStatementTab = () => {
     // ses propres produits — voir 04-Conception-Modele.md).
     const handleActivityDriverChange = (id, indirectCostDriver) => {
         onUpdateProductionActivities(productionActivities.map(a => a.id === id ? { ...a, indirectCostDriver } : a));
+    };
+
+    // Famille physique (masse 'g' / volume 'ml') du driver « volume » de CETTE activité — propre à
+    // chaque activité, comme le driver lui-même (voir ci-dessus) ; n'a d'effet que si
+    // `indirectCostDriver === 'volume'` (ignorée sinon, jamais effacée au changement de driver, pour
+    // ne pas perdre le choix si l'utilisateur revient à « volume » ensuite).
+    const handleActivityVolumeUnitChange = (id, indirectCostVolumeUnit) => {
+        onUpdateProductionActivities(productionActivities.map(a => a.id === id ? { ...a, indirectCostVolumeUnit } : a));
     };
 
     // Sous-totaux par colonne (bas du tableau Revenus) : un sous-total par contenant (Général +
@@ -1315,7 +1327,7 @@ export const IncomeStatementTab = () => {
             <div id="tutorial-section-cici" className="p-4 bg-gray-100 rounded-lg">
                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
                     Coefficient d'imputation des charges indirectes
-                    <Tooltip text="Le CICI est le driver utilisé pour convertir un pool de frais fixes déjà dimensionné (par la clé de répartition, ci-dessus) en un taux $ par produit — propre à chaque ligne ci-dessous, sans effet sur les autres : Général (frais de structure non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) se répartit à l'échelle du menu entier ; chaque activité se répartit seulement entre ses propres produits. « Selon les charges directes » (matière + emballage + main-d'œuvre + sous-traitance combinés) : choix par défaut, approprié quand le coût indirect suit globalement la valeur des intrants consommés — capture à la fois le volume et la complexité d'un produit. « Selon le temps de main-d'œuvre » : plus précis si le coût indirect suit plutôt la CADENCE/le temps machine qu'une pure valeur d'intrants. Canal n'a pas de CICI : son coût indirect est toujours un pourcentage de majoration (Paramètres → Canaux de vente)." />
+                    <Tooltip text="Le CICI est le driver utilisé pour convertir un pool de frais fixes déjà dimensionné (par la clé de répartition, ci-dessus) en un taux $ par produit — propre à chaque ligne ci-dessous, sans effet sur les autres : Général (frais de structure non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) se répartit à l'échelle du menu entier ; chaque activité se répartit seulement entre ses propres produits. « Au prorata des coûts directs » (matière + emballage + main-d'œuvre + sous-traitance combinés) : choix par défaut, approprié quand le coût indirect suit globalement la valeur des intrants consommés — capture à la fois le volume et la complexité d'un produit. « Au prorata du temps de production » : plus précis si le coût indirect suit plutôt la CADENCE/le temps machine qu'une pure valeur d'intrants. « Au prorata du volume physique » (inspiré de l'Agro-Calculateur du MAPAQ) : selon le poids ou volume physique total vendu (ex. kg, L) — pertinent quand le frais indirect suit l'encombrement (entreposage réfrigéré, capacité d'entrepôt) plutôt que la valeur ou la cadence ; exige de préciser la famille physique (Masse ou Volume) juste à côté — un format d'une autre famille (ex. vendu à l'unité, ou en volume si Masse est choisi) reste simplement absent de ce calcul, jamais une conversion masse/volume inventée. Canal n'a pas de CICI : son coût indirect est toujours un pourcentage de majoration (Paramètres → Canaux de vente)." />
                 </h2>
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 bg-white p-2 rounded-md shadow-sm">
@@ -1325,6 +1337,14 @@ export const IncomeStatementTab = () => {
                                 <option key={value} value={value}>{label}</option>
                             ))}
                         </select>
+                        {generalInfo.indirectCostMethod === 'volume' && (
+                            <select id="indirectCostVolumeUnit" value={generalInfo.indirectCostVolumeUnit || ''} onChange={(e) => onUpdateGeneralInfo('indirectCostVolumeUnit', e.target.value)} className="p-1 border rounded text-sm border-gray-300">
+                                <option value="" disabled>Famille physique…</option>
+                                {VOLUME_CICI_FAMILIES.map((base) => (
+                                    <option key={base} value={base}>{UNIT_BASE_FAMILY_LABELS[base]}</option>
+                                ))}
+                            </select>
+                        )}
                     </div>
                     {productionActivities.map((activity) => (
                         <div key={activity.id} className="flex items-center gap-2 bg-white p-2 rounded-md shadow-sm">
@@ -1338,6 +1358,14 @@ export const IncomeStatementTab = () => {
                                     <option key={value} value={value}>{label}</option>
                                 ))}
                             </select>
+                            {activity.indirectCostDriver === 'volume' && (
+                                <select value={activity.indirectCostVolumeUnit || ''} onChange={(e) => handleActivityVolumeUnitChange(activity.id, e.target.value)} className="p-1 border rounded text-sm border-gray-300">
+                                    <option value="" disabled>Famille physique…</option>
+                                    {VOLUME_CICI_FAMILIES.map((base) => (
+                                        <option key={base} value={base}>{UNIT_BASE_FAMILY_LABELS[base]}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                     ))}
                 </div>

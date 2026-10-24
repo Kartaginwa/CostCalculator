@@ -841,15 +841,24 @@ export const getEmptyState = () => ({
     },
 });
 
-// Méthode d'attribution de Général (renommée le 21/10, retour utilisateur — « Méthode
-// d'attribution de Général » dans État des résultats, sous le tableau Frais fixes) : choisie
-// globalement, s'applique à tous les plats sans exception — mêmes options et même mécanisme que
-// le CICI d'une activité (voir `indirectCostDriver`, Phase 4.6), mais à l'échelle du menu entier.
-// Les deux répartissent exactement le pool de frais indirects Général (elles se réconcilient par
-// construction) :
+// Coefficient d'imputation des charges indirectes (CICI — terminologie de l'Agro-Calculateur du
+// MAPAQ, voir Projet_Claude/03-Feuille-de-route.md) choisi pour Général (renommé « Méthode
+// d'attribution de Général » le 21/10, centralisé dans la section CICI d'État des résultats le
+// 22/10) : choisi globalement, s'applique à tous les plats sans exception — mêmes options et même
+// mécanisme que le CICI d'une activité (voir `indirectCostDriver`, Phase 4.6), mais à l'échelle du
+// menu entier. Les deux répartissent exactement le pool de frais indirects Général (elles se
+// réconcilient par construction) :
 //   - directCost : au prorata du coût direct ($) — le plus défendable par défaut, voir
 //     04-Conception-Modele.md section Phase 4.6 (même raisonnement que pour une activité) ;
-//   - laborTime : au prorata du temps de production (taux = frais indirects / total heures MO).
+//   - laborTime : au prorata du temps de production (taux = frais indirects / total heures MO) ;
+//   - volume (22/10, inspiré du CICI du même nom dans l'Agro-Calculateur) : au prorata du volume ou
+//     poids physique total vendu (`portionSize` × `portionsSold`) — pertinent quand le frais
+//     indirect suit l'encombrement physique (entreposage réfrigéré, capacité d'entrepôt) plutôt que
+//     la valeur des intrants ou le temps de MO. Nécessite de préciser la famille physique (masse
+//     'g' ou volume 'ml', voir `indirectCostVolumeUnit` ci-dessous) : un format d'une autre famille
+//     (ex. vendu « à l'unité », ou en mL si la famille choisie est 'g') reste simplement ABSENT de
+//     ce calcul plutôt que de lui inventer une conversion masse/volume sans densité connue — voir
+//     `computeIndirectDriverValue`, engine/analysisData.js.
 // « salesAllocation » (au prorata du mix des ventes) a été retirée le 21/10 : elle se réduisait
 // mathématiquement toujours à un partage égal à l'unité dès que le mix des ventes reflète
 // fidèlement les volumes réels (ce qui est précisément son rôle) — voir
@@ -858,7 +867,16 @@ export const getEmptyState = () => ({
 export const indirectCostMethodLabels = {
     directCost: 'Au prorata des coûts directs',
     laborTime: 'Au prorata du temps de production',
+    volume: 'Au prorata du volume physique',
 };
+
+// `indirectCostVolumeUnit` ('g' ou 'ml', voir CONVERSION_FACTORS dans utils.js) : la famille
+// physique sur laquelle le driver « volume » ci-dessus agrège son total — propre à CHAQUE pool
+// (Général a la sienne, chaque activité la sienne), absente tant que « volume » n'a pas été choisi
+// pour ce pool. Vit sur `generalInfo.indirectCostVolumeUnit` pour Général, sur
+// `productionActivities[i].indirectCostVolumeUnit` pour une activité — jamais une 3e famille
+// générique partagée, puisque deux pools peuvent légitimement choisir des familles différentes
+// (ex. une activité dont tous les formats sont en kg, une autre entièrement en mL).
 
 // Période de référence (22/10) : toujours personnalisée désormais — le sélecteur
 // semaine/mois/trimestre/année a été retiré (voir IncomeStatementTab.jsx, section Période de

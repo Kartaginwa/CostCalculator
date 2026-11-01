@@ -383,6 +383,123 @@ export function computeChannelImpact(activeProducts, salesChannels = []) {
     return result;
 }
 
+// Rapport Par Activité / Par Canal (24/10, retour utilisateur) — agrégation de plusieurs SKU×canal
+// en un seul segment, par SOMME des $ déjà calculés (jamais une moyenne de pourcentages, voir
+// commentaire plus bas) : revenu, chaque poste de coût direct, et chaque pool indirect (Général/
+// Activité/Canal), tous multipliés par le volume RÉEL de cette ligne puis sommés sur le segment. Un
+// SKU sans volume réel sur ce canal n'y contribue simplement pas (jamais un 0 inventé).
+//
+// Pourquoi sommer les $ plutôt que moyenner les % : un simple % moyen (même pondéré par le volume)
+// peut diverger du vrai % consolidé dès que les prix varient entre SKU — paradoxe de Simpson déjà
+// rencontré et corrigé le 20/10 pour les KPI du menu entier (voir plus bas, `globalBreakEven` :
+// pondéré par le $ de revenu réel, pas par le mix des ventes en unités). La seule façon
+// mathématiquement correcte d'obtenir « la marge nette % de ce segment » est de diviser la SOMME
+// des $ de marge par la SOMME des $ de revenu — jamais l'inverse (moyenner d'abord, sommer après).
+//
+// Point mort du segment, en $ DE REVENU plutôt qu'en unités : un segment agrège des SKU
+// hétérogènes (prix, formats, unités de vente différents) — « X unités » n'aurait pas de sens
+// (unités de QUOI ?). La méthode standard en comptabilité de gestion pour un point mort multi-
+// produits est le ratio de marge de contribution pondéré en $ : Point mort ($) = Frais fixes
+// totaux du segment ÷ (marge de contribution totale du segment ÷ revenu total du segment) — même
+// méthode que `globalBreakEven` ci-dessous, à l'échelle du segment plutôt que du menu entier. La
+// main-d'œuvre y est traitée comme un coût FIXE (révision du 20/10, voir computeChannelBreakdown) :
+// ajoutée aux frais fixes au numérateur, exclue de la marge de contribution au dénominateur.
+function aggregateSegmentRows(rows) {
+    let revenueTotal = 0, volumeTotal = 0;
+    let costMatiereTotal = 0, costPackagingTotal = 0, costLaborTotal = 0, costSubcontractingTotal = 0, costAgingTotal = 0;
+    let costIndirectGeneralTotal = 0, costIndirectActivityTotal = 0, costIndirectChannelTotal = 0;
+
+    for (const { costs, cb } of rows) {
+        const volume = parseLocaleNumber(cb.volume);
+        if (!(volume > 0)) continue;
+        revenueTotal += parseLocaleNumber(cb.netPrice) * volume;
+        volumeTotal += volume;
+        costMatiereTotal += parseLocaleNumber(costs.costMatierePerPortion) * volume;
+        costPackagingTotal += parseLocaleNumber(costs.costPackagingPerPortion) * volume;
+        costLaborTotal += parseLocaleNumber(costs.costLaborPerPortion) * volume;
+        costSubcontractingTotal += parseLocaleNumber(costs.costSubcontractingPerPortion) * volume;
+        costAgingTotal += parseLocaleNumber(costs.costAgingPerPortion) * volume;
+        costIndirectGeneralTotal += parseLocaleNumber(costs.costIndirectGeneralPerPortion) * volume;
+        costIndirectActivityTotal += parseLocaleNumber(costs.costIndirectActivityPerPortion) * volume;
+        costIndirectChannelTotal += parseLocaleNumber(cb.costIndirectChannelPerPortion) * volume;
+    }
+
+    if (revenueTotal <= 0) return null; // Rien à ce segment — absent, jamais un tableau à 0.
+
+    const totalDirectCostTotal = costMatiereTotal + costPackagingTotal + costLaborTotal + costSubcontractingTotal;
+    const margeBruteTotal = revenueTotal - totalDirectCostTotal;
+    const totalIndirectTotal = costIndirectGeneralTotal + costIndirectActivityTotal + costIndirectChannelTotal;
+    const margeNetteTotal = margeBruteTotal - totalIndirectTotal - costAgingTotal;
+
+    // Point mort (voir commentaire de fonction) : marge de contribution SANS la main-d'œuvre, qui
+    // rejoint les frais fixes au numérateur.
+    const contributionTotal = margeBruteTotal + costLaborTotal;
+    const contributionRatio = contributionTotal / revenueTotal;
+    const fixedCostForBreakEven = totalIndirectTotal + costLaborTotal;
+    const breakEvenRevenue = contributionRatio > 0 ? fixedCostForBreakEven / contributionRatio : null;
+
+    return {
+        revenueTotal, volumeTotal,
+        costMatiereTotal, costPackagingTotal, costLaborTotal, costSubcontractingTotal, costAgingTotal,
+        totalDirectCostTotal,
+        margeBruteTotal, margeBrutePercent: margeBruteTotal / revenueTotal,
+        costIndirectGeneralTotal, costIndirectActivityTotal, costIndirectChannelTotal, totalIndirectTotal,
+        margeNetteTotal, margeNettePercent: margeNetteTotal / revenueTotal,
+        breakEvenRevenue,
+    };
+}
+
+// Rapport Par Activité : UNE activité fixée, ventilée par CANAL (même axe de colonnes que « Par
+// SKU », mais chaque colonne agrège maintenant tous les SKU de cette activité vendus par ce canal)
+// — plus une colonne `total`, tous canaux confondus pour cette activité. Une activité sans aucun
+// SKU/volume réel renvoie `{ byChannel: {}, total: null }`, jamais un rapport à 0.
+export function computeActivityReport(productsWithCosts, activityId, salesChannels = []) {
+    const byChannel = {};
+    const allRows = [];
+    for (const row of (productsWithCosts || [])) {
+        if (row.activityId !== activityId) continue;
+        for (const cb of (row.channelBreakdown || [])) {
+            const entry = { costs: row.costs, cb };
+            (byChannel[cb.channelId] || (byChannel[cb.channelId] = [])).push(entry);
+            allRows.push(entry);
+        }
+    }
+    const byChannelResult = {};
+    for (const [channelId, rows] of Object.entries(byChannel)) {
+        const aggregate = aggregateSegmentRows(rows);
+        if (!aggregate) continue;
+        const channel = salesChannels.find(c => c.id === channelId);
+        byChannelResult[channelId] = { channelId, channelName: channel?.name || channelId, ...aggregate };
+    }
+    return { byChannel: byChannelResult, total: aggregateSegmentRows(allRows) };
+}
+
+// Rapport Par Canal : UN canal fixé, ventilé par ACTIVITÉ — la transposée du rapport ci-dessus
+// (même fonction d'agrégation, même donnée déjà calculée) — plus une colonne `total`, toutes
+// activités confondues pour ce canal. Un SKU sans activité assignée en est exclu (donnée absente,
+// jamais un contenant « sans activité » inventé) — cas qui ne devrait de toute façon jamais se
+// produire (une activité est obligatoire à la création d'un produit).
+export function computeChannelReport(productsWithCosts, channelId, productionActivities = []) {
+    const byActivity = {};
+    const allRows = [];
+    for (const row of (productsWithCosts || [])) {
+        if (!row.activityId) continue;
+        const cb = (row.channelBreakdown || []).find(c => c.channelId === channelId);
+        if (!cb) continue;
+        const entry = { costs: row.costs, cb };
+        (byActivity[row.activityId] || (byActivity[row.activityId] = [])).push(entry);
+        allRows.push(entry);
+    }
+    const byActivityResult = {};
+    for (const [actId, rows] of Object.entries(byActivity)) {
+        const aggregate = aggregateSegmentRows(rows);
+        if (!aggregate) continue;
+        const activity = productionActivities.find(a => a.id === actId);
+        byActivityResult[actId] = { activityId: actId, activityName: activity?.name || actId, ...aggregate };
+    }
+    return { byActivity: byActivityResult, total: aggregateSegmentRows(allRows) };
+}
+
 // Phase 4.3bis (13/10) — Charges directes réelles : mappe chaque catégorie de `directCostLines`
 // (voir utils.js, DIRECT_COST_TYPES) vers le champ de coût théorique par portion correspondant
 // dans `costs` (calculateCosts.js) — driver « apparié par type » (voir Projet_Claude/

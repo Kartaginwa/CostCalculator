@@ -6,7 +6,7 @@ import { getCostTargetIndicator } from '../ui-utils.jsx';
 import { Tooltip, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
-import { computeMenuEngineeringQuadrants } from '../engine/analysisData.js';
+import { computeMenuEngineeringQuadrants, computeActivityReport, computeChannelReport } from '../engine/analysisData.js';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
 
@@ -695,6 +695,103 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
     );
 };
 
+// Rapport agrégé Par Activité / Par Canal (24/10, retour utilisateur) — même structure visuelle
+// que BySkuWaterfall (sections, BySkuRow/BySkuSectionHeader, palette de marge), mais chaque colonne
+// agrège plusieurs SKU (voir computeActivityReport/computeChannelReport, engine/analysisData.js)
+// plutôt qu'un seul. Volontairement SANS la section « PDS et frais de mise en marché » : les
+// maillons de cascade sont propres à CHAQUE SKU (format, PDS) — agglomérer leur détail entre
+// plusieurs SKU hétérogènes n'aurait pas de sens ; seul le Revenu total (déjà prix net × volume
+// réel, sommé) est montré. Tous les $ sont des TOTAUX du segment (jamais un prix/coût par unité,
+// qui supposerait une unité de vente commune à tous les SKU agrégés) ; les % sont dérivés en
+// divisant deux TOTAUX $, jamais en moyennant des % individuels (voir aggregateSegmentRows,
+// analysisData.js, pour la justification complète — paradoxe de Simpson). Le point mort est en $
+// DE REVENU, pas en unités, pour la même raison.
+const AggregateWaterfall = ({ columns, columnHeaderLabel }) => {
+    if (columns.length === 0) {
+        return <p className="text-sm text-gray-500 text-center py-8">Aucune donnée réelle (volume vendu) pour cette sélection.</p>;
+    }
+    const hasSubcontracting = columns.some(col => col.data.costSubcontractingTotal > 0);
+    return (
+        <div className="overflow-x-auto border rounded-lg">
+            <table className="min-w-full text-sm">
+                <thead className="bg-gray-100">
+                    <tr>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase sticky left-0 bg-gray-100">{columnHeaderLabel}</th>
+                        {columns.map(col => (
+                            <th key={col.key} className={`px-4 py-2.5 text-right text-sm font-semibold whitespace-nowrap ${col.isTotal ? 'text-gray-900 bg-gray-200' : 'text-gray-800'}`}>{col.name}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                    <BySkuSectionHeader label="Revenu" colSpan={columns.length + 1} />
+                    <BySkuRow label="Revenu total" tooltip="Somme de (prix net × volume réel) de tous les SKU de ce segment." render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-medium text-gray-800">{formatCurrency(col.data.revenueTotal)} $</td>
+                    ))} />
+
+                    <BySkuSectionHeader label="Coûts directs" colSpan={columns.length + 1} />
+                    <BySkuRow label="Coût matière" render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(col.data.costMatiereTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Emballage" render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(col.data.costPackagingTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Main-d'œuvre" render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(col.data.costLaborTotal)} $</td>
+                    ))} />
+                    {hasSubcontracting && (
+                        <BySkuRow label="Coûts additionnels (sous-traitance)" render={columns.map(col => (
+                            <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(col.data.costSubcontractingTotal)} $</td>
+                        ))} />
+                    )}
+                    <BySkuRow label="Coût de production (total)" tooltip="Matière + emballage + main-d'œuvre + sous-traitance, en $ total pour ce segment — avant tout frais indirect." emphasis render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(col.data.totalDirectCostTotal)} $</td>
+                    ))} />
+
+                    <BySkuSectionHeader label="Marge brute" colSpan={columns.length + 1} />
+                    <BySkuRow label="Bénéfice brut" tooltip="Revenu total moins le coût de production total. Avant frais fixes." render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(col.data.margeBrutePercent)}>{formatCurrency(col.data.margeBruteTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Marge brute" tooltip="Bénéfice brut ÷ Revenu total — jamais une moyenne des marges brutes individuelles de chaque SKU du segment, qui diverge du vrai % consolidé dès que les prix varient entre SKU." render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(col.data.margeBrutePercent)}>{formatPercent(col.data.margeBrutePercent)} %</td>
+                    ))} />
+
+                    <BySkuSectionHeader label="Répartition des charges fixes" colSpan={columns.length + 1} />
+                    <BySkuRow label="Frais fixes — Général" tooltip="Somme de la part « Général » (voir État des résultats, Coefficient d'imputation des charges indirectes) de chaque SKU du segment, × son volume réel." render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(col.data.costIndirectGeneralTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Frais fixes — Activité" render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(col.data.costIndirectActivityTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Frais fixes — Canal" render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(col.data.costIndirectChannelTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Frais fixes totaux" tooltip="Général + Activité + Canal ci-dessus, en $ total pour ce segment." emphasis render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(col.data.totalIndirectTotal)} $</td>
+                    ))} />
+
+                    <BySkuSectionHeader label="Coût net et marge nette" colSpan={columns.length + 1} />
+                    <BySkuRow label="Bénéfice net" tooltip="Le profit réel du segment une fois tous les coûts déduits (production + frais fixes)." render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(col.data.margeNettePercent)}>{formatCurrency(col.data.margeNetteTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Marge nette" render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(col.data.margeNettePercent)}>{formatPercent(col.data.margeNettePercent)} %</td>
+                    ))} />
+
+                    <BySkuSectionHeader label="Seuil de rentabilité du segment" colSpan={columns.length + 1} />
+                    <BySkuRow label="Volume total" tooltip="Somme des unités vendues — informatif seulement : des SKU de formats/unités différents ne sont pas comparables unité à unité (voir Point mort ci-dessous, exprimé en $, pas en unités, pour cette raison)." render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right text-gray-600">{col.data.volumeTotal.toLocaleString('fr-CA', { maximumFractionDigits: 1 })}</td>
+                    ))} />
+                    <BySkuRow label="Point mort" tooltip="Revenu que ce segment doit générer pour couvrir ses frais fixes (dont la main-d'œuvre, traitée comme fixe pour la période — même méthode que Par SKU) — en $ DE REVENU, pas en unités : des SKU hétérogènes n'ont pas d'unité de vente commune. Méthode du ratio de marge de contribution pondéré en $ (même principe que le Point Mort du Menu, Vue d'ensemble, mais à l'échelle de ce seul segment)." emphasis render={columns.map(col => (
+                        <td key={col.key} className="px-4 py-2.5 text-right font-bold text-indigo-700">
+                            {col.data.breakEvenRevenue != null ? `${formatCurrency(col.data.breakEvenRevenue)} $` : 'N/A'}
+                        </td>
+                    ))} />
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
 // Même palette que getMarginStyle (table "Vue d'ensemble"), réutilisée ici pour une cellule isolée.
 const getMarginCellStyle = (marginPercent) => {
     if (!isFinite(marginPercent)) return { backgroundColor: 'white', color: 'black' };
@@ -883,6 +980,7 @@ export const SummaryTable = ({
     // même SKU). Voir Projet_Claude/03-Feuille-de-route.md.
     activeSubTab, onActiveSubTabChange, selectedSkuId, onSelectedSkuIdChange,
     selectedIngredientId, onSelectedIngredientIdChange, selectedPackagingId, onSelectedPackagingIdChange,
+    selectedActivityId, onSelectedActivityIdChange, selectedChannelId, onSelectedChannelIdChange,
 }) => {
     const {
         products, generalInfo, laborDatabase, analysisData, salesChannels, productionActivities,
@@ -910,6 +1008,54 @@ export const SummaryTable = ({
         if (skuOptions.length > 0 && !skuOptions.some(o => o.id === selectedSkuId)) onSelectedSkuIdChange(skuOptions[0].id);
     }, [skuOptions, selectedSkuId, onSelectedSkuIdChange]);
     const selectedSkuRow = productsWithCosts.find(p => p.id === selectedSkuId) || null;
+
+    // --- PAR ACTIVITÉ / PAR CANAL (24/10, retour utilisateur) : même sélecteur-et-repli robuste
+    // que « Par SKU » ci-dessus, sur les listes déjà existantes (Paramètres → Activités de
+    // production / Canaux de vente) — jamais une liste recalculée depuis les données vendues
+    // (une activité ou un canal sans aucune vente reste une option valide, simplement affichée
+    // avec un rapport vide, voir AggregateWaterfall).
+    useEffect(() => {
+        if (productionActivities.length > 0 && !productionActivities.some(a => a.id === selectedActivityId)) {
+            onSelectedActivityIdChange(productionActivities[0].id);
+        }
+    }, [productionActivities, selectedActivityId, onSelectedActivityIdChange]);
+    useEffect(() => {
+        if (salesChannels.length > 0 && !salesChannels.some(c => c.id === selectedChannelId)) {
+            onSelectedChannelIdChange(salesChannels[0].id);
+        }
+    }, [salesChannels, selectedChannelId, onSelectedChannelIdChange]);
+
+    // Rapport Par Activité : l'activité choisie, ventilée par canal (+ colonne Total). Rapport Par
+    // Canal : la transposée exacte (canal choisi, ventilé par activité). Même moteur pur pour les
+    // deux (voir computeActivityReport/computeChannelReport, engine/analysisData.js) — seules les
+    // colonnes affichées diffèrent. Un canal/une activité sans aucune vente réelle n'apparaît
+    // simplement pas dans les colonnes (voir AggregateWaterfall, qui affiche alors son propre
+    // message plutôt qu'un tableau vide).
+    const activityReport = useMemo(
+        () => (selectedActivityId ? computeActivityReport(productsWithCosts, selectedActivityId, salesChannels) : null),
+        [productsWithCosts, selectedActivityId, salesChannels]
+    );
+    const activityReportColumns = useMemo(() => {
+        if (!activityReport) return [];
+        const cols = salesChannels
+            .filter(c => activityReport.byChannel[c.id])
+            .map(c => ({ key: c.id, name: c.name || 'Sans nom', data: activityReport.byChannel[c.id] }));
+        if (activityReport.total) cols.push({ key: 'total', name: 'Total', data: activityReport.total, isTotal: true });
+        return cols;
+    }, [activityReport, salesChannels]);
+
+    const channelReport = useMemo(
+        () => (selectedChannelId ? computeChannelReport(productsWithCosts, selectedChannelId, productionActivities) : null),
+        [productsWithCosts, selectedChannelId, productionActivities]
+    );
+    const channelReportColumns = useMemo(() => {
+        if (!channelReport) return [];
+        const cols = productionActivities
+            .filter(a => channelReport.byActivity[a.id])
+            .map(a => ({ key: a.id, name: a.name || 'Sans nom', data: channelReport.byActivity[a.id] }));
+        if (channelReport.total) cols.push({ key: 'total', name: 'Total', data: channelReport.total, isTotal: true });
+        return cols;
+    }, [channelReport, productionActivities]);
 
     // --- SECTION SUIVI (fusionnée dans Rapport le 24/10, retour utilisateur) ---
     const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
@@ -1269,6 +1415,18 @@ export const SummaryTable = ({
                     Par SKU
                 </button>
                 <button
+                    onClick={() => onActiveSubTabChange('byActivity')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'byActivity' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    Par Activité
+                </button>
+                <button
+                    onClick={() => onActiveSubTabChange('byChannel')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'byChannel' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    Par Canal
+                </button>
+                <button
                     onClick={() => onActiveSubTabChange('intrants')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'intrants' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
@@ -1345,6 +1503,45 @@ export const SummaryTable = ({
                     )}
                 </div>
                 )}
+            </div>
+            )}
+
+            {/* Par Activité / Par Canal (24/10, retour utilisateur) : même structure que « Par
+                SKU » (sélecteur + tableau), mais le tableau agrège plusieurs SKU à la fois — voir
+                AggregateWaterfall et computeActivityReport/computeChannelReport (engine/
+                analysisData.js) pour la méthodologie d'agrégation ($ sommés, jamais % moyennés ;
+                point mort en $ de revenu, pas en unités). */}
+            {activeSubTab === 'byActivity' && (
+            <div id="tutorial-section-summary-byactivity">
+                <div className="flex items-center gap-2 mb-6">
+                    <label htmlFor="summaryActivitySelect" className="text-sm font-medium text-gray-700">Activité :</label>
+                    <select
+                        id="summaryActivitySelect"
+                        value={selectedActivityId || ''}
+                        onChange={(e) => onSelectedActivityIdChange(e.target.value)}
+                        className="p-1.5 border rounded-md text-sm border-gray-300 flex-1 max-w-md"
+                    >
+                        {productionActivities.map(a => <option key={a.id} value={a.id}>{a.name || 'Sans nom'}</option>)}
+                    </select>
+                </div>
+                <AggregateWaterfall columns={activityReportColumns} columnHeaderLabel="Canal" />
+            </div>
+            )}
+
+            {activeSubTab === 'byChannel' && (
+            <div id="tutorial-section-summary-bychannel">
+                <div className="flex items-center gap-2 mb-6">
+                    <label htmlFor="summaryChannelSelect" className="text-sm font-medium text-gray-700">Canal :</label>
+                    <select
+                        id="summaryChannelSelect"
+                        value={selectedChannelId || ''}
+                        onChange={(e) => onSelectedChannelIdChange(e.target.value)}
+                        className="p-1.5 border rounded-md text-sm border-gray-300 flex-1 max-w-md"
+                    >
+                        {salesChannels.map(c => <option key={c.id} value={c.id}>{c.name || 'Sans nom'}</option>)}
+                    </select>
+                </div>
+                <AggregateWaterfall columns={channelReportColumns} columnHeaderLabel="Activité" />
             </div>
             )}
 

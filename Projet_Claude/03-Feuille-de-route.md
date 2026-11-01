@@ -3497,3 +3497,77 @@ Trois retouches ponctuelles après la fusion ci-dessus :
   (icône `lucide-trending-up` confirmée sur le bouton Rapport et suivi, `lucide-table` sur État des
   résultats ; ordre des sous-onglets confirmé : Vue d'ensemble, Par SKU, Intrants, Simulation),
   lint et `npx vite build` propres.
+
+## Nouveaux sous-onglets « Par Activité » / « Par Canal » dans Rapport et suivi (24/10)
+
+Retour utilisateur : deux nouveaux rapports agrégés, insérés entre « Par SKU » et « Intrants »,
+« ressemblant à Par SKU mais différents car ils agglomèrent des données ». L'utilisateur a demandé
+explicitement une méthodologie comptable cohérente avec celle déjà en place dans l'app, à décrire
+dans le rapport — voir ci-dessous.
+
+**Méthodologie d'agrégation (le cœur de la demande)** :
+
+1. **Sommer les $ puis diviser, jamais moyenner des %.** Un % moyen (même pondéré par le volume ou
+   par le mix des ventes) peut diverger du vrai % consolidé dès que les prix varient entre les SKU
+   agrégés — le paradoxe de Simpson déjà rencontré et corrigé le 20/10 pour les KPI du menu entier
+   (`weightedGrossMargin`/`globalBreakEven`, pondérés par le $ de revenu réel plutôt que par le mix
+   des ventes en unités, après qu'une marge pondérée négative ait contredit un point mort positif
+   dans le même tableau de bord). Chaque poste ($ de revenu, de coût matière, d'emballage, de
+   main-d'œuvre, de frais fixes Général/Activité/Canal) est donc sommé sur tous les SKU du segment
+   (× leur volume réel), et chaque % (marge brute, marge nette) se calcule en divisant deux de ces
+   sommes — jamais l'inverse. Test dédié (`analysisData.test.js`) avec un SKU « B » au prix et aux
+   coûts volontairement différents du SKU « A », pour qu'une moyenne de % donnerait un résultat
+   visiblement faux (vérifié : la moyenne naïve des `margeBrutePercent` individuels donnerait
+   ≈ 46,9 % contre 62,8 % pour le vrai % $-pondéré sur l'exemple du test).
+2. **Point mort du segment en $ DE REVENU, jamais en unités.** Un segment agrège des SKU
+   hétérogènes (formats, unités de vente différentes) — « X unités » n'aurait pas de sens (unités
+   de quoi ?). Méthode standard en comptabilité de gestion pour un point mort multi-produits : le
+   ratio de marge de contribution pondéré en $ — `Point mort ($) = Frais fixes totaux du segment ÷
+   (marge de contribution totale du segment ÷ revenu total du segment)` — exactement la méthode
+   déjà utilisée par `globalBreakEven` (Point Mort du Menu, Vue d'ensemble), appliquée ici à
+   l'échelle d'un seul segment. La main-d'œuvre y est traitée comme un coût FIXE (révision du
+   20/10, voir `computeChannelBreakdown`) : ajoutée aux frais fixes au numérateur, exclue de la
+   marge de contribution au dénominateur.
+3. **Réutilisation des données déjà calculées, jamais un recalcul.** `computeActivityReport`/
+   `computeChannelReport` ne font QUE sommer des champs déjà présents sur chaque ligne de
+   `productsWithCosts`/`channelBreakdown` (`costMatierePerPortion`, `costIndirectGeneralPerPortion`,
+   `cb.costIndirectChannelPerPortion`, `cb.netPrice`, `cb.volume`, etc.) — même principe que
+   `computeChannelRevenueShareByActivity`/`computeActivityImpact`/`computeChannelImpact`, déjà
+   dans ce fichier. Un SKU sans volume réel sur ce canal, ou sans activité assignée, n'y contribue
+   simplement pas (donnée absente, jamais un 0 inventé).
+4. **« Par Activité » et « Par Canal » sont deux vues transposées de la MÊME agrégation
+   Activité × Canal** — réutilisent la même fonction `aggregateSegmentRows` ; `computeActivityReport`
+   fixe l'activité et ventile par canal (+ colonne Total), `computeChannelReport` fixe le canal et
+   ventile par activité (+ colonne Total). Vérifié : le segment « Plats principaux surgelés vendu
+   via Vente directe » affiche des $ identiques au chiffre près, qu'on y arrive par l'un ou l'autre
+   rapport (test e2e dédié).
+5. **Section « PDS et frais de mise en marché » délibérément absente** (contrairement à Par SKU) :
+   les maillons de cascade sont propres à CHAQUE SKU (format, PDS) — les agglomérer entre plusieurs
+   SKU hétérogènes n'aurait pas de sens. Seul le Revenu total (déjà prix net × volume réel, sommé)
+   remplace cette section.
+
+**Mise en œuvre** :
+1. `engine/analysisData.js` — `aggregateSegmentRows` (fonction interne partagée) + `computeActivityReport`/
+   `computeChannelReport` (exportées). 5 nouveaux tests (`analysisData.test.js`) couvrant
+   l'agrégation $, le point mort en $, l'exclusion des segments sans volume/activité, et la
+   transposée exacte entre les deux rapports.
+2. `features/SummaryTable.jsx` — nouveau composant `AggregateWaterfall` (même style visuel que
+   `BySkuWaterfall` : `BySkuRow`/`BySkuSectionHeader`/`getMarginCellStyle`, mais sections adaptées
+   — voir point 5 ci-dessus). Deux nouveaux sous-onglets « Par Activité »/« Par Canal », chacun
+   avec son sélecteur (activité ou canal, pas de second sélecteur comme pour l'ancienne « Analyse
+   par format ») et sa propre persistance de position (`selectedActivityId`/`selectedChannelId`,
+   même patron que `selectedSkuId` — voir la reconfiguration du 24/10 pour la justification de
+   portée).
+3. `App.jsx` — `reportSelectedActivityId`/`reportSelectedChannelId` levés, mêmes conventions que le
+   reste de la position de Rapport et suivi.
+4. `AppDialogs.jsx`/`InstructionModal.jsx` — 2 nouvelles étapes du tour guidé, nouvelle sous-section
+   du guide expliquant la méthodologie (résumée pour l'utilisateur final, sans jargon).
+- Fichiers touchés : `src/engine/analysisData.js`, `src/engine/analysisData.test.js`,
+  `src/features/SummaryTable.jsx`, `src/App.jsx`, `src/components/AppDialogs.jsx`,
+  `src/components/InstructionModal.jsx`, nouveau `e2e/summary-by-activity-channel.spec.js`.
+- Tests : 230/230 unitaires (225 + 5 nouveaux), 48/48 e2e (47 + 1 nouveau), vérification
+  fonctionnelle par scripts Playwright temporaires : (a) chiffres du projet démo lus et
+  recoupés manuellement (ex. « Plats principaux surgelés » × « Vente directe » : 9 475,50 $ de
+  revenu, 57,45 % de marge brute, identique des deux côtés de la transposée) ; (b) tour guidé
+  complet (28 étapes) jusqu'à « Terminer » sans jamais rester bloqué, zéro erreur console. Lint et
+  `npx vite build` propres.

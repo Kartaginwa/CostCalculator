@@ -237,11 +237,13 @@ test("réconciliation réel/théorique dans l'onglet État des résultats (Phase
     await expect(grossProfitRow.getByText('32 000.00 $', { exact: true })).toBeVisible();
     await expect(grossProfitRow.getByText('28 443.38 $', { exact: true })).toBeVisible();
 
-    // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo), même total
-    // soustrait des deux côtés.
+    // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo, même total
+    // soustrait des deux côtés) - coût de vieillissement théorique (révisé le 02/11, retour
+    // utilisateur : manquait entièrement jusqu'ici, alors que le réel bottom-up — Par Activité/
+    // Canal/SKU — le déduit déjà ; 28 443.38 - 28 000 - 83.54 $ de vieillissement = 359.84 $).
     const netProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice net' });
     await expect(netProfitRow.getByText('4 000.00 $', { exact: true })).toBeVisible();
-    await expect(netProfitRow.getByText('443.38 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('359.84 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

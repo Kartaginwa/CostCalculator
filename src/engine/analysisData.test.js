@@ -914,6 +914,24 @@ describe('computeRealVsTheoreticalReconciliation — réconciliation réel/théo
         });
         expect(result.rows[3]).toEqual({ label: 'Bénéfice net', real: 750, theoretical: 500, diff: 250, diffPercent: 250 / 500 });
     });
+
+    it("le coût de vieillissement théorique (costAgingPerPortion) est déduit du Bénéfice net théorique, pas des Charges directes/Bénéfice brut (révisé le 02/11, retour utilisateur — manquait entièrement jusqu'ici)", () => {
+        const productsWithAging = [
+            { id: 'p1', costs: { totalDirectCostPerPortion: 4, costAgingPerPortion: 0.5 } },
+            { id: 'p2', costs: { totalDirectCostPerPortion: 2 } }, // pas de vieillissement sur ce produit.
+        ];
+        // Vieillissement théorique = 100 unités × 0,50 $ = 50 $ (p2 n'en a pas).
+        const result = computeRealVsTheoreticalReconciliation({
+            totalRevenue: 1200, totalDirectCosts: 450,
+            activeProducts: productsWithAging, unitsSoldById, menuRevenue: 1000, totalIndirects: 100,
+        });
+        // Charges directes/Bénéfice brut théoriques inchangés (vieillissement n'en fait pas partie,
+        // même principe qu'`aggregateSegmentRows` : margeBruteTotal exclut costAgingTotal).
+        expect(result.rows[1]).toEqual({ label: 'Charges directes', real: 450, theoretical: 500, diff: -50, diffPercent: -50 / 500 });
+        expect(result.rows[2]).toEqual({ label: 'Bénéfice brut', real: 750, theoretical: 500, diff: 250, diffPercent: 250 / 500 });
+        // Bénéfice net théorique = 500 (brut) - 100 (frais fixes) - 50 (vieillissement) = 350.
+        expect(result.rows[3]).toEqual({ label: 'Bénéfice net', real: 650, theoretical: 350, diff: 300, diffPercent: 300 / 350 });
+    });
 });
 
 describe('computeGrossProfitTotals/computeNetProfitTotals — Bénéfice brut/net par activité et canal (20/10)', () => {

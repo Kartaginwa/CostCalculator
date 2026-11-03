@@ -3777,3 +3777,37 @@ depuis le 20/10). Un $ se somme sans ambiguïté ; c'est ce qui rend un Total po
   Canal (ex. « Vente directe » : 2 385,11 $ des deux côtés), et le grand total (359,84 $) est
   identique en sommant soit les lignes, soit les colonnes. Lint (mêmes avertissements
   préexistants), `npx vite build` propres.
+
+## Révision du 02/11 (suite) : coût de vieillissement ajouté au théorique de la Réconciliation réel/théorique
+
+L'utilisateur a remarqué que le grand total de la nouvelle matrice (359,84 $) ne correspondait pas
+au Bénéfice net théorique affiché dans État des résultats → Réconciliation réel/théorique
+(443,38 $), et a demandé pourquoi. Investigation : `computeRealVsTheoreticalReconciliation`
+(Phase 4.4, 20/10) ne soustrayait le coût de vieillissement (`costAgingPerPortion`) NULLE PART de
+son théorique — ni dans les Charges directes (`theoreticalDirectCosts` ne sommait que
+`totalDirectCostPerPortion`), ni ailleurs — alors que `calculateCosts.js` le traite comme un
+TROISIÈME poste distinct (`totalCostPerPortion = totalDirectCostPerPortion + costIndirectPerPortion
++ costAgingPerPortion`) et qu'`aggregateSegmentRows` (Par Activité/Canal/SKU, et donc la nouvelle
+matrice) le soustrait bel et bien dans `margeNetteTotal`. Écart constaté dans la démo : 83,54 $,
+exactement le coût de vieillissement total (un format de « Plats principaux surgelés » a
+`aging: { enabled: true, ... }`) — confirmant que ce n'était pas une divergence de méthodologie
+entre les deux rapports, mais un poste de coût entièrement absent de la Réconciliation depuis sa
+création.
+
+**Décision, confirmée par l'utilisateur** : corriger la Réconciliation pour qu'elle inclue ce coût,
+plutôt que d'expliquer l'écart sans le résoudre.
+
+**Mise en œuvre** : `engine/analysisData.js`, `computeRealVsTheoreticalReconciliation` — nouveau
+`theoreticalAgingCosts` (même patron que `theoreticalDirectCosts` : somme sur `activeProducts` de
+`unitsSoldById[p.id] × costs.costAgingPerPortion`), soustrait UNIQUEMENT de la ligne Bénéfice net
+théorique (`grossProfitTheoretical - indirects - theoreticalAgingCosts`) — PAS des Charges
+directes ni du Bénéfice brut théoriques, pour rester au même niveau qu'`aggregateSegmentRows`
+(`margeBruteTotal` exclut déjà `costAgingTotal` ; seul `margeNetteTotal` le soustrait, après les
+frais fixes). Côté réel, rien à soustraire en retour : le vieillissement n'est pas un des 4 types
+de charge directe RÉELLE saisissables (`DIRECT_COST_TYPES`, utils.js) — asymétrie assumée, pas un
+oubli, puisqu'il n'existe tout simplement pas de ligne réelle de ce type dans le modèle financier.
+- Fichiers touchés : `src/engine/analysisData.js`, `src/engine/analysisData.test.js` (nouveau test
+  vérifiant que le vieillissement théorique est déduit du Bénéfice net mais pas des Charges
+  directes/Bénéfice brut), `e2e/income-statement-params.spec.js` (valeur attendue du Bénéfice net
+  théorique : 443.38 $ → 359.84 $).
+- Tests : 233/233 unitaires (1 nouveau), 48/48 e2e. `npx eslint .`, `npx vite build` propres.

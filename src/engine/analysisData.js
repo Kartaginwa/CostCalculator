@@ -738,11 +738,26 @@ export function computeNetProfitTotals({ activityBuckets, salesChannels, grossPr
 // fois, jamais modélisés par produit) : il est donc soustrait identiquement du réel ET du
 // théorique, l'écart entre les deux colonnes ne venant alors que des revenus/charges directes
 // ci-dessus, jamais de ce total commun.
+// Coût de vieillissement théorique (02/11, retour utilisateur) : manquait entièrement de ce
+// tableau depuis sa création (20/10), alors qu'il est bien soustrait côté réel indirectement —
+// `aggregateSegmentRows` (Par Activité/Canal/SKU) le déduit dans `margeNetteTotal`, séparément des
+// charges directes et des frais fixes (`calculateCosts.js` : `totalCostPerPortion =
+// totalDirectCostPerPortion + costIndirectPerPortion + costAgingPerPortion`, 3 postes distincts).
+// Sans ce correctif, le Bénéfice net théorique SURESTIME le profit de tout produit avec
+// vieillissement activé (constaté : écart de 83,54 $ dans le projet démo, exactement le coût de
+// vieillissement total). Vieillissement n'est PAS un type de charge directe RÉELLE saisissable
+// (`DIRECT_COST_TYPES`, utils.js, n'en a pas) : rien à soustraire côté réel pour rester symétrique
+// — seul le théorique gagne ce nouveau poste, soustrait au même niveau que dans
+// `aggregateSegmentRows` (après le Bénéfice brut, pas dans les Charges directes/Bénéfice brut).
 export function computeRealVsTheoreticalReconciliation({
     totalRevenue, totalDirectCosts, activeProducts, unitsSoldById, menuRevenue, totalIndirects,
 }) {
     const theoreticalDirectCosts = (activeProducts || []).reduce(
         (sum, p) => sum + (unitsSoldById?.[p.id] || 0) * parseLocaleNumber(p.costs?.totalDirectCostPerPortion),
+        0
+    );
+    const theoreticalAgingCosts = (activeProducts || []).reduce(
+        (sum, p) => sum + (unitsSoldById?.[p.id] || 0) * parseLocaleNumber(p.costs?.costAgingPerPortion),
         0
     );
 
@@ -764,7 +779,7 @@ export function computeRealVsTheoreticalReconciliation({
         makeRow('Revenus', totalRevenue, menuRevenue),
         makeRow('Charges directes', totalDirectCosts, theoreticalDirectCosts),
         makeRow('Bénéfice brut', grossProfitReal, grossProfitTheoretical),
-        makeRow('Bénéfice net', grossProfitReal - indirects, grossProfitTheoretical - indirects),
+        makeRow('Bénéfice net', grossProfitReal - indirects, grossProfitTheoretical - indirects - theoreticalAgingCosts),
     ];
 
     return { rows };

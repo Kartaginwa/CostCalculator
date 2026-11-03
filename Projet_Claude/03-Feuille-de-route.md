@@ -3837,3 +3837,19 @@ existantes de chaque case (déjà correctes depuis la Phase 1.4/4.4bis) restent 
   fonctionnelle par script Playwright temporaire (supprimé après usage) : les deux badges
   s'affichent correctement dans la section dépliée du projet démo. `npx eslint .` (mêmes
   avertissements préexistants), `npx vite build` propres.
+
+## Révision du 02/11 (suite) : ligne et colonne Total mises en évidence (matrice Activité × Canal)
+
+Demande explicite : « mettre en évidence les lignes et colonne total afin qu'elles semblent
+séparées du reste » dans la matrice Bénéfices/pertes des activités par canaux (Vue d'ensemble).
+
+**Mise en œuvre** : `features/SummaryTable.jsx` — bordure `border-l-4 border-gray-400` (4px, plus
+épaisse que les séparateurs ordinaires `divide-gray-200` à 1px) sur toute la colonne Total (en-tête
++ chaque cellule de ligne, y compris la cellule Total/Total du coin) ; `border-t-4 border-gray-400`
+sur la ligne Total (déjà `bg-gray-100 font-bold`, bordure renforcée de 2px à 4px pour la même
+cohérence visuelle que la colonne).
+- Fichiers touchés : `src/features/SummaryTable.jsx`.
+- Tests : 233/233 unitaires (inchangés, pure mise en forme), 48/48 e2e. Vérification fonctionnelle
+  par script Playwright temporaire (supprimé après usage) : bordures confirmées par capture d'écran
+  et assertions de classe CSS sur l'en-tête Total, la ligne Total et chaque cellule Total de ligne.
+  `npx eslint .` (mêmes avertissements préexistants), `npx vite build` propres.

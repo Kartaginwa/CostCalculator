@@ -449,55 +449,52 @@ function aggregateSegmentRows(rows) {
     };
 }
 
-// Rapport Par Activité : UNE activité fixée, ventilée par CANAL (même axe de colonnes que « Par
-// SKU », mais chaque colonne agrège maintenant tous les SKU de cette activité vendus par ce canal)
-// — plus une colonne `total`, tous canaux confondus pour cette activité. Une activité sans aucun
-// SKU/volume réel renvoie `{ byChannel: {}, total: null }`, jamais un rapport à 0.
-export function computeActivityReport(productsWithCosts, activityId, salesChannels = []) {
-    const byChannel = {};
-    const allRows = [];
-    for (const row of (productsWithCosts || [])) {
-        if (row.activityId !== activityId) continue;
-        for (const cb of (row.channelBreakdown || [])) {
-            const entry = { costs: row.costs, cb };
-            (byChannel[cb.channelId] || (byChannel[cb.channelId] = [])).push(entry);
-            allRows.push(entry);
-        }
-    }
-    const byChannelResult = {};
-    for (const [channelId, rows] of Object.entries(byChannel)) {
-        const aggregate = aggregateSegmentRows(rows);
-        if (!aggregate) continue;
-        const channel = salesChannels.find(c => c.id === channelId);
-        byChannelResult[channelId] = { channelId, channelName: channel?.name || channelId, ...aggregate };
-    }
-    return { byChannel: byChannelResult, total: aggregateSegmentRows(allRows) };
-}
-
-// Rapport Par Canal : UN canal fixé, ventilé par ACTIVITÉ — la transposée du rapport ci-dessus
-// (même fonction d'agrégation, même donnée déjà calculée) — plus une colonne `total`, toutes
-// activités confondues pour ce canal. Un SKU sans activité assignée en est exclu (donnée absente,
-// jamais un contenant « sans activité » inventé) — cas qui ne devrait de toute façon jamais se
-// produire (une activité est obligatoire à la création d'un produit).
-export function computeChannelReport(productsWithCosts, channelId, productionActivities = []) {
+// Rapport Par Activité (révisé le 02/11, retour utilisateur) : UNE ligne par activité, réduite à
+// son propre TOTAL agrégé — tous canaux confondus, jamais ventilée par canal. Version précédente
+// (24/10) : une activité choisie, ventilée par canal en colonnes — retour utilisateur immédiat,
+// « on dirait une simple répétition de deux rapports identiques » (« Par Activité » transposé de
+// « Par Canal »), alors que le vrai intérêt était LE TOTAL de chaque ligne, pas sa répartition par
+// canal/activité. Voir Projet_Claude/03-Feuille-de-route.md pour la discussion complète. Une
+// activité sans aucun volume réel vendu en est simplement absente (jamais une ligne à 0).
+export function computeActivitySummaries(productsWithCosts, productionActivities = []) {
     const byActivity = {};
-    const allRows = [];
     for (const row of (productsWithCosts || [])) {
         if (!row.activityId) continue;
-        const cb = (row.channelBreakdown || []).find(c => c.channelId === channelId);
-        if (!cb) continue;
-        const entry = { costs: row.costs, cb };
-        (byActivity[row.activityId] || (byActivity[row.activityId] = [])).push(entry);
-        allRows.push(entry);
+        for (const cb of (row.channelBreakdown || [])) {
+            (byActivity[row.activityId] || (byActivity[row.activityId] = [])).push({ costs: row.costs, cb });
+        }
     }
-    const byActivityResult = {};
-    for (const [actId, rows] of Object.entries(byActivity)) {
+    const result = [];
+    for (const activity of productionActivities) {
+        const rows = byActivity[activity.id];
+        if (!rows) continue;
         const aggregate = aggregateSegmentRows(rows);
         if (!aggregate) continue;
-        const activity = productionActivities.find(a => a.id === actId);
-        byActivityResult[actId] = { activityId: actId, activityName: activity?.name || actId, ...aggregate };
+        result.push({ activityId: activity.id, activityName: activity.name || activity.id, ...aggregate });
     }
-    return { byActivity: byActivityResult, total: aggregateSegmentRows(allRows) };
+    return result;
+}
+
+// Rapport Par Canal : la transposée exacte du rapport ci-dessus (même fonction d'agrégation) — une
+// ligne par canal, réduite à son propre total, toutes activités confondues. Un SKU sans activité
+// assignée en est exclu (donnée absente — cas qui ne devrait de toute façon jamais se produire,
+// une activité étant obligatoire à la création d'un produit).
+export function computeChannelSummaries(productsWithCosts, salesChannels = []) {
+    const byChannel = {};
+    for (const row of (productsWithCosts || [])) {
+        for (const cb of (row.channelBreakdown || [])) {
+            (byChannel[cb.channelId] || (byChannel[cb.channelId] = [])).push({ costs: row.costs, cb });
+        }
+    }
+    const result = [];
+    for (const channel of salesChannels) {
+        const rows = byChannel[channel.id];
+        if (!rows) continue;
+        const aggregate = aggregateSegmentRows(rows);
+        if (!aggregate) continue;
+        result.push({ channelId: channel.id, channelName: channel.name || channel.id, ...aggregate });
+    }
+    return result;
 }
 
 // Phase 4.3bis (13/10) — Charges directes réelles : mappe chaque catégorie de `directCostLines`

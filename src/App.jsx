@@ -130,9 +130,8 @@ const App = () => {
     const [reportSelectedSkuId, setReportSelectedSkuId] = useState(null);
     const [reportSelectedIngredientId, setReportSelectedIngredientId] = useState('');
     const [reportSelectedPackagingId, setReportSelectedPackagingId] = useState('');
-    // Sous-onglets Par Activité / Par Canal (24/10) : même patron de persistance que ci-dessus.
-    const [reportSelectedActivityId, setReportSelectedActivityId] = useState(null);
-    const [reportSelectedChannelId, setReportSelectedChannelId] = useState(null);
+    // Sous-onglets Par Activité / Par Canal : une ligne par activité/canal (révisé le 02/11), plus
+    // de sélection à persister — `reportActiveSubTab` seul suffit pour revenir au bon sous-onglet.
 
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
     const [pdfOptions, setPdfOptions] = useState({ title: '', subtitle: '' });
@@ -1084,10 +1083,6 @@ const App = () => {
                         onSelectedIngredientIdChange={setReportSelectedIngredientId}
                         selectedPackagingId={reportSelectedPackagingId}
                         onSelectedPackagingIdChange={setReportSelectedPackagingId}
-                        selectedActivityId={reportSelectedActivityId}
-                        onSelectedActivityIdChange={setReportSelectedActivityId}
-                        selectedChannelId={reportSelectedChannelId}
-                        onSelectedChannelIdChange={setReportSelectedChannelId}
                     />;
 
                 default: return null;

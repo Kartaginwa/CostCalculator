@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivityReport, computeChannelReport } from './analysisData.js';
+import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivitySummaries, computeChannelSummaries } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -640,14 +640,14 @@ describe('computeChannelRevenueShareByActivity — ventilation indicative des re
     });
 });
 
-describe('computeActivityReport / computeChannelReport — rapports agrégés Par Activité et Par Canal (24/10)', () => {
+describe('computeActivitySummaries / computeChannelSummaries — rapports agrégés Par Activité et Par Canal (révisé le 02/11)', () => {
     const salesChannels = [{ id: 'c1', name: 'Canal 1' }, { id: 'c2', name: 'Canal 2' }];
-    const productionActivities = [{ id: 'act1', name: 'Activité 1' }];
+    const productionActivities = [{ id: 'act1', name: 'Activité 1' }, { id: 'act2', name: 'Activité 2' }];
 
-    // A : vendu sur c1 ET c2 (mêmes coûts canal-invariants, driver Canal différent par canal).
-    // B : vendu sur c1 SEULEMENT, prix et coûts différents de A — exprès, pour qu'une moyenne de
-    // pourcentages (plutôt que $ sommés puis divisés) donnerait un résultat différent (paradoxe de
-    // Simpson, voir le commentaire de aggregateSegmentRows).
+    // A, B : même activité (act1), A vendu sur c1 ET c2, B sur c1 seulement — prix et coûts
+    // volontairement différents de A, pour qu'une moyenne de pourcentages (plutôt que $ sommés
+    // puis divisés) donnerait un résultat différent (paradoxe de Simpson, voir le commentaire de
+    // aggregateSegmentRows). C : une AUTRE activité (act2), vendue sur c1 seulement.
     const rowA = {
         activityId: 'act1',
         costs: { costMatierePerPortion: 2, costPackagingPerPortion: 0.5, costLaborPerPortion: 1, costSubcontractingPerPortion: 0, costAgingPerPortion: 0, costIndirectGeneralPerPortion: 0.3, costIndirectActivityPerPortion: 0.4 },
@@ -663,88 +663,85 @@ describe('computeActivityReport / computeChannelReport — rapports agrégés Pa
             { channelId: 'c1', netPrice: 20, volume: 40, costIndirectChannelPerPortion: 0.3 },
         ],
     };
-    const productsWithCosts = [rowA, rowB];
+    const rowC = {
+        activityId: 'act2',
+        costs: { costMatierePerPortion: 3, costPackagingPerPortion: 0.5, costLaborPerPortion: 1.5, costSubcontractingPerPortion: 0, costAgingPerPortion: 0, costIndirectGeneralPerPortion: 0.4, costIndirectActivityPerPortion: 0.5 },
+        channelBreakdown: [{ channelId: 'c1', netPrice: 15, volume: 20, costIndirectChannelPerPortion: 0.25 }],
+    };
+    const productsWithCosts = [rowA, rowB, rowC];
 
-    it("computeActivityReport agrège par SOMME des $ (jamais une moyenne de %), par canal puis au total", () => {
-        const result = computeActivityReport(productsWithCosts, 'act1', salesChannels);
+    it("computeActivitySummaries réduit chaque activité à SON PROPRE total — tous canaux confondus, jamais ventilée par canal", () => {
+        const result = computeActivitySummaries(productsWithCosts, productionActivities);
 
-        // Canal 1 : A (10$ × 100) + B (20$ × 40) = 1000 + 800 = 1800 $ de revenu.
-        const c1 = result.byChannel.c1;
-        expect(c1.revenueTotal).toBeCloseTo(1800);
-        expect(c1.volumeTotal).toBeCloseTo(140);
-        expect(c1.costMatiereTotal).toBeCloseTo(2 * 100 + 5 * 40); // 400
-        expect(c1.costIndirectChannelTotal).toBeCloseTo(0.2 * 100 + 0.3 * 40); // 32
-        const totalDirectC1 = (2 + 0.5 + 1) * 100 + (5 + 1 + 2) * 40; // 350 + 320 = 670
-        expect(c1.totalDirectCostTotal).toBeCloseTo(totalDirectC1);
-        expect(c1.margeBruteTotal).toBeCloseTo(1800 - totalDirectC1); // 1130
-        // % = $ de marge ÷ $ de revenu — PAS une moyenne de margeBrutePercent individuels (qui
-        // vaudrait (0.5×100+0.4×40)/140 ≈ 46,9 %, une valeur TRÈS différente du vrai 62,8 % ci-bas).
-        expect(c1.margeBrutePercent).toBeCloseTo(c1.margeBruteTotal / 1800);
-        expect(c1.margeBrutePercent).toBeCloseTo(1130 / 1800);
+        // act1 = A (c1+c2) + B (c1) : revenu = (10×100 + 12×50) + (20×40) = 1600 + 800 = 2400.
+        const act1 = result.find(r => r.activityId === 'act1');
+        expect(act1.revenueTotal).toBeCloseTo(2400);
+        expect(act1.volumeTotal).toBeCloseTo(190); // 100+50+40
+        const totalDirect = (2 + 0.5 + 1) * 100 + (2 + 0.5 + 1) * 50 + (5 + 1 + 2) * 40; // 350+175+320=845
+        expect(act1.totalDirectCostTotal).toBeCloseTo(totalDirect);
+        expect(act1.margeBruteTotal).toBeCloseTo(2400 - totalDirect); // 1555
+        // % = $ de marge ÷ $ de revenu — PAS une moyenne de margeBrutePercent individuels.
+        expect(act1.margeBrutePercent).toBeCloseTo(act1.margeBruteTotal / 2400);
 
-        // Canal 2 : seul A y est vendu (B absent de ce canal) — 12$ × 50 = 600 $.
-        const c2 = result.byChannel.c2;
+        // act2 = C seulement : revenu = 15 × 20 = 300.
+        const act2 = result.find(r => r.activityId === 'act2');
+        expect(act2.revenueTotal).toBeCloseTo(300);
+        expect(act2.activityName).toBe('Activité 2');
+
+        // Aucune ventilation par canal exposée : une seule valeur par métrique, pas un sous-objet.
+        expect(act1.byChannel).toBeUndefined();
+    });
+
+    it("point mort en $ DE REVENU (pas en unités) : frais fixes (Général+Activité+Canal+MO traitée comme fixe) ÷ ratio de marge de contribution, à l'échelle de toute l'activité", () => {
+        const result = computeActivitySummaries(productsWithCosts, productionActivities);
+        const act1 = result.find(r => r.activityId === 'act1');
+
+        const totalIndirect = (0.3 * 100 + 0.3 * 50 + 0.6 * 40) + (0.4 * 100 + 0.4 * 50 + 0.8 * 40) + (0.2 * 100 + 0.25 * 50 + 0.3 * 40); // Général+Activité+Canal
+        const totalLabor = 1 * 100 + 1 * 50 + 2 * 40; // 240
+        const fixedCostForBreakEven = totalIndirect + totalLabor;
+        const contributionTotal = act1.margeBruteTotal + totalLabor;
+        const expectedBreakEven = fixedCostForBreakEven / (contributionTotal / act1.revenueTotal);
+
+        expect(act1.totalIndirectTotal).toBeCloseTo(totalIndirect);
+        expect(act1.breakEvenRevenue).toBeCloseTo(expectedBreakEven);
+        expect(act1.breakEvenRevenue).not.toBeNull();
+    });
+
+    it("exclut une activité sans aucun volume réel vendu, plutôt que d'y forcer une ligne à 0", () => {
+        const activitiesWithExtra = [...productionActivities, { id: 'act_sans_volume', name: 'Vide' }];
+        const result = computeActivitySummaries(productsWithCosts, activitiesWithExtra);
+        expect(result.find(r => r.activityId === 'act_sans_volume')).toBeUndefined();
+        expect(result).toHaveLength(2); // act1, act2 seulement.
+    });
+
+    it("computeChannelSummaries est la transposée exacte (même agrégation, une ligne par canal plutôt que par activité)", () => {
+        const result = computeChannelSummaries(productsWithCosts, salesChannels);
+
+        // c1 = A@c1 + B@c1 + C@c1 : revenu = 1000 + 800 + 300 = 2100.
+        const c1 = result.find(r => r.channelId === 'c1');
+        expect(c1.revenueTotal).toBeCloseTo(2100);
+        // c2 = A@c2 seulement : revenu = 600.
+        const c2 = result.find(r => r.channelId === 'c2');
         expect(c2.revenueTotal).toBeCloseTo(600);
-        expect(c2.volumeTotal).toBeCloseTo(50);
 
-        // Total (tous canaux de l'activité) = somme des deux canaux ci-dessus.
-        expect(result.total.revenueTotal).toBeCloseTo(c1.revenueTotal + c2.revenueTotal);
-        expect(result.total.volumeTotal).toBeCloseTo(c1.volumeTotal + c2.volumeTotal);
-        expect(result.total.margeBruteTotal).toBeCloseTo(c1.margeBruteTotal + c2.margeBruteTotal);
+        // Invariant de réconciliation : la somme des revenus par CANAL égale la somme des revenus
+        // par ACTIVITÉ — les deux rapports ventilent le même total, juste selon un axe différent.
+        const activitySummaries = computeActivitySummaries(productsWithCosts, productionActivities);
+        const totalByChannel = result.reduce((s, r) => s + r.revenueTotal, 0);
+        const totalByActivity = activitySummaries.reduce((s, r) => s + r.revenueTotal, 0);
+        expect(totalByChannel).toBeCloseTo(totalByActivity);
     });
 
-    it("point mort du segment en $ DE REVENU (pas en unités) : frais fixes (Général+Activité+Canal+MO traitée comme fixe) ÷ ratio de marge de contribution", () => {
-        const result = computeActivityReport(productsWithCosts, 'act1', salesChannels);
-        const c1 = result.byChannel.c1;
-
-        const totalIndirect = (0.3 * 100 + 0.6 * 40) + (0.4 * 100 + 0.8 * 40) + (0.2 * 100 + 0.3 * 40); // 54+72+32=158
-        const totalLabor = 1 * 100 + 2 * 40; // 180
-        const fixedCostForBreakEven = totalIndirect + totalLabor; // 338
-        const contributionTotal = c1.margeBruteTotal + totalLabor; // 1130+180=1310
-        const expectedBreakEven = fixedCostForBreakEven / (contributionTotal / c1.revenueTotal);
-
-        expect(c1.totalIndirectTotal).toBeCloseTo(totalIndirect);
-        expect(c1.breakEvenRevenue).toBeCloseTo(expectedBreakEven);
-        // Jamais `null`/`undefined` : un segment avec du volume réel a toujours une marge de
-        // contribution positive dans ce scénario, donc un point mort défini.
-        expect(c1.breakEvenRevenue).not.toBeNull();
-    });
-
-    it("exclut un canal/une activité sans aucun volume réel, plutôt que d'y forcer un rapport à 0", () => {
-        const result = computeActivityReport(productsWithCosts, 'act1', salesChannels);
-        expect(result.byChannel.c3).toBeUndefined(); // canal inexistant, jamais une entrée vide.
-
-        const emptyResult = computeActivityReport(productsWithCosts, 'act_sans_volume', salesChannels);
-        expect(emptyResult.byChannel).toEqual({});
-        expect(emptyResult.total).toBeNull();
-    });
-
-    it("computeChannelReport est la transposée exacte (même agrégation, canal fixé, ventilée par activité)", () => {
-        const rowC = {
-            activityId: 'act2',
-            costs: { costMatierePerPortion: 3, costPackagingPerPortion: 0.5, costLaborPerPortion: 1.5, costSubcontractingPerPortion: 0, costAgingPerPortion: 0, costIndirectGeneralPerPortion: 0.4, costIndirectActivityPerPortion: 0.5 },
-            channelBreakdown: [{ channelId: 'c1', netPrice: 15, volume: 20, costIndirectChannelPerPortion: 0.25 }],
-        };
-        const activities = [...productionActivities, { id: 'act2', name: 'Activité 2' }];
-        const result = computeChannelReport([rowA, rowB, rowC], 'c1', activities);
-
-        // act1 sur c1 : exactement les mêmes $ que `computeActivityReport(...).byChannel.c1`
-        // ci-dessus (A + B) — la même donnée, juste ventilée dans l'autre sens.
-        expect(result.byActivity.act1.revenueTotal).toBeCloseTo(1800);
-        // act2 sur c1 : seulement rowC — 15$ × 20 = 300 $.
-        expect(result.byActivity.act2.revenueTotal).toBeCloseTo(300);
-        // Total (toutes activités, canal c1) = act1 + act2.
-        expect(result.total.revenueTotal).toBeCloseTo(1800 + 300);
-    });
-
-    it("computeChannelReport exclut une ligne sans activityId (donnée absente, jamais un contenant « sans activité » inventé)", () => {
+    it("computeChannelSummaries inclut un SKU même sans activityId assignée — l'absence d'activité n'a aucun sens à exclure ici, contrairement à computeActivitySummaries", () => {
         const rowNoActivity = {
             costs: { costMatierePerPortion: 1, costPackagingPerPortion: 0, costLaborPerPortion: 0, costSubcontractingPerPortion: 0, costAgingPerPortion: 0, costIndirectGeneralPerPortion: 0, costIndirectActivityPerPortion: 0 },
             channelBreakdown: [{ channelId: 'c1', netPrice: 5, volume: 10, costIndirectChannelPerPortion: 0 }],
         };
-        const result = computeChannelReport([rowA, rowB, rowNoActivity], 'c1', productionActivities);
-        // Le total du canal c1 ne doit PAS inclure rowNoActivity (1800, pas 1800+50).
-        expect(result.total.revenueTotal).toBeCloseTo(1800);
+        const result = computeChannelSummaries([rowA, rowB, rowNoActivity], salesChannels);
+        const c1 = result.find(r => r.channelId === 'c1');
+        // c1 inclut maintenant rowNoActivity (1800 + 5×10 = 1850) : ce rapport ne ventile pas par
+        // activité, l'absence d'activityId n'a donc aucune raison d'exclure la ligne.
+        expect(c1.revenueTotal).toBeCloseTo(1800 + 50);
     });
 });
 

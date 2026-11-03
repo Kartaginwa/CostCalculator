@@ -206,8 +206,8 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-contribution-chart', content: "Ce graphique classe vos plats selon leur contribution réelle en dollars à votre profit, vous montrant vos piliers financiers.", tab: 'summary', subTab: 'overview' },
     { selector: '#strategic-analysis', content: "L'analyse stratégique classe automatiquement vos plats (Étoiles, Vaches à lait...) pour vous aider à prendre des décisions éclairées.", tab: 'summary', subTab: 'overview' },
     { selector: '#tutorial-section-summary-bysku', content: "Le sous-onglet 'Par SKU' détaille un seul plat à travers ses canaux de vente, et comment ses coûts ont évolué dans le temps.", tab: 'summary', subTab: 'bySku' },
-    { selector: '#tutorial-section-summary-byactivity', content: "'Par Activité' agrège tous les plats d'une même activité de production, ventilés par canal — un segment plutôt qu'un seul SKU.", tab: 'summary', subTab: 'byActivity' },
-    { selector: '#tutorial-section-summary-bychannel', content: "'Par Canal' fait l'inverse : un canal de vente fixé, ventilé par activité de production.", tab: 'summary', subTab: 'byChannel' },
+    { selector: '#tutorial-section-summary-byactivity', content: "'Par Activité' liste chaque activité de production avec son propre total agrégé (revenu, marges, point mort) — une vue d'ensemble par segment plutôt que par SKU.", tab: 'summary', subTab: 'byActivity' },
+    { selector: '#tutorial-section-summary-bychannel', content: "'Par Canal' fait la même chose pour vos canaux de vente.", tab: 'summary', subTab: 'byChannel' },
     { selector: '#tutorial-section-tracking-ingredient', content: "Le sous-onglet 'Intrants' suit l'évolution du prix de vos ingrédients et de votre emballage dans le temps.", tab: 'summary', subTab: 'intrants' },
     { selector: '#tutorial-snapshot', content: "Créez un point de référence pour sauvegarder une 'photo' de votre projet, ou gérez ceux déjà créés, depuis ce menu — à tout moment, peu importe le sous-onglet. C'est la fin du tour !", tab: 'summary', subTab: 'overview' },
 ];

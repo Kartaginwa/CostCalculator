@@ -3571,3 +3571,63 @@ dans le rapport — voir ci-dessous.
   revenu, 57,45 % de marge brute, identique des deux côtés de la transposée) ; (b) tour guidé
   complet (28 étapes) jusqu'à « Terminer » sans jamais rester bloqué, zéro erreur console. Lint et
   `npx vite build` propres.
+
+## Révision du 02/11 : Par Activité / Par Canal simplifiés en une ligne par segment
+
+Retour utilisateur immédiat sur la version du 24/10 : « on dirait une simple répétition de deux
+rapports identiques, alors que le total apporte une donnée additionnelle d'un grand intérêt ». Deux
+pistes discutées avant de trancher :
+
+1. **Matrice Activité × Canal complète** (comme la matrice SKU × Canal de Vue d'ensemble), avec un
+   total par ligne ET par colonne — proposée par Claude en premier. L'utilisateur a reconnu que
+   l'idée tenait, mais a demandé : « qu'apporte-t-on de plus » par rapport à une matrice qui
+   existe déjà sous une autre forme ? Il a clarifié que ce qui l'intéressait vraiment, c'était LE
+   TOTAL de chaque ligne — pas nécessairement la division par l'autre axe.
+2. **Une ligne par segment, réduite à son propre total** — la vraie demande, une fois clarifiée :
+   pas une matrice à deux axes, une LISTE d'activités (ou de canaux) classée par profitabilité,
+   chacune déjà réduite au chiffre qui intéresse (ce qu'affichait la colonne « Total », cachée en
+   bout de tableau derrière un sélecteur).
+
+**Décision retenue** : option 2. `computeActivityReport`/`computeChannelReport` (24/10, qui
+fixaient une activité/un canal et ventilaient par l'autre axe + une colonne Total) remplacées par
+`computeActivitySummaries`/`computeChannelSummaries` — chaque activité (ou canal) devient UNE ligne,
+réduite à son `aggregateSegmentRows` sur TOUS ses canaux (ou toutes ses activités) confondus, sans
+sélecteur ni tableau transposé. Classées par Bénéfice net $ décroissant (même logique que le
+« Classement par contribution totale » de Vue d'ensemble) : le segment le plus/moins profitable
+saute aux yeux sans action de l'utilisateur. Toute la méthodologie du 24/10 reste inchangée ($
+sommés puis divisés pour les %, jamais une moyenne de % individuels ; point mort en $ de revenu,
+pas en unités) — seule la présentation change.
+
+**Question en suspens de l'utilisateur, répondue sans l'implémenter** : une matrice Activité ×
+Canal aurait-elle sa place dans Vue d'ensemble, aux côtés de la matrice SKU × Canal déjà présente ?
+Avis donné : oui, les deux répondent à des questions différentes malgré la ressemblance visuelle —
+SKU × Canal diagnostique un PRODUIT précis (niveau opérationnel), Activité × Canal diagnostiquerait
+une LIGNE DE PRODUCTION ou un CIRCUIT DE VENTE (niveau stratégique/structurel). Pas un doublon à
+des granularités différentes, deux leviers de décision distincts. Non implémentée (pas demandée
+explicitement) — à reconsidérer si le besoin revient.
+
+**Mise en œuvre** :
+1. `engine/analysisData.js` — `computeActivityReport`/`computeChannelReport` supprimées,
+   remplacées par `computeActivitySummaries`/`computeChannelSummaries` (même fonction interne
+   partagée `aggregateSegmentRows`, inchangée). 5 tests remplacés par 5 nouveaux
+   (`analysisData.test.js`), dont un invariant de réconciliation : la somme des revenus PAR CANAL
+   égale la somme des revenus PAR ACTIVITÉ (les deux ventilent le même total, juste selon un axe
+   différent).
+2. `features/SummaryTable.jsx` — `AggregateWaterfall` (sections façon BySkuWaterfall, une colonne
+   par canal/activité) remplacé par `SegmentSummaryTable` (table classique, une ligne par segment,
+   triée par Bénéfice net $ décroissant). Sélecteurs `#summaryActivitySelect`/
+   `#summaryChannelSelect` retirés — plus rien à choisir, toute la liste est déjà visible.
+3. `App.jsx` — `reportSelectedActivityId`/`reportSelectedChannelId` (levés le 24/10) retirés :
+   `reportActiveSubTab` seul suffit désormais pour revenir au bon sous-onglet.
+4. `AppDialogs.jsx`/`InstructionModal.jsx` — étapes du tour guidé et guide utilisateur mis à jour
+   pour décrire la nouvelle présentation.
+- Fichiers touchés : `src/engine/analysisData.js`, `src/engine/analysisData.test.js`,
+  `src/features/SummaryTable.jsx`, `src/App.jsx`, `src/components/AppDialogs.jsx`,
+  `src/components/InstructionModal.jsx`, `e2e/summary-by-activity-channel.spec.js` (réécrit).
+- Tests : 230/230 unitaires (5 remplacés, même total), 48/48 e2e, vérification fonctionnelle par
+  scripts Playwright temporaires : (a) chiffres du projet démo identiques au chiffre près à
+  l'ancienne colonne « Total » du 24/10 (ex. « Plats principaux surgelés » : 61 978,20 $ de revenu,
+  9,99 % de marge nette, 49 345,87 $ de point mort — confirmant que seule la présentation a changé,
+  jamais le calcul) ; tri par Bénéfice net $ décroissant confirmé sur les deux tableaux ; aucun
+  sélecteur restant ; (b) tour guidé complet (28 étapes) sans blocage, zéro erreur console. Lint et
+  `npx vite build` propres.

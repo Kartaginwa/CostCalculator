@@ -497,6 +497,39 @@ export function computeChannelSummaries(productsWithCosts, salesChannels = []) {
     return result;
 }
 
+// Matrice Activité × Canal (02/11, retour utilisateur) : la marge nette (%) de chaque activité,
+// pour chacun de ses canaux de vente — même principe que la matrice SKU × Canal déjà dans Vue
+// d'ensemble (computeAnalysisData, `productsWithCosts[].channelBreakdown`), à l'échelle de
+// l'activité plutôt que du SKU. Réutilise `aggregateSegmentRows` (même agrégation $ sommés puis
+// divisés que Par Activité/Par Canal, jamais une moyenne de % individuels) — une combinaison
+// (activité, canal) sans aucun volume réel en est simplement absente de la matrice (jamais une
+// cellule à 0 %). Renvoie `{ [activityId]: { [channelId]: margeNettePercent } }` ; une activité ou
+// un canal sans aucune donnée obtient un objet vide, pas une entrée manquante — l'appelant peut
+// donc itérer sur TOUTES les activités/canaux (même ceux sans vente), comme le fait déjà la
+// matrice SKU × Canal pour un SKU sans aucun canal renseigné.
+export function computeActivityChannelMarginMatrix(productsWithCosts, productionActivities = [], salesChannels = []) {
+    const cellRows = {};
+    for (const row of (productsWithCosts || [])) {
+        if (!row.activityId) continue;
+        for (const cb of (row.channelBreakdown || [])) {
+            const key = `${row.activityId}::${cb.channelId}`;
+            (cellRows[key] || (cellRows[key] = [])).push({ costs: row.costs, cb });
+        }
+    }
+    const matrix = {};
+    for (const activity of productionActivities) {
+        matrix[activity.id] = {};
+        for (const channel of salesChannels) {
+            const rows = cellRows[`${activity.id}::${channel.id}`];
+            if (!rows) continue;
+            const aggregate = aggregateSegmentRows(rows);
+            if (!aggregate) continue;
+            matrix[activity.id][channel.id] = aggregate.margeNettePercent;
+        }
+    }
+    return matrix;
+}
+
 // Phase 4.3bis (13/10) — Charges directes réelles : mappe chaque catégorie de `directCostLines`
 // (voir utils.js, DIRECT_COST_TYPES) vers le champ de coût théorique par portion correspondant
 // dans `costs` (calculateCosts.js) — driver « apparié par type » (voir Projet_Claude/

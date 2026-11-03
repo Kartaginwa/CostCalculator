@@ -6,7 +6,7 @@ import { getCostTargetIndicator } from '../ui-utils.jsx';
 import { Tooltip, Pagination } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
-import { computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries } from '../engine/analysisData.js';
+import { computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
 
@@ -1291,6 +1291,76 @@ export const SummaryTable = ({
         return sortConfig.direction === 'ascending' ? '▲' : '▼';
     };
 
+    // Matrice Activité × Canal (02/11, retour utilisateur — intégrée en haut de la matrice SKU ×
+    // Canal ci-dessous) : mêmes règles que celle-ci (tri par colonne, « — »/jamais 0 % pour une
+    // combinaison sans vente, pagination, palette de marge) — un état de tri/pagination séparé,
+    // puisque c'est une liste différente (`productionActivities`, pas `productsWithCosts`),
+    // partageant seulement le même réglage de nombre de lignes par page (`itemsPerPage`, prop
+    // commune aux deux tableaux).
+    const [activityMatrixSort, setActivityMatrixSort] = useState({ key: 'activityName', direction: 'descending' });
+    const [activityMatrixPage, setActivityMatrixPage] = useState(1);
+    useEffect(() => {
+        setActivityMatrixPage(1);
+    }, [activityMatrixSort]);
+
+    const activityChannelMatrix = useMemo(
+        () => computeActivityChannelMarginMatrix(productsWithCosts, productionActivities, salesChannels),
+        [productsWithCosts, productionActivities, salesChannels]
+    );
+
+    const getActivityMatrixValue = (activity, key) => {
+        if (key.startsWith('channel:')) {
+            const channelId = key.slice('channel:'.length);
+            const value = activityChannelMatrix[activity.id]?.[channelId];
+            return value === undefined ? null : value;
+        }
+        return activity.name; // key === 'activityName'
+    };
+
+    const sortedActivityRows = useMemo(() => {
+        const items = [...productionActivities];
+        items.sort((a, b) => {
+            const aValue = getActivityMatrixValue(a, activityMatrixSort.key);
+            const bValue = getActivityMatrixValue(b, activityMatrixSort.key);
+            if (activityMatrixSort.key.startsWith('channel:')) {
+                // « — » (valeur absente) reste toujours en fin de liste, peu importe le sens du
+                // tri — jamais interprété comme 0 %, même règle que la matrice SKU × Canal.
+                const aNum = aValue === null ? null : parseLocaleNumber(aValue);
+                const bNum = bValue === null ? null : parseLocaleNumber(bValue);
+                if (aNum === null && bNum === null) return 0;
+                if (aNum === null) return 1;
+                if (bNum === null) return -1;
+                const comparison = aNum - bNum;
+                return activityMatrixSort.direction === 'ascending' ? comparison : -comparison;
+            }
+            const comparison = String(aValue || '').localeCompare(String(bValue || ''), 'fr', { sensitivity: 'base' });
+            return activityMatrixSort.direction === 'ascending' ? comparison : -comparison;
+        });
+        return items;
+    }, [productionActivities, activityChannelMatrix, activityMatrixSort]);
+
+    const displayedActivityRows = useMemo(() => {
+        const startIndex = (activityMatrixPage - 1) * itemsPerPage;
+        return sortedActivityRows.slice(startIndex, startIndex + itemsPerPage);
+    }, [sortedActivityRows, activityMatrixPage, itemsPerPage]);
+
+    const requestActivityMatrixSort = (key) => {
+        let direction = 'ascending';
+        if (activityMatrixSort.key === key && activityMatrixSort.direction === 'ascending') {
+            direction = 'descending';
+        } else if (activityMatrixSort.key === key && activityMatrixSort.direction === 'descending') {
+            direction = 'ascending';
+        }
+        setActivityMatrixSort({ key, direction });
+    };
+
+    const getActivityMatrixSortIcon = (key) => {
+        if (activityMatrixSort.key !== key) {
+            return <ArrowUpDown size={14} className="ml-2 text-gray-400" />;
+        }
+        return activityMatrixSort.direction === 'ascending' ? '▲' : '▼';
+    };
+
     return (
         <div className="container mx-auto p-6 bg-white rounded-xl shadow-2xl max-w-7xl">
             <SnapshotDetailsModal
@@ -1498,6 +1568,59 @@ export const SummaryTable = ({
                 </div>
             </div>
 
+            {/* 02/11, retour utilisateur : matrice Activité × Canal insérée au-dessus de la matrice
+                SKU × Canal — même principe (marge nette % par combinaison, « — » si aucune vente),
+                mais à l'échelle de l'activité de production plutôt que du SKU individuel. Toutes
+                les activités fournies apparaissent (même sans vente, « — » partout), comme la
+                matrice SKU × Canal liste tous les SKUs. Pas de colonne « éditer » : une activité
+                n'a pas de destination d'édition unique comme un SKU. */}
+            <div className="mt-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Marges nettes des activités par canaux</h2>
+                <p className="text-sm text-gray-500 mb-4">La marge nette (%) de chaque activité de production, pour chacun de ses canaux de vente. « — » : cette activité n'a aucune vente dans ce canal.</p>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-100">
+                        <tr>
+                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-gray-100">
+                                <button onClick={() => requestActivityMatrixSort('activityName')} className="flex items-center w-full">
+                                    Activité {getActivityMatrixSortIcon('activityName')}
+                                </button>
+                            </th>
+                            {salesChannels.map(c => (
+                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                    <button onClick={() => requestActivityMatrixSort(`channel:${c.id}`)} className="flex items-center justify-end w-full">
+                                        {c.name || 'Sans nom'} {getActivityMatrixSortIcon(`channel:${c.id}`)}
+                                    </button>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {displayedActivityRows.map((activity, index) => (
+                            <tr key={activity.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                <td className="px-3 py-1.5 whitespace-nowrap font-medium sticky left-0 bg-inherit">{activity.name || 'Sans nom'}</td>
+                                {salesChannels.map(c => {
+                                    const value = activityChannelMatrix[activity.id]?.[c.id];
+                                    return (
+                                        <td key={c.id} className="px-3 py-1.5 text-right font-bold" style={value !== undefined ? getMarginCellStyle(value) : undefined}>
+                                            {value !== undefined ? `${formatPercent(value)} %` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                <Pagination
+                    totalItems={sortedActivityRows.length}
+                    itemsPerPage={itemsPerPage}
+                    currentPage={activityMatrixPage}
+                    onPageChange={setActivityMatrixPage}
+                    onItemsPerPageChange={onItemsPerPageChange}
+                />
+            </div>
+
             {/* 06/10 : matrice SKU × canal inspirée de l'onglet « Rapport - Marges » du chiffrier
                 SymbiOse de l'utilisateur — remplace l'ancien tableau détaillé à un seul canal à la
                 fois (son filtre par canal n'a plus lieu d'être : tous les canaux sont déjà visibles
@@ -1512,34 +1635,34 @@ export const SummaryTable = ({
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-gray-100">
+                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-gray-100">
                                 <button onClick={() => requestSort('displayName')} className="flex items-center w-full">
                                     Plat {getSortIcon('displayName')}
                                 </button>
                             </th>
                             {salesChannels.map(c => (
-                                <th key={c.id} className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                     <button onClick={() => requestSort(`channel:${c.id}`)} className="flex items-center justify-end w-full">
                                         {c.name || 'Sans nom'} {getSortIcon(`channel:${c.id}`)}
                                     </button>
                                 </th>
                             ))}
-                            <th className="relative px-4 py-3"></th>
+                            <th className="relative px-3 py-1.5"></th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {displayedProducts.map((product, index) => (
                             <tr key={product.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-4 py-4 whitespace-nowrap font-medium sticky left-0 bg-inherit">{product.displayName || product.platName || `Plat ${index + 1}`}</td>
+                                <td className="px-3 py-1.5 whitespace-nowrap font-medium sticky left-0 bg-inherit">{product.displayName || product.platName || `Plat ${index + 1}`}</td>
                                 {salesChannels.map(c => {
                                     const cb = (product.channelBreakdown || []).find(ch => ch.channelId === c.id);
                                     return (
-                                        <td key={c.id} className="px-4 py-4 text-right font-bold" style={cb ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
+                                        <td key={c.id} className="px-3 py-1.5 text-right font-bold" style={cb ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
                                             {cb ? `${formatPercent(cb.margeNettePercent)} %` : <span className="text-gray-400 font-normal" title="Non vendu dans ce canal">—</span>}
                                         </td>
                                     );
                                 })}
-                                <td className="px-4 py-4 text-right">
+                                <td className="px-3 py-1.5 text-right">
                                     <button
                                         onClick={() => onEditProduct(products.findIndex(p => p.id === product.productId), product.formatIndex || 0)}
                                         title="Éditer le plat"

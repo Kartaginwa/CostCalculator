@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivitySummaries, computeChannelSummaries } from './analysisData.js';
+import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -742,6 +742,26 @@ describe('computeActivitySummaries / computeChannelSummaries — rapports agrég
         // c1 inclut maintenant rowNoActivity (1800 + 5×10 = 1850) : ce rapport ne ventile pas par
         // activité, l'absence d'activityId n'a donc aucune raison d'exclure la ligne.
         expect(c1.revenueTotal).toBeCloseTo(1800 + 50);
+    });
+
+    it("computeActivityChannelMarginMatrix : marge nette (%) de CHAQUE combinaison activité × canal, $ sommés puis divisés (jamais une moyenne de %)", () => {
+        const matrix = computeActivityChannelMarginMatrix(productsWithCosts, productionActivities, salesChannels);
+
+        // act1 × c1 = A@c1 + B@c1 : marge nette = (1130-158)/1800 = 972/1800 = 54 %.
+        expect(matrix.act1.c1).toBeCloseTo(0.54);
+        // act1 × c2 = A@c2 seule : marge nette = (425-47.5)/600 = 377.5/600 ≈ 62,92 %.
+        expect(matrix.act1.c2).toBeCloseTo(377.5 / 600);
+        // act2 × c1 = C seule : marge nette = (200-23)/300 = 177/300 = 59 %.
+        expect(matrix.act2.c1).toBeCloseTo(0.59);
+        // act2 × c2 : aucune vente de act2 sur ce canal — absente, jamais 0 %.
+        expect(matrix.act2.c2).toBeUndefined();
+    });
+
+    it("renvoie une entrée pour TOUTES les activités/canaux fournis (même sans vente), avec un objet vide plutôt qu'une clé manquante — pour que l'appelant puisse itérer sur la liste complète comme la matrice SKU × Canal", () => {
+        const activitiesWithExtra = [...productionActivities, { id: 'act_vide', name: 'Vide' }];
+        const matrix = computeActivityChannelMarginMatrix(productsWithCosts, activitiesWithExtra, salesChannels);
+        expect(matrix.act_vide).toEqual({});
+        expect(Object.keys(matrix)).toEqual(['act1', 'act2', 'act_vide']);
     });
 });
 

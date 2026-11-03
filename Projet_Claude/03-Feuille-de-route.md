@@ -3631,3 +3631,48 @@ explicitement) — à reconsidérer si le besoin revient.
   jamais le calcul) ; tri par Bénéfice net $ décroissant confirmé sur les deux tableaux ; aucun
   sélecteur restant ; (b) tour guidé complet (28 étapes) sans blocage, zéro erreur console. Lint et
   `npx vite build` propres.
+
+## Révision du 02/11 (suite) : matrice Activité × Canal ajoutée à Vue d'ensemble, lignes compactées
+
+Suite directe de la question en suspens ci-dessus : l'utilisateur a tranché « la matrice
+Activités/canaux serait surement plus pertinente que le tableau par SKU dans Vue d'ensemble »,
+puis a explicitement demandé de l'ajouter (pas de remplacer le tableau SKU, les deux ont leur
+pertinence propre) : « Tu peux l'intégrer en haut du tableau par sku dans Vue d'ensemble. Réduire
+la hauteur des lignes afin de prendre moins d'espace total (cela est bon pour les 2 tableaux).
+Appliquer les mêmes règles que le tableau par sku au nouveau tableau ».
+
+**Mise en œuvre** :
+1. `engine/analysisData.js` — nouvelle `computeActivityChannelMarginMatrix(productsWithCosts,
+   productionActivities, salesChannels)`, retourne `{ [activityId]: { [channelId]:
+   margeNettePercent } }`. Réutilise `aggregateSegmentRows` (même agrégation $ sommés puis divisés,
+   jamais une moyenne de %) sur les lignes groupées par la combinaison (activité, canal) exacte.
+   Itère sur TOUTES les activités/canaux fournis (même sans vente, objet `{}` plutôt qu'une clé
+   absente) — même convention que la matrice SKU × Canal, qui liste tout `productsWithCosts` même
+   un SKU sans aucun canal renseigné.
+2. `analysisData.test.js` — 2 tests ajoutés aux fixtures déjà en place (`révisé le 02/11`) :
+   valeurs exactes de chaque combinaison ($ sommés puis divisés, pas de moyenne de %), et présence
+   d'une entrée vide pour une activité sans aucune vente.
+3. `features/SummaryTable.jsx`, sous-onglet Vue d'ensemble — nouveau tableau « Marges nettes des
+   activités par canaux » inséré immédiatement AU-DESSUS de « Marges nettes des SKUs par canaux »,
+   mêmes règles que celui-ci : tri par clic sur une colonne (état `activityMatrixSort` séparé,
+   mêmes fonctions `requestSort`/`getSortIcon` dupliquées sous les noms
+   `requestActivityMatrixSort`/`getActivityMatrixSortIcon` — liste différente,
+   `productionActivities` plutôt que `productsWithCosts`), pagination via le composant `Pagination`
+   partagé (état `activityMatrixPage` séparé, mais même réglage `itemsPerPage`/
+   `onItemsPerPageChange` que le tableau SKU — un seul contrôle de taille de page pour les deux
+   tableaux), palette `getMarginCellStyle` identique, « — » (jamais 0 %) pour une combinaison sans
+   vente. Pas de colonne « éditer » : une activité n'a pas de destination d'édition unique comme un
+   SKU (différence assumée, pas un oubli).
+4. Hauteur de ligne réduite sur LES DEUX tableaux (demande explicite « cela est bon pour les 2
+   tableaux ») : `px-4 py-3`/`px-4 py-4` → `px-3 py-1.5` partout (en-têtes et cellules), sur la
+   matrice Activité × Canal ET la matrice SKU × Canal.
+- Fichiers touchés : `src/engine/analysisData.js`, `src/engine/analysisData.test.js`,
+  `src/features/SummaryTable.jsx`.
+- Tests : 232/232 unitaires (2 nouveaux), 48/48 e2e. Vérification fonctionnelle par script
+  Playwright temporaire (supprimé après usage) : les deux titres apparaissent dans le bon ordre
+  vertical (Activité × Canal avant SKU × Canal) ; chiffres du projet démo cohérents (ex. « Plats
+  principaux surgelés » : 28,75 % / 11,82 % / 4,50 % selon le canal) ; hauteur de cellule mesurée
+  à 37px (nettement sous l'ancien `py-4`) ; tri par clic sur une colonne de canal sans erreur
+  console. Lint (0 erreur, avertissements `react-hooks/set-state-in-effect` identiques au patron
+  déjà en place pour `sortConfig`/`currentPage`, pas une régression introduite), `npx vite build`
+  propres.

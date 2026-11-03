@@ -1311,11 +1311,18 @@ export const SummaryTable = ({
     };
 
     // Matrice Activité × Canal (02/11, retour utilisateur — intégrée en haut de la matrice SKU ×
-    // Canal ci-dessous) : mêmes règles que celle-ci (tri par colonne, « — »/jamais 0 % pour une
+    // Canal ci-dessous) : mêmes règles que celle-ci (tri par colonne, « — »/jamais 0 $ pour une
     // combinaison sans vente, pagination, palette de marge) — un état de tri/pagination séparé,
     // puisque c'est une liste différente (`productionActivities`, pas `productsWithCosts`),
     // partageant seulement le même réglage de nombre de lignes par page (`itemsPerPage`, prop
     // commune aux deux tableaux).
+    // Révision du 02/11 (retour utilisateur, suite) : métrique en $ (bénéfice net) plutôt qu'en %,
+    // avec une ligne ET une colonne Total — une matrice en % ne peut pas avoir de total sensé
+    // (sommer ou moyenner des % individuels diverge du vrai % consolidé, paradoxe de Simpson,
+    // même principe que partout ailleurs dans ce fichier), alors qu'un $ se somme sans ambiguïté.
+    // Les totaux réutilisent directement `activitySummaries`/`channelSummaries` (déjà calculés
+    // plus haut pour Par Activité/Par Canal) plutôt que de re-sommer la matrice — même donnée,
+    // jamais deux calculs indépendants qui pourraient diverger.
     const [activityMatrixSort, setActivityMatrixSort] = useState({ key: 'activityName', direction: 'descending' });
     const [activityMatrixPage, setActivityMatrixPage] = useState(1);
     useEffect(() => {
@@ -1327,11 +1334,23 @@ export const SummaryTable = ({
         [productsWithCosts, productionActivities, salesChannels]
     );
 
+    // Grand total (coin inférieur droit) : somme des totaux par activité — équivalente à la somme
+    // des totaux par canal (les deux ventilent le même bénéfice net, juste selon un axe différent,
+    // comme déjà vérifié pour Par Activité/Par Canal).
+    const activityMatrixGrandTotal = useMemo(
+        () => activitySummaries.reduce((sum, r) => sum + r.margeNetteTotal, 0),
+        [activitySummaries]
+    );
+
     const getActivityMatrixValue = (activity, key) => {
+        if (key === 'total') {
+            const total = activitySummaries.find(r => r.activityId === activity.id);
+            return total ? total.margeNetteTotal : null;
+        }
         if (key.startsWith('channel:')) {
             const channelId = key.slice('channel:'.length);
-            const value = activityChannelMatrix[activity.id]?.[channelId];
-            return value === undefined ? null : value;
+            const cell = activityChannelMatrix[activity.id]?.[channelId];
+            return cell ? cell.margeNetteTotal : null;
         }
         return activity.name; // key === 'activityName'
     };
@@ -1341,9 +1360,9 @@ export const SummaryTable = ({
         items.sort((a, b) => {
             const aValue = getActivityMatrixValue(a, activityMatrixSort.key);
             const bValue = getActivityMatrixValue(b, activityMatrixSort.key);
-            if (activityMatrixSort.key.startsWith('channel:')) {
+            if (activityMatrixSort.key === 'total' || activityMatrixSort.key.startsWith('channel:')) {
                 // « — » (valeur absente) reste toujours en fin de liste, peu importe le sens du
-                // tri — jamais interprété comme 0 %, même règle que la matrice SKU × Canal.
+                // tri — jamais interprété comme 0 $, même règle que la matrice SKU × Canal.
                 const aNum = aValue === null ? null : parseLocaleNumber(aValue);
                 const bNum = bValue === null ? null : parseLocaleNumber(bValue);
                 if (aNum === null && bNum === null) return 0;
@@ -1356,7 +1375,7 @@ export const SummaryTable = ({
             return activityMatrixSort.direction === 'ascending' ? comparison : -comparison;
         });
         return items;
-    }, [productionActivities, activityChannelMatrix, activityMatrixSort]);
+    }, [productionActivities, activityChannelMatrix, activitySummaries, activityMatrixSort]);
 
     const displayedActivityRows = useMemo(() => {
         const startIndex = (activityMatrixPage - 1) * itemsPerPage;
@@ -1588,14 +1607,19 @@ export const SummaryTable = ({
             </div>
 
             {/* 02/11, retour utilisateur : matrice Activité × Canal insérée au-dessus de la matrice
-                SKU × Canal — même principe (marge nette % par combinaison, « — » si aucune vente),
-                mais à l'échelle de l'activité de production plutôt que du SKU individuel. Toutes
-                les activités fournies apparaissent (même sans vente, « — » partout), comme la
-                matrice SKU × Canal liste tous les SKUs. Pas de colonne « éditer » : une activité
-                n'a pas de destination d'édition unique comme un SKU. */}
+                SKU × Canal — même principe (« — » si aucune vente), mais à l'échelle de l'activité
+                de production plutôt que du SKU individuel. Toutes les activités fournies
+                apparaissent (même sans vente, « — » partout), comme la matrice SKU × Canal liste
+                tous les SKUs. Pas de colonne « éditer » : une activité n'a pas de destination
+                d'édition unique comme un SKU.
+                Révisée le 02/11 (retour utilisateur, suite) : bénéfices/pertes en $ plutôt qu'en %
+                — un $ se somme sans ambiguïté, ce qui permet une ligne ET une colonne Total (une
+                matrice en % n'aurait pas de total sensé, voir le commentaire plus haut). La
+                couleur de chaque cellule reste basée sur la marge nette % (intensité relative à
+                l'échelle propre de CETTE cellule), même si la valeur affichée est en $. */}
             <div className="mt-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Marges nettes des activités par canaux</h2>
-                <p className="text-sm text-gray-500 mb-4">La marge nette (%) de chaque activité de production, pour chacun de ses canaux de vente. « — » : cette activité n'a aucune vente dans ce canal.</p>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Bénéfices / pertes des activités par canaux</h2>
+                <p className="text-sm text-gray-500 mb-4">Le bénéfice net (ou la perte) de chaque activité de production, pour chacun de ses canaux de vente, avec le total par activité et par canal. « — » : cette activité n'a aucune vente dans ce canal.</p>
             </div>
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -1613,22 +1637,48 @@ export const SummaryTable = ({
                                     </button>
                                 </th>
                             ))}
+                            <th className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                <button onClick={() => requestActivityMatrixSort('total')} className="flex items-center justify-end w-full">
+                                    Total {getActivityMatrixSortIcon('total')}
+                                </button>
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {displayedActivityRows.map((activity, index) => (
-                            <tr key={activity.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-3 py-1.5 whitespace-nowrap font-medium sticky left-0 bg-inherit">{activity.name || 'Sans nom'}</td>
-                                {salesChannels.map(c => {
-                                    const value = activityChannelMatrix[activity.id]?.[c.id];
-                                    return (
-                                        <td key={c.id} className="px-3 py-1.5 text-right font-bold" style={value !== undefined ? getMarginCellStyle(value) : undefined}>
-                                            {value !== undefined ? `${formatPercent(value)} %` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
+                        {displayedActivityRows.map((activity, index) => {
+                            const activityTotal = activitySummaries.find(r => r.activityId === activity.id);
+                            return (
+                                <tr key={activity.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                    <td className="px-3 py-1.5 whitespace-nowrap font-medium sticky left-0 bg-inherit">{activity.name || 'Sans nom'}</td>
+                                    {salesChannels.map(c => {
+                                        const cell = activityChannelMatrix[activity.id]?.[c.id];
+                                        return (
+                                            <td key={c.id} className="px-3 py-1.5 text-right font-bold" style={cell ? getMarginCellStyle(cell.margeNettePercent) : undefined}>
+                                                {cell ? `${formatCurrency(cell.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
+                                            </td>
+                                        );
+                                    })}
+                                    <td className="px-3 py-1.5 text-right font-bold" style={activityTotal ? getMarginCellStyle(activityTotal.margeNettePercent) : undefined}>
+                                        {activityTotal ? `${formatCurrency(activityTotal.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente pour cette activité">—</span>}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {/* Ligne Total : toujours la somme sur TOUTES les activités (jamais limitée
+                            à la page affichée) — réutilise channelSummaries, déjà calculé pour Par
+                            Canal. */}
+                        <tr className="bg-gray-100 font-bold border-t-2 border-gray-300">
+                            <td className="px-3 py-1.5 whitespace-nowrap sticky left-0 bg-gray-100">Total</td>
+                            {salesChannels.map(c => {
+                                const channelTotal = channelSummaries.find(r => r.channelId === c.id);
+                                return (
+                                    <td key={c.id} className="px-3 py-1.5 text-right" style={channelTotal ? getMarginCellStyle(channelTotal.margeNettePercent) : undefined}>
+                                        {channelTotal ? `${formatCurrency(channelTotal.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
+                                    </td>
+                                );
+                            })}
+                            <td className="px-3 py-1.5 text-right text-indigo-700">{formatCurrency(activityMatrixGrandTotal)} $</td>
+                        </tr>
                     </tbody>
                 </table>
                 <Pagination

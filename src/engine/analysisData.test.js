@@ -744,16 +744,19 @@ describe('computeActivitySummaries / computeChannelSummaries — rapports agrég
         expect(c1.revenueTotal).toBeCloseTo(1800 + 50);
     });
 
-    it("computeActivityChannelMarginMatrix : marge nette (%) de CHAQUE combinaison activité × canal, $ sommés puis divisés (jamais une moyenne de %)", () => {
+    it("computeActivityChannelMarginMatrix : bénéfice net $ (et marge nette % pour la palette) de CHAQUE combinaison activité × canal, $ sommés puis divisés (jamais une moyenne de %)", () => {
         const matrix = computeActivityChannelMarginMatrix(productsWithCosts, productionActivities, salesChannels);
 
-        // act1 × c1 = A@c1 + B@c1 : marge nette = (1130-158)/1800 = 972/1800 = 54 %.
-        expect(matrix.act1.c1).toBeCloseTo(0.54);
-        // act1 × c2 = A@c2 seule : marge nette = (425-47.5)/600 = 377.5/600 ≈ 62,92 %.
-        expect(matrix.act1.c2).toBeCloseTo(377.5 / 600);
-        // act2 × c1 = C seule : marge nette = (200-23)/300 = 177/300 = 59 %.
-        expect(matrix.act2.c1).toBeCloseTo(0.59);
-        // act2 × c2 : aucune vente de act2 sur ce canal — absente, jamais 0 %.
+        // act1 × c1 = A@c1 + B@c1 : bénéfice net = 1130-158 = 972 $ ; marge nette = 972/1800 = 54 %.
+        expect(matrix.act1.c1.margeNetteTotal).toBeCloseTo(972);
+        expect(matrix.act1.c1.margeNettePercent).toBeCloseTo(0.54);
+        // act1 × c2 = A@c2 seule : bénéfice net = 425-47.5 = 377.5 $ ; marge nette = 377.5/600 ≈ 62,92 %.
+        expect(matrix.act1.c2.margeNetteTotal).toBeCloseTo(377.5);
+        expect(matrix.act1.c2.margeNettePercent).toBeCloseTo(377.5 / 600);
+        // act2 × c1 = C seule : bénéfice net = 200-23 = 177 $ ; marge nette = 177/300 = 59 %.
+        expect(matrix.act2.c1.margeNetteTotal).toBeCloseTo(177);
+        expect(matrix.act2.c1.margeNettePercent).toBeCloseTo(0.59);
+        // act2 × c2 : aucune vente de act2 sur ce canal — absente, jamais 0 $.
         expect(matrix.act2.c2).toBeUndefined();
     });
 

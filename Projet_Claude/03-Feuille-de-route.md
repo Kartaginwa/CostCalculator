@@ -3731,3 +3731,49 @@ sur la mise en page Par SKU) devait rester blanche. Retiré le prop `emphasis` d
 changement.
 - Tests : 232/232 unitaires, 48/48 e2e (inchangés, aucune assertion sur la couleur de fond).
   `npx eslint .`, `npx vite build` propres.
+
+## Révision du 02/11 (suite) : matrice Activité × Canal de Vue d'ensemble passée en $, avec Total
+
+L'utilisateur a demandé confirmation : la matrice (%) actuelle lui semblait fausse, et il se
+souvenait d'une discussion antérieure sur un tableau en bénéfices/pertes $ avec une ligne et une
+colonne Total. Vérification faite dans l'historique de la session (recherche dans le JSONL) :
+l'utilisateur avait raison. Lors de la discussion du 02/11 sur la refonte de Par Activité/Par
+Canal, j'avais proposé une matrice Activité × Canal « avec un total par ligne **et** par colonne »,
+avec le choix entre marge nette % ou bénéfice net $ par cellule. Cette proposition a été
+abandonnée pour Par Activité/Par Canal (l'utilisateur voulait une liste simple, pas une matrice),
+mais n'a jamais été explicitement réexaminée pour CETTE matrice (ajoutée plus tard à Vue
+d'ensemble) — j'ai par défaut reproduit le patron de la matrice SKU × Canal existante (%, sans
+total), sans revalider ce choix pour ce nouveau contexte.
+
+Au-delà du souvenir exact, le choix du $ est aussi techniquement nécessaire : une matrice en %
+NE PEUT PAS avoir de ligne/colonne Total sensée — sommer ou moyenner des % individuels diverge du
+vrai % consolidé (paradoxe de Simpson, le même principe appliqué partout ailleurs dans ce projet
+depuis le 20/10). Un $ se somme sans ambiguïté ; c'est ce qui rend un Total possible.
+
+**Mise en œuvre** :
+1. `engine/analysisData.js` — `computeActivityChannelMarginMatrix` renvoie maintenant
+   `{ [activityId]: { [channelId]: { margeNetteTotal, margeNettePercent } } }` au lieu d'un simple
+   nombre (%). `margeNettePercent` reste disponible pour la palette de couleur (l'intensité d'une
+   cellule doit rester relative à SA propre échelle de revenu, pas au $ brut) ; `margeNetteTotal`
+   est la valeur maintenant affichée.
+2. `analysisData.test.js` — les 2 tests existants adaptés à la nouvelle forme (vérifient
+   `.margeNetteTotal` ET `.margeNettePercent` par cellule).
+3. `features/SummaryTable.jsx` — tableau renommé « Bénéfices / pertes des activités par canaux » ;
+   cellules affichent `formatCurrency(cell.margeNetteTotal)` (couleur toujours via
+   `margeNettePercent`) ; colonne Total ajoutée (une par activité, réutilise `activitySummaries`
+   déjà calculé pour Par Activité) ; ligne Total ajoutée en pied de tableau, toujours sur TOUTES
+   les activités peu importe la pagination (réutilise `channelSummaries` déjà calculé pour Par
+   Canal) ; cellule Total/Total (grand total) = somme des totaux par activité. Les totaux
+   RÉUTILISENT les agrégats déjà calculés plutôt que de re-sommer la matrice — même donnée, jamais
+   deux calculs indépendants qui pourraient diverger. Tri étendu à la nouvelle colonne Total
+   (même mécanique que les colonnes de canal).
+- Fichiers touchés : `src/engine/analysisData.js`, `src/engine/analysisData.test.js`,
+  `src/features/SummaryTable.jsx`.
+- Tests : 232/232 unitaires, 48/48 e2e (aucune assertion existante sur cette matrice ne s'appuyait
+  sur le %, donc rien à adapter côté e2e). Vérification fonctionnelle par script Playwright
+  temporaire (supprimé après usage) : réconciliation exacte confirmée — chaque total de ligne
+  (activité) égale le Bénéfice net $ déjà affiché dans Par Activité (ex. « Plats principaux
+  surgelés » : 6 192,47 $ des deux côtés), chaque total de colonne (canal) égale celui de Par
+  Canal (ex. « Vente directe » : 2 385,11 $ des deux côtés), et le grand total (359,84 $) est
+  identique en sommant soit les lignes, soit les colonnes. Lint (mêmes avertissements
+  préexistants), `npx vite build` propres.

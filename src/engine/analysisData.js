@@ -497,16 +497,21 @@ export function computeChannelSummaries(productsWithCosts, salesChannels = []) {
     return result;
 }
 
-// Matrice Activité × Canal (02/11, retour utilisateur) : la marge nette (%) de chaque activité,
-// pour chacun de ses canaux de vente — même principe que la matrice SKU × Canal déjà dans Vue
-// d'ensemble (computeAnalysisData, `productsWithCosts[].channelBreakdown`), à l'échelle de
-// l'activité plutôt que du SKU. Réutilise `aggregateSegmentRows` (même agrégation $ sommés puis
-// divisés que Par Activité/Par Canal, jamais une moyenne de % individuels) — une combinaison
-// (activité, canal) sans aucun volume réel en est simplement absente de la matrice (jamais une
-// cellule à 0 %). Renvoie `{ [activityId]: { [channelId]: margeNettePercent } }` ; une activité ou
-// un canal sans aucune donnée obtient un objet vide, pas une entrée manquante — l'appelant peut
-// donc itérer sur TOUTES les activités/canaux (même ceux sans vente), comme le fait déjà la
-// matrice SKU × Canal pour un SKU sans aucun canal renseigné.
+// Matrice Activité × Canal (02/11, retour utilisateur) : le bénéfice net $ (« Bénéfices/Pertes »)
+// de chaque activité, pour chacun de ses canaux de vente — même principe que la matrice SKU ×
+// Canal déjà dans Vue d'ensemble (computeAnalysisData, `productsWithCosts[].channelBreakdown`), à
+// l'échelle de l'activité plutôt que du SKU. Réutilise `aggregateSegmentRows` (même agrégation $
+// sommés puis divisés que Par Activité/Par Canal, jamais une moyenne de % individuels) — une
+// combinaison (activité, canal) sans aucun volume réel en est simplement absente de la matrice
+// (jamais une cellule à 0 $). Métrique en $ plutôt qu'en % (révision du 02/11, retour utilisateur) :
+// une ligne/colonne Total n'a de sens que pour un $ (sommable) — une moyenne ou une somme de %
+// individuels divergerait du vrai % consolidé (paradoxe de Simpson, même principe que partout
+// ailleurs dans ce fichier). `margeNettePercent` reste renvoyé à côté, pour la palette de couleur
+// (l'intensité d'une cellule doit rester relative à SA propre échelle de revenu, pas au $ brut).
+// Renvoie `{ [activityId]: { [channelId]: { margeNetteTotal, margeNettePercent } } }` ; une
+// activité ou un canal sans aucune donnée obtient un objet vide, pas une entrée manquante —
+// l'appelant peut itérer sur TOUTES les activités/canaux (même ceux sans vente), comme le fait déjà
+// la matrice SKU × Canal pour un SKU sans aucun canal renseigné.
 export function computeActivityChannelMarginMatrix(productsWithCosts, productionActivities = [], salesChannels = []) {
     const cellRows = {};
     for (const row of (productsWithCosts || [])) {
@@ -524,7 +529,7 @@ export function computeActivityChannelMarginMatrix(productsWithCosts, production
             if (!rows) continue;
             const aggregate = aggregateSegmentRows(rows);
             if (!aggregate) continue;
-            matrix[activity.id][channel.id] = aggregate.margeNettePercent;
+            matrix[activity.id][channel.id] = { margeNetteTotal: aggregate.margeNetteTotal, margeNettePercent: aggregate.margeNettePercent };
         }
     }
     return matrix;

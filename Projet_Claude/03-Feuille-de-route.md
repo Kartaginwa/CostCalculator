@@ -3811,3 +3811,29 @@ oubli, puisqu'il n'existe tout simplement pas de ligne réelle de ce type dans l
   directes/Bénéfice brut), `e2e/income-statement-params.spec.js` (valeur attendue du Bénéfice net
   théorique : 443.38 $ → 359.84 $).
 - Tests : 233/233 unitaires (1 nouveau), 48/48 e2e. `npx eslint .`, `npx vite build` propres.
+
+## Révision du 02/11 (suite) : clarification de la section « Coûts additionnels » (Recette & Calcul)
+
+L'utilisateur a relevé une apparente incohérence : la sous-traitance et le vieillissement sont
+regroupés dans la même section « 4. Coûts additionnels » (`RecipeCalculator.jsx`), mais le
+vieillissement n'est PAS inclus dans les Charges directes (contrairement à la sous-traitance).
+Validation méthodologique faite (voir réponse de la session précédente) : ce n'est pas une
+erreur — la sous-traitance est un coût de PRODUCTION (appartient au COGS/Charges directes),
+tandis que le vieillissement est une charge FINANCIÈRE (intérêt de portage sur le capital déjà
+immobilisé dans les charges directes — `totalAgingCost = (matière+emballage+MO+sous-traitance) ×
+taux/12 × mois`, comme le MAPAQ), qui n'a jamais eu sa place dans le COGS depuis la Phase 1.4. Le
+regroupement visuel des deux dans une même section est une commodité UI (toutes deux optionnelles,
+masquées par défaut) — pas une déclaration de traitement comptable identique. L'ambiguïté était
+réelle, donc clarifiée plutôt que seulement expliquée en conversation.
+
+**Mise en œuvre** : `features/RecipeCalculator.jsx`, section « 4. Coûts additionnels » — une
+phrase explicative ajoutée en tête de la section ouverte (« regroupées ici parce qu'optionnelles,
+pas parce qu'elles se comptabilisent pareil ») ; un badge inline sur chaque case (« charge
+directe » en bleu pour Sous-traitance, « charge financière » en ambre pour Vieillissement/
+affinage) pour une distinction visible même sans lire la phrase ou l'infobulle. Les infobulles
+existantes de chaque case (déjà correctes depuis la Phase 1.4/4.4bis) restent inchangées.
+- Fichiers touchés : `src/features/RecipeCalculator.jsx`.
+- Tests : 233/233 unitaires (inchangés, pure clarification visuelle), 48/48 e2e. Vérification
+  fonctionnelle par script Playwright temporaire (supprimé après usage) : les deux badges
+  s'affichent correctement dans la section dépliée du projet démo. `npx eslint .` (mêmes
+  avertissements préexistants), `npx vite build` propres.

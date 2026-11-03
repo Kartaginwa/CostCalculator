@@ -1282,13 +1282,23 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 </div>
                 {openRecipeSections.has('additional') && (
                     <div className="mt-4 space-y-6">
+                        {/* Clarification (02/11, retour utilisateur) : regroupées ici seulement parce
+                            que les deux sont optionnelles et masquées par défaut — pas parce qu'elles
+                            seraient comptabilisées de la même façon. La sous-traitance est un coût de
+                            PRODUCTION (s'ajoute aux charges directes, donc à la marge sur coût
+                            primaire) ; le vieillissement est une charge FINANCIÈRE (intérêt de
+                            portage sur le capital déjà immobilisé dans les charges directes), qui ne
+                            touche que la marge nette. Voir les infobulles de chaque case ci-dessous. */}
+                        <p className="text-xs text-gray-500 -mt-2">
+                            Ces deux coûts sont regroupés ici parce qu'ils sont optionnels — pas parce qu'ils se comptabilisent de la même façon : la <strong>sous-traitance</strong> est un coût de production (charge directe) alors que le <strong>vieillissement</strong> est une charge financière (intérêt sur le capital immobilisé), qui n'affecte que la marge nette.
+                        </p>
                         <div className="flex justify-end">
                             <CopyFromFormatControl formats={formats} currentFormatId={format.id} onCopy={copyAdditionalCostsFrom} label="les coûts additionnels" />
                         </div>
                         <div>
                             <label className="flex items-center text-sm font-medium text-gray-700">
                                 <input type="checkbox" checked={!!format.subcontracting?.enabled} onChange={(e) => handleFormatNestedToggle('subcontracting', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" />
-                                Sous-traitance
+                                Sous-traitance <span className="ml-1.5 text-[11px] font-normal text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">charge directe</span>
                                 <Tooltip text="Coût d'une opération de fabrication confiée à un tiers pour ce format (ex. embouteillage externe). S'ajoute aux coûts directs (matière + main-d'œuvre) et affecte donc la marge sur coût primaire." />
                             </label>
                             {format.subcontracting?.enabled && (
@@ -1309,7 +1319,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div>
                             <label className="flex items-center text-sm font-medium text-gray-700">
                                 <input type="checkbox" checked={!!format.aging?.enabled} onChange={(e) => handleFormatNestedToggle('aging', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" />
-                                Vieillissement / affinage
+                                Vieillissement / affinage <span className="ml-1.5 text-[11px] font-normal text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">charge financière</span>
                                 <Tooltip text="Charge d'intérêt de portage pour un format qui doit vieillir ou affiner en inventaire avant la vente (ex. fermentation). Calculée sur le total des charges directes du lot ; incluse dans la marge nette mais pas dans la marge sur coût primaire." />
                             </label>
                             {format.aging?.enabled && (

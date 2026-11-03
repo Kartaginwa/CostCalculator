@@ -3676,3 +3676,24 @@ Appliquer les mêmes règles que le tableau par sku au nouveau tableau ».
   console. Lint (0 erreur, avertissements `react-hooks/set-state-in-effect` identiques au patron
   déjà en place pour `sortConfig`/`currentPage`, pas une régression introduite), `npx vite build`
   propres.
+
+## Révision du 02/11 (suite) : axes inversés dans Par Activité / Par Canal
+
+Demande explicite : « Inverser les axes des tableau dans les sous onglets par activités et par
+canals ». `SegmentSummaryTable` avait une ligne par segment (activité/canal) et une colonne par
+indicateur (Revenu total, Marge brute, etc.) — peu de segments (2-4 typiquement) mais 8 colonnes
+d'indicateurs, moins lisible pour comparer les segments côte à côte sur un même indicateur.
+
+**Mise en œuvre** : `features/SummaryTable.jsx`, `SegmentSummaryTable` réécrite — colonnes =
+segments (triés par Bénéfice net $ décroissant, de gauche à droite, même critère de tri qu'avant),
+lignes = les 8 indicateurs (`metricRows`, tableau de descripteurs `{ label, render, style?,
+emphasis?, indigo? }` pour éviter de dupliquer le JSX par ligne). Même palette `getMarginCellStyle`
+sur Bénéfice/Marge brute et nette (appliquée par cellule plutôt que par colonne), même tooltip sur
+la ligne Point mort. Premier colonne/ligne (libellés) toujours sticky. Aucun changement de calcul,
+seulement de présentation.
+- Fichiers touchés : `src/features/SummaryTable.jsx`, `e2e/summary-by-activity-channel.spec.js`
+  (assertions adaptées : « Point mort » est maintenant un `td` de ligne, plus un `th` de colonne ;
+  `tbody tr` compte 8 lignes d'indicateur au lieu de 3 segments ; 1re colonne de données = segment
+  le plus profitable).
+- Tests : 232/232 unitaires (inchangés, aucun calcul touché), 48/48 e2e. Lint (mêmes avertissements
+  préexistants, aucune erreur), `npx vite build` propres.

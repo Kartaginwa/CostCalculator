@@ -3721,3 +3721,13 @@ calcul ni de l'axe (toujours une colonne par segment, triée par Bénéfice net 
   sous-chaîne « marge nette »).
 - Tests : 232/232 unitaires (inchangés), 48/48 e2e. Lint (mêmes avertissements préexistants,
   aucune erreur), `npx vite build` propres.
+
+## Révision du 02/11 (suite) : ligne « Frais fixes » repassée en blanc
+
+Retour utilisateur : la ligne « Frais fixes » (emphase `bg-indigo-50`, ajoutée lors de l'alignement
+sur la mise en page Par SKU) devait rester blanche. Retiré le prop `emphasis` de ce `BySkuRow` dans
+`SegmentSummaryTable` (`features/SummaryTable.jsx`) — seule « Point mort » garde l'emphase
+(cohérent avec Par SKU, où seuls les vrais sous-totaux/le point mort sont surlignés). Aucun autre
+changement.
+- Tests : 232/232 unitaires, 48/48 e2e (inchangés, aucune assertion sur la couleur de fond).
+  `npx eslint .`, `npx vite build` propres.

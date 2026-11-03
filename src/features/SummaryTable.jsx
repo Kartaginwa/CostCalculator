@@ -749,7 +749,7 @@ const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) => {
                     ))} />
 
                     <BySkuSectionHeader label="Frais fixes et marge nette" colSpan={sortedRows.length + 1} />
-                    <BySkuRow label="Frais fixes" emphasis render={sortedRows.map(row => (
+                    <BySkuRow label="Frais fixes" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(row.totalIndirectTotal)} $</td>
                     ))} />
                     <BySkuRow label="Bénéfice net" render={sortedRows.map(row => (

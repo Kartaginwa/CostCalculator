@@ -3697,3 +3697,27 @@ seulement de présentation.
   le plus profitable).
 - Tests : 232/232 unitaires (inchangés, aucun calcul touché), 48/48 e2e. Lint (mêmes avertissements
   préexistants, aucune erreur), `npx vite build` propres.
+
+## Révision du 02/11 (suite) : même mise en page que Par SKU pour Par Activité / Par Canal
+
+Demande explicite : « Mettre les tableau dans la même mise en page que celui dans le sous-onglet
+par sku ». `SegmentSummaryTable` avait sa propre mise en page ad hoc (en-têtes `text-xs uppercase`,
+lignes alternées blanc/gris) alors que la cascade « Par SKU » (`BySkuWaterfall`) a son propre style
+distinct (en-têtes de section grisées, étiquette de ligne en `<th>` sticky avec infobulle inline,
+pas de rayures alternées, une ligne d'emphase `bg-indigo-50` pour un total/point mort).
+
+**Mise en œuvre** : `features/SummaryTable.jsx`, `SegmentSummaryTable` réécrite pour réutiliser
+DIRECTEMENT `BySkuRow`/`BySkuSectionHeader` — les mêmes composants déjà utilisés par
+`BySkuWaterfall`, plutôt qu'une mise en page parallèle à maintenir en synchronisation. 3 sections
+ajoutées pour retrouver le même rythme visuel (5 sections dans Par SKU) : « Marge brute » (Revenu
+total, Coût de production, Bénéfice brut, Marge brute), « Frais fixes et marge nette » (Frais
+fixes — emphase, comme « Frais fixes totaux par unité » dans Par SKU —, Bénéfice net, Marge
+nette), « Seuil de rentabilité » (Point mort, emphase, même tooltip qu'avant). Aucun changement de
+calcul ni de l'axe (toujours une colonne par segment, triée par Bénéfice net $ décroissant).
+- Fichiers touchés : `src/features/SummaryTable.jsx`, `e2e/summary-by-activity-channel.spec.js`
+  (assertions adaptées : 3 en-têtes de section + 8 lignes d'indicateur = 11 `tbody tr` ; « Point
+  mort » redevient un `<th>`, comme dans Par SKU ; ligne « Marge nette » ciblée par index fixe
+  plutôt que par texte, le header de section « Frais fixes et marge nette » contenant aussi la
+  sous-chaîne « marge nette »).
+- Tests : 232/232 unitaires (inchangés), 48/48 e2e. Lint (mêmes avertissements préexistants,
+  aucune erreur), `npx vite build` propres.

@@ -711,6 +711,10 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
 // ligne par indicateur — plus lisible quand il y a peu de segments (souvent 2-4) à comparer côte
 // à côte sur beaucoup d'indicateurs, plutôt que l'inverse. Segments triés par Bénéfice net $
 // décroissant, de gauche à droite (même logique de tri qu'avant, appliquée aux colonnes).
+// Mise en page alignée le 02/11 sur celle de Par SKU (retour utilisateur) : réutilise directement
+// BySkuRow/BySkuSectionHeader — même cascade visuelle (en-têtes de section gris, ligne d'emphase
+// bg-indigo-50 pour un total/point mort, étiquette sticky avec infobulle inline) — plutôt qu'une
+// mise en page ad hoc propre à ce tableau.
 const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) => {
     const sortedRows = useMemo(() => [...rows].sort((a, b) => b.margeNetteTotal - a.margeNetteTotal), [rows]);
 
@@ -718,52 +722,54 @@ const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) => {
         return <p className="text-sm text-gray-500 text-center py-8">Aucune donnée réelle (volume vendu) pour l'instant.</p>;
     }
 
-    const metricRows = [
-        { label: 'Revenu total', render: (row) => `${formatCurrency(row.revenueTotal)} $` },
-        { label: 'Coût de production', render: (row) => `${formatCurrency(row.totalDirectCostTotal)} $` },
-        { label: 'Bénéfice brut', render: (row) => `${formatCurrency(row.margeBruteTotal)} $`, style: (row) => getMarginCellStyle(row.margeBrutePercent), emphasis: true },
-        { label: 'Marge brute', render: (row) => `${formatPercent(row.margeBrutePercent)} %`, style: (row) => getMarginCellStyle(row.margeBrutePercent), emphasis: true },
-        { label: 'Frais fixes', render: (row) => `${formatCurrency(row.totalIndirectTotal)} $` },
-        { label: 'Bénéfice net', render: (row) => `${formatCurrency(row.margeNetteTotal)} $`, style: (row) => getMarginCellStyle(row.margeNettePercent), emphasis: true },
-        { label: 'Marge nette', render: (row) => `${formatPercent(row.margeNettePercent)} %`, style: (row) => getMarginCellStyle(row.margeNettePercent), emphasis: true },
-        {
-            label: (
-                <span className="inline-flex items-center gap-1">
-                    Point mort
-                    <Tooltip text="Revenu que ce segment doit générer pour couvrir ses frais fixes (dont la main-d'œuvre, traitée comme fixe pour la période) — en $ DE REVENU, pas en unités : des SKU hétérogènes n'ont pas d'unité de vente commune. Méthode du ratio de marge de contribution pondéré en $ (même principe que le Point Mort du Menu, Vue d'ensemble, mais à l'échelle de ce seul segment)." />
-                </span>
-            ),
-            render: (row) => (row.breakEvenRevenue != null ? `${formatCurrency(row.breakEvenRevenue)} $` : 'N/A'),
-            indigo: true,
-        },
-    ];
-
     return (
         <div className="overflow-x-auto border rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <table className="min-w-full text-sm">
                 <thead className="bg-gray-100">
                     <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-gray-100">{nameColumnLabel}</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase sticky left-0 bg-gray-100">{nameColumnLabel}</th>
                         {sortedRows.map(row => (
-                            <th key={row[idKey]} className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{row[nameKey]}</th>
+                            <th key={row[idKey]} className="px-4 py-2.5 text-right text-sm font-semibold text-gray-800 whitespace-nowrap">{row[nameKey]}</th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {metricRows.map((metric, index) => (
-                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="px-4 py-3 font-medium text-gray-800 sticky left-0 bg-inherit whitespace-nowrap">{metric.label}</td>
-                            {sortedRows.map(row => (
-                                <td
-                                    key={row[idKey]}
-                                    className={`px-4 py-3 text-right whitespace-nowrap ${metric.emphasis ? 'font-semibold' : metric.indigo ? 'font-bold text-indigo-700' : 'text-gray-700'}`}
-                                    style={metric.style ? metric.style(row) : undefined}
-                                >
-                                    {metric.render(row)}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
+                <tbody className="divide-y divide-gray-100">
+                    <BySkuSectionHeader label="Marge brute" colSpan={sortedRows.length + 1} />
+                    <BySkuRow label="Revenu total" render={sortedRows.map(row => (
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.revenueTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Coût de production" render={sortedRows.map(row => (
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.totalDirectCostTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Bénéfice brut" render={sortedRows.map(row => (
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatCurrency(row.margeBruteTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Marge brute" render={sortedRows.map(row => (
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatPercent(row.margeBrutePercent)} %</td>
+                    ))} />
+
+                    <BySkuSectionHeader label="Frais fixes et marge nette" colSpan={sortedRows.length + 1} />
+                    <BySkuRow label="Frais fixes" emphasis render={sortedRows.map(row => (
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(row.totalIndirectTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Bénéfice net" render={sortedRows.map(row => (
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatCurrency(row.margeNetteTotal)} $</td>
+                    ))} />
+                    <BySkuRow label="Marge nette" render={sortedRows.map(row => (
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatPercent(row.margeNettePercent)} %</td>
+                    ))} />
+
+                    <BySkuSectionHeader label="Seuil de rentabilité" colSpan={sortedRows.length + 1} />
+                    <BySkuRow
+                        label="Point mort"
+                        tooltip="Revenu que ce segment doit générer pour couvrir ses frais fixes (dont la main-d'œuvre, traitée comme fixe pour la période) — en $ DE REVENU, pas en unités : des SKU hétérogènes n'ont pas d'unité de vente commune. Méthode du ratio de marge de contribution pondéré en $ (même principe que le Point Mort du Menu, Vue d'ensemble, mais à l'échelle de ce seul segment)."
+                        emphasis
+                        render={sortedRows.map(row => (
+                            <td key={row[idKey]} className="px-4 py-2.5 text-right font-bold text-indigo-700">
+                                {row.breakEvenRevenue != null ? `${formatCurrency(row.breakEvenRevenue)} $` : 'N/A'}
+                            </td>
+                        ))}
+                    />
                 </tbody>
             </table>
         </div>

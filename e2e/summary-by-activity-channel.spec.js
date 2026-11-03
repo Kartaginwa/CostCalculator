@@ -8,9 +8,13 @@
 //
 // Axes inversés le 02/11 (retour utilisateur, suite) : une colonne par segment, une ligne par
 // indicateur — plus lisible pour comparer peu de segments côte à côte sur plusieurs indicateurs.
+//
+// Mise en page alignée le 02/11 sur celle de Par SKU (retour utilisateur, suite) : réutilise
+// BySkuRow/BySkuSectionHeader — en-têtes de section gris, étiquette de ligne en <th> sticky avec
+// infobulle, ligne d'emphase bg-indigo-50 pour Frais fixes/Point mort.
 import { test, expect } from '@playwright/test';
 
-test("Rapport et suivi : Par Activité et Par Canal listent chaque segment en colonne, un indicateur par ligne, sans sélecteur ni ventilation par l'autre axe", async ({ page }) => {
+test("Rapport et suivi : Par Activité et Par Canal, même mise en page que Par SKU (sections, étiquette de ligne sticky, ligne d'emphase)", async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -27,30 +31,41 @@ test("Rapport et suivi : Par Activité et Par Canal listent chaque segment en co
     await page.getByText('Par Activité', { exact: true }).click();
     const byActivity = page.locator('#tutorial-section-summary-byactivity');
     await expect(byActivity.locator('select')).toHaveCount(0);
-    // « Point mort » est maintenant un libellé de ligne (td), plus un en-tête de colonne (th).
-    await expect(byActivity.locator('td', { hasText: 'Point mort' })).toBeVisible();
-    // 8 lignes d'indicateur (Revenu total, Coût de production, Bénéfice brut, Marge brute, Frais
-    // fixes, Bénéfice net, Marge nette, Point mort).
+    // 3 en-têtes de section (Marge brute / Frais fixes et marge nette / Seuil de rentabilité).
+    await expect(byActivity.getByText('Marge brute', { exact: true }).first()).toBeVisible();
+    await expect(byActivity.getByText('Seuil de rentabilité', { exact: true })).toBeVisible();
+    // « Point mort » est l'étiquette (th) de la dernière ligne, comme dans Par SKU.
+    await expect(byActivity.locator('th', { hasText: 'Point mort' })).toBeVisible();
+    // 3 en-têtes de section + 8 lignes d'indicateur (Revenu total, Coût de production, Bénéfice
+    // brut, Marge brute, Frais fixes, Bénéfice net, Marge nette, Point mort).
     const activityRows = byActivity.locator('tbody tr');
-    await expect(activityRows).toHaveCount(8);
+    await expect(activityRows).toHaveCount(11);
     // Classée par Bénéfice net $ décroissant, de gauche à droite : la plus profitable en 1re colonne.
     const activityHeaders = byActivity.locator('thead th');
     await expect(activityHeaders).toHaveCount(4); // libellé + 3 activités (surgelés, soupes, sauces).
     await expect(activityHeaders.nth(1)).toContainText('Plats principaux surgelés');
     await expect(byActivity.locator('tbody tr', { hasText: 'Revenu total' })).toContainText('61 978.20 $'); // tous canaux.
-    await expect(byActivity.locator('tbody tr', { hasText: 'Marge nette' })).toContainText('9.99 %');
+    // Rangée « Marge nette » = tbody tr nth(8) (0-indexé) dans l'ordre fixe des lignes : section
+    // Marge brute (header + 4 lignes), section Frais fixes et marge nette (header + Frais fixes +
+    // Bénéfice net + Marge nette). Ciblée par index plutôt que par texte : le header de section
+    // « Frais fixes et marge nette » contient aussi la sous-chaîne « marge nette ».
+    const activityMargeNetteRow = activityRows.nth(8);
+    await expect(activityMargeNetteRow).toContainText('Marge nette');
+    await expect(activityMargeNetteRow).toContainText('9.99 %');
 
     // Par Canal : même structure, une colonne par canal.
     await page.getByText('Par Canal', { exact: true }).click();
     const byChannel = page.locator('#tutorial-section-summary-bychannel');
     await expect(byChannel.locator('select')).toHaveCount(0);
     const channelRows = byChannel.locator('tbody tr');
-    await expect(channelRows).toHaveCount(8);
+    await expect(channelRows).toHaveCount(11);
     const channelHeaders = byChannel.locator('thead th');
     await expect(channelHeaders).toHaveCount(4); // libellé + 3 canaux.
     await expect(channelHeaders.nth(1)).toContainText('Vente directe (boutique en ligne)');
     await expect(byChannel.locator('tbody tr', { hasText: 'Revenu total' })).toContainText('11 740.20 $'); // toutes activités.
-    await expect(byChannel.locator('tbody tr', { hasText: 'Marge nette' })).toContainText('20.32 %');
+    const channelMargeNetteRow = channelRows.nth(8);
+    await expect(channelMargeNetteRow).toContainText('Marge nette');
+    await expect(channelMargeNetteRow).toContainText('20.32 %');
 
     // Point mort en $ (jamais « unités », contrairement à Par SKU).
     await expect(byChannel.getByText('unités')).toHaveCount(0);

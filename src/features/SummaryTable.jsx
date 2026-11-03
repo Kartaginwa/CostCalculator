@@ -1637,11 +1637,10 @@ export const SummaryTable = ({
                                     </button>
                                 </th>
                             ))}
-                            {/* Colonne Total mise en évidence (02/11, retour utilisateur) : bordure
-                                gauche plus épaisse que les séparateurs de colonnes ordinaires
-                                (divide-gray-200, 1px), pour qu'elle se détache visuellement comme un
-                                résultat agrégé plutôt qu'une colonne de canal parmi d'autres. */}
-                            <th className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap border-l-4 border-gray-400">
+                            {/* Colonne Total : pas de bordure ajoutée ici (retour utilisateur) — la
+                                ligne des titres ne doit pas changer d'apparence ; la séparation se
+                                fait seulement sur les lignes de données et la ligne Total ci-dessous. */}
+                            <th className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                                 <button onClick={() => requestActivityMatrixSort('total')} className="flex items-center justify-end w-full">
                                     Total {getActivityMatrixSortIcon('total')}
                                 </button>
@@ -1662,7 +1661,7 @@ export const SummaryTable = ({
                                             </td>
                                         );
                                     })}
-                                    <td className="px-3 py-1.5 text-right font-bold border-l-4 border-gray-400" style={activityTotal ? getMarginCellStyle(activityTotal.margeNettePercent) : undefined}>
+                                    <td className="px-3 py-1.5 text-right font-bold border-l-4 border-white" style={activityTotal ? getMarginCellStyle(activityTotal.margeNettePercent) : undefined}>
                                         {activityTotal ? `${formatCurrency(activityTotal.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente pour cette activité">—</span>}
                                     </td>
                                 </tr>
@@ -1671,10 +1670,13 @@ export const SummaryTable = ({
                         {/* Ligne Total mise en évidence (02/11, retour utilisateur) : même principe
                             que la colonne Total ci-dessus — bordure du haut plus épaisse que les
                             séparateurs de lignes ordinaires, pour qu'elle se détache comme un résultat
-                            agrégé plutôt qu'une activité de plus. Toujours la somme sur TOUTES les
-                            activités (jamais limitée à la page affichée) — réutilise
-                            channelSummaries, déjà calculé pour Par Canal. */}
-                        <tr className="bg-gray-100 font-bold border-t-4 border-gray-400">
+                            agrégé plutôt qu'une activité de plus. Blanche plutôt que grise (retour
+                            utilisateur) : la bordure grise tranchait mal avec les cellules déjà
+                            colorées (palette de marge) — le blanc se lit comme un espacement net entre
+                            cartes plutôt qu'un trait disgracieux par-dessus une couleur. Toujours la
+                            somme sur TOUTES les activités (jamais limitée à la page affichée) —
+                            réutilise channelSummaries, déjà calculé pour Par Canal. */}
+                        <tr className="bg-gray-100 font-bold border-t-4 border-white">
                             <td className="px-3 py-1.5 whitespace-nowrap sticky left-0 bg-gray-100">Total</td>
                             {salesChannels.map(c => {
                                 const channelTotal = channelSummaries.find(r => r.channelId === c.id);
@@ -1684,7 +1686,7 @@ export const SummaryTable = ({
                                     </td>
                                 );
                             })}
-                            <td className="px-3 py-1.5 text-right text-indigo-700 border-l-4 border-gray-400">{formatCurrency(activityMatrixGrandTotal)} $</td>
+                            <td className="px-3 py-1.5 text-right text-indigo-700 border-l-4 border-white">{formatCurrency(activityMatrixGrandTotal)} $</td>
                         </tr>
                     </tbody>
                 </table>

@@ -3853,3 +3853,21 @@ cohérence visuelle que la colonne).
   par script Playwright temporaire (supprimé après usage) : bordures confirmées par capture d'écran
   et assertions de classe CSS sur l'en-tête Total, la ligne Total et chaque cellule Total de ligne.
   `npx eslint .` (mêmes avertissements préexistants), `npx vite build` propres.
+
+## Révision du 02/11 (suite) : bordures Total passées au blanc, en-tête redevenue inchangée
+
+Retour utilisateur sur la mise en évidence ci-dessus : « la bordure grise est très laide », et la
+bordure ajoutée à l'en-tête « Total » (ligne des titres) ne devait pas être modifiée.
+
+**Mise en œuvre** : `features/SummaryTable.jsx` — `border-l-4 border-gray-400` retiré du `<th>`
+« Total » (ligne des titres redevenue identique aux autres en-têtes de colonne, aucune bordure
+ajoutée) ; `border-gray-400` → `border-white` sur la colonne Total (chaque cellule de ligne) et la
+ligne Total (bordure du haut + cellule du grand total). Le blanc se lit comme un espacement net
+entre la grille colorée (palette de marge, vert/rouge) et le total, plutôt qu'un trait gris qui
+tranchait mal par-dessus des cellules déjà saturées de couleur.
+- Fichiers touchés : `src/features/SummaryTable.jsx`.
+- Tests : 233/233 unitaires (inchangés, pure mise en forme), 48/48 e2e. Vérification fonctionnelle
+  par script Playwright temporaire (supprimé après usage) : capture d'écran confirmant le rendu
+  (gouttière blanche nette, en-tête visuellement identique aux autres colonnes) + assertions que le
+  `<th>` Total n'a plus `border-l-4` et que la ligne/colonne Total ont bien `border-white`.
+  `npx eslint .` (mêmes avertissements préexistants), `npx vite build` propres.

@@ -1673,20 +1673,25 @@ export const SummaryTable = ({
                             agrégé plutôt qu'une activité de plus. Blanche plutôt que grise (retour
                             utilisateur) : la bordure grise tranchait mal avec les cellules déjà
                             colorées (palette de marge) — le blanc se lit comme un espacement net entre
-                            cartes plutôt qu'un trait disgracieux par-dessus une couleur. Toujours la
-                            somme sur TOUTES les activités (jamais limitée à la page affichée) —
-                            réutilise channelSummaries, déjà calculé pour Par Canal. */}
-                        <tr className="bg-gray-100 font-bold border-t-4 border-white">
-                            <td className="px-3 py-1.5 whitespace-nowrap sticky left-0 bg-gray-100">Total</td>
+                            cartes plutôt qu'un trait disgracieux par-dessus une couleur. Bordure posée
+                            sur CHAQUE <td> plutôt que sur le <tr> (retour utilisateur, la bordure du
+                            haut n'apparaissait pas) : un navigateur ne peint jamais une bordure posée
+                            directement sur <tr> en mode de bordures "separate" (celui par défaut d'un
+                            tableau HTML, jamais changé ici) — seules les cellules peuvent porter une
+                            bordure visible. Toujours la somme sur TOUTES les activités (jamais limitée
+                            à la page affichée) — réutilise channelSummaries, déjà calculé pour Par
+                            Canal. */}
+                        <tr className="bg-gray-100 font-bold">
+                            <td className="px-3 py-1.5 whitespace-nowrap sticky left-0 bg-gray-100 border-t-4 border-white">Total</td>
                             {salesChannels.map(c => {
                                 const channelTotal = channelSummaries.find(r => r.channelId === c.id);
                                 return (
-                                    <td key={c.id} className="px-3 py-1.5 text-right" style={channelTotal ? getMarginCellStyle(channelTotal.margeNettePercent) : undefined}>
+                                    <td key={c.id} className="px-3 py-1.5 text-right border-t-4 border-white" style={channelTotal ? getMarginCellStyle(channelTotal.margeNettePercent) : undefined}>
                                         {channelTotal ? `${formatCurrency(channelTotal.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
                                     </td>
                                 );
                             })}
-                            <td className="px-3 py-1.5 text-right text-indigo-700 border-l-4 border-white">{formatCurrency(activityMatrixGrandTotal)} $</td>
+                            <td className="px-3 py-1.5 text-right text-indigo-700 border-l-4 border-t-4 border-white">{formatCurrency(activityMatrixGrandTotal)} $</td>
                         </tr>
                     </tbody>
                 </table>

@@ -3871,3 +3871,21 @@ tranchait mal par-dessus des cellules déjà saturées de couleur.
   (gouttière blanche nette, en-tête visuellement identique aux autres colonnes) + assertions que le
   `<th>` Total n'a plus `border-l-4` et que la ligne/colonne Total ont bien `border-white`.
   `npx eslint .` (mêmes avertissements préexistants), `npx vite build` propres.
+
+## Révision du 02/11 (suite) : bordure du haut de la ligne Total réellement rendue
+
+Retour utilisateur : la bordure du haut de la ligne Total restait invisible malgré la révision
+précédente. Cause : `border-t-4 border-white` était posé sur le `<tr>` — or un navigateur ne peint
+jamais une bordure posée directement sur `<tr>` en mode de bordures « separate » (le mode par
+défaut d'un tableau HTML, jamais changé dans ce tableau) ; seules les cellules (`<td>`/`<th>`)
+peuvent porter une bordure visible dans ce mode. La bordure gauche de la colonne Total, elle,
+fonctionnait déjà parce qu'elle était posée sur des `<td>`.
+
+**Mise en œuvre** : `features/SummaryTable.jsx` — `border-t-4 border-white` déplacé du `<tr>` vers
+CHAQUE `<td>` de la ligne Total (nom, chaque canal, grand total).
+- Fichiers touchés : `src/features/SummaryTable.jsx`.
+- Tests : 233/233 unitaires (inchangés), 48/48 e2e. Vérification fonctionnelle par script
+  Playwright temporaire (supprimé après usage) : capture d'écran confirmant la gouttière blanche
+  désormais visible au-dessus de la ligne Total, assertions que chaque `<td>` de cette ligne porte
+  `border-t-4 border-white`. `npx eslint .` (mêmes avertissements préexistants), `npx vite build`
+  propres.

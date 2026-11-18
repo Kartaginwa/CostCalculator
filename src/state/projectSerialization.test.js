@@ -121,11 +121,11 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(pkg.uniqueId).toBe('');
     });
 
-    it('crée une activité de production "Général" par défaut pour un projet antérieur à cette notion', () => {
+    it('crée une activité de production « Activité 1 » par défaut pour un projet antérieur à cette notion', () => {
         const legacy = { generalInfo: { totalIndirects: 1000 } }; // pas de productionActivities
         const parsed = parseProjectData(legacy, getEmptyState());
         expect(parsed.productionActivities).toHaveLength(1);
-        expect(parsed.productionActivities[0].name).toBe('Général');
+        expect(parsed.productionActivities[0].name).toBe('Activité 1');
     });
 
     it('crée un circuit de vente "Vente directe" par défaut pour un projet antérieur à la Phase 3 (sans salesChannels)', () => {

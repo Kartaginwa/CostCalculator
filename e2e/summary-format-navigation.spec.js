@@ -48,7 +48,7 @@ test('Rapport : lignes désambiguïsées par format + édition ouvre le bon ongl
     await rowUnite.locator('button[title="Éditer le plat"]').click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('h1:has-text("Recette et calcul pour")')).toBeVisible();
+    await expect(page.locator('h1:has-text("Production pour")')).toBeVisible();
     await expect(page.locator('select').first()).toHaveValue(/.*/); // le select de produit est rendu
     const activeFormatTab = page.locator('#tutorial-section-recipe-formats button.border-blue-500');
     await expect(activeFormatTab).toHaveText(/1 unité/);

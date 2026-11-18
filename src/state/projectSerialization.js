@@ -5,7 +5,7 @@
 // effets de bord (Blob/download, FileReader, setters d'état).
 
 import { buildDefaultFormat, stripFormatOwnedFields } from './initialState.js';
-import { EXPENSE_CATEGORIES, sumLineAmounts, parseLocaleNumber } from '../utils.js';
+import { todayLocalISO, EXPENSE_CATEGORIES, sumLineAmounts, parseLocaleNumber } from '../utils.js';
 
 // Un contenant ('general' ou l'id d'une activité) revalidé contre les activités réellement
 // présentes : une activité supprimée depuis la sauvegarde ne doit jamais laisser une référence
@@ -82,7 +82,7 @@ export function parseProjectData(data, emptyState) {
     }
 
     // Migration : projets antérieurs à l'ajout des activités de production (ligne de fabrication).
-    // Toujours au moins une activité par défaut ("Général"), pour que l'étape suivante (rattacher
+    // Toujours au moins une activité par défaut ("Activité 1"), pour que l'étape suivante (rattacher
     // chaque produit à une activité) ait toujours une valeur de repli.
     // `indirectCostDriver` (Phase 4.6) : une activité antérieure à cette phase retombe sur
     // « directCost » (coût direct combiné — le driver par défaut le plus défendable, voir
@@ -195,7 +195,7 @@ export function parseProjectData(data, emptyState) {
         isRecipe: ing.isRecipe || false,
         id: String(ing.id || `manual_${Date.now()}_${Math.random()}`),
         lossPercentage: ing.lossPercentage || 0,
-        lastUpdated: ing.lastUpdated || new Date().toISOString().split('T')[0]
+        lastUpdated: ing.lastUpdated || todayLocalISO()
     }));
 
     // Migration : projets antérieurs à l'ajout du Packaging (Phase 2) — catalogue vide par défaut.
@@ -204,7 +204,7 @@ export function parseProjectData(data, emptyState) {
         uniqueId: pkg.uniqueId || '',
         id: String(pkg.id || `pkg_${Date.now()}_${Math.random()}`),
         lossPercentage: pkg.lossPercentage || 0,
-        lastUpdated: pkg.lastUpdated || new Date().toISOString().split('T')[0]
+        lastUpdated: pkg.lastUpdated || todayLocalISO()
     }));
 
     const products = (data.products || emptyState.products).map(p => {

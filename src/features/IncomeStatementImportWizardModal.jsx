@@ -3,6 +3,8 @@ import { X, Upload } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { parseLocaleNumber, excelSerialDateToJSDate, INCOME_STATEMENT_APP_FIELDS, guessExpenseCategory, parsePdfStatementLine, EXPENSE_CATEGORIES } from '../utils.js';
+import { useEscapeKey } from '../ui-utils.jsx';
+import { useProject } from '../state/ProjectContext.jsx';
 
 // pdf.js a besoin d'un worker séparé pour décoder le PDF hors du thread principal — `?url` (Vite)
 // renvoie l'URL de l'asset buildé (même origine, conforme à la CSP `script-src 'self'` déjà en
@@ -75,6 +77,8 @@ const extractLinesFromPdf = async (arrayBuffer) => {
 // correspond au nom d'un produit existant, un revenu est automatiquement rattaché à l'activité de
 // production de ce produit plutôt qu'à Général.
 export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComplete, productsWithCosts, activityBuckets }) => {
+    const { showNotification } = useProject();
+    useEscapeKey(isOpen, onClose);
     const [step, setStep] = useState(1);
     const fileInputRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -179,7 +183,7 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                         .map((r) => ({ label: r.label, amount: Math.abs(r.amount), typeText: '', categoryText: '', skuText: '' }));
 
                     if (rows.length === 0) {
-                        alert("Aucun poste n'a pu être reconnu dans ce PDF. Vérifiez qu'il s'agit bien d'un PDF textuel (pas une image scannée), ou essayez un export CSV/Excel.");
+                        showNotification({ message: "Aucun poste n'a pu être reconnu dans ce PDF. Vérifiez qu'il s'agit bien d'un PDF textuel (pas une image scannée), ou essayez un export CSV/Excel.", type: 'error' });
                         resetWizard();
                         return;
                     }
@@ -189,7 +193,7 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                 }
 
                 if (typeof window.XLSX === 'undefined') {
-                    alert("La bibliothèque de lecture de fichiers n'est pas chargée. Veuillez réessayer.");
+                    showNotification({ message: "La bibliothèque de lecture de fichiers n'est pas chargée. Veuillez réessayer.", type: 'error' });
                     return;
                 }
                 const data = new Uint8Array(e.target.result);
@@ -200,7 +204,7 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                 const jsonData = window.XLSX.utils.sheet_to_json(worksheet, { cellDates: true });
 
                 if (jsonData.length === 0) {
-                    alert("Le fichier semble vide.");
+                    showNotification({ message: "Le fichier semble vide.", type: 'error' });
                     return;
                 }
 
@@ -210,7 +214,7 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
 
             } catch (error) {
                 console.error("Erreur de lecture du fichier:", error);
-                alert("Le format du fichier est invalide ou corrompu.");
+                showNotification({ message: "Le format du fichier est invalide ou corrompu.", type: 'error' });
                 resetWizard();
             } finally {
                 setIsLoading(false);

@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { AlertCircle, ChevronDown, GripVertical, Trash2, Scale, PlusCircle } from 'lucide-react';
 import {
-    parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPositiveNumber, isValidPercentage,
+    unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPositiveNumber, isInvalidPercentage,
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent, formatQuantityLabel,
     getCompatibleUnits, CONVERSION_FACTORS, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits,
 } from '../utils.js';
-import { getCostTargetIndicator, useValueFlash } from '../ui-utils.jsx';
-import { Tooltip, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
+import { getCostTargetIndicator, useValueFlash, useSessionState } from '../ui-utils.jsx';
+import { Tooltip, EmptyState, CostNatureBadge, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
 import { computeYieldUnits } from '../engine/yieldCalculator.js';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, onSelectProduct, openRecipeSections, setOpenRecipeSections, onAddFormat, onDuplicateFormat }) => {
-    const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification, analysisData, activeUnits } = useProject();
+    const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification, analysisData, activeUnits, goToTab } = useProject();
     const product = products[editingProductIndex] || null;
 
     const [selectedFormatIndex, setSelectedFormatIndex] = useState(0);
@@ -128,16 +128,25 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
         () => computeChannelBreakdown(costs, format?.channelPrices, salesChannels),
         [costs, format, salesChannels]
     );
-    const [selectedChannelId, setSelectedChannelId] = useState(null);
+    const [selectedChannelId, setSelectedChannelId] = useSessionState('recipe.selectedChannelId', null);
+    const prevFormatIdRef = useRef(format?.id);
     useEffect(() => {
-        // Revient au canal principal (premier de la liste) à chaque changement de format.
-        setSelectedChannelId(null);
-    }, [format?.id]);
+        // Revient au canal principal (premier de la liste) à chaque CHANGEMENT de format — pas au
+        // simple retour sur l'onglet (le canal choisi est alors conservé, voir useSessionState).
+        if (prevFormatIdRef.current !== format?.id) {
+            prevFormatIdRef.current = format?.id;
+            setSelectedChannelId(null);
+        }
+    }, [format?.id, setSelectedChannelId]);
     const selectedChannelData = channelBreakdown.find(cb => cb.channelId === selectedChannelId) || channelBreakdown[0] || null;
     // Source des valeurs dépendantes du prix (% de coût, marge de contribution, marge brute, prix
     // affiché) hors simulation : le canal sélectionné, avec repli sur `costs` (0 $ partout) si ce
     // format n'a encore aucun canal rattaché — jamais une erreur, jamais une valeur forcée.
     const marginView = selectedChannelData || costs;
+    // Sous-recette (ou format sans prix) : aucun prix de vente => aucune marge ni ratio en % du prix
+    // n'a de sens (« une donnée absente reste absente », jamais un -1,94 $ / 0,00 % trompeur).
+    // Pendant une simulation de prix, le prix simulé rend tout de nouveau pertinent.
+    const hasSalePrice = isSimulating || (selectedChannelData ? selectedChannelData.netPrice : parseLocaleNumber(format?.prixVente)) > 0;
 
     const simulatedCosts = (product && format && isSimulating && isValidNumber(simulatedPrice))
         ? calculateCosts(product, generalInfo, baseIngredients, products, laborDatabase, simulatedPrice, {}, new Set(), format, basePackaging)
@@ -192,7 +201,13 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
         ? Math.ceil(impliedFixedCostForSim / simulatedContributionExcludingLabor)
         : null;
 
-    if (!product || !format) return <div className="text-center p-8">Veuillez d'abord sélectionner ou ajouter un plat.</div>;
+    if (!product || !format) return (
+        <div className="container mx-auto p-6 max-w-3xl">
+            <EmptyState message="Veuillez d'abord sélectionner ou ajouter un plat.">
+                <button onClick={() => goToTab('info')} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Aller à Paramètres → Produits et SKUs</button>
+            </EmptyState>
+        </div>
+    );
 
     const handleDragStart = (e, index, type) => {
         setDraggedItem({ index, type });
@@ -647,9 +662,9 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 onUpdatePersonnel={handlePersonnelChange}
             />
             <div className="flex items-center gap-4">
-                <h1 className="text-3xl font-bold text-gray-800">Recette et calcul pour :</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Production pour :</h1>
                 <select value={editingProductIndex} onChange={(e) => onSelectProduct(parseInt(e.target.value, 10))} className="flex-1 p-2 border rounded-md">
-                    {products.map((p, index) => <option key={p.id || index} value={index}>{p.platName || `Plat ${index + 1}`}</option>)}
+                    {products.map((p, index) => <option key={p.id || index} value={index}>{p.platName || unnamedLabel(index)}</option>)}
                 </select>
             </div>
 
@@ -816,7 +831,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     className="w-full flex justify-between items-center cursor-pointer"
                     aria-expanded={openRecipeSections.has('ingredients')}
                 >
-                    <h2 className="text-xl font-semibold text-green-700">1. Ingrédients</h2>
+                    <h2 className="text-2xl font-bold text-green-700">1. Ingrédients</h2>
                     <ChevronDown className={`h-6 w-6 text-green-700 transform transition-transform duration-200 ${openRecipeSections.has('ingredients') ? 'rotate-180' : ''}`} />
                 </div>
                 {openRecipeSections.has('ingredients') && (
@@ -829,17 +844,17 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                          <thead className="bg-green-100">
                             <tr>
                                 <th className="px-2 py-2 w-12"></th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ingrédient</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût U. ($)</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Ingrédient</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Quantité</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unité</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût U. ($)</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">
                                     <div className="flex items-center whitespace-nowrap">
                                         Rendement (%)
                                         <Tooltip text="Perte PENDANT la préparation de cette recette : parage, épluchage, cuisson, etc. Exemple : 1kg de carottes donne 800g après épluchage, le rendement est de 80%. Ne pas confondre avec le Taux de perte (onglet Ingrédients), qui couvre la perte AVANT production (péremption, stock) — les deux se cumulent, ne saisissez pas la même perte aux deux endroits sous peine de gonfler le coût matière." />
                                     </div>
                                 </th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût Total ($)</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût total ($)</th>
                                 <th className="relative px-2 py-2"></th>
                             </tr>
                         </thead>
@@ -895,8 +910,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                         </td>
                                         <td className="px-2 py-2"><input type="text" value={formatUnitPrice(displayedUnitPrice)} readOnly disabled className="w-full p-1 bg-gray-100 border-0 rounded text-right"/></td>
                                         <td className="px-2 py-2">
-                                            <input type="text" inputMode="decimal" value={item.yieldPercentage || ''} onChange={e => handleValueChange('ingredients', index, 'yieldPercentage', e.target.value)} className={`w-full p-1 border rounded text-right ${!isValidPercentage(item.yieldPercentage) ? 'border-red-500' : 'border-gray-300'}`}/>
-                                            {!isValidPercentage(item.yieldPercentage) && <ValidationMessage message="Doit être un %." />}
+                                            <input type="text" inputMode="decimal" value={item.yieldPercentage || ''} onChange={e => handleValueChange('ingredients', index, 'yieldPercentage', e.target.value)} className={`w-full p-1 border rounded text-right ${isInvalidPercentage(item.yieldPercentage) ? 'border-red-500' : 'border-gray-300'}`}/>
+                                            {isInvalidPercentage(item.yieldPercentage) && <ValidationMessage message="Doit être un %." />}
                                         </td>
                                         <FlashingCell value={totalCost} />
                                         <td className="px-2 py-2 text-center"><button onClick={() => removeRow('ingredients', index)} className="text-red-500 hover:text-red-700 p-1 rounded-full"><Trash2 size={20}/></button></td>
@@ -907,6 +922,9 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     </table>
                 </div>
                 <button id="tutorial-add-ingredient-to-recipe" onClick={() => addRow('ingredients')} className="mt-4 text-sm text-green-600 hover:text-green-800">+ Ajouter un ingrédient</button>
+                {baseIngredients.length === 0 && (
+                    <p className="mt-2 text-xs text-amber-700">Votre base d'ingrédients est vide : les lignes ne pourront pas être liées à un ingrédient. <button type="button" onClick={() => goToTab('ingredients')} className="underline hover:text-amber-900">Aller à l'onglet Ingrédients</button></p>
+                )}
                 <div className="mt-4 p-3 bg-green-100 rounded-md space-y-2">
                     <div className="grid grid-cols-2 gap-4">
                         <p className="text-green-800">Coût Matières (base): <span>{formatCurrency(costs.totalBaseIngredientsCost)} $</span></p>
@@ -933,7 +951,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     className="w-full flex justify-between items-center cursor-pointer"
                     aria-expanded={openRecipeSections.has('packaging')}
                 >
-                    <h2 className="text-xl font-semibold text-orange-700">2. Emballage</h2>
+                    <h2 className="text-2xl font-bold text-orange-700">2. Emballage</h2>
                     <ChevronDown className={`h-6 w-6 text-orange-700 transform transition-transform duration-200 ${openRecipeSections.has('packaging') ? 'rotate-180' : ''}`} />
                 </div>
                 {openRecipeSections.has('packaging') && (
@@ -945,11 +963,11 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <table className="min-w-full">
                         <thead className="bg-orange-100">
                             <tr>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Emballage</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût U. ($)</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût Total ($)</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Emballage</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Quantité</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unité</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût U. ($)</th>
+                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût total ($)</th>
                                 <th className="relative px-2 py-2"></th>
                             </tr>
                         </thead>
@@ -1004,6 +1022,9 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     </table>
                 </div>
                 <button id="tutorial-add-packaging-to-recipe" onClick={addPackagingRow} className="mt-4 text-sm text-orange-600 hover:text-orange-800">+ Ajouter un emballage</button>
+                {basePackaging.length === 0 && (
+                    <p className="mt-2 text-xs text-amber-700">Votre base d'emballages est vide. <button type="button" onClick={() => goToTab('packaging')} className="underline hover:text-amber-900">Aller à l'onglet Emballage</button></p>
+                )}
                 <div className="mt-4 p-3 bg-orange-100 rounded-md space-y-2">
                     <div className="grid grid-cols-2 gap-4">
                         <p className="text-orange-800">Coût Emballage (base): <span>{formatCurrency(costs.totalBasePackagingCost)} $</span></p>
@@ -1018,7 +1039,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 )}
             </div>
 
-            {/* Processus de production et main-d'oeuvre */}
+            {/* Processus de production et main-d'œuvre */}
             <div id="tutorial-section-recipe-labor" className="p-4 bg-yellow-50 rounded-lg relative z-10">
                 <div
                     onClick={() => toggleSection('labor')}
@@ -1028,7 +1049,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     className="w-full flex justify-between items-center cursor-pointer"
                     aria-expanded={openRecipeSections.has('labor')}
                 >
-                    <h2 className="text-xl font-semibold text-yellow-700">3. Processus de production et main-d'œuvre</h2>
+                    <h2 className="text-2xl font-bold text-yellow-700">3. Processus de production et main-d'œuvre</h2>
                     <ChevronDown className={`h-6 w-6 text-yellow-700 transform transition-transform duration-200 ${openRecipeSections.has('labor') ? 'rotate-180' : ''}`} />
                 </div>
                 {openRecipeSections.has('labor') && (
@@ -1041,44 +1062,44 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <thead className="bg-yellow-100">
                             <tr>
                                 <th className="px-2 py-2 w-12 align-middle"></th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase align-middle">
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center">
                                         Étape de production
                                         <Tooltip text="Décrivez l'action (ex: 'Taillage des légumes', 'Cuisson de la viande')." />
                                     </div>
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase align-middle">
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center">
                                         Personnel
                                         <Tooltip text="Cliquez sur 'Modifier' pour assigner un ou plusieurs employés à cette tâche." />
                                     </div>
                                 </th>
-                                <th className="w-24 px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase align-middle">
+                                <th className="w-24 px-1 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         Début
                                         <Tooltip text="Le moment où l'étape commence, en heures, minutes et secondes, depuis le début de la recette." />
                                     </div>
                                 </th>
-                                <th className="w-24 px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase align-middle">
+                                <th className="w-24 px-1 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         Durée
                                         <Tooltip text="La durée totale de l'étape en heures, minutes et secondes." />
                                     </div>
                                 </th>
-                                <th className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase align-middle">Fin</th>
-                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase align-middle">
+                                <th className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">Fin</th>
+                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         <div className="flex flex-col items-center"><span>Coût</span><span>Direct ($)</span></div>
                                         <Tooltip text="Le coût pur de la main-d'œuvre pour cette étape, basé sur le salaire de base des employés et la durée de la tâche." />
                                     </div>
                                 </th>
-                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase align-middle">
+                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         <div className="flex flex-col items-center"><span>Coût</span><span>Indirect ($)</span></div>
                                         <Tooltip text="La part du coût de l'inefficacité et du temps non-productif de la cuisine allouée à cette étape, basée sur le taux de productivité global." />
                                     </div>
                                 </th>
-                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase align-middle">
+                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         <div className="flex flex-col items-center"><span>Coût</span><span>Total ($)</span></div>
                                     </div>
@@ -1195,8 +1216,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <p className="text-yellow-800">Total Coût Main-d'œuvre Indirect: <span>{formatCurrency(costs.totalLaborCost - costs.totalDirectLaborCost)} $</span></p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 border-t border-yellow-200 pt-2">
-                        <p className="font-bold text-yellow-800">Total Main-d'oeuvre (recette): <span>{formatCurrency(costs.totalLaborCost)} $</span></p>
-                        <p className="font-bold text-yellow-800">Coût Main-d'oeuvre (unité): <span>{formatCurrency(costs.costLaborPerPortion)} $</span></p>
+                        <p className="font-bold text-yellow-800">Total Main-d'œuvre (recette): <span>{formatCurrency(costs.totalLaborCost)} $</span></p>
+                        <p className="font-bold text-yellow-800">Coût Main-d'œuvre (unité): <span>{formatCurrency(costs.costLaborPerPortion)} $</span></p>
                     </div>
                     </div>
                 </div>
@@ -1216,7 +1237,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         className="w-full flex justify-between items-center cursor-pointer"
                         aria-expanded={openRecipeSections.has('ingredients')}
                     >
-                        <h2 className="text-xl font-semibold text-green-700">1. Coût d'Achat</h2>
+                        <h2 className="text-2xl font-bold text-green-700">1. Coût d'Achat</h2>
                         <ChevronDown className={`h-6 w-6 text-green-700 transform transition-transform duration-200 ${openRecipeSections.has('ingredients') ? 'rotate-180' : ''}`} />
                     </div>
                     {openRecipeSections.has('ingredients') && (
@@ -1277,7 +1298,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     className="w-full flex justify-between items-center cursor-pointer"
                     aria-expanded={openRecipeSections.has('additional')}
                 >
-                    <h2 className="text-xl font-semibold text-pink-700">4. Coûts additionnels</h2>
+                    <h2 className="text-2xl font-bold text-pink-700">4. Coûts additionnels</h2>
                     <ChevronDown className={`h-6 w-6 text-pink-700 transform transition-transform duration-200 ${openRecipeSections.has('additional') ? 'rotate-180' : ''}`} />
                 </div>
                 {openRecipeSections.has('additional') && (
@@ -1298,8 +1319,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div>
                             <label className="flex items-center text-sm font-medium text-gray-700">
                                 <input type="checkbox" checked={!!format.subcontracting?.enabled} onChange={(e) => handleFormatNestedToggle('subcontracting', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" />
-                                Sous-traitance <span className="ml-1.5 text-[11px] font-normal text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">charge directe</span>
-                                <Tooltip text="Coût d'une opération de fabrication confiée à un tiers pour ce format (ex. embouteillage externe). S'ajoute aux coûts directs (matière + main-d'œuvre) et affecte donc la marge sur coût primaire." />
+                                Sous-traitance <CostNatureBadge nature="direct" />
+                                <Tooltip text="Coût d'une opération de fabrication confiée à un tiers pour ce format (ex. embouteillage externe). S'ajoute aux coûts directs (matière + main-d'œuvre) et affecte donc la marge brute." />
                             </label>
                             {format.subcontracting?.enabled && (
                                 <div className="mt-2 space-y-1">
@@ -1319,8 +1340,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div>
                             <label className="flex items-center text-sm font-medium text-gray-700">
                                 <input type="checkbox" checked={!!format.aging?.enabled} onChange={(e) => handleFormatNestedToggle('aging', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" />
-                                Vieillissement / affinage <span className="ml-1.5 text-[11px] font-normal text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">charge financière</span>
-                                <Tooltip text="Charge d'intérêt de portage pour un format qui doit vieillir ou affiner en inventaire avant la vente (ex. fermentation). Calculée sur le total des charges directes du lot ; incluse dans la marge nette mais pas dans la marge sur coût primaire." />
+                                Vieillissement / affinage <CostNatureBadge nature="financial" />
+                                <Tooltip text="Charge d'intérêt de portage pour un format qui doit vieillir ou affiner en inventaire avant la vente (ex. fermentation). Calculée sur le total des charges directes du lot : charges directes × (taux annuel ÷ 12) × durée en mois, puis divisée par le nombre de portions. Incluse dans la marge nette mais pas dans la marge sur coût primaire. Limites : intérêt simple (non composé) et lot supposé immobilisé en entier pendant toute la durée — le calcul est donc prudent (légèrement surestimé), surtout au-delà de 12 mois. En comptabilité financière, les frais d'intérêt sont en principe une charge de la période, hors coût des stocks (IAS 2) ; la capitalisation n'est permise que pour un actif exigeant une longue préparation (IAS 23) — validez le traitement avec votre comptable." />
                             </label>
                             {format.aging?.enabled && (
                                 <div className="mt-2 grid grid-cols-2 gap-3 max-w-md">
@@ -1350,7 +1371,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     className="w-full flex justify-between items-center cursor-pointer"
                     aria-expanded={openRecipeSections.has('recap')}
                 >
-                    <h2 className="text-xl font-semibold text-blue-700">5. Récapitulatif</h2>
+                    <h2 className="text-2xl font-bold text-blue-700">5. Récapitulatif</h2>
                     <ChevronDown className={`h-6 w-6 text-blue-700 transform transition-transform duration-200 ${openRecipeSections.has('recap') ? 'rotate-180' : ''}`} />
                 </div>
                 {openRecipeSections.has('recap') && (
@@ -1381,36 +1402,36 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Matière (%)
                             <Tooltip text="Le pourcentage du prix de vente que représente le coût des ingrédients." />
-                            {getCostTargetIndicator(simulatedCosts ? simulatedCosts.costMatierePercent : marginView.costMatierePercent, generalInfo.foodCostTarget)}
+                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costMatierePercent : marginView.costMatierePercent, generalInfo.foodCostTarget)}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
                              {simulatedCosts
                                 ? renderComparison(costs.costMatierePercent, simulatedCosts.costMatierePercent, formatPercent, false, '%')
-                                : `${formatPercent(marginView.costMatierePercent)}%`}
+                                : (hasSalePrice ? `${formatPercent(marginView.costMatierePercent)}%` : '—')}
                         </p>
                     </div>
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Emballage (%)
                             <Tooltip text="Le pourcentage du prix de vente que représente le coût de l'emballage — poste séparé du coût matière." />
-                            {getCostTargetIndicator(simulatedCosts ? simulatedCosts.costPackagingPercent : marginView.costPackagingPercent, generalInfo.packagingCostTarget)}
+                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costPackagingPercent : marginView.costPackagingPercent, generalInfo.packagingCostTarget)}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
                              {simulatedCosts
                                 ? renderComparison(costs.costPackagingPercent, simulatedCosts.costPackagingPercent, formatPercent, false, '%')
-                                : `${formatPercent(marginView.costPackagingPercent)}%`}
+                                : (hasSalePrice ? `${formatPercent(marginView.costPackagingPercent)}%` : '—')}
                         </p>
                     </div>
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
-                            Coût Main-d'oeuvre (%)
+                            Coût Main-d'œuvre (%)
                             <Tooltip text="Le pourcentage du prix de vente que représente le coût total de la main-d'œuvre (direct et indirect)." />
-                            {getCostTargetIndicator(simulatedCosts ? simulatedCosts.costLaborPercent : marginView.costLaborPercent, generalInfo.laborCostTarget)}
+                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costLaborPercent : marginView.costLaborPercent, generalInfo.laborCostTarget)}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
                             {simulatedCosts
                                 ? renderComparison(costs.costLaborPercent, simulatedCosts.costLaborPercent, formatPercent, false, '%')
-                                : `${formatPercent(marginView.costLaborPercent)}%`}
+                                : (hasSalePrice ? `${formatPercent(marginView.costLaborPercent)}%` : '—')}
                         </p>
                     </div>
                 </div>
@@ -1427,9 +1448,10 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     ci-dessus. PAS de marge nette ici (décision utilisateur du 06/10) : elle a
                     besoin de l'allocation des frais fixes, pas encore multi-canal avant la Phase
                     4 — le rapport multi-canal pour la marge nette vit dans Résumé → Par SKU. */}
+                {hasSalePrice && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
                     <div className="p-3 bg-white rounded-lg shadow">
-                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge de contribution <Tooltip text="Prix de vente moins le coût matière seul. C'est ce qui reste pour couvrir la main-d'œuvre, les frais indirects et le profit." /></div>
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge de contribution <Tooltip text="Prix de vente moins le coût matière seul. C'est ce qui reste pour couvrir la main-d'œuvre, les frais indirects et le profit. Le % est calculé sur le prix de vente." /></div>
                         <p className={`text-xl font-bold ${getMarginTextColorClass(simulatedCosts ? simulatedCosts.margeContributionPercent : marginView.margeContributionPercent)}`}>
                             {simulatedCosts ? (
                                 <>
@@ -1444,7 +1466,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         </p>
                     </div>
                     <div className="p-3 bg-white rounded-lg shadow">
-                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge brute (coût primaire) <Tooltip text="Prix de vente moins les coûts directs (matière + emballage + main-d'œuvre + sous-traitance). Profit avant de déduire les frais indirects et le vieillissement. La MO est traitée comme un coût semi-variable." /></div>
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge brute <Tooltip text="Prix de vente moins les coûts directs (matière + emballage + main-d'œuvre + sous-traitance). Profit avant de déduire les frais indirects et le vieillissement. Le % est calculé sur le prix de vente." /></div>
                         <p className={`text-xl font-bold ${getMarginTextColorClass(simulatedCosts ? simulatedCosts.margeBrutePercent : marginView.margeBrutePercent)}`}>
                             {simulatedCosts ? (
                                 <>
@@ -1459,6 +1481,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         </p>
                     </div>
                 </div>
+                )}
+                {hasSalePrice && (<>
                 {/* Prix de vente au bas de la cascade, centré et à la taille d'une carte — celui
                     du canal sélectionné ci-dessus hors simulation. */}
                 <div className="flex justify-center mt-4">
@@ -1494,6 +1518,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         </p>
                     </div>
                 </div>
+                </>)}
                 <div className="mt-6 pt-4 border-t">
                     {!isSimulating ? (
                         <div className="text-center">

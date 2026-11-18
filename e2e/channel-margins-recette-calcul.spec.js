@@ -39,7 +39,7 @@ test('Recette & Calcul : le récapitulatif reflète le canal sélectionné, sans
     // tuile « Marge Nette ».
     await page.locator('button:has-text("Production")').first().click();
     await page.waitForTimeout(300);
-    await page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').selectOption({ label: 'Produit Multi' });
+    await page.locator('h1:has-text("Production pour")').locator('~ select').selectOption({ label: 'Produit Multi' });
     await page.waitForTimeout(300);
     const recap = page.locator('#recap-section');
     await recap.scrollIntoViewIfNeeded();

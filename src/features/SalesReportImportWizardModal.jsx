@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Upload } from 'lucide-react';
 import { parseLocaleNumber, excelSerialDateToJSDate, SALES_REPORT_APP_FIELDS, formatCurrency, formatQuantityLabel } from '../utils.js';
+import { useEscapeKey } from '../ui-utils.jsx';
+import { useProject } from '../state/ProjectContext.jsx';
 
 // Phase 3.4 : remplace PosImportWizardModal.jsx — vise des rapports de vente PAR CANAL (ex. un
 // export par distributeur/circuit depuis QuickBooks, Odoo, ou un rapport de vente générique),
@@ -12,6 +14,8 @@ import { parseLocaleNumber, excelSerialDateToJSDate, SALES_REPORT_APP_FIELDS, fo
 // - format non reconnu -> on n'en crée JAMAIS un nouveau (ça touche la recette, pas la vente) —
 //   seulement lier à un format existant du produit, ou ignorer la ligne.
 export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete, products: existingProducts, salesChannels }) => {
+    const { showNotification } = useProject();
+    useEscapeKey(isOpen, onClose);
     const [step, setStep] = useState(1);
     const fileInputRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -154,7 +158,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
         reader.onload = (e) => {
             try {
                 if (typeof window.XLSX === 'undefined') {
-                    alert("La bibliothèque de lecture de fichiers n'est pas chargée. Veuillez réessayer.");
+                    showNotification({ message: "La bibliothèque de lecture de fichiers n'est pas chargée. Veuillez réessayer.", type: 'error' });
                     setIsLoading(false);
                     return;
                 }
@@ -169,7 +173,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                 const jsonData = window.XLSX.utils.sheet_to_json(worksheet, { cellDates: true });
 
                 if (jsonData.length === 0) {
-                    alert("Le fichier semble vide.");
+                    showNotification({ message: "Le fichier semble vide.", type: 'error' });
                     setIsLoading(false);
                     return;
                 }
@@ -180,7 +184,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
 
             } catch (error) {
                 console.error("Erreur de lecture du fichier:", error);
-                alert("Le format du fichier est invalide ou corrompu.");
+                showNotification({ message: "Le format du fichier est invalide ou corrompu.", type: 'error' });
                 resetWizard();
             } finally {
                 setIsLoading(false);

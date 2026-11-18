@@ -53,7 +53,7 @@ test("une sous-recette sélectionnée via le sélecteur d'ingrédient coûte cor
     await section2.locator('input[type="text"]').first().fill('Plat Final');
 
     await page.locator('#tab-recipe').click();
-    await expect(page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').first()).toHaveValue(/.*/);
+    await expect(page.locator('h1:has-text("Production pour")').locator('~ select').first()).toHaveValue(/.*/);
     await page.locator('#tutorial-add-ingredient-to-recipe').click();
     const ingredientsSection2 = page.locator('#tutorial-section-recipe-ingredients');
     const combo2 = ingredientsSection2.locator('input[placeholder="Saisir ou sélectionner..."]').first();

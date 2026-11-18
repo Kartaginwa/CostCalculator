@@ -84,8 +84,8 @@ const ImpactGroupTable = ({ title, tooltip, rows }) => (
                 <tr className="text-left text-gray-500 border-b">
                     <th className="py-1.5 pr-3">Nom</th>
                     <th className="py-1.5 px-3 text-right">Marge brute</th>
-                    <th className="py-1.5 px-3 text-right">Food cost</th>
-                    <th className="py-1.5 pl-3 text-right">Coût MO</th>
+                    <th className="py-1.5 px-3 text-right"><span className="inline-flex items-center">Food cost<Tooltip text="Coût matière en % du prix de vente." /></span></th>
+                    <th className="py-1.5 pl-3 text-right"><span className="inline-flex items-center">Coût MO<Tooltip text="Coût de main-d'œuvre en % du prix de vente." /></span></th>
                 </tr>
             </thead>
             <tbody>
@@ -105,15 +105,21 @@ const ImpactGroupTable = ({ title, tooltip, rows }) => (
 // Simulateur de choc sur les coûts (onglet Résumé). Applique un ou plusieurs chocs — sur les prix
 // d'INTRANTS et/ou les salaires de MAIN-D'ŒUVRE — et recalcule l'analyse pour montrer l'impact sur
 // le food cost, le coût MO, la marge, le point mort et la marge nette par plat. Transitoire : les
-// scénarios ne sont pas sauvegardés dans le projet.
+// scénario (uiSettings.costShocks) est enregistré avec le projet.
 // `collapsible` (06/10) : repli à la Vrai dans son propre sous-onglet « Simulation » de Résumé —
 // être dans cet onglet EST déjà le geste d'ouverture, inutile de redemander un clic derrière.
 // Reste replié par défaut (`true`) pour tout autre usage futur hors d'un onglet dédié.
 export const CostShockSimulator = ({ collapsible = true }) => {
-    const { products, baseIngredients, basePackaging, salesChannels, laborDatabase, productionActivities, generalInfo, analysisData } = useProject();
+    const { products, baseIngredients, basePackaging, salesChannels, laborDatabase, productionActivities, generalInfo, analysisData, uiSettings, setUiSettings } = useProject();
     const [expanded, setExpanded] = useState(false);
     const isOpen = collapsible ? expanded : true;
-    const [shocks, setShocks] = useState([]);
+    // Le scénario vit dans uiSettings.costShocks : il survit au changement d'onglet et est
+    // enregistré avec le projet (décision du 18/11 ; auparavant perdu en quittant l'onglet).
+    const shocks = useMemo(() => uiSettings?.costShocks || [], [uiSettings?.costShocks]);
+    const setShocks = (next) => setUiSettings(prev => {
+        const current = prev?.costShocks || [];
+        return { ...prev, costShocks: typeof next === 'function' ? next(current) : next };
+    });
 
     const providers = useMemo(() => [...new Set(baseIngredients.map(i => i.provider).filter(Boolean))].sort(), [baseIngredients]);
     const posts = useMemo(() => (laborDatabase || []).map(p => ({ id: p.id, name: p.postName || 'Poste' })), [laborDatabase]);
@@ -362,9 +368,9 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                             <thead>
                                                 <tr className="text-left text-gray-500 border-b">
                                                     <th className="py-2 pr-4">Plat</th>
-                                                    <th className="py-2 px-4 text-right">Marge nette actuelle</th>
-                                                    <th className="py-2 px-4 text-right">Marge nette scénario</th>
-                                                    <th className="py-2 pl-4 text-right">Écart</th>
+                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette actuelle<Tooltip text="Marge nette par portion avec vos prix et salaires actuels." /></span></th>
+                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette scénario<Tooltip text="Marge nette par portion une fois les chocs appliqués." /></span></th>
+                                                    <th className="py-2 pl-4 text-right"><span className="inline-flex items-center">Écart<Tooltip text="Scénario moins actuel, en $ par portion. Négatif : le choc réduit la marge." /></span></th>
                                                 </tr>
                                             </thead>
                                             <tbody>

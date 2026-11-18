@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { XCircle, ChevronDown, Copy, Trash2 } from 'lucide-react';
+import { PlusCircle, XCircle, ChevronDown, Copy, Trash2 } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency } from '../utils.js';
-import { Tooltip } from '../components/common.jsx';
+import { Tooltip, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const LaborDatabaseTab = ({ openPostIds, setOpenPostIds }) => {
@@ -163,12 +163,18 @@ useEffect(() => {
     return (
         <div className="container mx-auto p-6 bg-white rounded-xl shadow-2xl max-w-7xl space-y-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Base de données de la main-d'oeuvre</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Base de données de la main-d'œuvre</h1>
                 <button id="tutorial-add-post" onClick={addPost} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                    Ajouter un poste
+                    <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un poste
                 </button>
             </div>
 
+
+            {laborDatabase.length === 0 && (
+                <EmptyState message="Aucun poste de main-d'œuvre pour l'instant.">
+                    <button onClick={addPost} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-5 w-5 mr-2" /> Ajouter un poste</button>
+                </EmptyState>
+            )}
 
             <div id="tutorial-section-labor-db" className="space-y-6">
                 {laborDatabase.map(post => {
@@ -224,20 +230,20 @@ useEffect(() => {
                                     {/* ... thead ... */}
                                     <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employé</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Employé</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">Salaire Horaire ($)<Tooltip text="Le salaire horaire brut de l'employé, avant déduction des charges." /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">Charges (%)<Tooltip text="Les charges sociales et patronales en pourcentage du salaire horaire brut (ex: assurances, cotisations, etc.)." /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">Vacances (%)<Tooltip text="Pourcentage du salaire brut mis de côté pour les vacances." /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">% Temps productif attendu<Tooltip text="Pourcentage du temps de travail qui devrait être passé en production (ex: un chef à 80% si 20% de son temps est administratif)." /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">Heures Travaillées<Tooltip text="Indiquez le nombre total d'heures travaillées par cet employé pour la période de référence." /></div>
                                             </th>
                                             <th className="relative px-4 py-2"></th>
@@ -285,17 +291,17 @@ useEffect(() => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-100">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Poste</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Poste</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                     <div className="flex items-center">Heures Productives Attendues<Tooltip text="Nombre d'heures que ce poste devrait passer en production, basé sur les heures travaillées et le % de temps productif attendu." /></div>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                     <div className="flex items-center">Heures Productives Réelles<Tooltip text="Nombre d'heures de production réellement nécessaires pour ce poste, calculé à partir de vos recettes et de vos ventes estimées." /></div>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                     <div className="flex items-center">Différence (h)<Tooltip text="Heures attendues - Heures réelles. Un chiffre positif indique un temps potentiellement non-alloué ou inefficace." /></div>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                     <div className="flex items-center">Taux d'Utilisation (%)<Tooltip text="Pourcentage des heures productives attendues qui sont réellement utilisées pour la production." /></div>
                                 </th>
                             </tr>
@@ -338,9 +344,9 @@ useEffect(() => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-100">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activité</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Heures Productives Réelles</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part du total</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Activité</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500"><div className="flex items-center">Heures Productives Réelles<Tooltip text="Heures de production par activité, calculées à partir des étapes de vos recettes et de vos ventes estimées." /></div></th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500"><div className="flex items-center">Part du total<Tooltip text="Part de cette activité dans l'ensemble des heures productives réelles." /></div></th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">

@@ -325,7 +325,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
 
     if (fmt.isResaleProduct) {
         costMatierePerPortion = nbPortions > 0 ? totalIngredientsCost / nbPortions : 0;
-        costLaborPerPortion = 0; // Un produit de revente n'a pas de coût de main-d'oeuvre direct
+        costLaborPerPortion = 0; // Un produit de revente n'a pas de coût de main-d'œuvre direct
     } else {
         costMatierePerPortion = nbPortions > 0 ? totalIngredientsCost / nbPortions : 0;
         costLaborPerPortion = nbPortions > 0 ? totalLaborCost / nbPortions : 0;

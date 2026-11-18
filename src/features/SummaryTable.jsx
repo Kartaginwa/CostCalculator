@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, Label, ResponsiveContainer, Bar, LabelList, Cell } from 'recharts';
 import { ArrowUpDown, FileDown, Pencil, AlertTriangle, Star, HelpCircle as QuestionMark, Milk, Bone, Camera, Trash2, ChevronDown } from 'lucide-react';
-import { parseLocaleNumber, formatCurrency, formatPercent } from '../utils.js';
-import { getCostTargetIndicator } from '../ui-utils.jsx';
-import { Tooltip, Pagination } from '../components/common.jsx';
+import { unnamedLabel, parseLocaleNumber, formatCurrency, formatPercent } from '../utils.js';
+import { getCostTargetIndicator, useEscapeKey, useSessionState } from '../ui-utils.jsx';
+import { Tooltip, Pagination, CostNatureBadge, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
 import { computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
+import { computeProjectChecks } from '../engine/projectChecks.js';
 import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
 
 // --- SECTION SUIVI (fusionnée dans Rapport le 24/10, retour utilisateur — voir
@@ -25,10 +26,10 @@ const VOLATILITY_TIERS = {
 // Tableau de volatilité générique (Phase 6, 15/10) : extrait de l'ancien bloc « Volatilité des
 // prix d'achat » (ingrédients seulement) pour le réutiliser tel quel sur l'emballage — même
 // tri/filtre/pagination, même visuel (badge de palier).
-const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceholder }) => {
-    const [sort, setSort] = useState({ key: 'amplitudePercent', direction: 'descending' });
-    const [filterName, setFilterName] = useState('');
-    const [filterProvider, setFilterProvider] = useState('all');
+const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceholder, memoryKey }) => {
+    const [sort, setSort] = useSessionState(`${memoryKey}.sort`, { key: 'amplitudePercent', direction: 'descending' });
+    const [filterName, setFilterName] = useSessionState(`${memoryKey}.filterName`, '');
+    const [filterProvider, setFilterProvider] = useSessionState(`${memoryKey}.filterProvider`, 'all');
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
 
@@ -218,6 +219,7 @@ const SimpleLineChart = ({ data, lines, yAxisLabel }) => {
 
 // --- MODAL POUR LES DÉTAILS DU POINT DE RÉFÉRENCE ---
 const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
+    useEscapeKey(isOpen, onClose);
     const [name, setName] = useState('');
     const [note, setNote] = useState('');
 
@@ -291,6 +293,7 @@ const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
 // contrôle quels points alimentent les graphiques et doit donc survivre à la fermeture de cette
 // modale).
 const ManagePointsModal = ({ isOpen, onClose, trackingPoints, selectedSnapshotIds, onSelectionChange, onSelectAll, onEditSnapshot, onDeleteSnapshot }) => {
+    useEscapeKey(isOpen, onClose);
     const [snapSort, setSnapSort] = useState({ key: 'timestamp', direction: 'descending' });
     const [snapFilter, setSnapFilter] = useState('');
     const [snapPage, setSnapPage] = useState(1);
@@ -350,7 +353,7 @@ const ManagePointsModal = ({ isOpen, onClose, trackingPoints, selectedSnapshotId
                                     { key: 'note', label: 'Note' },
                                     { key: 'timestamp', label: 'Date de création' },
                                 ].map(col => (
-                                    <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                         <button onClick={() => requestSnapSort(col.key)} className="inline-flex items-center gap-1 uppercase hover:text-gray-800">
                                             {col.label}
                                             <ArrowUpDown className={`h-3.5 w-3.5 ${snapSort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
@@ -423,7 +426,7 @@ const PointDeReferenceMenu = ({ onNew, onManage }) => {
             <button
                 id="tutorial-snapshot"
                 onClick={() => setIsOpen(o => !o)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
             >
                 <Camera className="h-5 w-5 mr-2" /> Point de référence <ChevronDown className="h-4 w-4 ml-2" />
             </button>
@@ -494,7 +497,7 @@ const BySkuRow = ({ label, tooltip, render, emphasis }) => (
 
 const BySkuSectionHeader = ({ label, colSpan }) => (
     <tr>
-        <th colSpan={colSpan} className="px-4 py-2 text-left text-xs font-bold uppercase italic tracking-wide text-gray-500 bg-gray-100">
+        <th colSpan={colSpan} className="px-4 py-2 text-left text-xs font-bold italic tracking-wide text-gray-500 bg-gray-100">
             {label}
         </th>
     </tr>
@@ -582,6 +585,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                 {hasSubcontracting && (
                     <div className="p-3 bg-gray-50 rounded-lg text-center">
                         <p className="text-xs text-gray-500 truncate" title={subcontractingLabel}>{subcontractingLabel}</p>
+                        <p className="text-[10px] leading-none -mt-0.5 mb-0.5"><CostNatureBadge nature="direct" /></p>
                         <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costSubcontractingPerPortion)} $</p>
                     </div>
                 )}
@@ -598,7 +602,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                     <table className="min-w-full text-sm">
                         <thead className="bg-gray-100">
                             <tr>
-                                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase sticky left-0 bg-gray-100">Canal</th>
+                                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 sticky left-0 bg-gray-100">Canal</th>
                                 {channelBreakdown.map(cb => (
                                     <th key={cb.channelId} className="px-4 py-2.5 text-right text-sm font-semibold text-gray-800 whitespace-nowrap">{cb.channelName}</th>
                                 ))}
@@ -612,7 +616,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                                 </td>
                             ))} />
                             {linkRows.map(linkRow => (
-                                <BySkuRow key={linkRow.key} label={linkRow.label} tooltip="Le markup ou la marge de ce maillon, en dollars, pour ce canal — une partie de l'écart entre le PDS et le prix net qui lui revient (calculée à partir de la cascade de maillons du canal, pas du prix net réellement saisi)." render={channelBreakdown.map(cb => {
+                                <BySkuRow key={linkRow.key} label={linkRow.label} tooltip="La majoration ou la marge de ce maillon, en dollars, pour ce canal — une partie de l'écart entre le PDS et le prix net qui lui revient (calculée à partir de la cascade de maillons du canal, pas du prix net réellement saisi)." render={channelBreakdown.map(cb => {
                                     const delta = getLinkDelta(cb, linkRow);
                                     return (
                                         <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
@@ -637,7 +641,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                             <BySkuRow label="Bénéfice brut" tooltip="Prix net moins le coût de production. Avant frais fixes." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatCurrency(cb.margeBruteDollar)} $</td>
                             ))} />
-                            <BySkuRow label="Marge brute" render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Marge brute" tooltip="En % du prix de vente net de ce canal : (prix − coûts directs) ÷ prix." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatPercent(cb.margeBrutePercent)} %</td>
                             ))} />
 
@@ -648,21 +652,26 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                             <BySkuRow label={`Frais fixes — Activité${activityName ? ` (${activityName})` : ''}`} tooltip="Part du pool de l'activité de production de ce SKU, au CICI choisi pour cette activité dans État des résultats, section « Coefficient d'imputation des charges indirectes » (charges directes ou temps de main-d'œuvre). Le même montant quel que soit le canal." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costIndirectActivityPerPortion || 0)} $</td>
                             ))} />
-                            <BySkuRow label="Frais fixes — Canal" tooltip="Part du pool du CANAL de cette colonne — varie par canal, contrairement à Général/Activité ci-dessus. Aucun driver au choix ici : toujours une majoration % sur le coût de production de ce SKU (pool du canal ÷ valeur totale, au coût de production, de tout ce qui transite par ce canal) — le même mécanisme pour tous les canaux, cascadé depuis le coût déjà établi à l'activité." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Frais fixes — Canal" tooltip="Part du pool du CANAL de cette colonne — varie par canal, contrairement à Général/Activité ci-dessus. Aucun driver au choix ici : toujours un % d'imputation sur le coût de production de ce SKU (pool du canal ÷ valeur totale, au coût de production, de tout ce qui transite par ce canal) — le même mécanisme pour tous les canaux, cascadé depuis le coût déjà établi à l'activité." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.costIndirectChannelPerPortion || 0)} $</td>
                             ))} />
-                            <BySkuRow label="Frais fixes totaux par unité" tooltip="Général + Activité + Canal ci-dessus — la part des frais fixes totaux allouée à ce SKU sur ce canal." emphasis render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cb.margeBruteDollar - cb.margeNetteDollar)} $</td>
+                            <BySkuRow label="Frais fixes totaux par unité" tooltip="Général + Activité + Canal ci-dessus — la part des frais fixes totaux allouée à ce SKU sur ce canal. Exclut le vieillissement, une charge financière présentée à part." emphasis render={channelBreakdown.map(cb => (
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cb.margeBruteDollar - cb.margeNetteDollar - (costs.costAgingPerPortion || 0))} $</td>
                             ))} />
 
                             <BySkuSectionHeader label="Coût net et marge nette" colSpan={channelBreakdown.length + 1} />
+                            {(costs.costAgingPerPortion || 0) > 0 && (
+                                <BySkuRow label={<>Vieillissement <CostNatureBadge nature="financial" /></>} tooltip="Intérêt de portage sur le capital immobilisé pendant l'affinage de ce format (saisi dans Recettes et produits → Coûts additionnels). Le même montant quel que soit le canal ; déduit du bénéfice net, pas du bénéfice brut." render={channelBreakdown.map(cb => (
+                                    <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costAgingPerPortion)} $</td>
+                                ))} />
+                            )}
                             <BySkuRow label="Coût net" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.netPrice - cb.margeNetteDollar)} $</td>
                             ))} />
                             <BySkuRow label="Bénéfice net" tooltip="Le profit réel par unité une fois tous les coûts déduits (production + frais fixes)." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatCurrency(cb.margeNetteDollar)} $</td>
                             ))} />
-                            <BySkuRow label="Marge nette" render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Marge nette" tooltip="En % du prix de vente net de ce canal : (prix − coût de revient total) ÷ prix." render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatPercent(cb.margeNettePercent)} %</td>
                             ))} />
 
@@ -719,7 +728,7 @@ const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) => {
     const sortedRows = useMemo(() => [...rows].sort((a, b) => b.margeNetteTotal - a.margeNetteTotal), [rows]);
 
     if (rows.length === 0) {
-        return <p className="text-sm text-gray-500 text-center py-8">Aucune donnée réelle (volume vendu) pour l'instant.</p>;
+        return <p className="text-sm text-gray-500 text-center py-8">Aucune donnée réelle pour l'instant — saisissez un volume vendu par canal dans Paramètres → Produits et SKUs pour alimenter ce tableau.</p>;
     }
 
     return (
@@ -727,7 +736,7 @@ const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) => {
             <table className="min-w-full text-sm">
                 <thead className="bg-gray-100">
                     <tr>
-                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase sticky left-0 bg-gray-100">{nameColumnLabel}</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 sticky left-0 bg-gray-100">{nameColumnLabel}</th>
                         {sortedRows.map(row => (
                             <th key={row[idKey]} className="px-4 py-2.5 text-right text-sm font-semibold text-gray-800 whitespace-nowrap">{row[nameKey]}</th>
                         ))}
@@ -735,27 +744,27 @@ const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                     <BySkuSectionHeader label="Marge brute" colSpan={sortedRows.length + 1} />
-                    <BySkuRow label="Revenu total" render={sortedRows.map(row => (
+                    <BySkuRow label="Revenu total" tooltip="Prix de vente × volume réel vendu, tous canaux confondus pour ce segment (volumes saisis dans Produits et SKUs)." render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.revenueTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Coût de production" render={sortedRows.map(row => (
+                    <BySkuRow label="Coût de production" tooltip="Matière + emballage + main-d'œuvre + sous-traitance × volume réel vendu — avant tout frais fixe." render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.totalDirectCostTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Bénéfice brut" render={sortedRows.map(row => (
+                    <BySkuRow label="Bénéfice brut" tooltip="Revenu total moins le coût de production. Avant frais fixes." render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatCurrency(row.margeBruteTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Marge brute" render={sortedRows.map(row => (
+                    <BySkuRow label="Marge brute" tooltip="Bénéfice brut en % du revenu total — avant frais fixes." render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatPercent(row.margeBrutePercent)} %</td>
                     ))} />
 
                     <BySkuSectionHeader label="Frais fixes et marge nette" colSpan={sortedRows.length + 1} />
-                    <BySkuRow label="Frais fixes" render={sortedRows.map(row => (
+                    <BySkuRow label="Frais fixes" tooltip="Part des frais fixes allouée à ce segment (Général + Activité + Canal), au volume réel vendu." render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(row.totalIndirectTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Bénéfice net" render={sortedRows.map(row => (
+                    <BySkuRow label="Bénéfice net" tooltip="Le profit réel de ce segment une fois tous les coûts déduits (production + frais fixes)." render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatCurrency(row.margeNetteTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Marge nette" render={sortedRows.map(row => (
+                    <BySkuRow label="Marge nette" tooltip="Bénéfice net en % du revenu total." render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatPercent(row.margeNettePercent)} %</td>
                     ))} />
 
@@ -812,7 +821,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
     // salesMix — même base que la vue par canal ci-dessous, pour éviter qu'un SKU soit classé
     // poids mort en tous-canaux sans jamais l'être dans aucun canal pris séparément (voir
     // computeAnalysisData dans analysisData.js).
-    const [bcgChannelId, setBcgChannelId] = useState('');
+    const [bcgChannelId, setBcgChannelId] = useSessionState('summary.bcgChannelId', '');
     const menuEngineeringData = useMemo(() => {
         if (!bcgChannelId) return blendedMenuEngineeringData;
         const rows = [];
@@ -865,7 +874,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
                 </div>
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip text="Marge après coût matière, emballage ET main-d'œuvre (la MO étant un coût semi-variable), pondérée par la popularité de chaque plat." /></div>
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip text="Marge brute (en % du prix de vente) de chaque SKU, pondérée par sa part des ventes. Moyenne des marges des SKUs : ce n'est pas la marge globale de l'entreprise." /></div>
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
@@ -967,10 +976,12 @@ export const SummaryTable = ({
 }) => {
     const {
         products, generalInfo, laborDatabase, analysisData, salesChannels, productionActivities,
-        trackingPoints, setTrackingPoints, baseIngredients, basePackaging, showNotification, setNotification,
+        trackingPoints, setTrackingPoints, baseIngredients, basePackaging, showNotification, setNotification, goToTab,
     } = useProject();
-    const [sortConfig, setSortConfig] = useState({ key: 'costs.margeNettePercent', direction: 'descending' });
+    const [sortConfig, setSortConfig] = useSessionState('summary.contributionSort', { key: 'costs.margeNettePercent', direction: 'descending' });
     const [showAllContributions, setShowAllContributions] = useState(false);
+    const [showChecks, setShowChecks] = useState(false);
+    const projectChecks = useMemo(() => computeProjectChecks({ products, baseIngredients, basePackaging }), [products, baseIngredients, basePackaging]);
     const [currentPage, setCurrentPage] = useState(1);
     useEffect(() => {
         setCurrentPage(1);
@@ -988,7 +999,11 @@ export const SummaryTable = ({
     // sur le premier SKU disponible — jamais un tableau figé sur « Aucun SKU » alors que le menu en
     // contient (l'ancienne condition `!selectedSkuId` seule ne couvrait pas ce second cas).
     useEffect(() => {
-        if (skuOptions.length > 0 && !skuOptions.some(o => o.id === selectedSkuId)) onSelectedSkuIdChange(skuOptions[0].id);
+        // Préfère un SKU rattaché à au moins un canal : une sous-recette (sans canal) n'offre aucune
+        // cascade à afficher, un mauvais écran d'accueil pour cet onglet.
+        if (skuOptions.length > 0 && !skuOptions.some(o => o.id === selectedSkuId)) {
+            onSelectedSkuIdChange((skuOptions.find(o => (o.channelBreakdown || []).length > 0) || skuOptions[0]).id);
+        }
     }, [skuOptions, selectedSkuId, onSelectedSkuIdChange]);
     const selectedSkuRow = productsWithCosts.find(p => p.id === selectedSkuId) || null;
 
@@ -1075,12 +1090,12 @@ export const SummaryTable = ({
                     note: point.note,
                     "Coût matière (%)": null,
                     "Coût emballage (%)": null,
-                    "Coût main-d'oeuvre (%)": null,
+                    "Coût main-d'œuvre (%)": null,
                     "Coût frais indirects (%)": null,
                     "Marge nette (%)": null,
                     "Coût matière ($/u.)": null,
                     "Coût emballage ($/u.)": null,
-                    "Coût main-d'oeuvre ($/u.)": null,
+                    "Coût main-d'œuvre ($/u.)": null,
                     "Coût de revient ($/u.)": null,
                 };
             }
@@ -1090,12 +1105,12 @@ export const SummaryTable = ({
                 note: point.note,
                 "Coût matière (%)": productData.costs.costMatierePercent * 100,
                 "Coût emballage (%)": productData.costs.costPackagingPercent * 100,
-                "Coût main-d'oeuvre (%)": productData.costs.costLaborPercent * 100,
+                "Coût main-d'œuvre (%)": productData.costs.costLaborPercent * 100,
                 "Coût frais indirects (%)": productData.costs.costIndirectPercent * 100,
                 "Marge nette (%)": productData.costs.margeNettePercent * 100,
                 "Coût matière ($/u.)": productData.costs.costMatierePerPortion,
                 "Coût emballage ($/u.)": productData.costs.costPackagingPerPortion,
-                "Coût main-d'oeuvre ($/u.)": productData.costs.costLaborPerPortion,
+                "Coût main-d'œuvre ($/u.)": productData.costs.costLaborPerPortion,
                 "Coût de revient ($/u.)": productData.costs.totalCostPerPortion,
             };
         });
@@ -1323,7 +1338,7 @@ export const SummaryTable = ({
     // Les totaux réutilisent directement `activitySummaries`/`channelSummaries` (déjà calculés
     // plus haut pour Par Activité/Par Canal) plutôt que de re-sommer la matrice — même donnée,
     // jamais deux calculs indépendants qui pourraient diverger.
-    const [activityMatrixSort, setActivityMatrixSort] = useState({ key: 'activityName', direction: 'descending' });
+    const [activityMatrixSort, setActivityMatrixSort] = useSessionState('summary.activityMatrixSort', { key: 'activityName', direction: 'descending' });
     const [activityMatrixPage, setActivityMatrixPage] = useState(1);
     useEffect(() => {
         setActivityMatrixPage(1);
@@ -1438,6 +1453,36 @@ export const SummaryTable = ({
                     />
                 </div>
             </div>
+            {products.length === 0 && (
+                <EmptyState message="Rien à analyser pour l'instant : ajoutez d'abord des produits.">
+                    <button onClick={() => goToTab('info')} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Aller à Paramètres → Produits et SKUs</button>
+                </EmptyState>
+            )}
+
+            {projectChecks.length > 0 && products.length > 0 && (
+                <div data-testid="project-checks" className="mb-6 border border-amber-300 bg-amber-50 rounded-lg">
+                    <button type="button" onClick={() => setShowChecks(o => !o)} aria-expanded={showChecks}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left">
+                        <span className="flex items-center text-sm font-semibold text-amber-900">
+                            <AlertTriangle className="h-5 w-5 mr-2 text-amber-600" />
+                            {projectChecks.length} point{projectChecks.length > 1 ? 's' : ''} à vérifier avant de vous fier à ces résultats
+                        </span>
+                        <ChevronDown className={`h-5 w-5 text-amber-700 transition-transform ${showChecks ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showChecks && (
+                        <ul className="px-4 pb-3 space-y-2">
+                            {projectChecks.map(c => (
+                                <li key={c.id} className="flex items-center justify-between gap-3 text-sm text-amber-900">
+                                    <span>{c.message}</span>
+                                    <button type="button" onClick={() => goToTab(c.tab)} className="flex-shrink-0 text-blue-700 hover:text-blue-900 underline whitespace-nowrap">
+                                        Corriger dans {c.tabLabel}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            )}
 
             <div className="flex gap-1 border-b border-gray-200 mb-6">
                 <button
@@ -1502,14 +1547,14 @@ export const SummaryTable = ({
                 </div>
                 {selectedSkuRow
                     ? <BySkuWaterfall row={selectedSkuRow} productionActivities={productionActivities} salesChannels={salesChannels} />
-                    : <p className="text-center text-gray-500 py-8">Aucun SKU dans le menu pour l'instant.</p>}
+                    : <p className="text-center text-gray-500 py-8">Aucun SKU dans le menu pour l'instant — cochez la case « Au menu » d'un format dans Paramètres → Produits et SKUs.</p>}
 
                 {/* Évolution des coûts de ce SKU (ex-« Analyse par format » de l'onglet Suivi,
                     fusionnée ici le 24/10, retour utilisateur, sous le tableau récapitulatif du
                     coût de revient par canal) — même SKU que ci-dessus, aucun second sélecteur. */}
                 {selectedSkuRow && (
                 <div id="tutorial-section-tracking-product" className="mt-8 pt-6 border-t">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-1">Évolution des coûts de ce SKU</h2>
+                    <h2 className="text-2xl font-bold text-gray-700 mb-1">Évolution des coûts de ce SKU</h2>
                     <p className="text-sm text-gray-500 mb-4">
                         {selectedProductIsPriced
                             ? "Comment les coûts et la marge nette (%) de ce SKU ont évolué, d'un point de référence à l'autre. Un excellent moyen de mesurer l'impact de vos changements de prix ou d'optimisation des coûts."
@@ -1521,7 +1566,7 @@ export const SummaryTable = ({
                             lines={[
                                 { dataKey: "Coût matière (%)", color: "#82ca9d", unit: '%' },
                                 { dataKey: "Coût emballage (%)", color: "#db2777", unit: '%' },
-                                { dataKey: "Coût main-d'oeuvre (%)", color: "#ffc658", unit: '%' },
+                                { dataKey: "Coût main-d'œuvre (%)", color: "#ffc658", unit: '%' },
                                 { dataKey: "Coût frais indirects (%)", color: "#8884d8", unit: '%' },
                                 { dataKey: "Marge nette (%)", color: "#ff7300", unit: '%' },
                             ]}
@@ -1533,7 +1578,7 @@ export const SummaryTable = ({
                             lines={[
                                 { dataKey: "Coût matière ($/u.)", color: "#82ca9d", unit: ' $' },
                                 { dataKey: "Coût emballage ($/u.)", color: "#db2777", unit: ' $' },
-                                { dataKey: "Coût main-d'oeuvre ($/u.)", color: "#ffc658", unit: ' $' },
+                                { dataKey: "Coût main-d'œuvre ($/u.)", color: "#ffc658", unit: ' $' },
                                 { dataKey: "Coût de revient ($/u.)", color: "#ff7300", unit: ' $' },
                             ]}
                             yAxisLabel="Coût ($ / unité)"
@@ -1625,13 +1670,13 @@ export const SummaryTable = ({
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-gray-100">
+                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
                                 <button onClick={() => requestActivityMatrixSort('activityName')} className="flex items-center w-full">
                                     Activité {getActivityMatrixSortIcon('activityName')}
                                 </button>
                             </th>
                             {salesChannels.map(c => (
-                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
                                     <button onClick={() => requestActivityMatrixSort(`channel:${c.id}`)} className="flex items-center justify-end w-full">
                                         {c.name || 'Sans nom'} {getActivityMatrixSortIcon(`channel:${c.id}`)}
                                     </button>
@@ -1640,7 +1685,7 @@ export const SummaryTable = ({
                             {/* Colonne Total : pas de bordure ajoutée ici (retour utilisateur) — la
                                 ligne des titres ne doit pas changer d'apparence ; la séparation se
                                 fait seulement sur les lignes de données et la ligne Total ci-dessous. */}
-                            <th className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                            <th className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
                                 <button onClick={() => requestActivityMatrixSort('total')} className="flex items-center justify-end w-full">
                                     Total {getActivityMatrixSortIcon('total')}
                                 </button>
@@ -1712,19 +1757,19 @@ export const SummaryTable = ({
                 pas encore. */}
             <div className="mt-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Marges nettes des SKUs par canaux</h2>
-                <p className="text-sm text-gray-500 mb-4">La marge nette (%) de chaque SKU, pour chacun de ses canaux de vente. « — » : ce SKU n'est pas vendu dans ce canal.</p>
+                <p className="text-sm text-gray-500 mb-4">La marge nette (% du prix de vente) de chaque SKU, pour chacun de ses canaux de vente. « — » : ce SKU n'est pas vendu dans ce canal.</p>
             </div>
             <div id="tutorial-section-summary-table" className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-gray-100">
+                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
                                 <button onClick={() => requestSort('displayName')} className="flex items-center w-full">
                                     Plat {getSortIcon('displayName')}
                                 </button>
                             </th>
                             {salesChannels.map(c => (
-                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
                                     <button onClick={() => requestSort(`channel:${c.id}`)} className="flex items-center justify-end w-full">
                                         {c.name || 'Sans nom'} {getSortIcon(`channel:${c.id}`)}
                                     </button>
@@ -1736,7 +1781,7 @@ export const SummaryTable = ({
                     <tbody className="bg-white divide-y divide-gray-200">
                         {displayedProducts.map((product, index) => (
                             <tr key={product.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-3 py-1.5 whitespace-nowrap font-medium sticky left-0 bg-inherit">{product.displayName || product.platName || `Plat ${index + 1}`}</td>
+                                <td className="px-3 py-1.5 whitespace-nowrap font-medium sticky left-0 bg-inherit">{product.displayName || product.platName || unnamedLabel(index)}</td>
                                 {salesChannels.map(c => {
                                     const cb = (product.channelBreakdown || []).find(ch => ch.channelId === c.id);
                                     return (
@@ -1782,7 +1827,7 @@ export const SummaryTable = ({
             <div className="space-y-8">
                 <div id="tutorial-section-tracking-ingredient" className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-4 mb-4">
-                        <h2 className="text-xl font-semibold text-gray-700">Évolution du prix des ingrédients</h2>
+                        <h2 className="text-2xl font-bold text-gray-700">Évolution du prix des ingrédients</h2>
                         <select
                             value={selectedIngredientId || ''}
                             onChange={(e) => onSelectedIngredientIdChange(e.target.value)}
@@ -1810,6 +1855,7 @@ export const SummaryTable = ({
                         </p>
                         <VolatilityTable
                             volatility={priceVolatility}
+                            memoryKey="summary.ingredientVolatility"
                             itemLabel="des ingrédients"
                             nameColumnLabel="Ingrédient"
                             filterPlaceholder="Filtrer par ingrédient…"
@@ -1820,7 +1866,7 @@ export const SummaryTable = ({
                 {/* Emballage — poste SÉPARÉ des ingrédients (voir Phase 2), jamais fusionné. */}
                 <div id="tutorial-section-tracking-packaging" className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-4 mb-4">
-                        <h2 className="text-xl font-semibold text-gray-700">Évolution du prix des emballages</h2>
+                        <h2 className="text-2xl font-bold text-gray-700">Évolution du prix des emballages</h2>
                         <select
                             value={selectedPackagingId || ''}
                             onChange={(e) => onSelectedPackagingIdChange(e.target.value)}
@@ -1845,10 +1891,11 @@ export const SummaryTable = ({
                         <p className="text-sm text-gray-500 mb-4">
                             Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
                             {packagingVolatility.hasEnoughData ? ` sur vos ${packagingVolatility.pointCount} points de référence` : ''}.
-                            À croiser avec la classe ABC (onglet Packaging) : un emballage de forte valeur au prix volatil est une priorité d'approvisionnement.
+                            À croiser avec la classe ABC (onglet Emballage) : un emballage de forte valeur au prix volatil est une priorité d'approvisionnement.
                         </p>
                         <VolatilityTable
                             volatility={packagingVolatility}
+                            memoryKey="summary.packagingVolatility"
                             itemLabel="de l'emballage"
                             nameColumnLabel="Emballage"
                             filterPlaceholder="Filtrer par emballage…"

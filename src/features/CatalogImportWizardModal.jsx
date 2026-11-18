@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Upload, X } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, isNotEmpty, isValidNumber, isValidPercentage, APP_FIELDS, formatCurrency } from '../utils.js';
+import { todayLocalISO, parseLocaleNumber, generateSlug, isNotEmpty, isValidNumber, isValidPercentage, APP_FIELDS, formatCurrency } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
+import { useEscapeKey } from '../ui-utils.jsx';
 
 // Assistant d'import générique, partagé par le catalogue d'Ingrédients et celui de Packaging
 // (Phase 2.3) — même structure, mêmes champs (`APP_FIELDS`, déjà agnostique du type d'item :
@@ -13,6 +14,7 @@ export const CatalogImportWizardModal = ({
     isOpen, onClose, baseItems, onUpdateItemsList, showNotification,
     itemLabel = 'ingrédient', itemLabelPlural = 'Ingrédients', extraNewItemFields = {},
 }) => {
+    useEscapeKey(isOpen, onClose);
     const [step, setStep] = useState(1);
     const [fileData, setFileData] = useState([]);
     const [headers, setHeaders] = useState([]);
@@ -289,7 +291,7 @@ export const CatalogImportWizardModal = ({
                             purchasePrice: parseLocaleNumber(processed.purchasePrice),
                             lossPercentage: processed.lossPercentage,
                             unitPrice: unitPrice,
-                            lastUpdated: new Date().toISOString().split('T')[0],
+                            lastUpdated: todayLocalISO(),
                         };
                     }
                     return it;
@@ -311,7 +313,7 @@ export const CatalogImportWizardModal = ({
                     purchasePrice: parseLocaleNumber(processed.purchasePrice),
                     unitPrice: unitPrice,
                     lossPercentage: processed.lossPercentage,
-                    lastUpdated: new Date().toISOString().split('T')[0],
+                    lastUpdated: todayLocalISO(),
                     ...extraNewItemFields,
                 });
             }

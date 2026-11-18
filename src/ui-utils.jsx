@@ -1,7 +1,7 @@
 // --- UTILITAIRES DÉPENDANTS DE REACT ---
 // Séparés des utilitaires purs (utils.js) pour que le moteur de calcul puisse importer ces
 // derniers sans tirer React ni lucide-react.
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { parseLocaleNumber } from './utils.js';
 
@@ -32,4 +32,52 @@ export const getCostTargetIndicator = (costPercent, targetPercent) => {
     } else {
         return <AlertTriangle className="text-red-500 ml-2" size={16} />;
     }
+};
+
+// Ferme une fenêtre modale avec la touche Échap (uniquement tant qu'elle est ouverte).
+export const useEscapeKey = (isOpen, onClose) => {
+    useEffect(() => {
+        if (!isOpen || typeof onClose !== 'function') return undefined;
+        const handler = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOpen, onClose]);
+};
+
+// Mémorise les champs que l'utilisateur a déjà quittés (blur) : une erreur « Requis » ne
+// s'affiche qu'une fois le champ touché, jamais sur une ligne fraîchement créée.
+export const useTouched = () => {
+    const [touched, setTouched] = useState(() => new Set());
+    const touch = (id) => setTouched(prev => (prev.has(id) ? prev : new Set(prev).add(id)));
+    return [(id) => touched.has(id), touch];
+};
+
+// Place le curseur dans un champ qui vient d'être créé (ligne ajoutée) : on attend le rendu suivant.
+export const focusSoon = (selector, delay = 120) => {
+    setTimeout(() => {
+        const el = document.querySelector(selector);
+        if (el && typeof el.focus === 'function') el.focus();
+    }, delay);
+};
+
+// --- MÉMOIRE DE SESSION (Phase 7, point 3) ---
+// Les onglets se démontent au changement d'onglet : un `useState` local y repart de zéro (filtre,
+// tri, sélection...). `useSessionState` est un remplaçant direct de `useState` dont la valeur est
+// gardée en mémoire pour la durée de la session (jamais enregistrée dans le fichier du projet) et
+// vidée par `resetSessionMemory()` quand on crée, ouvre ou charge un autre projet. `key` doit être
+// unique par état (ex. 'ingredients.filterName').
+const sessionMemory = new Map();
+export const resetSessionMemory = () => sessionMemory.clear();
+export const useSessionState = (key, initialValue) => {
+    const [value, setValue] = useState(() => (sessionMemory.has(key)
+        ? sessionMemory.get(key)
+        : (typeof initialValue === 'function' ? initialValue() : initialValue)));
+    const set = useCallback((next) => {
+        setValue(prev => {
+            const resolved = typeof next === 'function' ? next(prev) : next;
+            sessionMemory.set(key, resolved);
+            return resolved;
+        });
+    }, [key]);
+    return [value, set];
 };

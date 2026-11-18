@@ -16,7 +16,7 @@ test('exports PDF/Excel avec un emballage rattaché à un format : pas d\'erreur
     // Rattache un emballage à "Saumon teriyaki, riz et légumes".
     await page.locator('#tab-recipe').click();
     await page.waitForTimeout(300);
-    await page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').selectOption({ label: 'Saumon teriyaki, riz et légumes' });
+    await page.locator('h1:has-text("Production pour")').locator('~ select').selectOption({ label: 'Saumon teriyaki, riz et légumes' });
     await page.waitForTimeout(300);
     const packagingSection = page.locator('#tutorial-section-recipe-packaging');
     await packagingSection.locator('#tutorial-add-packaging-to-recipe').click();

@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import { ArrowUpDown, Upload, AlertCircle, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isValidPercentage, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
-import { Tooltip, ValidationMessage, Pagination, AllergenModal } from '../components/common.jsx';
+import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
+import { ArrowUpDown, Upload, PlusCircle, AlertCircle, Copy, Trash2 } from 'lucide-react';
+import { todayLocalISO, parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
+import { Tooltip, ValidationMessage, Pagination, AllergenModal, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeIngredientVolatility } from '../engine/priceVolatility.js';
 
@@ -39,16 +40,17 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     // // you should modify this part : on récupère les données pré-calculées
     const { purchasingReportData, abcAnalysisData } = analysisData;
 
-    const [filterName, setFilterName] = useState('');
-    const [filterProvider, setFilterProvider] = useState('all');
-    const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
+    const [isNameTouched, touchName] = useTouched();
+    const [filterName, setFilterName] = useSessionState('ingredients.filterName', '');
+    const [filterProvider, setFilterProvider] = useSessionState('ingredients.filterProvider', 'all');
+    const [sortConfig, setSortConfig] = useSessionState('ingredients.sortConfig', { key: 'name', direction: 'ascending' });
     const [newlyAddedId, setNewlyAddedId] = useState(null);
     const [editingIngredientId, setEditingIngredientId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [comparisonIngredient, setComparisonIngredient] = useState('');
+    const [comparisonIngredient, setComparisonIngredient] = useSessionState('ingredients.comparison', '');
     const [isSortDisabled, setIsSortDisabled] = useState(false);
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
-    const [reportFilterProvider, setReportFilterProvider] = useState('none');
+    const [reportFilterProvider, setReportFilterProvider] = useSessionState('ingredients.reportFilter', 'summary');
 
     // // IMPORTANT : Supprimez ici tout bloc useMemo ou fonction qui s'appelait 
     // // 'purchasingReportData' ou 'abcAnalysisData' car ils sont maintenant fournis par la prop analysisData.
@@ -197,7 +199,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
         itemToUpdate.unitPrice = purchasePrice / purchaseFormat;
 
         if (field === 'purchasePrice') {
-            itemToUpdate.lastUpdated = new Date().toISOString().split('T')[0];
+            itemToUpdate.lastUpdated = todayLocalISO();
         }
 
         newList[originalIndex] = itemToUpdate;
@@ -257,7 +259,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             unitPrice: 0,
             isRecipe: false,
             lossPercentage: 0,
-            lastUpdated: new Date().toISOString().split('T')[0],
+            lastUpdated: todayLocalISO(),
             allergens: []
         };
         // 1. On désactive le tri
@@ -268,6 +270,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
         setNewlyAddedId(newIngredient.id); 
         // 4. On ajoute le nouvel ingrédient AU DÉBUT de la liste
         onUpdateIngredientsList([newIngredient, ...baseIngredients]);
+        focusSoon(`[id="ingredient-row-${newIngredient.id}"] input`);
     };
 
     const ingredientToEdit = editingIngredientId ? baseIngredients.find(ing => ing.id === editingIngredientId) : null;
@@ -281,11 +284,18 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                         <Upload className="h-5 w-5 mr-2" /> Importer une liste
                     </button>
                     <button id="tutorial-add-ingredient" onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                        Ajouter un ingrédient
+                        <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un ingrédient
                     </button>
                 </div> {/* Fin de la div ajoutée */}
             </div>
             
+            {baseIngredients.length === 0 && (
+                <EmptyState message="Aucun ingrédient dans la base pour l'instant.">
+                    <button onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-5 w-5 mr-2" /> Ajouter un ingrédient</button>
+                    <button onClick={() => setIsImportWizardOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"><Upload className="h-5 w-5 mr-2" /> Importer une liste</button>
+                </EmptyState>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                     <label htmlFor="filterName" className="block text-sm font-medium text-gray-700">Filtrer par ingrédient</label>
@@ -337,10 +347,10 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-blue-100">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Fournisseur</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Prix Unitaire</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Perte Estimée</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Prix Efficace ($/{comparisonResults[0]?.unit})</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Fournisseur</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Prix unitaire</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Perte estimée</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Prix efficace ($/{comparisonResults[0]?.unit})</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -372,12 +382,12 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/6"><button onClick={() => requestSort('name')} className="flex items-center w-full">Ingrédient {getSortIcon('name')}</button></th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/6"><button onClick={() => requestSort('provider')} className="flex items-center w-full">Fournisseur {getSortIcon('provider')}</button></th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => requestSort('purchaseFormat')} className="flex items-center w-full">Format Achat {getSortIcon('purchaseFormat')}</button></th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unité de Base</th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => requestSort('purchasePrice')} className="flex items-center w-full">Prix Achat ($) {getSortIcon('purchasePrice')}</button></th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('name')} className="flex items-center w-full">Ingrédient {getSortIcon('name')}</button></th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('provider')} className="flex items-center w-full">Fournisseur {getSortIcon('provider')}</button></th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchaseFormat')} className="flex items-center w-full">Format d'achat {getSortIcon('purchaseFormat')}</button></th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Unité de base</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchasePrice')} className="flex items-center w-full">Prix achat ($) {getSortIcon('purchasePrice')}</button></th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
                             <div className="flex items-center">
                                 <button onClick={() => requestSort('lossPercentage')} className="flex items-center">
                                     Taux de perte (%) {getSortIcon('lossPercentage')}
@@ -385,10 +395,10 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <Tooltip text="Perte AVANT la production : péremption, produits abîmés, gaspillage en stock. Ne pas confondre avec le Rendement (onglet Recette), qui couvre la perte PENDANT la préparation (ex. épluchage, cuisson) — les deux se cumulent, ne saisissez pas la même perte aux deux endroits sous peine de gonfler le coût matière." />
                             </div>
                         </th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => requestSort('unitPrice')} className="flex items-center w-full">Prix Unitaire ($) {getSortIcon('unitPrice')}</button></th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('unitPrice')} className="flex items-center w-full">Prix unitaire ($) {getSortIcon('unitPrice')}</button></th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
-                                    <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière MàJ {getSortIcon('lastUpdated')}</button>
+                                    <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière màj {getSortIcon('lastUpdated')}</button>
                                     <Tooltip text="La date de la dernière modification du prix d'achat. Un point jaune apparaît si la date est supérieure à 30 jours." />
                                 </div>
                             </th>
@@ -400,11 +410,11 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             const isOld = new Date(item.lastUpdated) < thirtyDaysAgo;
                             return (
                             <tr key={item.id} id={`ingredient-row-${item.id}`} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${item.id === newlyAddedId ? 'new-row' : ''}`}>
-                                <td className="px-4 py-2">
-                                    <input type="text" value={item.name || ''} onChange={e => handleUpdate(item.id, 'name', e.target.value)} className={`w-full p-1 border rounded ${!isNotEmpty(item.name) ? 'border-red-500' : 'border-gray-300'}`} disabled={item.isRecipe}/>
-                                    {!isNotEmpty(item.name) && <ValidationMessage message="Requis." />}
+                                <td className="px-2 py-2">
+                                    <input type="text" value={item.name || ''} onChange={e => handleUpdate(item.id, 'name', e.target.value)} onBlur={() => touchName(item.id)} className={`w-full p-1 text-sm border rounded ${!isNotEmpty(item.name) && isNameTouched(item.id) ? 'border-red-500' : 'border-gray-300'}`} disabled={item.isRecipe}/>
+                                    {!isNotEmpty(item.name) && isNameTouched(item.id) && <ValidationMessage message="Requis." />}
                                 </td>
-                                <td className="px-4 py-2"><input type="text" list="provider-list" value={item.provider || ''} onChange={e => handleUpdate(item.id, 'provider', e.target.value)} className="w-full p-1 border rounded" disabled={item.isRecipe}/></td>
+                                <td className="px-2 py-2"><input type="text" list="provider-list" value={item.provider || ''} onChange={e => handleUpdate(item.id, 'provider', e.target.value)} className="w-full p-1 text-sm border rounded" disabled={item.isRecipe}/></td>
                                 <td className="px-2 py-2">
                                     <input type="text" inputMode="decimal" value={item.purchaseFormat || ''} onChange={e => handleUpdate(item.id, 'purchaseFormat', e.target.value)} className={`w-16 p-1 border rounded text-right ${!isValidNumber(item.purchaseFormat) ? 'border-red-500' : 'border-gray-300'}`} disabled={item.isRecipe}/>
                                     {!isValidNumber(item.purchaseFormat) && <ValidationMessage message="Nombre invalide." />}
@@ -426,10 +436,10 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                         inputMode="decimal" 
                                         value={item.lossPercentage || ''} 
                                         onChange={e => handleUpdate(item.id, 'lossPercentage', e.target.value)} 
-                                        className={`w-16 p-1 border rounded text-right ${!item.isRecipe && !isValidPercentage(item.lossPercentage) ? 'border-red-500' : 'border-gray-300'} ${item.isRecipe ? 'bg-gray-100' : ''}`}
+                                        className={`w-16 p-1 border rounded text-right ${!item.isRecipe && isInvalidPercentage(item.lossPercentage) ? 'border-red-500' : 'border-gray-300'} ${item.isRecipe ? 'bg-gray-100' : ''}`}
                                         disabled={item.isRecipe}
                                     />
-                                    {!item.isRecipe && !isValidPercentage(item.lossPercentage) && <ValidationMessage message="Doit être un %." />}
+                                    {!item.isRecipe && isInvalidPercentage(item.lossPercentage) && <ValidationMessage message="Doit être un %." />}
                                 </td>
                                 <td className="px-2 py-2"><input type="text" value={formatCurrency(item.unitPrice)} readOnly disabled className="w-16 p-1 bg-gray-50 border-0 rounded text-right"/></td>
                                 <td className="px-4 py-2">
@@ -495,29 +505,43 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             <div id="tutorial-section-ingredients-rapport" className="mt-8 pt-6 border-t">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-gray-800">Rapport d'achats et pertes pour la période</h2>
+                </div>
+                <p className="text-sm font-medium text-gray-500">Totaux — tous les fournisseurs</p>
+                <div className="mt-2 p-4 bg-blue-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                     <div>
-                        <label htmlFor="reportFilterProvider" className="block text-sm font-medium text-gray-700">Filtrer par fournisseur</label>
+                        <h3 className="text-lg font-semibold text-blue-800">Coût net total (production)</h3>
+                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(purchasingReportData.grandTotal.purchase)} $</p>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold text-red-800">Coût total des pertes</h3>
+                        <p className="text-2xl font-bold text-red-900">{formatCurrency(purchasingReportData.grandTotal.loss)} $</p>
+                    </div>
+                    <div className="md:col-span-1">
+                        <h3 className="text-lg font-semibold text-gray-800">Coût d'Achat Total Requis</h3>
+                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(purchasingReportData.grandTotal.total)} $</p>
+                    </div>
+                </div>
+                    <div className="mt-6 max-w-xs">
+                        <label htmlFor="reportFilterProvider" className="block text-sm font-medium text-gray-700">Détail par fournisseur</label>
                         <select
                             id="reportFilterProvider"
                             value={reportFilterProvider}
                             onChange={e => setReportFilterProvider(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                         >
+                            <option value="summary">Aucun (totaux seulement)</option>
                             <option value="all">Tous les fournisseurs</option>
-                            <option value="none">Aucun</option> {/* <-- AJOUTEZ CETTE LIGNE */}
                             {Object.keys(purchasingReportData.groupedByProvider).sort().map(provider => (
                                 <option key={provider} value={provider}>{provider}</option>
                             ))}
                         </select>
                     </div>
-                </div>
 
                 <div className="space-y-6">
                     {Object.entries(purchasingReportData.groupedByProvider)
                         .filter(([provider]) => {
+                            if (reportFilterProvider === 'summary') return false;
                             if (reportFilterProvider === 'all') return true;
-                            // L'application groupe les ingrédients sans fournisseur sous le nom "Non spécifié"
-                            if (reportFilterProvider === 'none') return provider === 'Non spécifié';
                             return provider === reportFilterProvider;
                         })
                         .map(([provider, data]) => (
@@ -527,22 +551,22 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ingrédient</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Ingrédient</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">
                                                     Qté Nette (Production)
                                                     <Tooltip text="La quantité totale de cet ingrédient qui est réellement utilisée dans vos plats, basée sur vos ventes estimées." />
                                                 </div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">
                                                     Coût Net (Production)
                                                     <Tooltip text="Le coût de la quantité nette. C'est la valeur de la matière qui est transformée en plats vendus." />
                                                 </div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qté Perdue (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût Perdu (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qté perdue (Stock)</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût perdu (Stock)</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">
                                                     Coût d'Achat Requis
                                                     <Tooltip text="Le coût total que vous devriez budgéter pour cet ingrédient, incluant le coût de la matière productive et le coût de la perte." />
@@ -577,20 +601,6 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                     ))}
                 </div>
 
-                <div className="mt-6 p-4 bg-blue-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                    <div>
-                        <h3 className="text-lg font-semibold text-blue-800">Coût Net Total (Production)</h3>
-                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(purchasingReportData.grandTotal.purchase)} $</p>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-red-800">Coût Total des Pertes</h3>
-                        <p className="text-2xl font-bold text-red-900">{formatCurrency(purchasingReportData.grandTotal.loss)} $</p>
-                    </div>
-                    <div className="md:col-span-1">
-                        <h3 className="text-lg font-semibold text-gray-800">Coût d'Achat Total Requis</h3>
-                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(purchasingReportData.grandTotal.total)} $</p>
-                    </div>
-                </div>
             </div>
             <AllergenModal
                 isOpen={!!ingredientToEdit}

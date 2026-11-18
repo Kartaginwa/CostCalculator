@@ -1,5 +1,5 @@
 import { calculateCosts } from '../engine/calculateCosts.js';
-import { generateSlug, buildRowDisplayName, sumLineAmounts, sumAmountsMap, DEFAULT_ACTIVE_UNITS } from '../utils.js';
+import { todayLocalISO, generateSlug, buildRowDisplayName, sumLineAmounts, sumAmountsMap, DEFAULT_ACTIVE_UNITS } from '../utils.js';
 
 // Construit le format de vente par défaut d'un produit à partir de ses champs "à plat"
 // (prixVente, nbPortions, etc.) ET de sa fiche recette (ingrédients, étapes de production, statut
@@ -195,7 +195,7 @@ const demoFormatPricing = (retailPrice, opts) => ({
 });
 
 export const getDefaultState = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocalISO();
 
     // --- CANAUX DE VENTE (3, avec cascade de maillons réaliste) ---
     // Phase 4.6 : un canal n'a PAS de driver au choix (contrairement à une activité) — son pool de
@@ -801,6 +801,9 @@ export const getDefaultState = () => {
             ingredientsItemsPerPage: 10,
             packagingItemsPerPage: 10,
             summaryItemsPerPage: 10,
+        // Scénario de la Simulation de chocs de coûts (Rapport et suivi → Simulation) : enregistré
+        // avec le projet pour ne pas être perdu en quittant l'onglet ou en fermant l'app.
+        costShocks: [],
         },
     };
 };
@@ -808,7 +811,7 @@ export const getDefaultState = () => {
 export const getEmptyState = () => ({
     companyName: "",
     logoUrl: '',
-    productionActivities: [{ id: 'act_general', name: 'Général', indirectCostDriver: 'directCost' }],
+    productionActivities: [{ id: 'act_general', name: 'Activité 1', indirectCostDriver: 'directCost' }],
     salesChannels: [{ id: 'channel_default', name: 'Vente directe', links: [] }],
     activeUnits: [...DEFAULT_ACTIVE_UNITS],
     expenseLines: [],
@@ -838,6 +841,9 @@ export const getEmptyState = () => ({
         ingredientsItemsPerPage: 10,
         packagingItemsPerPage: 10,
         summaryItemsPerPage: 10,
+        // Scénario de la Simulation de chocs de coûts (Rapport et suivi → Simulation) : enregistré
+        // avec le projet pour ne pas être perdu en quittant l'onglet ou en fermant l'app.
+        costShocks: [],
     },
 });
 

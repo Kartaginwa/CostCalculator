@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import { ArrowUpDown, Copy, Trash2, Upload } from 'lucide-react';
-import { parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isValidPercentage, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
-import { Tooltip, ValidationMessage, Pagination } from '../components/common.jsx';
+import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
+import { ArrowUpDown, Copy, PlusCircle, Trash2, Upload } from 'lucide-react';
+import { todayLocalISO, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
+import { Tooltip, ValidationMessage, Pagination, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
 // Chargé à la demande : l'assistant d'import est volumineux et rarement ouvert.
@@ -16,15 +17,16 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     const { basePackaging, onUpdatePackagingList, showNotification, setNotification, analysisData, activeUnits } = useProject();
     const { packagingPurchasingReportData, packagingAbcAnalysisData } = analysisData;
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
-    const [reportFilterProvider, setReportFilterProvider] = useState('none');
+    const [reportFilterProvider, setReportFilterProvider] = useSessionState('packaging.reportFilter', 'summary');
 
-    const [filterName, setFilterName] = useState('');
-    const [filterProvider, setFilterProvider] = useState('all');
-    const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
+    const [isNameTouched, touchName] = useTouched();
+    const [filterName, setFilterName] = useSessionState('packaging.filterName', '');
+    const [filterProvider, setFilterProvider] = useSessionState('packaging.filterProvider', 'all');
+    const [sortConfig, setSortConfig] = useSessionState('packaging.sortConfig', { key: 'name', direction: 'ascending' });
     const [newlyAddedId, setNewlyAddedId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [isSortDisabled, setIsSortDisabled] = useState(false);
-    const [comparisonPackaging, setComparisonPackaging] = useState('');
+    const [comparisonPackaging, setComparisonPackaging] = useSessionState('packaging.comparison', '');
 
     const uniqueProviders = useMemo(() => ['all', ...new Set(basePackaging.map(p => p.provider).filter(Boolean))], [basePackaging]);
     const uniquePackagingNames = useMemo(() => [...new Set(basePackaging.map(p => p.name).filter(Boolean))], [basePackaging]);
@@ -140,7 +142,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
         itemToUpdate.unitPrice = purchasePrice / purchaseFormat;
 
         if (field === 'purchasePrice') {
-            itemToUpdate.lastUpdated = new Date().toISOString().split('T')[0];
+            itemToUpdate.lastUpdated = todayLocalISO();
         }
 
         newList[originalIndex] = itemToUpdate;
@@ -192,12 +194,13 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             purchasePrice: '',
             unitPrice: 0,
             lossPercentage: 0,
-            lastUpdated: new Date().toISOString().split('T')[0],
+            lastUpdated: todayLocalISO(),
         };
         setIsSortDisabled(true);
         setCurrentPage(1);
         setNewlyAddedId(newItem.id);
         onUpdatePackagingList([newItem, ...basePackaging]);
+        focusSoon(`[id="packaging-row-${newItem.id}"] input`);
     };
 
     return (
@@ -209,10 +212,17 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                         <Upload className="h-5 w-5 mr-2" /> Importer une liste
                     </button>
                     <button id="tutorial-add-packaging" onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                        Ajouter un emballage
+                        <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un emballage
                     </button>
                 </div>
             </div>
+
+            {basePackaging.length === 0 && (
+                <EmptyState message="Aucun emballage dans la base pour l'instant.">
+                    <button onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-5 w-5 mr-2" /> Ajouter un emballage</button>
+                    <button onClick={() => setIsImportWizardOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"><Upload className="h-5 w-5 mr-2" /> Importer une liste</button>
+                </EmptyState>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                 <div>
@@ -265,10 +275,10 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-blue-100">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Fournisseur</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Prix Unitaire</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Perte Estimée</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Prix Efficace ($/{comparisonResults[0]?.unit})</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Fournisseur</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Prix unitaire</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Perte estimée</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Prix efficace ($/{comparisonResults[0]?.unit})</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -300,26 +310,26 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/6"><button onClick={() => requestSort('name')} className="flex items-center w-full">Emballage {getSortIcon('name')}</button></th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/6"><button onClick={() => requestSort('provider')} className="flex items-center w-full">Fournisseur {getSortIcon('provider')}</button></th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => requestSort('purchaseFormat')} className="flex items-center w-full">Format Achat {getSortIcon('purchaseFormat')}</button></th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unité de Base</th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase"><button onClick={() => requestSort('purchasePrice')} className="flex items-center w-full">Prix Achat ($) {getSortIcon('purchasePrice')}</button></th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('name')} className="flex items-center w-full">Emballage {getSortIcon('name')}</button></th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('provider')} className="flex items-center w-full">Fournisseur {getSortIcon('provider')}</button></th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchaseFormat')} className="flex items-center w-full">Format d'achat {getSortIcon('purchaseFormat')}</button></th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Unité de base</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchasePrice')} className="flex items-center w-full">Prix achat ($) {getSortIcon('purchasePrice')}</button></th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
                                     <button onClick={() => requestSort('lossPercentage')} className="flex items-center">Taux de perte (%) {getSortIcon('lossPercentage')}</button>
                                     <Tooltip text="Perte AVANT la production : bris, rebuts, format non conforme. Même logique que le taux de perte des ingrédients." />
                                 </div>
                             </th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
-                                    <button onClick={() => requestSort('unitPrice')} className="flex items-center">Prix Unitaire ($) {getSortIcon('unitPrice')}</button>
+                                    <button onClick={() => requestSort('unitPrice')} className="flex items-center">Prix unitaire ($) {getSortIcon('unitPrice')}</button>
                                     <Tooltip text="Calculé automatiquement (Prix d'Achat ÷ Format d'Achat) : c'est ce prix qui sera utilisé pour le coût d'emballage d'une recette." />
                                 </div>
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
-                                    <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière MàJ {getSortIcon('lastUpdated')}</button>
+                                    <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière màj {getSortIcon('lastUpdated')}</button>
                                     <Tooltip text="La date de la dernière modification du prix d'achat. Un point jaune apparaît si la date est supérieure à 30 jours, pour vous alerter qu'il est peut-être temps de le vérifier." />
                                 </div>
                             </th>
@@ -331,11 +341,11 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             const isOld = new Date(item.lastUpdated) < thirtyDaysAgo;
                             return (
                             <tr key={item.id} id={`packaging-row-${item.id}`} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${item.id === newlyAddedId ? 'new-row' : ''}`}>
-                                <td className="px-4 py-2">
-                                    <input type="text" value={item.name || ''} onChange={e => handleUpdate(item.id, 'name', e.target.value)} className={`w-full p-1 border rounded ${!isNotEmpty(item.name) ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {!isNotEmpty(item.name) && <ValidationMessage message="Requis." />}
+                                <td className="px-2 py-2">
+                                    <input type="text" value={item.name || ''} onChange={e => handleUpdate(item.id, 'name', e.target.value)} onBlur={() => touchName(item.id)} className={`w-full p-1 text-sm border rounded ${!isNotEmpty(item.name) && isNameTouched(item.id) ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {!isNotEmpty(item.name) && isNameTouched(item.id) && <ValidationMessage message="Requis." />}
                                 </td>
-                                <td className="px-4 py-2"><input type="text" list="packaging-provider-list" value={item.provider || ''} onChange={e => handleUpdate(item.id, 'provider', e.target.value)} className="w-full p-1 border rounded" /></td>
+                                <td className="px-2 py-2"><input type="text" list="packaging-provider-list" value={item.provider || ''} onChange={e => handleUpdate(item.id, 'provider', e.target.value)} className="w-full p-1 text-sm border rounded" /></td>
                                 <td className="px-2 py-2">
                                     <input type="text" inputMode="decimal" value={item.purchaseFormat || ''} onChange={e => handleUpdate(item.id, 'purchaseFormat', e.target.value)} className={`w-16 p-1 border rounded text-right ${!isValidNumber(item.purchaseFormat) ? 'border-red-500' : 'border-gray-300'}`} />
                                     {!isValidNumber(item.purchaseFormat) && <ValidationMessage message="Nombre invalide." />}
@@ -352,8 +362,8 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                     {!isValidNumber(item.purchasePrice) && <ValidationMessage message="Nombre invalide." />}
                                 </td>
                                 <td className="px-2 py-2">
-                                    <input type="text" inputMode="decimal" value={item.lossPercentage || ''} onChange={e => handleUpdate(item.id, 'lossPercentage', e.target.value)} className={`w-16 p-1 border rounded text-right ${!isValidPercentage(item.lossPercentage) ? 'border-red-500' : 'border-gray-300'}`} />
-                                    {!isValidPercentage(item.lossPercentage) && <ValidationMessage message="Doit être un %." />}
+                                    <input type="text" inputMode="decimal" value={item.lossPercentage || ''} onChange={e => handleUpdate(item.id, 'lossPercentage', e.target.value)} className={`w-16 p-1 border rounded text-right ${isInvalidPercentage(item.lossPercentage) ? 'border-red-500' : 'border-gray-300'}`} />
+                                    {isInvalidPercentage(item.lossPercentage) && <ValidationMessage message="Doit être un %." />}
                                 </td>
                                 <td className="px-2 py-2"><input type="text" value={formatCurrency(item.unitPrice)} readOnly disabled className="w-16 p-1 bg-gray-50 border-0 rounded text-right" /></td>
                                 <td className="px-4 py-2">
@@ -430,7 +440,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                     </div>
                 </div>
                 {packagingAbcAnalysisData.A.length === 0 && packagingAbcAnalysisData.B.length === 0 && packagingAbcAnalysisData.C.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-4">Aucun emballage consommé pour la période — rattachez des emballages à vos formats de vente (onglet Recette &amp; Calcul) pour voir apparaître cette analyse.</p>
+                    <p className="text-sm text-gray-500 mt-4">Aucun emballage consommé pour la période — rattachez des emballages à vos formats de vente (onglet Recettes et produits) pour voir apparaître cette analyse.</p>
                 )}
             </div>
 
@@ -438,28 +448,43 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             <div className="mt-8 pt-6 border-t">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-gray-800">Rapport d'achats et pertes pour la période</h2>
+                </div>
+                <p className="text-sm font-medium text-gray-500">Totaux — tous les fournisseurs</p>
+                <div className="mt-2 p-4 bg-blue-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                     <div>
-                        <label htmlFor="reportFilterProviderPackaging" className="block text-sm font-medium text-gray-700">Filtrer par fournisseur</label>
+                        <h3 className="text-lg font-semibold text-blue-800">Coût net total (production)</h3>
+                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(packagingPurchasingReportData.grandTotal.purchase)} $</p>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold text-red-800">Coût total des pertes</h3>
+                        <p className="text-2xl font-bold text-red-900">{formatCurrency(packagingPurchasingReportData.grandTotal.loss)} $</p>
+                    </div>
+                    <div className="md:col-span-1">
+                        <h3 className="text-lg font-semibold text-gray-800">Coût d'Achat Total Requis</h3>
+                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(packagingPurchasingReportData.grandTotal.total)} $</p>
+                    </div>
+                </div>
+                    <div className="mt-6 max-w-xs">
+                        <label htmlFor="reportFilterProviderPackaging" className="block text-sm font-medium text-gray-700">Détail par fournisseur</label>
                         <select
                             id="reportFilterProviderPackaging"
                             value={reportFilterProvider}
                             onChange={e => setReportFilterProvider(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                         >
+                            <option value="summary">Aucun (totaux seulement)</option>
                             <option value="all">Tous les fournisseurs</option>
-                            <option value="none">Aucun</option>
                             {Object.keys(packagingPurchasingReportData.groupedByProvider).sort().map(provider => (
                                 <option key={provider} value={provider}>{provider}</option>
                             ))}
                         </select>
                     </div>
-                </div>
 
                 <div className="space-y-6">
                     {Object.entries(packagingPurchasingReportData.groupedByProvider)
                         .filter(([provider]) => {
+                            if (reportFilterProvider === 'summary') return false;
                             if (reportFilterProvider === 'all') return true;
-                            if (reportFilterProvider === 'none') return provider === 'Non spécifié';
                             return provider === reportFilterProvider;
                         })
                         .map(([provider, data]) => (
@@ -469,12 +494,12 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Emballage</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qté Nette (Production)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût Net (Production)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qté Perdue (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût Perdu (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Coût d'Achat Requis</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Emballage</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qté nette (Production)</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût net (Production)</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qté perdue (Stock)</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût perdu (Stock)</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût d'achat requis</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
@@ -504,20 +529,6 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                     ))}
                 </div>
 
-                <div className="mt-6 p-4 bg-blue-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                    <div>
-                        <h3 className="text-lg font-semibold text-blue-800">Coût Net Total (Production)</h3>
-                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(packagingPurchasingReportData.grandTotal.purchase)} $</p>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-red-800">Coût Total des Pertes</h3>
-                        <p className="text-2xl font-bold text-red-900">{formatCurrency(packagingPurchasingReportData.grandTotal.loss)} $</p>
-                    </div>
-                    <div className="md:col-span-1">
-                        <h3 className="text-lg font-semibold text-gray-800">Coût d'Achat Total Requis</h3>
-                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(packagingPurchasingReportData.grandTotal.total)} $</p>
-                    </div>
-                </div>
             </div>
 
             {isImportWizardOpen && (

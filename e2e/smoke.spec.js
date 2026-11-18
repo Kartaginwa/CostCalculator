@@ -44,7 +44,7 @@ test.describe('Parcours projet vierge', () => {
 
         // Ajouter un poste et un employé
         await page.locator('#tab-labor').click();
-        await page.getByText('Ajouter un poste').click();
+        await page.locator('#tutorial-add-post').click();
         await page.getByText('+ Ajouter un employé').first().click();
 
         // Recette & Calcul : ajouter un ingrédient et une étape de production (repro du bug de

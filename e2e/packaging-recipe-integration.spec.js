@@ -15,7 +15,7 @@ test('section Emballage de Recette & Calcul : ajout d\'un emballage et coût ref
     await page.locator('#tab-recipe').click();
     await page.waitForTimeout(300);
     // Sélectionne un produit non-revente, non sous-recette : "Poulet général Tao, riz et légumes".
-    await page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').selectOption({ label: 'Poulet général Tao, riz et légumes' });
+    await page.locator('h1:has-text("Production pour")').locator('~ select').selectOption({ label: 'Poulet général Tao, riz et légumes' });
     await page.waitForTimeout(300);
 
     const packagingSection = page.locator('#tutorial-section-recipe-packaging');
@@ -46,7 +46,7 @@ test('un produit de revente n\'affiche pas de section Emballage', async ({ page 
     await page.waitForTimeout(500);
     await page.locator('#tab-recipe').click();
     await page.waitForTimeout(300);
-    await page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').selectOption({ label: 'Sauce artisanale du Terroir' });
+    await page.locator('h1:has-text("Production pour")').locator('~ select').selectOption({ label: 'Sauce artisanale du Terroir' });
     await page.waitForTimeout(300);
 
     await expect(page.locator('#tutorial-section-recipe-packaging')).toHaveCount(0);

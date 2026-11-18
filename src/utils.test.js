@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
+import { parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
 
 describe('formatCurrency', () => {
     it('ajoute un espace comme séparateur de milliers, point comme séparateur décimal', () => {
@@ -148,5 +148,18 @@ describe('parsePdfStatementLine', () => {
 
     it('retourne null quand le montant isolé vaut 0 (sous-total sans valeur réelle)', () => {
         expect(parsePdfStatementLine('Sous-total 0.00')).toBeNull();
+    });
+});
+
+
+describe('saisie numérique : point OU virgule, milliers tolérés', () => {
+    it.each([['1,5', 1.5], ['1.5', 1.5], ['1 234,56', 1234.56], ['1,234.56', 1234.56], ['1.234,56', 1234.56], ['1,234,567', 1234567], ['12', 12], ['$ 45,00', 45]])(
+        'parseLocaleNumber(%s) = %s', (input, expected) => { expect(parseLocaleNumber(input)).toBeCloseTo(expected, 5); });
+    it('isValidNumber accepte virgule, point et milliers, refuse le texte', () => {
+        expect(isValidNumber('1,5')).toBe(true);
+        expect(isValidNumber('1.5')).toBe(true);
+        expect(isValidNumber('1 234,5')).toBe(true);
+        expect(isValidNumber('abc12')).toBe(false);
+        expect(isValidNumber('')).toBe(false);
     });
 });

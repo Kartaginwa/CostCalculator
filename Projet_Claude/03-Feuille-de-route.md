@@ -2532,7 +2532,78 @@ place :
   onglets (filtres d'Ingrédients, etc., qui se réinitialisent encore aujourd'hui) méritent le même
   traitement, une fois toutes les fonctionnalités en place et le comportement final de chaque écran
   stabilisé.
+- **Révision complète de la langue française de l'app** (étape ajoutée le 17/11, AVANT le rapport
+  final) : anglicismes (« Items par page », « Food cost », « Pop: »...) et fautes de grammaire
+  fréquentes dans l'ensemble de l'app ; y traiter aussi le format des champs de date
+  (« yyyy-mm-dd » natif du navigateur) et l'ambiguïté du filtre « Aucun » du Rapport d'achats
+  (Ingrédients). Y inclure (décisions du 17/11) : (1) la **marque** — « Resto Calculateur » subsiste
+  dans le guide, le dialogue d'accueil, le texte alternatif des logos et le PDF alors que la
+  fenêtre s'appelle « TransfoCalculateur » ; (2) une **révision du vocabulaire** pour centrer
+  l'app sur la **transformation alimentaire** plutôt que la restauration (ex. « plat »,
+  « menu », « Au Menu », « Food cost »...) — lien avec la reflexion différée sur le renommage
+  d'« Au Menu » ; (3) la forme « Sans nom N » et les libellés d'en-têtes (majuscule initiale
+  seulement) à revérifier.
+- **Révision complète des infobulles** (étape ajoutée le 17/11, APRÈS la consolidation pédagogique
+  du guide d'utilisation et avant la révision du français) : (a) s'assurer que chaque bulle est
+  intégralement visible (certaines s'affichent parfois à l'extérieur de la page) ; (b) s'assurer
+  qu'elles ne sont pas trop longues — pour une note trop longue, la raccourcir et ajouter un lien
+  qui ouvre le guide d'utilisation à la section concernée.
+  Mesure du 17/11 (1280×720, projet démo) : sur 137 infobulles, 9 sortent de la fenêtre (le
+  composant `Tooltip` ne s'affiche qu'au-dessus, centré, sans repli aux bords), 23 dépassent 260
+  caractères, dont une de 1 470 (CICI, État des résultats).
 - Rapport final de fin de projet (programmation, UI, UX, méthodologie).
+
+- **À ajouter à la consolidation du guide (17/11)** : le guide dit que le tutoriel « se lance
+  automatiquement » à la création d'un projet, mais l'app le propose d'abord (bouton « Explorer
+  par moi-même ») — corriger la formulation.
+
+### Phase 7 — journal du point 1 (passage en revue transversal, 17/11)
+Fait : badges de nature de coût (`CostNatureBadge`) + ligne « Vieillissement » dans Par SKU
+(« Frais fixes totaux » n'inclut plus le vieillissement) ; infobulle du vieillissement (limites +
+IAS 2/23) ; infobulles de la comparaison de SKUs, du simulateur de choc et de la capacité par
+activité ; états vides avec consigne ; Par SKU s'ouvre sur un SKU avec canal ; titre interne
+« Production pour : » ; premières colonnes de l'État des résultats, d'Ingrédients et d'Emballage
+élargies/resserrées. Décisions : État des résultats reste large (défilement déjà disponible).
+Audit UI/UX du 17/11 — appliqué : avertissement + indicateur de modifications non sauvegardées
+(`beforeunload`, `will-prevent-unload` Electron), Échap ferme les fenêtres (`useEscapeKey`),
+erreurs « Requis. » seulement après avoir quitté le champ (`useTouched`) et % vide = pas
+d'erreur, « Sans nom N », activité par défaut « Activité 1 », boutons « Ajouter » avec icône
+(sauf Production) et « Importer » en vert, en-têtes de tableau en casse de phrase. Ajouté ensuite (17/11) : « Ouvrir » avertit si modifications en attente ; boutons de gestion
+(Gérer les unités, Gérer les clés, Point de référence) en bleu, « Nouveau » en vert 600, Importer
+reste gris ; états vides avec action (Ingrédients, Packaging, Main-d'œuvre, Rapport, Production) ;
+tri de la liste de produits remplacé par deux boutons A→Z / Z→A. En attente
+de décision : couleur des boutons « Gérer… » / Point de référence, états vides (UX 4), assistants
+d'import (UX 8), accessibilité (UI 5), contrôle de tri (UI 6).
+Dernier audit UI/UX (18/11) — appliqué : date du jour en heure locale (`todayLocalISO`, l'UTC
+affichait le lendemain en soirée) ; focus sur le nouveau champ après un ajout ; saisie numérique
+point OU virgule (+ milliers) partout, import compris (`normalizeNumberString`) ; « Packaging » →
+« Emballage », « œuvre » collé, « Nouveau projet » ; titres de section h2 en 24 px gras ; panneau
+« points à vérifier » en haut de Rapport et suivi (`engine/projectChecks.js`, dépliable, absent
+s'il n'y a rien à signaler). Décisions : tailles de police de l'État des résultats voulues ;
+croix rouge = supprimer un poste (la corbeille supprime un employé) ; PDF rouge / Excel vert
+conservés. Reporté : persistance des filtres (point 3) ; affichage des décimales avec point
+(« 39.35 $ ») conservé, à reconsidérer à l'étape de langue seulement si souhaité.
+Point 2 de la Phase 7 (marge vs majoration, 18/11) — fait : toute marge en % de l'app est une marge
+sur le PRIX DE VENTE (constat du moteur) ; base ajoutée de façon discrète (infobulles Production,
+Par SKU, KPI pondéré, matrice ; en-têtes PDF/Excel « (% du prix) ») ; « Marge brute » unique
+(fin de « coût primaire » / « marge sur coût primaire ») ; sélecteur des maillons « Marge (sur le
+prix de vente) » / « Majoration (sur le coût) » (fin de l'anglicisme « Markup ») ; « majoration »
+du pool de canal renommé « % d'imputation » pour éviter la collision ; guide : définition de la
+marge brute alignée (sous-traitance) + entrée « Marge ou majoration ? ». « Marge de contribution »
+conservée (décision). Moyenne pondérée : infobulle précisée (moyenne des marges des SKUs, pas la
+marge globale), calcul inchangé.
+Point 3 de la Phase 7 (persistance de position, 18/11) — fait : `useSessionState` (ui-utils.jsx),
+remplaçant de `useState` en mémoire de SESSION (vidée à Nouveau/Ouvrir/Démo, remontage forcé par
+`projectEpoch`), appliqué à : Paramètres (produit sélectionné, filtres, tri), Ingrédients et Emballage
+(filtres, tri, comparaison, filtre du rapport d'achats), Production (canal sélectionné — la
+réinitialisation au changement de FORMAT est conservée), Rapport (tri/filtre de la volatilité,
+classement, matrice d'activités, canal BCG). Non conservés volontairement : numéro de page, mode
+simulation de prix, fenêtres. Scénario de la Simulation de chocs : `uiSettings.costShocks`,
+enregistré dans le fichier du projet. Barre d'onglets collante (`sticky`, en-tête non collant,
+espacement du dessous conservé).
+Reste à trancher / reporter : marges négatives d'une sous-recette sans prix dans Production
+(masquer les tuiles ?) ; premier libellé d'axe X coupé des graphiques de suivi (mineur, ne pas
+toucher aux marges du graphique) ; Rapport d'achats (filtre fournisseur « Aucun »).
 
 ---
 

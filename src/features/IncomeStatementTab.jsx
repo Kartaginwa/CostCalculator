@@ -1,5 +1,5 @@
 import React, { useMemo, useState, lazy, Suspense } from 'react';
-import { Trash2, CheckCircle2, AlertCircle, X, Plus, Lock } from 'lucide-react';
+import { Upload, Trash2, CheckCircle2, AlertCircle, X, Plus, Lock } from 'lucide-react';
 import { parseLocaleNumber, isValidNumber, isNotEmpty, formatCurrency, sumLineAmounts, sumAmountsMap, round2, EXPENSE_CATEGORIES, DIRECT_COST_TYPES, UNIT_BASE_FAMILY_LABELS } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
@@ -17,6 +17,7 @@ import {
     computeGrossProfitTotals,
     REPARTITION_ACTIVITY_PREFIX, REPARTITION_CHANNEL_PREFIX, REPARTITION_CUSTOM_PREFIX,
 } from '../engine/analysisData.js';
+import { useEscapeKey } from '../ui-utils.jsx';
 
 // Cellule « — » neutre pour une colonne qui ne s'applique pas à ce tableau (voir
 // Projet_Claude/04-Conception-Modele.md, section 1bis : les 3 tableaux de l'État des résultats
@@ -53,9 +54,9 @@ const AllocationCheckBadge = ({ diff }) => {
 // Largeurs de colonne communes aux 3 tableaux zonés (Revenus, Charges directes, Frais fixes) —
 // voir IncomeStatementColGroup ci-dessous pour pourquoi ces valeurs doivent vivre dans un
 // `<colgroup>` plutôt que sur les `<th>`.
-const COL_WIDTH_POSTE = 136;
-const COL_WIDTH_CATEGORIE = 136;
-const COL_WIDTH_REPARTITION = 136;
+const COL_WIDTH_POSTE = 150;
+const COL_WIDTH_CATEGORIE = 142;
+const COL_WIDTH_REPARTITION = 142;
 const COL_WIDTH_MONTANT = 106;
 const COL_WIDTH_BUCKET = 85;
 const COL_WIDTH_SPACER = 8;
@@ -159,6 +160,7 @@ const DEFAULT_KEYS = [
 ];
 
 const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepartitionKeys, activityBuckets, salesChannels, bucketTotals, totalRevenue, directCostBucketTotals, totalDirectCosts }) => {
+    useEscapeKey(isOpen, onClose);
     if (!isOpen) return null;
 
     const defaultKeyActivityPct = (sourceKey) => {
@@ -278,7 +280,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                                     <div>
                                         <div className="text-xs font-semibold text-blue-800 mb-1.5">Canaux — {channelTotal.toFixed(1)} %</div>
                                         <div className="space-y-1">
-                                            {salesChannels.length === 0 && <p className="text-xs text-gray-400 italic">Aucun canal de vente défini.</p>}
+                                            {salesChannels.length === 0 && <p className="text-xs text-gray-400 italic">Aucun canal de vente défini — ajoutez-en dans Paramètres → Produits et SKUs.</p>}
                                             {salesChannels.map((c) => (
                                                 <div key={c.id} className="flex items-center justify-between gap-2">
                                                     <span className="text-xs text-gray-600 truncate">{c.name}</span>
@@ -649,11 +651,11 @@ export const IncomeStatementTab = () => {
                         onClick={() => setShowImportWizard(true)}
                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"
                     >
-                        Importer l'état des résultats
+                        <Upload className="h-5 w-5 mr-2" /> Importer l'état des résultats
                     </button>
                     <button
                         onClick={() => setShowRepartitionKeysModal(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-500 hover:bg-green-600"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                     >
                         Gérer les clés de répartition
                     </button>
@@ -718,7 +720,7 @@ export const IncomeStatementTab = () => {
             <div className="overflow-x-auto">
             <div className="space-y-8">
             <div id="tutorial-section-revenue">
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
                     Revenus
                     <Tooltip text="Vos revenus réels (tels qu'ils apparaissent dans votre vraie comptabilité). Choisissez une répartition par ligne : Général (non rattachable à une activité précise), une activité de production précise, ou Saisie manuelle pour ventiler librement entre plusieurs contenants à la fois. Les colonnes par canal sont une estimation dérivée du mix de vente, jamais une donnée réelle — à titre indicatif seulement, pas un calcul." />
                 </h2>
@@ -727,13 +729,13 @@ export const IncomeStatementTab = () => {
                             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
                             <thead>
                                 <tr>
-                                    <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 uppercase bg-green-50 rounded-t-lg">&nbsp;</th>
+                                    <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 bg-green-50 rounded-t-lg">&nbsp;</th>
                                     <th className="w-2 p-0" aria-hidden="true" />
-                                    <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 uppercase bg-yellow-50 rounded-t-lg">Activités de production</th>
+                                    <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">Activités de production</th>
                                     {salesChannels.length > 0 && (
                                         <>
                                             <th className="w-2 p-0" aria-hidden="true" />
-                                            <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 uppercase bg-blue-50 rounded-t-lg">
+                                            <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente (indicatif)
                                                     <Tooltip text="Estimée automatiquement à partir du mix de vente déclaré (channelPrices). Jamais une donnée saisie ni un intrant de calcul — uniquement informatif." />
@@ -744,20 +746,20 @@ export const IncomeStatementTab = () => {
                                     <th rowSpan={2} className="w-10 px-1 py-1" aria-hidden="true" />
                                 </tr>
                                 <tr>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">Poste de revenu</th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Poste de revenu</th>
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Catégorie
                                             <Tooltip text="Les revenus n'ont pas de catégorie comptable à classer, contrairement aux charges ci-dessous — cette colonne existe pour que les 3 tableaux de cet onglet gardent la même forme. Rien à saisir ici." />
                                         </span>
                                     </th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Clé de répartition
                                             <Tooltip text="Où compter ce revenu : Général (non rattachable à une activité de production précise), une activité précise, ou Saisie manuelle pour répartir un même revenu entre plusieurs activités à la fois." />
                                         </span>
                                     </th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">Montant ($)</th>
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
                                     <th className="w-2 p-0" aria-hidden="true" />
                                     {activityBuckets.map((b) => (
                                         <th key={b.key} className="px-2 py-1 text-center text-xs font-normal text-yellow-800 bg-yellow-50">
@@ -903,7 +905,7 @@ export const IncomeStatementTab = () => {
             </div>
 
             <div id="tutorial-section-direct-costs">
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
                     Charges directes réelles
                     <Tooltip text="Vos charges directes réelles (telles qu'elles apparaissent dans votre vraie comptabilité), ventilées par type de coût — pas par les catégories de frais fixes ci-dessous. Sert au diagnostic réel vs théorique (comparaison avec le coût de revient calculé par le modèle de recette) ; n'entre pas encore dans un calcul en aval." />
                 </h2>
@@ -912,9 +914,9 @@ export const IncomeStatementTab = () => {
                             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
                             <thead>
                                 <tr>
-                                    <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 uppercase bg-green-50 rounded-t-lg">&nbsp;</th>
+                                    <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 bg-green-50 rounded-t-lg">&nbsp;</th>
                                     <th className="w-2 p-0" aria-hidden="true" />
-                                    <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 uppercase bg-yellow-50 rounded-t-lg">
+                                    <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">
                                         <span className="flex items-center justify-center">
                                             Activités de production (indicatif)
                                             <Tooltip text="Estimée automatiquement à partir du coût théorique du modèle de recette, apparié au type de coût de la ligne (matière première, main-d'œuvre directe, emballage ou sous-traitance) — jamais une donnée saisie ni un intrant de calcul. Une ligne sans aucune donnée théorique de ce type retombe sur Général." />
@@ -923,7 +925,7 @@ export const IncomeStatementTab = () => {
                                     {salesChannels.length > 0 && (
                                         <>
                                             <th className="w-2 p-0" aria-hidden="true" />
-                                            <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 uppercase bg-blue-50 rounded-t-lg">
+                                            <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente (indicatif)
                                                     <Tooltip text="Estimée automatiquement à partir du coût théorique et du volume réel par canal — jamais une donnée saisie ni un intrant de calcul. Uniquement informatif." />
@@ -934,20 +936,20 @@ export const IncomeStatementTab = () => {
                                     <th rowSpan={2} className="w-10 px-1 py-1" aria-hidden="true" />
                                 </tr>
                                 <tr>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">Poste de charge directe</th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Poste de charge directe</th>
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Catégorie
                                             <Tooltip text="Le type de dépense selon sa nature : Matière première (ingrédients), Main-d'œuvre directe (salaires de production), Emballage, ou Sous-traitance (services externes de production)." />
                                         </span>
                                     </th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Clé de répartition
                                             <Tooltip text="Non applicable ici : contrairement aux revenus, la répartition par activité et par canal (colonnes de droite) se calcule automatiquement à partir du type de coût choisi — rien à saisir dans cette colonne." />
                                         </span>
                                     </th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">Montant ($)</th>
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
                                     <th className="w-2 p-0" aria-hidden="true" />
                                     {activityBuckets.map((b) => (
                                         <th key={b.key} className="px-2 py-1 text-center text-xs font-normal text-yellow-800 bg-yellow-50">
@@ -1077,7 +1079,7 @@ export const IncomeStatementTab = () => {
 
             <div id="tutorial-section-expenses">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Frais fixes
                         <Tooltip text="Listez ici chaque poste de dépense qui n'est pas directement lié à la production d'un plat précis (loyer, électricité, marketing, salaires administratifs, assurances, frais bancaires...), avec sa catégorie. Le total (contenant « Général », non rattaché à une activité ou un canal précis) alimente le calcul des frais indirects par plat, selon la méthode d'attribution de Général choisie plus bas." />
                     </h2>
@@ -1087,9 +1089,9 @@ export const IncomeStatementTab = () => {
                             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
                             <thead>
                                 <tr>
-                                    <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 uppercase bg-green-50 rounded-t-lg">&nbsp;</th>
+                                    <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 bg-green-50 rounded-t-lg">&nbsp;</th>
                                     <th className="w-2 p-0" aria-hidden="true" />
-                                    <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 uppercase bg-yellow-50 rounded-t-lg">
+                                    <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">
                                         <span className="flex items-center justify-center">
                                             Activités de production
                                             <Tooltip text="Répartissez manuellement le montant de chaque dépense entre Général et vos activités de production — la somme des cellules remplies est comparée au Montant de la ligne (voir l'icône à côté de la Clé de répartition), sans jamais bloquer : certaines dépenses ne s'appliquent naturellement qu'à cet axe, ou qu'à l'autre." />
@@ -1098,7 +1100,7 @@ export const IncomeStatementTab = () => {
                                     {salesChannels.length > 0 && (
                                         <>
                                             <th className="w-2 p-0" aria-hidden="true" />
-                                            <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 uppercase bg-blue-50 rounded-t-lg">
+                                            <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente
                                                     <Tooltip text="Répartissez manuellement le montant de chaque dépense entre vos canaux de vente — un axe indépendant des Activités (une même dépense peut être répartie sur les deux à la fois, ou sur un seul si l'autre ne s'applique pas)." />
@@ -1109,20 +1111,20 @@ export const IncomeStatementTab = () => {
                                     <th rowSpan={2} className="w-10 px-1 py-1" aria-hidden="true" />
                                 </tr>
                                 <tr>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">Poste de dépense</th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Poste de dépense</th>
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Catégorie
                                             <Tooltip text="La fonction de l'entreprise à laquelle cette dépense se rattache, qui suggère (sans l'imposer) un contenant par défaut : Frais généraux de production → Général ou une activité ; Frais de vente/mise en marché → Général ou un canal ; Frais d'administration et Frais financiers → Général (rarement rattachables à une ligne ou un canal précis)." />
                                         </span>
                                     </th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Clé de répartition
                                             <Tooltip text="Raccourci optionnel qui pré-remplit la grille proportionnellement — Selon les ventes ou Selon les charges directes réelles — modifiable ensuite cellule par cellule. Manuel laisse la grille telle quelle : rien n'est pré-rempli automatiquement." />
                                         </span>
                                     </th>
-                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 uppercase bg-green-50">Montant ($)</th>
+                                    <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
                                     <th className="w-2 p-0" aria-hidden="true" />
                                     {activityBuckets.map((b) => (
                                         <th key={b.key} className="px-2 py-1 text-center text-xs font-normal text-yellow-800 bg-yellow-50">
@@ -1325,7 +1327,7 @@ export const IncomeStatementTab = () => {
                 reste toujours visible, jamais caché en défilant vers les colonnes de droite des
                 tableaux. */}
             <div id="tutorial-section-cici" className="p-4 bg-gray-100 rounded-lg">
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
                     Coefficient d'imputation des charges indirectes
                     <Tooltip text="Le CICI est le driver utilisé pour convertir un pool de frais fixes déjà dimensionné (par la clé de répartition, ci-dessus) en un taux $ par produit — propre à chaque ligne ci-dessous, sans effet sur les autres : Général (frais de structure non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) se répartit à l'échelle du menu entier ; chaque activité se répartit seulement entre ses propres produits. « Au prorata des coûts directs » (matière + emballage + main-d'œuvre + sous-traitance combinés) : choix par défaut, approprié quand le coût indirect suit globalement la valeur des intrants consommés — capture à la fois le volume et la complexité d'un produit. « Au prorata du temps de production » : plus précis si le coût indirect suit plutôt la CADENCE/le temps machine qu'une pure valeur d'intrants. « Au prorata du volume physique » (inspiré de l'Agro-Calculateur du MAPAQ) : selon le poids ou volume physique total vendu (ex. kg, L) — pertinent quand le frais indirect suit l'encombrement (entreposage réfrigéré, capacité d'entrepôt) plutôt que la valeur ou la cadence ; exige de préciser la famille physique (Masse ou Volume) juste à côté — un format d'une autre famille (ex. vendu à l'unité, ou en volume si Masse est choisi) reste simplement absent de ce calcul, jamais une conversion masse/volume inventée. Canal n'a pas de CICI : son coût indirect est toujours un pourcentage de majoration (Paramètres → Canaux de vente)." />
                 </h2>
@@ -1373,7 +1375,7 @@ export const IncomeStatementTab = () => {
 
             <div id="tutorial-section-reconciliation" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Réconciliation réel / théorique
                         <Tooltip text="Compare, au niveau de l'entreprise entière, vos revenus et charges directes réels (saisis ci-dessus) au théorique implicite de votre modèle de recettes (prix de vente × volumes reconstruits à partir du mix des ventes et du chiffre d'affaires du menu, dans Paramètres). Mesure la qualité de vos hypothèses de modélisation contre la réalité comptable — jamais un intrant de calcul, uniquement un diagnostic. Jamais par activité ou canal : à ce niveau de détail, le modèle utilisé pour reconstruire les volumes serait partiellement circulaire." />
                     </h2>
@@ -1382,31 +1384,31 @@ export const IncomeStatementTab = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-200">
                             <tr>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">
+                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Poste
                                         <Tooltip text="Bénéfice brut = Revenus moins Charges directes (avant frais fixes). Bénéfice net = Bénéfice brut moins le total des frais fixes (Dépenses ci-dessus) — ce total n'ayant qu'une seule valeur dans l'app, il est soustrait identiquement du réel et du théorique. Toutes ces lignes reprennent les totaux des tableaux ci-dessus, jamais une donnée saisie séparément." />
                                     </span>
                                 </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">
+                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Réel ($)
                                         <Tooltip text="Le montant tel que saisi dans les tableaux Revenus et Charges directes réelles ci-dessus." />
                                     </span>
                                 </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">
+                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Théorique ($)
                                         <Tooltip text="Le montant que prédit votre modèle de recettes (prix de vente et mix de vente déclarés dans Paramètres) — une estimation basée sur vos hypothèses, pas une donnée réelle." />
                                     </span>
                                 </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">
+                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Écart ($)
                                         <Tooltip text="Réel moins Théorique. Positif : votre résultat réel dépasse ce que le modèle prévoyait. Négatif : il est en dessous." />
                                     </span>
                                 </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">
+                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Écart (%)
                                         <Tooltip text="Le même écart, exprimé en pourcentage du théorique — pour comparer plus facilement l'ampleur de l'écart entre les lignes." />

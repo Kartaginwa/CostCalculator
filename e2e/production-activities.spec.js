@@ -17,8 +17,8 @@ test('gestion des activités de production dans Paramètres', async ({ page }) =
     await expect(section).toBeVisible();
     await expect(section.getByText('Activités de production')).toBeVisible();
 
-    // Une activité "Général" par défaut
-    await expect(section.locator('input[type="text"]')).toHaveValue('Général');
+    // Une activité « Activité 1 » par défaut
+    await expect(section.locator('input[type="text"]')).toHaveValue('Activité 1');
 
     // Ajouter une activité
     await section.getByText('Ajouter une activité').click();

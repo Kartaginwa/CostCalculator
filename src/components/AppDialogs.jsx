@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { CheckCircle, AlertTriangle, Info, X, FilePlus, FolderOpen, FileText } from 'lucide-react';
+import { useEscapeKey } from '../ui-utils.jsx';
 
 // Composant de notification (Version améliorée avec option Annuler)
 export const Notification = ({ message, type, onClose, onUndo }) => {
@@ -23,7 +24,7 @@ export const Notification = ({ message, type, onClose, onUndo }) => {
     const { bg, icon } = typeStyles[type] || typeStyles.info;
 
     return (
-        <div className={`fixed top-5 right-5 z-50 flex items-center p-4 rounded-lg shadow-lg text-white ${bg} animate-fade-in-down`}>
+        <div className={`fixed top-5 right-5 z-[60] flex items-center p-4 rounded-lg shadow-lg text-white ${bg} animate-fade-in-down`}>
             <div className="flex-shrink-0">
                 {icon}
             </div>
@@ -76,6 +77,7 @@ export const WelcomeModal = ({ onNew, onOpen, onExample }) => {
 
 // --- NOUVEAU: MODAL POUR LES OPTIONS PDF ---
 export const PdfOptionsModal = ({ isOpen, onClose, onConfirm, initialData }) => {
+    useEscapeKey(isOpen, onClose);
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
 
@@ -188,7 +190,7 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#tutorial-section-ingredients-db', content: "C'est votre base de données centrale pour toutes vos matières premières. Vous y définissez les prix d'achat et les taux de perte.", tab: 'ingredients' },
     { selector: '#tutorial-section-ingredients-abc', content: "L'analyse ABC classe automatiquement vos ingrédients par importance financière, vous aidant à concentrer vos efforts de gestion.", tab: 'ingredients' },
     { selector: '#tutorial-section-ingredients-rapport', content: "Basé sur vos ventes, ce rapport estime automatiquement les quantités d'ingrédients à acheter pour la période.", tab: 'ingredients' },
-    // Onglet Main d'oeuvre
+    // Onglet Main d'œuvre
     { selector: '#tab-labor', content: "Continuons avec l'onglet 'Main-d'œuvre'.", tab: 'ingredients' },
     { selector: '#tutorial-section-labor-db', content: "Ici, vous pouvez définir les différents postes (Cuisinier, Commis...) et y assigner des employés avec leurs salaires et charges.", tab: 'labor' },
     { selector: '#tutorial-section-labor-rapport', content: "Ce rapport compare les heures de travail prévues à celles réellement nécessaires, vous donnant un aperçu de votre productivité.", tab: 'labor' },

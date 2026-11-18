@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown, Trash2, PlusCircle } from 'lucide-react';
 import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits } from '../utils.js';
-import { useValueFlash } from '../ui-utils.jsx';
+import { useValueFlash, useEscapeKey } from '../ui-utils.jsx';
 
 // Composant pour les messages de validation
 export const ValidationMessage = ({ message }) => (
@@ -56,6 +56,19 @@ export const Tooltip = ({ text }) => {
 };
 
 // --- NOUVEAU COMPOSANT DE PAGINATION ---
+// Étiquette de nature comptable d'un coût (charge directe / indirecte / financière) — un seul
+// composant pour que le vocabulaire et les couleurs restent identiques partout où un coût est classé.
+const COST_NATURE_STYLES = {
+    direct: { label: 'charge directe', cls: 'text-blue-700 bg-blue-100' },
+    indirect: { label: 'charge indirecte', cls: 'text-gray-700 bg-gray-200' },
+    financial: { label: 'charge financière', cls: 'text-amber-700 bg-amber-100' },
+};
+export const CostNatureBadge = ({ nature }) => {
+    const style = COST_NATURE_STYLES[nature];
+    if (!style) return null;
+    return <span className={`ml-1.5 text-[11px] font-normal px-1.5 py-0.5 rounded ${style.cls}`}>{style.label}</span>;
+};
+
 export const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange, onItemsPerPageChange }) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -480,6 +493,7 @@ export const TimeInput = ({ totalSeconds, onChange }) => {
 
 // --- MODAL DE GESTION DES ALLERGÈNES ---
 export const AllergenModal = ({ isOpen, onClose, ingredientName, assignedAllergens, onUpdateAllergens }) => {
+    useEscapeKey(isOpen, onClose);
     if (!isOpen) return null;
 
     const handleCheckboxChange = (allergenKey, isChecked) => {
@@ -532,6 +546,7 @@ export const AllergenModal = ({ isOpen, onClose, ingredientName, assignedAllerge
 // `filterActiveUnits` (utils.js), qui garde toujours la valeur déjà choisie par une donnée
 // existante même si elle vient d'être désactivée ici.
 export const UnitsModal = ({ isOpen, onClose, activeUnits, onUpdateActiveUnits }) => {
+    useEscapeKey(isOpen, onClose);
     if (!isOpen) return null;
 
     const handleCheckboxChange = (unitKey, isChecked) => {
@@ -553,7 +568,7 @@ export const UnitsModal = ({ isOpen, onClose, activeUnits, onUpdateActiveUnits }
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg p-6 shadow-xl max-w-2xl w-full">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1">Gérer les unités de mesure</h3>
-                <p className="text-xs text-gray-500 mb-4">Les unités cochées apparaissent partout où une unité peut être choisie (Ingrédients, Packaging, Produits et SKUs, Recette & Calcul). Décocher une unité déjà utilisée par une donnée existante ne la supprime pas — cette donnée garde sa valeur.</p>
+                <p className="text-xs text-gray-500 mb-4">Les unités cochées apparaissent partout où une unité peut être choisie (Ingrédients, Emballage, Produits et SKUs, Recette & Calcul). Décocher une unité déjà utilisée par une donnée existante ne la supprime pas — cette donnée garde sa valeur.</p>
                 <div className="space-y-4">
                     {Object.entries(groupedUnits).map(([familyLabel, unitKeys]) => (
                         <div key={familyLabel}>
@@ -590,6 +605,7 @@ export const UnitsModal = ({ isOpen, onClose, activeUnits, onUpdateActiveUnits }
 
 // --- MODAL D'ASSIGNATION DU PERSONNEL (VERSION AMÉLIORÉE) ---
 export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdatePersonnel }) => {
+    useEscapeKey(isOpen, onClose);
     if (!isOpen) return null;
 
     const handleCountChange = (postId, newCount) => {
@@ -655,13 +671,14 @@ export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdateP
 // production) — une ligne résumé ("N maillons"/"Aucun maillon") dans l'écran principal, le détail
 // complet (nom, marge/markup, %, suppression, ajout) vit dans cette modale.
 export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkChange, onRemoveLink }) => {
+    useEscapeKey(isOpen, onClose);
     if (!isOpen || !channel) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg p-6 shadow-xl max-w-lg w-full">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1">Maillons — {channel.name || 'Sans nom'}</h3>
-                <p className="text-xs text-gray-500 mb-4">Chaque maillon applique une marge ou un markup sur le prix du maillon précédent, jusqu'au prix de vente suggéré au consommateur.</p>
+                <p className="text-xs text-gray-500 mb-4">Chaque maillon applique une marge ou une majoration sur le prix du maillon précédent, jusqu'au prix de vente suggéré au consommateur.</p>
                 <div className="space-y-2 max-h-[50vh] overflow-y-auto">
                     {channel.links.length === 0 && (
                         <p className="text-sm text-gray-500">Aucun maillon pour ce canal — son prix net équivaut alors directement au prix de détail suggéré (PDS) du format.</p>
@@ -681,7 +698,7 @@ export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkC
                                 className="p-1.5 border rounded text-sm border-gray-300"
                             >
                                 <option value="margin">Marge</option>
-                                <option value="markup">Markup</option>
+                                <option value="markup">Majoration</option>
                             </select>
                             <input
                                 type="text" inputMode="decimal"
@@ -691,7 +708,7 @@ export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkC
                                 className={`w-20 p-1.5 border rounded text-right text-sm ${!isValidPercentage(link.percent) ? 'border-red-500' : 'border-gray-300'}`}
                             />
                             <span className="text-xs text-gray-500">%</span>
-                            <Tooltip text="Markup : % appliqué sur le prix précédent (ex. le coût) — prix = précédent × (1 + %). Marge : % du prix de VENTE résultant, pas du coût — prix = précédent ÷ (1 − %). Pour un même 20 % sur un coût de 10 $ : markup → 12,00 $ (10 × 1,20) ; marge → 12,50 $ (10 ÷ 0,80), car ces 20 % représentent alors 20 % du prix de vente de 12,50 $, pas du coût de 10 $." />
+                            <Tooltip text="Majoration : % ajouté au prix précédent (ex. le coût) — prix = précédent × (1 + %). Marge : % du prix de VENTE résultant, pas du coût — prix = précédent ÷ (1 − %). Pour un même 20 % sur un coût de 10 $ : majoration → 12,00 $ (10 × 1,20) ; marge → 12,50 $ (10 ÷ 0,80), car ces 20 % représentent alors 20 % du prix de vente de 12,50 $, pas du coût de 10 $." />
                             <button onClick={() => onRemoveLink(channel.id, link.id)} className="text-red-500 hover:text-red-700 p-1 flex-shrink-0"><Trash2 size={16} /></button>
                         </div>
                     ))}
@@ -720,6 +737,7 @@ export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkC
 // central (onCreate délègue à onAddFormat/onDuplicateFormat déjà utilisés par Paramètres) : le
 // nouveau format apparaît donc immédiatement dans les deux écrans, sans copie ni état séparé.
 export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, onCreate, activeUnits }) => {
+    useEscapeKey(isOpen, onClose);
     const [portionSize, setPortionSize] = useState('');
     const [portionUnit, setPortionUnit] = useState('unité');
     const [sku, setSku] = useState('');
@@ -849,6 +867,7 @@ export const FlashingCell = ({ value, formatter = formatCurrency }) => {
 };
 
 export const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children }) => {
+    useEscapeKey(isOpen, onClose);
     if (!isOpen) return null;
 
     return (
@@ -887,3 +906,11 @@ export const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children 
         </div>
     );
 };
+
+// État vide standard : une phrase + une ou deux actions (children). Même gabarit partout.
+export const EmptyState = ({ message, children }) => (
+    <div data-testid="empty-state" className="flex flex-col items-center justify-center text-center gap-3 p-6 mb-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+        <p className="text-sm text-gray-600">{message}</p>
+        {children && <div className="flex flex-wrap justify-center gap-2">{children}</div>}
+    </div>
+);

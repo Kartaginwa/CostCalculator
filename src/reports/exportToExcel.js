@@ -85,8 +85,8 @@ export const exportToExcel = (deps) => {
                 // exact de chaque ligne, inutile de les recalculer ici.
                 const summaryHeaders = [
                     'Plat', 'Catégorie', 'Prix Vente', 'Coût Total', 'Coût Matière (%)', 'Coût Emballage (%)',
-                    'Coût Main-d\'oeuvre (%)', 'Coût Indirects (%)', 'Marge Brute ($)',
-                    'Marge Brute (%)', 'Marge Nette ($)', 'Marge Nette (%)', 'Mix Ventes'
+                    'Coût Main-d\'œuvre (%)', 'Coût Indirects (%)', 'Marge Brute ($)',
+                    'Marge Brute (% du prix)', 'Marge Nette ($)', 'Marge Nette (% du prix)', 'Mix Ventes'
                 ];
                 const summarySheetData = [summaryHeaders.map(h => ({ v: h, s: headerStyle }))];
 
@@ -136,7 +136,7 @@ export const exportToExcel = (deps) => {
                 XLSX.utils.book_append_sheet(wb, ws_ingredients, "Ingrédients");
                 usedSheetNames.add("Ingrédients".toLowerCase());
 
-                // --- Feuille 4: Main d'oeuvre ---
+                // --- Feuille 4: Main d'œuvre ---
                 const laborHeaders = ["Employé", "Salaire Horaire", "Charges (%)", "Vacances (%)", "Heures", "Coût Total"];
                 const laborSheetData = [laborHeaders.map(h => ({v: h, s: headerStyle}))];
                 
@@ -168,8 +168,8 @@ export const exportToExcel = (deps) => {
                 });
 
                 ws_labor['!cols'] = [{wch: 25}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15}];
-                XLSX.utils.book_append_sheet(wb, ws_labor, "Main d'oeuvre");
-                usedSheetNames.add("Main d'oeuvre".toLowerCase());
+                XLSX.utils.book_append_sheet(wb, ws_labor, "Main d'œuvre");
+                usedSheetNames.add("Main d'œuvre".toLowerCase());
 
                 // --- Fiches de Coût Individuelles ---
                 // Une fiche par FORMAT (pas par produit) — reprend productsWithCosts (coûts déjà
@@ -291,7 +291,7 @@ export const exportToExcel = (deps) => {
                             { t: 'n', v: Number(stepCost), z: currencyFormat }
                         ]);
                     });
-                    sheetData.push(['Total Main-d\'oeuvre', '', '', '', '', { t: 'n', v: Number(costs.totalLaborCost), z: currencyFormat }]);
+                    sheetData.push(['Total Main-d\'œuvre', '', '', '', '', { t: 'n', v: Number(costs.totalLaborCost), z: currencyFormat }]);
 
                     sheetData.push([], [{ v: 'Récapitulatif par portion', s: { font: { bold: true, sz: 12 } } }]);
                     sheetData.push(['Prix de Vente', { t: 'n', v: Number(parseLocaleNumber(product.prixVente)), z: currencyFormat }]);
@@ -299,12 +299,12 @@ export const exportToExcel = (deps) => {
                     sheetData.push(['Coût des Pertes (stock)', { t: 'n', v: Number(costs.totalLossCost / product.nbPortions), z: currencyFormat }]);
                     sheetData.push(['Coût Matières Total', { t: 'n', v: Number(costs.costMatierePerPortion), z: currencyFormat }]);
                     sheetData.push(['Coût Emballage', { t: 'n', v: Number(costs.costPackagingPerPortion), z: currencyFormat }]);
-                    sheetData.push(['Coût Main-d\'oeuvre', { t: 'n', v: Number(costs.costLaborPerPortion), z: currencyFormat }]);
+                    sheetData.push(['Coût Main-d\'œuvre', { t: 'n', v: Number(costs.costLaborPerPortion), z: currencyFormat }]);
                     sheetData.push(['Coût Indirect', { t: 'n', v: Number(costs.costIndirectPerPortion), z: currencyFormat }]);
                     sheetData.push(['Coût de Revient Total', { t: 'n', v: Number(costs.totalCostPerPortion), z: currencyFormat }]);
                     sheetData.push(['Coût Matière (%)', { t: 'n', v: Number(costs.costMatierePercent), z: percentFormat }]);
                     sheetData.push(['Coût Emballage (%)', { t: 'n', v: Number(costs.costPackagingPercent), z: percentFormat }]);
-                    sheetData.push(['Coût Main-d\'oeuvre (%)', { t: 'n', v: Number(costs.costLaborPercent), z: percentFormat }]);
+                    sheetData.push(['Coût Main-d\'œuvre (%)', { t: 'n', v: Number(costs.costLaborPercent), z: percentFormat }]);
                     sheetData.push(['Coût Indirects (%)', { t: 'n', v: Number(costs.costIndirectPercent), z: percentFormat }]);
                     sheetData.push(['Marge Brute', { t: 'n', v: Number(costs.margeBruteDollar), z: currencyFormat }, { t: 'n', v: Number(costs.margeBrutePercent), z: percentFormat }]);
                     sheetData.push(['Marge Nette', { t: 'n', v: Number(costs.margeNetteDollar), z: currencyFormat }, { t: 'n', v: Number(costs.margeNettePercent), z: percentFormat }]);

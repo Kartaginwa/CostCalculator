@@ -8,7 +8,7 @@
 // complet, pour rester cohérent avec le reste de l'UI qui utilise déjà le point en affichage).
 export const formatCurrency = (value) => {
     // Tente de convertir la valeur en nombre, peu importe son type initial
-    const num = parseFloat(String(value).replace(',', '.'));
+    const num = parseLocaleNumber(value);
     // Si la conversion échoue (par exemple, pour un objet), isNaN sera vrai
     if (isNaN(num)) {
         return '0.00'; // Retourne une valeur par défaut sécuritaire au lieu de planter
@@ -21,22 +21,38 @@ export const formatCurrency = (value) => {
 };
 // Formate un nombre en pourcentage
 export const formatPercent = (value) => (value * 100 || 0).toFixed(2);
-// Gère les entrées numériques avec point ou virgule
+// Date du jour au format AAAA-MM-JJ, en heure LOCALE. `toISOString()` donne la date UTC : en soirée
+// (heure de l'Est), elle affichait déjà le lendemain.
+export const todayLocalISO = () => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+// Normalise une saisie numérique vers la forme « -1234.56 » : accepte le point OU la virgule
+// décimale, et des séparateurs de milliers (espace, espace insécable, ou le « autre » séparateur :
+// « 1 234,56 », « 1,234.56 », « 1.234,56 »). Règle : si les deux séparateurs sont présents, le
+// DERNIER est le décimal ; si un seul type est présent plusieurs fois, ce sont des milliers ;
+// un seul séparateur présent une fois est le décimal.
+export const normalizeNumberString = (stringValue) => {
+    let s = String(stringValue).replace(/[^0-9,.-]/g, '');
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    if (lastComma !== -1 && lastDot !== -1) {
+        const decimalIsComma = lastComma > lastDot;
+        s = decimalIsComma ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+    } else if (lastComma !== -1) {
+        s = (s.match(/,/g).length > 1) ? s.replace(/,/g, '') : s.replace(',', '.');
+    } else if (lastDot !== -1 && s.match(/\./g).length > 1) {
+        s = s.replace(/\./g, '');
+    }
+    return s;
+};
+
+// Gère les entrées numériques avec point ou virgule (voir normalizeNumberString)
 export const parseLocaleNumber = (stringValue) => {
     if (stringValue === null || stringValue === undefined) return 0;
-
-    // 1. Convertit en chaîne de caractères
-    const s = String(stringValue);
-
-    // 2. Supprime tous les caractères qui ne sont pas des chiffres, un point, une virgule ou un signe moins.
-    // Cela élimine les symboles de devise, les espaces, etc.
-    const cleaned = s.replace(/[^0-9,.-]/g, '');
-
-    // 3. Remplace la virgule par un point pour la conversion en nombre
-    const standardized = cleaned.replace(',', '.');
-
-    // 4. Tente de convertir la chaîne nettoyée en nombre
-    return parseFloat(standardized) || 0;
+    return parseFloat(normalizeNumberString(stringValue)) || 0;
 };
 
 // Arrondit à 2 décimales (montants en argent) — évite les décimales résiduelles d'un calcul
@@ -129,13 +145,16 @@ export const isNotEmpty = (value) => value != null && String(value).trim() !== '
 
 export const isValidNumber = (value) => {
     if (!isNotEmpty(value)) return false;
-    const parsed = String(value).replace(',', '.');
+    // Seuls chiffres, séparateurs (point/virgule), espaces et signe sont admis ; « abc12 » reste invalide.
+    if (!/^[\d\s\u00a0\u202f,.-]+$/.test(String(value))) return false;
+    const parsed = normalizeNumberString(value);
     return !isNaN(parseFloat(parsed)) && isFinite(parsed) && parseFloat(parsed) >= 0;
 };
 
 export const isValidPositiveInteger = (value) => {
     if (!isNotEmpty(value)) return false;
-    const num = Number(String(value).replace(',', '.'));
+    if (!isValidNumber(value)) return false;
+    const num = Number(normalizeNumberString(value));
     return Number.isInteger(num) && num > 0;
 };
 
@@ -149,6 +168,13 @@ export const isValidPercentage = (value) => {
     // Use the base isValidNumber to check for valid number format and non-negativity
     return isValidNumber(value) && num <= 100;
 };
+
+// Libellé d'un produit sans nom : « Sans nom 3 » (numéro = position dans la liste), partout pareil.
+export const unnamedLabel = (index) => `Sans nom ${index + 1}`;
+
+// Pour l'affichage d'erreurs : un champ vide n'est pas une erreur (une donnée absente reste
+// absente) — seule une valeur saisie et invalide est signalée.
+export const isInvalidPercentage = (value) => isNotEmpty(value) && !isValidPercentage(value);
 
 // --- MOTEUR DE CONVERSION D'UNITÉS ---
 // `type` distingue une unité de mesure continue (poids/volume — une quantité produite peut être

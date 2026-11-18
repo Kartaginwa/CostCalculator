@@ -1,11 +1,11 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
-	title: "Resto Calculateur", // <-- Ajoutez cette ligne
+	title: "TransfoCalculateur",
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       // Fixés explicitement plutôt que de dépendre des valeurs par défaut d'Electron
@@ -16,6 +16,22 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
     }
+  });
+
+  // Fermeture avec des modifications non sauvegardées : le renderer pose un gestionnaire
+  // `beforeunload` (voir App.jsx) ; Electron annule alors la fermeture en silence si on ne
+  // l'intercepte pas. On demande donc confirmation à l'utilisateur.
+  win.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(win, {
+      type: 'warning',
+      buttons: ['Rester', 'Quitter sans sauvegarder'],
+      defaultId: 0,
+      cancelId: 0,
+      title: 'Modifications non sauvegardées',
+      message: 'Vous avez des modifications non sauvegardées.',
+      detail: 'Si vous quittez maintenant, elles seront perdues. Utilisez « Sauvegarder » pour conserver votre travail.',
+    });
+    if (choice === 1) event.preventDefault(); // ignore le blocage : la fenêtre se ferme
   });
 
   // --- DURCISSEMENT ---

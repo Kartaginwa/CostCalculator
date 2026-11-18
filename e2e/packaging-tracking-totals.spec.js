@@ -16,7 +16,7 @@ test('section Emballage de Recette & Calcul : totaux complets (base, perte stock
 
     await page.locator('#tab-recipe').click();
     await page.waitForTimeout(300);
-    await page.locator('h1:has-text("Recette et calcul pour")').locator('~ select').selectOption({ label: 'Chili con carne mijoté' });
+    await page.locator('h1:has-text("Production pour")').locator('~ select').selectOption({ label: 'Chili con carne mijoté' });
     await page.waitForTimeout(300);
 
     const packagingSection = page.locator('#tutorial-section-recipe-packaging');

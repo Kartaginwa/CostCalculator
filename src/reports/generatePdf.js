@@ -34,8 +34,8 @@ import { indirectCostMethodLabels } from '../state/initialState.js';
             if (!productData) {
                 return {
                     name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note,
-                    "Coût matière (%)": null, "Coût main-d'oeuvre (%)": null, "Coût frais indirects (%)": null, "Marge nette (%)": null,
-                    "Coût matière ($/u.)": null, "Coût main-d'oeuvre ($/u.)": null, "Coût de revient ($/u.)": null,
+                    "Coût matière (%)": null, "Coût main-d'œuvre (%)": null, "Coût frais indirects (%)": null, "Marge nette (%)": null,
+                    "Coût matière ($/u.)": null, "Coût main-d'œuvre ($/u.)": null, "Coût de revient ($/u.)": null,
                 };
             }
             return {
@@ -43,11 +43,11 @@ import { indirectCostMethodLabels } from '../state/initialState.js';
                 label: point.name,
                 note: point.note,
                 "Coût matière (%)": productData.costs.costMatierePercent * 100,
-                "Coût main-d'oeuvre (%)": productData.costs.costLaborPercent * 100,
+                "Coût main-d'œuvre (%)": productData.costs.costLaborPercent * 100,
                 "Coût frais indirects (%)": productData.costs.costIndirectPercent * 100,
                 "Marge nette (%)": productData.costs.margeNettePercent * 100,
                 "Coût matière ($/u.)": productData.costs.costMatierePerPortion,
-                "Coût main-d'oeuvre ($/u.)": productData.costs.costLaborPerPortion,
+                "Coût main-d'œuvre ($/u.)": productData.costs.costLaborPerPortion,
                 "Coût de revient ($/u.)": productData.costs.totalCostPerPortion,
             };
         });
@@ -809,7 +809,7 @@ export const generatePdf = (options, deps) => {
                     ['Ratio Coût Main-d\'œuvre', pct(costs.costLaborPercent)],
                     ['Coût de Revient par Portion', `${formatCurrency(costs.totalCostPerPortion)} $`],
                     ['Marge de contribution par Portion', `${formatCurrency(costs.margeContributionDollar)} $ (${pct(costs.margeContributionPercent)})`],
-                    ['Marge sur coût primaire par Portion', `${formatCurrency(costs.margeBruteDollar)} $ (${pct(costs.margeBrutePercent)})`],
+                    ['Marge brute par Portion', `${formatCurrency(costs.margeBruteDollar)} $ (${pct(costs.margeBrutePercent)})`],
                     ['Marge Nette par Portion', `${formatCurrency(costs.margeNetteDollar)} $ (${pct(costs.margeNettePercent)})`],
                 ];
 
@@ -1024,12 +1024,12 @@ export const generatePdf = (options, deps) => {
                             data: productKpiData,
                             lines: isPriced ? [
                                 { dataKey: "Coût matière (%)", color: "#10B981" },
-                                { dataKey: "Coût main-d'oeuvre (%)", color: "#F59E0B" },
+                                { dataKey: "Coût main-d'œuvre (%)", color: "#F59E0B" },
                                 { dataKey: "Coût frais indirects (%)", color: "#8B5CF6" },
                                 { dataKey: "Marge nette (%)", color: "#3B82F6" },
                             ] : [
                                 { dataKey: "Coût matière ($/u.)", color: "#10B981" },
-                                { dataKey: "Coût main-d'oeuvre ($/u.)", color: "#F59E0B" },
+                                { dataKey: "Coût main-d'œuvre ($/u.)", color: "#F59E0B" },
                                 { dataKey: "Coût de revient ($/u.)", color: "#3B82F6" },
                             ],
                             x: 14,
@@ -1060,7 +1060,7 @@ export const generatePdf = (options, deps) => {
 
             doc.autoTable({
                 startY: yPos,
-                head: [['Plat', 'Prix Vente ($)', 'Coût Total ($)', 'Marge Brute ($)', 'Marge Brute (%)', 'Marge Nette ($)', 'Marge Nette (%)']],
+                head: [['Plat', 'Prix Vente ($)', 'Coût Total ($)', 'Marge Brute ($)', 'Marge Brute (% prix)', 'Marge Nette ($)', 'Marge Nette (% prix)']],
                 body: summaryAnnexBody,
                 theme: 'striped',
                 headStyles: { fillColor: themeColors.secondary, fontStyle: 'bold', fontSize: 9 },

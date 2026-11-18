@@ -1,8 +1,8 @@
-// Phase 2.1 : nouvel onglet Packaging (catalogue miroir des ingrédients, sans impact sur le
+// Phase 2.1 : nouvel onglet Emballage (catalogue miroir des ingrédients, sans impact sur le
 // moteur de calcul à cette sous-étape — voir Projet_Claude/03-Feuille-de-route.md).
 import { test, expect } from '@playwright/test';
 
-test('onglet Packaging : ajouter, modifier, dupliquer et supprimer un emballage sans erreur', async ({ page }) => {
+test('onglet Emballage : ajouter, modifier, dupliquer et supprimer un emballage sans erreur', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });

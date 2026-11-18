@@ -4,7 +4,7 @@ import {
     PlusCircle, Settings, Package, TrendingUp,
 } from 'lucide-react';
 
-import { parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, sumAmountsMap } from './utils.js';
+import { todayLocalISO, parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, sumAmountsMap } from './utils.js';
 import {
     computeAnalysisData, buildActivityBuckets, computeBucketTotalsFromAmounts,
     computeDirectCostLineAllocations, computeExpenseLineEffectiveAllocations,
@@ -28,6 +28,7 @@ import { IngredientsTab } from './features/IngredientsTab.jsx';
 import { PackagingTab } from './features/PackagingTab.jsx';
 import { LaborDatabaseTab } from './features/LaborDatabaseTab.jsx';
 import { IncomeStatementTab } from './features/IncomeStatementTab.jsx';
+import { resetSessionMemory } from './ui-utils.jsx';
 
 // Code-splitting : ces vues/wizards sont chargés à la demande (chunks séparés). Cela sort du
 // bundle initial les dépendances lourdes qu'ils tirent — notamment recharts (SummaryTable, qui a
@@ -459,7 +460,7 @@ const App = () => {
                     purchasePrice: costs.totalCostPerPortion,
                     unitPrice: calculatedUnitPrice,
                     isRecipe: true,
-                    lastUpdated: new Date().toISOString().split('T')[0]
+                    lastUpdated: todayLocalISO()
                 };
             });
         return [...baseIngredients, ...recipeIngredients];
@@ -864,7 +865,9 @@ const App = () => {
         setEditingProductIndex(0);
         setActiveTab('info');
         setShowResetConfirm(false);
+        resetSessionMemory(); setProjectEpoch(e => e + 1);
         setIsProjectLoaded(true);
+        setBaselineTick(t => t + 1);
         // Affiche la modale d'onboarding pour un nouveau projet
         setShowOnboardingModal(true);
         showNotification({ message: "Le projet a été réinitialisé.", type: 'success' });
@@ -891,8 +894,33 @@ const App = () => {
         setEditingProductIndex(0);
         setActiveTab('info');
         showNotification({ message: "Projet d'exemple chargé avec succès !", type: 'success' }); // Appel corrigé
+        resetSessionMemory(); setProjectEpoch(e => e + 1);
         setIsProjectLoaded(true);
+        setBaselineTick(t => t + 1);
     };
+
+    // --- MODIFICATIONS NON SAUVEGARDÉES ---
+    // L'app n'a pas de sauvegarde automatique : le travail vit en mémoire jusqu'au clic sur
+    // « Sauvegarder ». On compare la sérialisation courante à celle prise au dernier
+    // chargement / enregistrement (baselineTick déclenche la prise de photo après que les
+    // nouveaux états ont été appliqués).
+    const currentProjectJson = useMemo(() => JSON.stringify(buildProjectData({
+        companyName, logoUrl, generalInfo, baseIngredients, basePackaging,
+        products, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings,
+    })), [companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings]);
+    const [savedProjectJson, setSavedProjectJson] = useState(null);
+    const [baselineTick, setBaselineTick] = useState(0);
+    useEffect(() => {
+        if (baselineTick > 0) setSavedProjectJson(currentProjectJson);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [baselineTick]);
+    const hasUnsavedChanges = isProjectLoaded && savedProjectJson !== null && currentProjectJson !== savedProjectJson;
+    useEffect(() => {
+        if (!hasUnsavedChanges) return undefined;
+        const handler = (e) => { e.preventDefault(); e.returnValue = ''; };
+        window.addEventListener('beforeunload', handler);
+        return () => window.removeEventListener('beforeunload', handler);
+    }, [hasUnsavedChanges]);
 
     const saveProject = () => {
         try {
@@ -902,6 +930,7 @@ const App = () => {
             });
 
             const jsonString = JSON.stringify(projectData, null, 2);
+            setSavedProjectJson(JSON.stringify(projectData));
             const blob = new Blob([jsonString], { type: 'application/json' });
             const href = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -918,7 +947,12 @@ const App = () => {
         }
     };
 
+    const [showOpenConfirm, setShowOpenConfirm] = useState(false);
+    // Change à chaque nouveau projet / ouverture / démo : force le remontage de l'onglet affiché pour
+    // que sa mémoire locale (filtres, sélection) reparte de zéro avec le nouveau projet.
+    const [projectEpoch, setProjectEpoch] = useState(0);
     const openProject = () => {
+        if (hasUnsavedChanges) { setShowOpenConfirm(true); return; }
         fileInputRef.current.click();
     };
 
@@ -952,7 +986,9 @@ const App = () => {
                 setEditingProductIndex(0);
                 setActiveTab('info');
                 showNotification({ message: 'Projet importé avec succès !', type: 'success' });
+                resetSessionMemory(); setProjectEpoch(e => e + 1);
                 setIsProjectLoaded(true);
+                setBaselineTick(t => t + 1);
             } catch (error) {
                 console.error("Erreur lors de la lecture du fichier JSON:", error);
                 showNotification("Erreur d'importation. Vérifiez le format du fichier.", 'error');
@@ -979,16 +1015,27 @@ const App = () => {
 
     const getTabClasses = (tabName) => `flex-1 py-4 px-1 flex items-center justify-center border-b-2 font-medium text-sm focus:outline-none transition duration-300 ease-in-out ${activeTab === tabName ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`;
     
+    // Deux blocs frères (et non un seul conteneur) : la barre d'onglets est « collante » (sticky) et
+    // ne peut l'être que par rapport à un parent aussi haut que la page — le conteneur d'App.
+    // L'en-tête (logo + boutons) défile normalement ; seule la barre reste en haut. Son
+    // espacement du dessous (mb-4) existe au repos seulement : barre collée, le contenu défile juste dessous
+    // (décision du 18/11 : l'interstice fixe sur fond de page n'était pas esthétique).
     const renderContent = () => (
-            <div className="w-full max-w-7xl mt-2 mb-4">
+            <>
+            <div className="w-full max-w-7xl mt-2">
                 <div className="flex justify-between items-end mb-4">
                     <img src="./Logo_RestoCalculateur3.png" alt="Resto Calculateur Logo" className="h-28 w-auto" />
-                    <div id="tutorial-main-functions" className="flex space-x-2">
+                    <div id="tutorial-main-functions" className="flex space-x-2 items-center">
+                        {hasUnsavedChanges && (
+                            <span data-testid="unsaved-indicator" title="Votre travail n'est conservé qu'en mémoire : cliquez sur « Sauvegarder » pour l'enregistrer dans un fichier." className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1 mr-1">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>Modifications non sauvegardées
+                            </span>
+                        )}
                         <button onClick={() => setShowInstructions(true)} title="Guide d'utilisation" className="inline-flex items-center p-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gray-200 hover:bg-gray-300">
                             <Info className="h-5 w-5" />
                         </button>
-                        <button onClick={() => setShowResetConfirm(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-500 hover:bg-green-600">
-                            <PlusCircle className="h-5 w-5 mr-2" /> Nouveau
+                        <button onClick={() => setShowResetConfirm(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                            <PlusCircle className="h-5 w-5 mr-2" /> Nouveau projet
                         </button>
                         <button onClick={saveProject} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
                             <Save className="h-5 w-5 mr-2" /> Sauvegarder
@@ -998,16 +1045,19 @@ const App = () => {
                         </button>
                     </div>
                 </div>
+            </div>
+            <div className="sticky top-0 z-30 w-full max-w-7xl mb-4">
                 <div id="tutorial-tab-bar" className="flex bg-white rounded-xl shadow-md overflow-hidden">
                     <button onClick={() => setActiveTab('info')} className={getTabClasses('info')}><Settings className="h-5 w-5 mr-2" /> Paramètres</button>
                     <button id="tab-ingredients" onClick={() => setActiveTab('ingredients')} className={getTabClasses('ingredients')}><ShoppingCart className="h-5 w-5 mr-2" /> Ingrédients</button>
-                    <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Packaging</button>
+                    <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Emballage</button>
                     <button id="tab-labor" onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
                     <button id="tab-income-statement" onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Table className="h-5 w-5 mr-2" /> État des résultats</button>
                     <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Production</button>
                     <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><TrendingUp className="h-5 w-5 mr-2" /> Rapport et suivi</button>
                 </div>
             </div>
+            </>
         );
 
         // Données et setters du projet, exposés via ProjectContext pour éviter de les faire
@@ -1017,6 +1067,7 @@ const App = () => {
         // ne change de référence que lorsque les données qu'il transporte changent réellement —
         // sans quoi tous les onglets se re-rendraient à chaque rendu de App, quelle qu'en soit la cause.
         const projectContextValue = useMemo(() => ({
+            goToTab: setActiveTab,
             companyName, onUpdateCompanyName: setCompanyName,
             logoUrl, onUpdateLogoUrl: setLogoUrl,
             generalInfo: calculatedGeneralInfo, onUpdateGeneralInfo: handleUpdateGeneralInfo,
@@ -1033,6 +1084,7 @@ const App = () => {
             directCostLines, onUpdateDirectCostLines: setDirectCostLines,
             repartitionKeys, onUpdateRepartitionKeys: setRepartitionKeys,
             analysisData,
+            uiSettings, setUiSettings,
             showNotification, setNotification,
         }), [
             companyName, setCompanyName, logoUrl, setLogoUrl,
@@ -1044,7 +1096,7 @@ const App = () => {
             activeUnits, setActiveUnits,
             expenseLines, handleUpdateExpenseLines, revenueLines, setRevenueLines,
             directCostLines, setDirectCostLines, repartitionKeys, setRepartitionKeys,
-            analysisData, showNotification, setNotification,
+            analysisData, uiSettings, setUiSettings, showNotification, setNotification,
         ]);
 
         const renderActiveTab = () => {
@@ -1153,6 +1205,14 @@ const App = () => {
                     >
                         Êtes-vous sûr de vouloir effacer toutes les données et commencer un nouveau projet ? Cette action est irréversible.
                     </ConfirmationModal>
+                    <ConfirmationModal
+                        isOpen={showOpenConfirm}
+                        onClose={() => setShowOpenConfirm(false)}
+                        onConfirm={() => { setShowOpenConfirm(false); fileInputRef.current.click(); }}
+                        title="Ouvrir un autre projet"
+                    >
+                        Vous avez des modifications non sauvegardées. Ouvrir un autre projet les remplacera. Voulez-vous continuer ?
+                    </ConfirmationModal>
 
                     <OnboardingModal
                         isOpen={showOnboardingModal}
@@ -1216,7 +1276,7 @@ const App = () => {
                                 sans emporter le reste de l'app ; changer d'onglet remonte le garde-fou. */}
                             <ErrorBoundary key={activeTab}>
                                 <Suspense fallback={<div className="w-full text-center py-16 text-gray-500">Chargement…</div>}>
-                                    {renderActiveTab()}
+                                    <React.Fragment key={projectEpoch}>{renderActiveTab()}</React.Fragment>
                                 </Suspense>
                             </ErrorBoundary>
                             <footer className="w-full text-center py-4 mt-8 text-gray-500 text-sm">

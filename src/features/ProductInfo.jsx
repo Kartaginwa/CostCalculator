@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { ArrowUpDown, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
-import { parseLocaleNumber, isValidNumber, isValidPositiveNumber, isValidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
+import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
+import { ArrowDownAZ, ArrowDownZA, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
+import { unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveNumber, isInvalidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal, UnitsModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeNetPriceFromPds } from '../engine/salesChannelCascade.js';
@@ -14,10 +15,11 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     } = useProject();
 
     const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
-    const [filterName, setFilterName] = useState('');
-    const [filterCategory, setFilterCategory] = useState('all');
-    const [filterActivity, setFilterActivity] = useState('all');
-    const [sortConfig, setSortConfig] = useState({ key: 'platName', direction: 'ascending' });
+    const [isNameTouched, touchName] = useTouched();
+    const [filterName, setFilterName] = useSessionState('info.filterName', '');
+    const [filterCategory, setFilterCategory] = useSessionState('info.filterCategory', 'all');
+    const [filterActivity, setFilterActivity] = useSessionState('info.filterActivity', 'all');
+    const [sortConfig, setSortConfig] = useSessionState('info.sortConfig', { key: 'platName', direction: 'ascending' });
     const [currentPage, setCurrentPage] = useState(1);
     // Phase 3.2 : détail "prix par canal" repliable par format — évite d'alourdir le tableau
     // Produits et SKUs quand on n'a pas besoin de voir ce détail (voir discussion méthodologique).
@@ -33,7 +35,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     // écran — volontairement PAS partagé avec `editingProductIndex`/`editingFormatIndex` d'App.jsx
     // (qui pilotent l'onglet Recette & Calcul ; les réutiliser ici créerait un couplage surprenant
     // entre les deux onglets, l'un n'ayant pas à changer ce que l'autre affiche).
-    const [selectedProductId, setSelectedProductId] = useState(null);
+    const [selectedProductId, setSelectedProductId] = useSessionState('info.selectedProductId', null);
     // Sur petit écran, les deux colonnes ne peuvent pas être côte à côte : bascule entre la liste
     // et le détail. Ignoré à partir du breakpoint md (les deux restent toujours visibles).
     const [mobileShowDetail, setMobileShowDetail] = useState(false);
@@ -88,21 +90,6 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         return filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
     }, [filteredAndSortedProducts, currentPage, itemsPerPage]);
 
-    const requestSort = (key) => {
-        let direction = 'ascending';
-        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-            direction = 'descending';
-        }
-        setSortConfig({ key, direction });
-    };
-
-    const getSortIcon = (key) => {
-        if (sortConfig.key !== key) {
-            return <ArrowUpDown size={14} className="ml-2 text-gray-400" />;
-        }
-        return sortConfig.direction === 'ascending' ? '▲' : '▼';
-    };
-
     useEffect(() => {
         // Revient à la page 1 si on change les filtres
         setCurrentPage(1);
@@ -142,6 +129,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
 
     const handleAddItem = () => {
         onNewProduct();
+        focusSoon('#product-detail-pane input[type="text"]', 250);
     };
 
     const selectedProductIndex = products.findIndex(p => p.id === selectedProductId);
@@ -163,6 +151,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     const handleAddActivity = () => {
         const newActivity = { id: `act_${Date.now()}_${Math.random()}`, name: '', indirectCostDriver: 'directCost' };
         onUpdateProductionActivities([...productionActivities, newActivity]);
+        focusSoon(`[id="activity-name-${newActivity.id}"]`);
     };
 
     const handleActivityNameChange = (id, name) => {
@@ -195,6 +184,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     const handleAddChannel = () => {
         const newChannel = { id: `channel_${Date.now()}_${Math.random()}`, name: '', links: [] };
         onUpdateSalesChannels([...salesChannels, newChannel]);
+        focusSoon(`[id="channel-name-${newChannel.id}"]`);
     };
 
     const handleChannelNameChange = (channelId, name) => {
@@ -291,7 +281,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             <h1 className="text-3xl font-bold text-gray-800">Paramètres</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div id="tutorial-section-info-entreprise" className="p-4 bg-gray-100 rounded-lg">
-                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Informations sur l'entreprise</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Informations sur l'entreprise</h2>
                     <div>
                         <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">Nom de l'entreprise</label>
                         <input type="text" id="tutorial-company-name" value={companyName} onChange={(e) => onUpdateCompanyName(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" />
@@ -314,31 +304,31 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 </div>
 
                 <div id="tutorial-section-info-objectifs" className="p-4 bg-gray-100 rounded-lg">
-                    <h2 className="text-2xl font-semibold mb-4 text-gray-800">Objectifs stratégiques</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Objectifs stratégiques</h2>
                     <div className="grid grid-cols-1 gap-4">
                         <div>
                             <label htmlFor="foodCostTarget" className="flex items-center text-sm font-medium text-gray-700">
                                 Objectif coût matière (%)
                                 <Tooltip text="Le pourcentage maximum du prix de vente que le coût des ingrédients devrait représenter." />
                             </label>
-                            <input type="text" inputMode="decimal" id="foodCostTarget" value={generalInfo.foodCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('foodCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.foodCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
-                            {!isValidPercentage(generalInfo.foodCostTarget) && <ValidationMessage message="Doit être un %." />}
+                            <input type="text" inputMode="decimal" id="foodCostTarget" value={generalInfo.foodCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('foodCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.foodCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
+                            {isInvalidPercentage(generalInfo.foodCostTarget) && <ValidationMessage message="Doit être un %." />}
                         </div>
                         <div>
                             <label htmlFor="packagingCostTarget" className="flex items-center text-sm font-medium text-gray-700">
                                 Objectif coût d'emballage (%)
                                 <Tooltip text="Le pourcentage maximum du prix de vente que le coût d'emballage devrait représenter." />
                             </label>
-                            <input type="text" inputMode="decimal" id="packagingCostTarget" value={generalInfo.packagingCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('packagingCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.packagingCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
-                            {!isValidPercentage(generalInfo.packagingCostTarget) && <ValidationMessage message="Doit être un %." />}
+                            <input type="text" inputMode="decimal" id="packagingCostTarget" value={generalInfo.packagingCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('packagingCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.packagingCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
+                            {isInvalidPercentage(generalInfo.packagingCostTarget) && <ValidationMessage message="Doit être un %." />}
                         </div>
                         <div>
                             <label htmlFor="laborCostTarget" className="flex items-center text-sm font-medium text-gray-700">
-                                Objectif coût main-d'oeuvre (%)
-                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût de la main-d'oeuvre devrait représenter." />
+                                Objectif coût main-d'œuvre (%)
+                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût de la main-d'œuvre devrait représenter." />
                             </label>
-                            <input type="text" inputMode="decimal" id="laborCostTarget" value={generalInfo.laborCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('laborCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${!isValidPercentage(generalInfo.laborCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
-                            {!isValidPercentage(generalInfo.laborCostTarget) && <ValidationMessage message="Doit être un %." />}
+                            <input type="text" inputMode="decimal" id="laborCostTarget" value={generalInfo.laborCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('laborCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.laborCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
+                            {isInvalidPercentage(generalInfo.laborCostTarget) && <ValidationMessage message="Doit être un %." />}
                         </div>
                     </div>
                 </div>
@@ -346,10 +336,10 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
 
             <div className="p-4 bg-gray-100 rounded-lg flex justify-between items-center">
                 <div>
-                    <h2 className="text-lg font-semibold text-gray-800">Unités de mesure</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">Unités de mesure</h2>
                     <p className="text-sm text-gray-600">Choisissez les unités offertes dans les listes déroulantes (ingrédients, emballages, formats).</p>
                 </div>
-                <button onClick={() => setIsUnitsModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-500 hover:bg-green-600 whitespace-nowrap">
+                <button onClick={() => setIsUnitsModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
                     Gérer les unités de mesure
                 </button>
             </div>
@@ -357,7 +347,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
 
             <div id="tutorial-section-info-activites" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Activités de production
                         <Tooltip text="Une activité de production regroupe les produits qui partagent un même procédé de fabrication (ex. Confitures, Produits séchés). Son coefficient d'imputation des charges indirectes (CICI) — le driver utilisé pour répartir ses frais indirects — se choisit dans État des résultats, pas ici." />
                     </h2>
@@ -373,7 +363,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 value={activity.name}
                                 onChange={(e) => handleActivityNameChange(activity.id, e.target.value)}
                                 placeholder="Nom de l'activité de production"
-                                className={`flex-1 p-1 border rounded ${!isNotEmpty(activity.name) ? 'border-red-500' : 'border-gray-300'}`}
+                                id={`activity-name-${activity.id}`} onBlur={() => touchName(activity.id)} className={`flex-1 p-1 border rounded ${!isNotEmpty(activity.name) && isNameTouched(activity.id) ? 'border-red-500' : 'border-gray-300'}`}
                             />
                             <button onClick={() => handleRemoveActivity(activity.id)} title="Supprimer l'activité de production" className="text-red-500 hover:text-red-700 p-1 rounded-full">
                                 <Trash2 size={20} />
@@ -385,9 +375,9 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
 
             <div id="tutorial-section-info-channels" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Canaux de vente
-                        <Tooltip text="Un canal de vente est une chaîne de mise en marché (ex. vente directe, grande distribution via un courtier et un distributeur). Chaque maillon applique une marge ou un markup sur le prix du maillon précédent, jusqu'au prix de vente suggéré au consommateur. Le rattachement d'un format de vente à un canal, avec son prix net, se fait dans Produits et SKUs ci-dessous." />
+                        <Tooltip text="Un canal de vente est une chaîne de mise en marché (ex. vente directe, grande distribution via un courtier et un distributeur). Chaque maillon applique une marge ou une majoration sur le prix du maillon précédent, jusqu'au prix de vente suggéré au consommateur. Le rattachement d'un format de vente à un canal, avec son prix net, se fait dans Produits et SKUs ci-dessous." />
                     </h2>
                     <button onClick={handleAddChannel} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                         <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un canal
@@ -402,7 +392,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                     value={channel.name}
                                     onChange={(e) => handleChannelNameChange(channel.id, e.target.value)}
                                     placeholder="Nom du canal (ex. Vente directe à la ferme)"
-                                    className={`flex-1 p-1 border rounded font-medium ${!isNotEmpty(channel.name) ? 'border-red-500' : 'border-gray-300'}`}
+                                    id={`channel-name-${channel.id}`} onBlur={() => touchName(channel.id)} className={`flex-1 p-1 border rounded font-medium ${!isNotEmpty(channel.name) && isNameTouched(channel.id) ? 'border-red-500' : 'border-gray-300'}`}
                                 />
                                 <button onClick={() => handleRemoveChannel(channel.id)} title="Supprimer le circuit de vente" className="text-red-500 hover:text-red-700 p-1 rounded-full">
                                     <Trash2 size={20} />
@@ -432,18 +422,18 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
 
             <div id="tutorial-section-info-menu" className="p-4 bg-gray-100 rounded-lg">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-                    <h2 className="text-2xl font-semibold text-gray-800">Produits et SKUs</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">Produits et SKUs</h2>
                     <div className="flex flex-wrap items-center gap-2">
                         <button onClick={onOpenSalesImport} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700">
                             <Upload className="h-5 w-5 mr-2" /> Importer un rapport de ventes
                         </button>
                         <button id="tutorial-add-item" onClick={handleAddItem} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                            Ajouter un item
+                            <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un item
                         </button>
                     </div>
                 </div>
                 
-                {allRows.length > 0 && Math.round(totalSalesMix) !== 100 && (
+                {allRows.length > 0 && totalSalesMix > 0 && Math.round(totalSalesMix) !== 100 && (
                     <div className="p-3 mb-4 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm flex items-center justify-center">
                         <AlertTriangle className="inline h-4 w-4 mr-2"/>
                         Attention : Le total de votre mix des ventes est de {totalSalesMix.toFixed(1)}%. Pour une analyse précise, il devrait être de 100%.
@@ -497,13 +487,22 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 </select>
                             </div>
                             <div className="flex items-center flex-wrap gap-x-3 gap-y-1 px-1">
-                                <button onClick={() => requestSort('platName')} className="flex items-center text-xs font-medium text-gray-500 uppercase">Trier par nom {getSortIcon('platName')}</button>
-                                <button onClick={() => requestSort('category')} className="flex items-center text-xs font-medium text-gray-500 uppercase">Trier par catégorie {getSortIcon('category')}</button>
+                                <span className="text-xs text-gray-500 mr-1">Tri par nom</span>
+                                {[['ascending', 'A → Z', ArrowDownAZ], ['descending', 'Z → A', ArrowDownZA]].map(([dir, label, Icon]) => {
+                                    const active = sortConfig.key === 'platName' && sortConfig.direction === dir;
+                                    return (
+                                        <button key={dir} type="button" title={label} aria-label={`Trier par nom, ${label}`} aria-pressed={active}
+                                            onClick={() => setSortConfig({ key: 'platName', direction: dir })}
+                                            className={`w-8 h-8 inline-flex items-center justify-center rounded border ${active ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100'}`}>
+                                            <Icon size={16} />
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
                         <div className="flex-1 min-h-0 overflow-y-auto space-y-1 border border-gray-200 rounded-lg bg-white p-2">
-                            {displayedProducts.length === 0 && (
+                            {displayedProducts.length === 0 && products.length > 0 && (
                                 <p className="text-sm text-gray-500 p-2">Aucun produit ne correspond à ces filtres.</p>
                             )}
                             {displayedProducts.map(({ product }) => {
@@ -517,7 +516,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                         className={`w-full text-left px-3 py-2 rounded-md border-l-4 transition-colors ${isSelected ? 'bg-blue-50 border-blue-500' : 'border-transparent hover:bg-gray-50'}`}
                                     >
                                         <div className={`font-medium truncate ${!isNotEmpty(product.platName) ? 'text-red-600' : 'text-gray-800'}`}>
-                                            {product.platName || 'Sans nom'}
+                                            {product.platName || unnamedLabel(products.findIndex(p => p.id === product.id))}
                                         </div>
                                         <div className="text-xs text-gray-500 truncate">
                                             {product.category || 'Sans catégorie'} · {formatCount} format{formatCount > 1 ? 's' : ''}
@@ -565,8 +564,8 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                 <div className="flex items-start gap-3">
                                     <div className="flex-1 min-w-0">
                                         <label className="block text-xs font-medium text-gray-500 uppercase">Nom du plat</label>
-                                        <input type="text" value={product.platName || ''} onChange={(e) => handleProductValueChange(productIndex, 'platName', e.target.value)} className={`mt-1 w-full p-1.5 border rounded font-semibold ${!isNotEmpty(product.platName) ? 'border-red-500' : 'border-gray-300'}`} />
-                                        {!isNotEmpty(product.platName) && <ValidationMessage message="Requis." />}
+                                        <input type="text" value={product.platName || ''} onChange={(e) => handleProductValueChange(productIndex, 'platName', e.target.value)} onBlur={() => touchName(product.id)} placeholder="Nom du produit" className={`mt-1 w-full p-1.5 border rounded font-semibold ${!isNotEmpty(product.platName) && isNameTouched(product.id) ? 'border-red-500' : 'border-gray-300'}`} />
+                                        {!isNotEmpty(product.platName) && isNameTouched(product.id) && <ValidationMessage message="Requis." />}
                                     </div>
                                     <div className="flex items-center gap-1 pt-5 flex-shrink-0">
                                         <button onClick={() => onDuplicateProduct(productIndex)} title="Dupliquer le plat" className="text-indigo-500 hover:text-indigo-700 p-1.5 rounded-full hover:bg-indigo-50"><Layers size={18}/></button>
@@ -615,32 +614,32 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 Format
                                                 <Tooltip text="L'emballage et la quantité de ce format de vente (ex. 250 ml, 1 kg). Un produit peut avoir plusieurs formats — un pot de 250 ml et un pot de 500 ml, par exemple — chacun avec sa propre fiche recette, son propre prix et mix des ventes." />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 SKU
                                                 <Tooltip text="Numéro de référence de ce format, déduit automatiquement de la recette et du format (librement modifiable)." />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 PDS ($)
                                                 <Tooltip text="Prix de détail suggéré au consommateur pour ce format — saisi manuellement, une seule valeur pour tous les canaux (le prix tablette visé ne varie généralement pas par canal, contrairement au prix net producteur). Sert à générer le prix net de chaque canal via le bouton « Générer » (section Canaux de vente ci-dessous), qui redescend la cascade de maillons de ce canal à partir de ce prix." />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 Canaux
                                                 <Tooltip text="Le prix net et le volume de ce format diffèrent selon le canal (vente directe, distributeur...). Un format n'est pas forcément vendu dans tous les canaux — ex. un grand format réservé à la restauration. Le premier canal de la liste détermine le prix utilisé ailleurs dans l'app (marge, rapports) en attendant que ces écrans deviennent eux-mêmes multi-canal." />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Mix (%)</th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Menu</th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Mix (%)</th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Menu</th>
                                         <th className="relative px-2 py-2"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
@@ -684,10 +683,10 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                             </td>
                                             <td className="px-2 py-2">
                                                 <div className="flex items-center gap-1">
-                                                    <input type="text" inputMode="decimal" value={format.salesMix || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'salesMix', e.target.value)} disabled={!format.onMenu || isSalesMixAuto} className={`w-16 p-1 border rounded text-right text-sm ${!isValidPercentage(format.salesMix) ? 'border-red-500' : 'border-gray-300'} ${!format.onMenu || isSalesMixAuto ? 'bg-gray-100' : ''}`} />
+                                                    <input type="text" inputMode="decimal" value={format.salesMix || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'salesMix', e.target.value)} disabled={!format.onMenu || isSalesMixAuto} className={`w-16 p-1 border rounded text-right text-sm ${isInvalidPercentage(format.salesMix) ? 'border-red-500' : 'border-gray-300'} ${!format.onMenu || isSalesMixAuto ? 'bg-gray-100' : ''}`} />
                                                     {isSalesMixAuto && <Tooltip text="Calculé automatiquement à partir des unités vendues saisies pour ce format (onglet Canaux de vente ci-dessus) — plus précis qu'un % tapé à la main. Pour reprendre la main sur ce %, retirez toutes les unités saisies pour ce format." />}
                                                 </div>
-                                                {!isValidPercentage(format.salesMix) && <ValidationMessage message="Doit être un %." />}
+                                                {isInvalidPercentage(format.salesMix) && <ValidationMessage message="Doit être un %." />}
                                             </td>
                                             <td className="px-2 py-2 text-center">
                                                 <input type="checkbox" checked={format.onMenu} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'onMenu', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"/>
@@ -771,7 +770,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                         />
                                                                     </div>
                                                                     {channel?.links?.length > 0 && (
-                                                                        <Tooltip text={`Cascade de ce canal : ${channel.links.map(l => `${l.name || '(sans nom)'} ${l.type === 'markup' ? 'markup' : 'marge'} ${l.percent || 0}%`).join(' → ')}.`} />
+                                                                        <Tooltip text={`Cascade de ce canal : ${channel.links.map(l => `${l.name || '(sans nom)'} ${l.type === 'markup' ? 'majoration' : 'marge'} ${l.percent || 0}%`).join(' → ')}.`} />
                                                                     )}
                                                                     <button onClick={() => handleRemoveChannelPrice(productIndex, formatIndex, format, cp.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={14} /></button>
                                                                 </div>

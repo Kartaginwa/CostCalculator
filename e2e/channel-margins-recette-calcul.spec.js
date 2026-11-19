@@ -47,13 +47,13 @@ test('Recette & Calcul : le récapitulatif reflète le canal sélectionné, sans
 
     await expect(recap.getByText('Marge Nette')).toHaveCount(0);
     await expect(recap.getByText('Prix de Vente')).toBeVisible();
-    await expect(recap.getByText('20.00 $').first()).toBeVisible();
+    await expect(recap.getByText('20,00 $').first()).toBeVisible();
 
     // Bascule vers le 2e canal : prix net et marges passent à 15 $.
     await recap.locator('select').first().selectOption({ label: 'Grande distribution' });
     await page.waitForTimeout(300);
-    await expect(recap.getByText('20.00 $')).toHaveCount(0);
-    await expect(recap.getByText('15.00 $').first()).toBeVisible();
+    await expect(recap.getByText('20,00 $')).toHaveCount(0);
+    await expect(recap.getByText('15,00 $').first()).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

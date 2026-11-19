@@ -1,7 +1,7 @@
 // Vérifications de cohérence du projet (Phase 7, 18/11) : regroupe à un seul endroit des problèmes
 // de données qui, autrement, n'apparaissent que dans l'onglet concerné. Fonction pure — aucune
 // donnée n'est modifiée ; chaque constat dit où aller pour le corriger (`tab`).
-import { parseLocaleNumber, isNotEmpty } from '../utils.js';
+import { parseLocaleNumber, isNotEmpty, formatNumber } from '../utils.js';
 
 const STALE_DAYS = 30;
 
@@ -21,7 +21,7 @@ export function computeProjectChecks({ products = [], baseIngredients = [], base
         !(parseLocaleNumber(f.prixVente) > 0) && !(f.channelPrices || []).some(cp => parseLocaleNumber(cp.netPrice) > 0));
     if (noPrice.length > 0) {
         checks.push({ id: 'no-sale-price', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
-            message: `${noPrice.length} SKU${noPrice.length > 1 ? 's' : ''} au menu sans prix de vente : leurs marges ne peuvent pas être calculées.` });
+            message: `${noPrice.length} SKU${noPrice.length > 1 ? 's' : ''} actif${noPrice.length > 1 ? 's' : ''} sans prix de vente : leurs marges ne peuvent pas être calculées.` });
     }
 
     if (menuFormats.length > 0) {
@@ -29,8 +29,8 @@ export function computeProjectChecks({ products = [], baseIngredients = [], base
         if (Math.round(totalMix) !== 100) {
             checks.push({ id: 'sales-mix', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
                 message: totalMix > 0
-                    ? `Le mix des ventes des SKUs au menu totalise ${totalMix.toFixed(1)} % au lieu de 100 % : les moyennes pondérées sont faussées.`
-                    : 'Le mix des ventes des SKUs au menu n\'est pas renseigné : les moyennes pondérées ne sont pas fiables.' });
+                    ? `La répartition des ventes des SKUs actifs totalise ${formatNumber(totalMix, 1)} % au lieu de 100 % : les moyennes pondérées sont faussées.`
+                    : 'La répartition des ventes des SKUs actifs n\'est pas renseignée : les moyennes pondérées ne sont pas fiables.' });
         }
     }
 

@@ -49,11 +49,11 @@ test("Simulateur de chocs : portées 'par format'/'par activité' et tableaux d'
     const activityTable = page.locator('p', { hasText: 'Impact par activité de production' }).locator('xpath=following-sibling::table');
     const readDelta = async (rowLocator) => {
         const text = await rowLocator.locator('td').nth(2).innerText();
-        const [before, after] = text.split('→').map(s => parseFloat(s.trim().replace('%', '')));
+        const [before, after] = text.split('→').map(s => parseFloat(s.trim().replace('%', '').replace(',', '.')));
         return after - before;
     };
     const saucesDelta = await readDelta(activityTable.locator('tr', { hasText: 'Sauces et accompagnements' }));
-    const platsDelta = await readDelta(activityTable.locator('tr', { hasText: 'Plats principaux surgelés' }));
+    const platsDelta = await readDelta(activityTable.locator('tr', { hasText: 'Mets principaux surgelés' }));
     expect(saucesDelta).toBeGreaterThan(0);
     expect(saucesDelta).toBeGreaterThan(platsDelta);
 

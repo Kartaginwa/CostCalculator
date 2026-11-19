@@ -18,7 +18,7 @@ test('dupliquer un produit du projet démo ne plante pas et crée une copie', as
     const detailPane = menuSection.locator('#product-detail-pane');
     const firstRowName = await detailPane.locator('input[type="text"]').first().inputValue();
 
-    await detailPane.locator('button[title="Dupliquer le plat"]').click();
+    await detailPane.locator('button[title="Dupliquer le produit"]').click();
     await page.waitForTimeout(300);
 
     // Le duplicata est sélectionné automatiquement : son détail s'affiche directement dans le
@@ -47,7 +47,7 @@ test('le SKU d\'un produit dupliqué se régénère au renommage de la copie', a
     // Vue maître-détail (refonte du 19/10) : sélectionne le produit dans la liste de gauche.
     await menuSection.getByText('Saumon teriyaki, riz et légumes', { exact: true }).click();
     const detailPane = menuSection.locator('#product-detail-pane');
-    await detailPane.locator('button[title="Dupliquer le plat"]').click();
+    await detailPane.locator('button[title="Dupliquer le produit"]').click();
     await page.waitForTimeout(300);
 
     // Le duplicata est sélectionné automatiquement (plus besoin de le retrouver dans la liste par

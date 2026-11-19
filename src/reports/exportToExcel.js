@@ -60,14 +60,14 @@ export const exportToExcel = (deps) => {
                     // année retiré, voir IncomeStatementTab.jsx) : une seule plage de dates.
                     ["Période:", `${generalInfo.startDate} au ${generalInfo.endDate}`],
                     ["Frais Indirects Totaux:", { t: 'n', v: Number(calculatedGeneralInfo.totalIndirects), z: currencyFormat }],
-                    ["Coût M-O Cuisine:", { t: 'n', v: Number(calculatedGeneralInfo.totalKitchenLaborCost), z: currencyFormat }],
+                    ["Coût main-d'œuvre de production:", { t: 'n', v: Number(calculatedGeneralInfo.totalKitchenLaborCost), z: currencyFormat }],
                     [],
                     ["Indicateurs Clés de Performance (KPIs) Globaux"],
                     ["Coût Matière Moyen Pondéré:", { t: 'n', v: Number(weightedMaterialCost), z: percentFormat }],
                     ["Coût Emballage Moyen Pondéré:", { t: 'n', v: Number(weightedPackagingCost), z: percentFormat }],
                     ["Coût Main-d'œuvre Moyen Pondéré:", { t: 'n', v: Number(weightedLaborCost), z: percentFormat }],
                     ["Marge Brute Moyenne Pondérée:", { t: 'n', v: Number(weightedGrossMargin), z: percentFormat }],
-                    ["Point Mort du Menu:", { t: 'n', v: Number(globalBreakEven), z: currencyFormat }],
+                    ["Point Mort des Produits Actifs:", { t: 'n', v: Number(globalBreakEven), z: currencyFormat }],
                 ];
                 const ws_dashboard = XLSX.utils.aoa_to_sheet(ws_dashboard_data);
                 
@@ -84,16 +84,16 @@ export const exportToExcel = (deps) => {
                 // analysisData.js (Phase 1.6) ; les coûts y sont déjà calculés pour le format
                 // exact de chaque ligne, inutile de les recalculer ici.
                 const summaryHeaders = [
-                    'Plat', 'Catégorie', 'Prix Vente', 'Coût Total', 'Coût Matière (%)', 'Coût Emballage (%)',
+                    'Produit', 'Catégorie', 'Prix Vente', 'Coût Total', 'Coût Matière (%)', 'Coût Emballage (%)',
                     'Coût Main-d\'œuvre (%)', 'Coût Indirects (%)', 'Marge Brute ($)',
-                    'Marge Brute (% du prix)', 'Marge Nette ($)', 'Marge Nette (% du prix)', 'Mix Ventes'
+                    'Marge Brute (% du prix)', 'Marge Nette ($)', 'Marge Nette (% du prix)', 'Part des ventes'
                 ];
                 const summarySheetData = [summaryHeaders.map(h => ({ v: h, s: headerStyle }))];
 
                 productsWithCosts.forEach(product => {
                     const costs = product.costs;
                     summarySheetData.push([
-                        product.displayName || `Plat Inconnu`,
+                        product.displayName || `Produit inconnu`,
                         product.category || '',
                         { t: 'n', v: Number(parseLocaleNumber(product.prixVente)), z: currencyFormat },
                         { t: 'n', v: Number(costs.totalCostPerPortion), z: currencyFormat },

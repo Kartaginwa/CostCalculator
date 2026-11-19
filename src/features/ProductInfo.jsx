@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowDownAZ, ArrowDownZA, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
-import { unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveNumber, isInvalidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
+import { unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveNumber, isInvalidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits, formatNumber } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal, UnitsModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeNetPriceFromPds } from '../engine/salesChannelCascade.js';
@@ -40,6 +40,8 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     // et le détail. Ignoré à partir du breakpoint md (les deux restent toujours visibles).
     const [mobileShowDetail, setMobileShowDetail] = useState(false);
     const prevProductIdsRef = useRef(new Set(products.map(p => p.id)));
+    const logoInputRef = useRef(null);
+    const [logoFileName, setLogoFileName] = useState('');
 
     const uniqueCategories = useMemo(() => ['all', ...new Set(products.map(p => p.category).filter(Boolean))], [products]);
     // Options du sélecteur de catégorie par produit (voir plus bas), sous la forme attendue par
@@ -51,7 +53,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         [uniqueCategories]
     );
 
-    // Toutes les paires {produit, format}, pour l'avertissement global de mix des ventes
+    // Toutes les paires {produit, format}, pour l'avertissement global de répartition des ventes
     // (calculé sur l'ensemble du menu, indépendamment des filtres/pagination affichés).
     const allRows = useMemo(() => products.flatMap((product, productIndex) =>
         (product.formats && product.formats.length > 0 ? product.formats : [null]).map((format, formatIndex) => ({
@@ -289,7 +291,11 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                     <div className="mt-4 grid grid-cols-1 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Importer un logo (fichier)</label>
-                            <input type="file" accept="image/*" onChange={handleLogoFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                            <input type="file" accept="image/*" ref={logoInputRef} onChange={(e) => { setLogoFileName(e.target.files[0] ? e.target.files[0].name : ''); handleLogoFileChange(e); }} className="hidden" data-testid="logo-file-input" />
+                            <div className="mt-1 flex items-center gap-3">
+                                <button type="button" onClick={() => logoInputRef.current && logoInputRef.current.click()} className="py-2 px-4 rounded-md text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100">Choisir un fichier</button>
+                                <span className="text-sm text-gray-500 truncate">{logoFileName || 'Aucun fichier choisi'}</span>
+                            </div>
                         </div>
                          <div>
                             <label className="block text-sm font-medium text-gray-700">Importer un logo (URL)</label>
@@ -339,7 +345,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                     <h2 className="text-2xl font-bold text-gray-800">Unités de mesure</h2>
                     <p className="text-sm text-gray-600">Choisissez les unités offertes dans les listes déroulantes (ingrédients, emballages, formats).</p>
                 </div>
-                <button onClick={() => setIsUnitsModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
+                <button onClick={() => setIsUnitsModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
                     Gérer les unités de mesure
                 </button>
             </div>
@@ -351,8 +357,8 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         Activités de production
                         <Tooltip tip="param.activites" />
                     </h2>
-                    <button onClick={handleAddActivity} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                        <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une activité
+                    <button onClick={handleAddActivity} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                        <PlusCircle className="h-4 w-4 mr-2" /> Ajouter une activité
                     </button>
                 </div>
                 <div className="space-y-2">
@@ -379,8 +385,8 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         Canaux de vente
                         <Tooltip tip="param.canaux" />
                     </h2>
-                    <button onClick={handleAddChannel} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                        <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un canal
+                    <button onClick={handleAddChannel} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                        <PlusCircle className="h-4 w-4 mr-2" /> Ajouter un canal
                     </button>
                 </div>
                 <div className="space-y-3">
@@ -424,11 +430,11 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
                     <h2 className="text-2xl font-bold text-gray-800">Produits et SKUs</h2>
                     <div className="flex flex-wrap items-center gap-2">
-                        <button onClick={onOpenSalesImport} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700">
-                            <Upload className="h-5 w-5 mr-2" /> Importer un rapport de ventes
+                        <button onClick={onOpenSalesImport} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700">
+                            <Upload className="h-4 w-4 mr-2" /> Importer un rapport de ventes
                         </button>
-                        <button id="tutorial-add-item" onClick={handleAddItem} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                            <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un item
+                        <button id="tutorial-add-item" onClick={handleAddItem} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                            <PlusCircle className="h-4 w-4 mr-2" /> Ajouter un item
                         </button>
                     </div>
                 </div>
@@ -436,7 +442,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 {allRows.length > 0 && totalSalesMix > 0 && Math.round(totalSalesMix) !== 100 && (
                     <div className="p-3 mb-4 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm flex items-center justify-center">
                         <AlertTriangle className="inline h-4 w-4 mr-2"/>
-                        Attention : Le total de votre mix des ventes est de {totalSalesMix.toFixed(1)}%. Pour une analyse précise, il devrait être de 100%.
+                        Attention : Le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}%. Pour une analyse précise, il devrait être de 100%.
                     </div>
                 )}
 
@@ -456,7 +462,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                     value={filterName}
                                     onChange={e => setFilterName(e.target.value)}
                                     className="block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm"
-                                    placeholder="Rechercher un plat..."
+                                    placeholder="Rechercher un produit..."
                                 />
                             </div>
                             <div>
@@ -556,20 +562,20 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                             return (
                         <div id="product-detail-pane" className="border border-gray-200 rounded-lg overflow-hidden bg-white">
                             <div className="bg-gray-50 p-3 border-b border-gray-200">
-                                {/* Nom du plat sur sa propre ligne, pleine largeur (jamais cramé par
+                                {/* Nom du produit sur sa propre ligne, pleine largeur (jamais cramé par
                                     les deux autres champs) ; actions alignées à droite. Activité et
                                     catégorie en-dessous, sur une grille responsive — se replient
                                     proprement à 1 colonne plutôt que de tronquer leur contenu
                                     (select natif, Combobox) dans une colonne de détail étroite. */}
                                 <div className="flex items-start gap-3">
                                     <div className="flex-1 min-w-0">
-                                        <label className="block text-xs font-medium text-gray-500 uppercase">Nom du plat</label>
+                                        <label className="block text-xs font-medium text-gray-500 uppercase">Nom du produit</label>
                                         <input type="text" value={product.platName || ''} onChange={(e) => handleProductValueChange(productIndex, 'platName', e.target.value)} onBlur={() => touchName(product.id)} placeholder="Nom du produit" className={`mt-1 w-full p-1.5 border rounded font-semibold ${!isNotEmpty(product.platName) && isNameTouched(product.id) ? 'border-red-500' : 'border-gray-300'}`} />
                                         {!isNotEmpty(product.platName) && isNameTouched(product.id) && <ValidationMessage message="Requis." />}
                                     </div>
                                     <div className="flex items-center gap-1 pt-5 flex-shrink-0">
-                                        <button onClick={() => onDuplicateProduct(productIndex)} title="Dupliquer le plat" className="text-indigo-500 hover:text-indigo-700 p-1.5 rounded-full hover:bg-indigo-50"><Layers size={18}/></button>
-                                        <button onClick={() => onDeleteProduct(productIndex)} title="Supprimer le plat (tous ses formats)" className="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100"><Trash2 size={18}/></button>
+                                        <button onClick={() => onDuplicateProduct(productIndex)} title="Dupliquer le produit" className="text-indigo-500 hover:text-indigo-700 p-1.5 rounded-full hover:bg-indigo-50"><Layers size={18}/></button>
+                                        <button onClick={() => onDeleteProduct(productIndex)} title="Supprimer le produit (tous ses formats)" className="text-gray-500 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100"><Trash2 size={18}/></button>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
@@ -638,8 +644,8 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                 <Tooltip tip="param.canauxFormat" />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Mix (%)</th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Menu</th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Part des ventes (%)</th>
+                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Actif</th>
                                         <th className="relative px-2 py-2"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
@@ -694,7 +700,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                             <td className="px-2 py-2 text-center">
                                                 <div className="flex items-center justify-center gap-0.5">
                                                     <button onClick={() => onDuplicateFormat(productIndex, formatIndex)} title="Dupliquer ce format" className="text-blue-500 hover:text-blue-700 p-1 rounded-full"><Copy size={14}/></button>
-                                                    <button onClick={() => onDeleteFormat(productIndex, formatIndex)} title={isOnlyFormat ? "Supprimer le plat" : "Supprimer ce format"} className="text-red-500 hover:text-red-700 p-1 rounded-full"><Trash2 size={14}/></button>
+                                                    <button onClick={() => onDeleteFormat(productIndex, formatIndex)} title={isOnlyFormat ? "Supprimer le produit" : "Supprimer ce format"} className="text-red-500 hover:text-red-700 p-1 rounded-full"><Trash2 size={14}/></button>
                                                 </div>
                                             </td>
                                         </tr>

@@ -35,7 +35,8 @@ for (const [screen, strings] of Object.entries(DEMO_SCREEN_CHECKS)) {
         await SCREENS[screen](page);
         await page.waitForTimeout(500);
         const text = await page.evaluate(() => document.body.innerText);
-        const missing = [...new Set(strings)].filter((s) => !text.includes(s));
+        // Les chaînes de référence sont écrites avec le point ; l'écran affiche la virgule décimale.
+        const missing = [...new Set(strings.map((s) => s.replace(/(\d)\.(\d)/g, '$1,$2')))].filter((s) => !text.includes(s));
         expect(missing, `chiffres du guide introuvables à l'écran « ${screen} »`).toEqual([]);
     });
 }

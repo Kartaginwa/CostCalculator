@@ -219,7 +219,7 @@ export const getDefaultState = () => {
     // Projet_Claude/04-Conception-Modele.md section Phase 4.6) ou « laborTime » (préférable quand le
     // frais indirect suit surtout la cadence/le temps machine plutôt que la valeur des intrants).
     const demoProductionActivities = [
-        { id: 'act_plats', name: 'Plats principaux surgelés', indirectCostDriver: 'directCost' },
+        { id: 'act_plats', name: 'Mets principaux surgelés', indirectCostDriver: 'directCost' },
         { id: 'act_soupes', name: 'Soupes et potages', indirectCostDriver: 'directCost' },
         { id: 'act_sauces', name: 'Sauces et accompagnements', indirectCostDriver: 'directCost' },
     ];
@@ -241,7 +241,7 @@ export const getDefaultState = () => {
     // Réconciliation doit encore avoir quelque chose à montrer) du nouveau théorique (voir
     // Projet_Claude/03-Feuille-de-route.md). Proportions entre lignes conservées à l'identique.
     const demoRevenueLines = [
-        { id: 'rev_plats', label: 'Ventes — Plats principaux surgelés', repartition: 'act_plats', amounts: { act_plats: 45000 } },
+        { id: 'rev_plats', label: 'Ventes — Mets principaux surgelés', repartition: 'act_plats', amounts: { act_plats: 45000 } },
         { id: 'rev_soupes', label: 'Ventes — Soupes et potages', repartition: 'act_soupes', amounts: { act_soupes: 20000 } },
         { id: 'rev_sauces', label: 'Ventes — Sauces et accompagnements', repartition: 'act_sauces', amounts: { act_sauces: 12500 } },
         { id: 'rev_divers', label: 'Revenus divers (non rattachés à une activité)', repartition: 'general', amounts: { general: 2500 } },
@@ -438,7 +438,7 @@ export const getDefaultState = () => {
         // Chili ci-dessus (quantités d'ingrédients/emballage × taille du lot, temps de
         // production NON linéaire).
         {
-            id: 'prod_pate', platName: 'Pâté chinois traditionnel', category: 'Plat principal', activityId: 'act_plats',
+            id: 'prod_pate', platName: 'Pâté chinois traditionnel', category: 'Mets principal', activityId: 'act_plats',
             isIngredient: false, onMenu: true, salesMix: 11.21, prixVente: 8.09, nbPortions: 20, portionSize: 340, portionUnit: 'g',
             formats: [
                 {
@@ -491,7 +491,7 @@ export const getDefaultState = () => {
 
         // Poulet général Tao, riz et légumes. Production par lot de 20 portions (20/10).
         {
-            id: 'prod_tao', platName: 'Poulet général Tao, riz et légumes', category: 'Plat principal', activityId: 'act_plats',
+            id: 'prod_tao', platName: 'Poulet général Tao, riz et légumes', category: 'Mets principal', activityId: 'act_plats',
             isIngredient: false, onMenu: true, salesMix: 11.21, prixVente: 8.54, nbPortions: 20, portionSize: 400, portionUnit: 'g',
             formats: [{
                 id: 'fmt_tao', sku: 'PP-GENERALTAO-400G', prixVente: 8.54, nbPortions: 20, portionSize: 400, portionUnit: 'g',
@@ -520,7 +520,7 @@ export const getDefaultState = () => {
         // Saumon teriyaki, riz et légumes — item premium. Production par lot de 15 portions (20/10,
         // plus petit lot que les 20 ci-dessus, cohérent avec son volume réel plus faible).
         {
-            id: 'prod_saumon', platName: 'Saumon teriyaki, riz et légumes', category: 'Plat principal', activityId: 'act_plats',
+            id: 'prod_saumon', platName: 'Saumon teriyaki, riz et légumes', category: 'Mets principal', activityId: 'act_plats',
             isIngredient: false, onMenu: true, salesMix: 7.93, prixVente: 12.59, nbPortions: 15, portionSize: 380, portionUnit: 'g',
             formats: [{
                 // SKU auto-généré (pas un code manuel comme les autres formats) : un seul produit du
@@ -557,7 +557,7 @@ export const getDefaultState = () => {
         // par portion ne donne pas de rabais de volume dans ce modèle, contrairement au temps de
         // MO interne, qui lui profite de l'effet de lot.
         {
-            id: 'prod_thai', platName: 'Sauté de poulet thaï, riz et légumes', category: 'Plat principal', activityId: 'act_plats',
+            id: 'prod_thai', platName: 'Sauté de poulet thaï, riz et légumes', category: 'Mets principal', activityId: 'act_plats',
             isIngredient: false, onMenu: true, salesMix: 8.73, prixVente: 8.36, nbPortions: 20, portionSize: 350, portionUnit: 'g',
             formats: [
                 {
@@ -615,7 +615,7 @@ export const getDefaultState = () => {
         // le temps d'une seule) — même mijotage, plus long, dilué sur bien plus d'unités : c'est
         // précisément le levier que l'ancien `nbPortions: 1` empêchait de démontrer.
         {
-            id: 'prod_chili', platName: 'Chili con carne mijoté', category: 'Plat principal', activityId: 'act_plats',
+            id: 'prod_chili', platName: 'Chili con carne mijoté', category: 'Mets principal', activityId: 'act_plats',
             isIngredient: false, onMenu: true, salesMix: 13.13, prixVente: 7.64, nbPortions: 20, portionSize: 400, portionUnit: 'g',
             formats: [{
                 id: 'fmt_chili', sku: 'PP-CHILICONCARNE-400G', prixVente: 7.64, nbPortions: 20, portionSize: 400, portionUnit: 'g',
@@ -717,7 +717,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_sauce_spag', sku: 'SA-SPAGHETTI-500ML', prixVente: 7.19, nbPortions: 15, portionSize: 500, portionUnit: 'ml',
                 // Volumes à 0 (délibérément) : seul format du menu démo resté en mode « % manuel »
-                // du mix des ventes, pour illustrer la coexistence avec les formats « unités »
+                // du répartition des ventes, pour illustrer la coexistence avec les formats « unités »
                 // (tous les autres) — voir salesMixFromChannels.js.
                 salesMix: 12, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
                 ...demoFormatPricing(7.99, { volumeDirect: 0, volumeEpi: 0, volumeGs: 0 }),
@@ -865,8 +865,8 @@ export const getEmptyState = () => ({
 //     (ex. vendu « à l'unité », ou en mL si la famille choisie est 'g') reste simplement ABSENT de
 //     ce calcul plutôt que de lui inventer une conversion masse/volume sans densité connue — voir
 //     `computeIndirectDriverValue`, engine/analysisData.js.
-// « salesAllocation » (au prorata du mix des ventes) a été retirée le 21/10 : elle se réduisait
-// mathématiquement toujours à un partage égal à l'unité dès que le mix des ventes reflète
+// « salesAllocation » (au prorata du répartition des ventes) a été retirée le 21/10 : elle se réduisait
+// mathématiquement toujours à un partage égal à l'unité dès que le répartition des ventes reflète
 // fidèlement les volumes réels (ce qui est précisément son rôle) — voir
 // Projet_Claude/03-Feuille-de-route.md pour la démonstration complète. Un projet sauvegardé avec
 // cette ancienne valeur est migré vers `directCost` au chargement (projectSerialization.js).

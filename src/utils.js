@@ -3,24 +3,28 @@
 // par le moteur de calcul (src/engine/) sans y traîner la couche de présentation. Les
 // utilitaires qui rendent du JSX ou reposent sur des hooks React vivent dans ui-utils.jsx.
 
-// Formate un nombre en devise (version sécurisée) — espace comme séparateur de milliers (ex.
-// « 160 000.00 »), point comme séparateur décimal conservé tel quel (pas la virgule du fr-CA
-// complet, pour rester cohérent avec le reste de l'UI qui utilise déjà le point en affichage).
+// Affichage des nombres (Phase 7, étape 6) : VIRGULE décimale partout à l'écran, comme dans le guide.
+// La saisie, elle, accepte toujours le point OU la virgule (voir normalizeNumberString).
+export const formatNumber = (value, decimals = 2) => {
+    if (value === null || value === undefined) return '';
+    return Number(value).toFixed(decimals).replace('.', ',');
+};
+// Montant avec séparateur de milliers (espace) : « 1 234,56 ».
 export const formatCurrency = (value) => {
     // Tente de convertir la valeur en nombre, peu importe son type initial
     const num = parseLocaleNumber(value);
     // Si la conversion échoue (par exemple, pour un objet), isNaN sera vrai
     if (isNaN(num)) {
-        return '0.00'; // Retourne une valeur par défaut sécuritaire au lieu de planter
+        return '0,00'; // Retourne une valeur par défaut sécuritaire au lieu de planter
     }
     const [intPart, decPart] = num.toFixed(2).split('.');
     const sign = intPart.startsWith('-') ? '-' : '';
     const digits = sign ? intPart.slice(1) : intPart;
     const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    return `${sign}${grouped}.${decPart}`;
+    return `${sign}${grouped},${decPart}`;
 };
 // Formate un nombre en pourcentage
-export const formatPercent = (value) => (value * 100 || 0).toFixed(2);
+export const formatPercent = (value) => formatNumber(value * 100 || 0, 2);
 // Date du jour au format AAAA-MM-JJ, en heure LOCALE. `toISOString()` donne la date UTC : en soirée
 // (heure de l'Est), elle affichait déjà le lendemain.
 export const todayLocalISO = () => {
@@ -255,11 +259,11 @@ export const filterActiveUnits = (units, activeUnits, currentValue) => {
 
 // Formate un coût unitaire avec plus de précision si nécessaire
 export const formatUnitPrice = (value) => {
-    if (value === null || value === undefined || isNaN(value)) return '0.00';
+    if (value === null || value === undefined || isNaN(value)) return '0,00';
     if (value > 0 && value < 0.01) {
-        return value.toFixed(4); // Affiche plus de décimales pour les petits montants
+        return formatNumber(value, 4); // Affiche plus de décimales pour les petits montants
     }
-    return value.toFixed(2);
+    return formatNumber(value, 2);
 };
 
 // Champs de format également présents "à plat" sur le produit (Phase 1.3-1.5). Tant que les
@@ -330,7 +334,7 @@ export const MAJOR_ALLERGENS = [
 // Odoo « Point of Sale »/« Équipe commerciale »...) — à affiner si un format source précis pose
 // problème, sans changer le modèle de données sous-jacent.
 export const SALES_REPORT_APP_FIELDS = [
-    { key: 'platName', label: "Nom du plat", required: true, keywords: ['nom', 'item', 'produit', 'plat', 'description'] },
+    { key: 'platName', label: "Nom du produit", required: true, keywords: ['nom', 'item', 'produit', 'plat', 'description'] },
     { key: 'format', label: "Format (ex. 250 ml)", keywords: ['format', 'taille', 'variant', 'sku'] },
     { key: 'channel', label: "Canal de vente", keywords: ['canal', 'channel', 'circuit', 'class', 'location', 'point of sale', 'équipe', 'distributeur'] },
     { key: 'category', label: "Catégorie", keywords: ['catégorie', 'category', 'groupe'] },

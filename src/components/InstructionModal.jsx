@@ -95,8 +95,8 @@ export const InstructionModal = ({ isOpen, onClose, anchor = null, appLogoBase64
                 <div className="flex justify-between items-center p-4 border-b">
                     <h2 className="text-2xl font-bold text-gray-800">Guide d'utilisation et d'apprentissage</h2>
                     <div className="flex items-center gap-2">
-                        <button onClick={downloadPdf} disabled={isExporting} className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-60">
-                            <FileDown className="h-5 w-5 mr-2" /> {isExporting ? 'Génération…' : 'Télécharger en PDF'}
+                        <button onClick={downloadPdf} disabled={isExporting} className="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-60">
+                            <FileDown className="h-4 w-4 mr-2" /> {isExporting ? 'Génération…' : 'Télécharger en PDF'}
                         </button>
                         <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200" aria-label="Fermer le guide">
                             <X className="h-6 w-6 text-gray-600" />

@@ -49,10 +49,10 @@ export const Notification = ({ message, type, onClose, onUndo }) => {
 export const WelcomeModal = ({ onNew, onOpen, onExample }) => {
     return (
         <div className="fixed inset-0 bg-gray-100 z-50 flex flex-col justify-center items-center p-4">
-            <img src="./Logo_RestoCalculateur3.png" alt="Resto Calculateur Logo" className="h-32 sm:h-48 w-auto mb-8" />
+            <img src="./Logo_RestoCalculateur3.png" alt="Logo TransfoCalculateur" className="h-32 sm:h-48 w-auto mb-8" />
             <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-gray-800">Bienvenue sur Resto Calculateur</h1>
-                <p className="text-lg text-gray-600 mt-2">Votre outil pour maîtriser le coût de revient de vos plats.</p>
+                <h1 className="text-4xl font-bold text-gray-800">Bienvenue sur TransfoCalculateur</h1>
+                <p className="text-lg text-gray-600 mt-2">Votre outil pour maîtriser le coût de revient de vos produits.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
                 <button onClick={onNew} className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-green-50 transition-all duration-300">
@@ -124,7 +124,7 @@ export const PdfOptionsModal = ({ isOpen, onClose, onConfirm, initialData }) => 
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                     <button
                         type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-xs"
                         onClick={handleConfirm}
                     >
                         Générer le PDF
@@ -156,7 +156,7 @@ export const OnboardingModal = ({ isOpen, onStart, onSkip }) => {
                 <div className="flex justify-center space-x-4">
                     <button
                         onClick={onStart}
-                        className="px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                        className="px-6 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                     >
                         Commencer le guide
                     </button>
@@ -202,12 +202,12 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
     { selector: '#recap-section', content: "Et voici le résultat ! Cette section récapitule votre coût de production et calcule vos marges de contribution et brute en temps réel — les frais fixes (Général/Activité/Canal) se retrouvent dans l'onglet Rapport, par SKU.", tab: 'recipe' },
     // Onglet Rapport et suivi (fusion du 24/10, retour utilisateur — l'ex-onglet Suivi, séparé
     // avant cette date, vit maintenant ici comme sous-onglets supplémentaires).
-    { selector: '#tab-summary', content: "L'onglet 'Rapport et suivi' vous donne une vue d'ensemble de la performance de votre menu, et vous permet d'en suivre l'évolution dans le temps.", tab: 'recipe' },
+    { selector: '#tab-summary', content: "L'onglet 'Rapport et suivi' vous donne une vue d'ensemble de la performance de vos produits, et vous permet d'en suivre l'évolution dans le temps.", tab: 'recipe' },
     { selector: '#tutorial-section-tracking-global', content: "L'évolution de vos indicateurs globaux, d'un point de référence à l'autre.", tab: 'summary', subTab: 'overview' },
-    { selector: '#tutorial-section-summary-table', content: "Ce tableau vous permet de comparer rapidement la rentabilité de tous vos plats.", tab: 'summary', subTab: 'overview' },
-    { selector: '#tutorial-contribution-chart', content: "Ce graphique classe vos plats selon leur contribution réelle en dollars à votre profit, vous montrant vos piliers financiers.", tab: 'summary', subTab: 'overview' },
-    { selector: '#strategic-analysis', content: "L'analyse stratégique classe automatiquement vos plats (Étoiles, Vaches à lait...) pour vous aider à prendre des décisions éclairées.", tab: 'summary', subTab: 'overview' },
-    { selector: '#tutorial-section-summary-bysku', content: "Le sous-onglet 'Par SKU' détaille un seul plat à travers ses canaux de vente, et comment ses coûts ont évolué dans le temps.", tab: 'summary', subTab: 'bySku' },
+    { selector: '#tutorial-section-summary-table', content: "Ce tableau vous permet de comparer rapidement la rentabilité de tous vos produits.", tab: 'summary', subTab: 'overview' },
+    { selector: '#tutorial-contribution-chart', content: "Ce graphique classe vos produits selon leur contribution réelle en dollars à votre profit, vous montrant vos piliers financiers.", tab: 'summary', subTab: 'overview' },
+    { selector: '#strategic-analysis', content: "L'analyse stratégique classe automatiquement vos produits (Étoiles, Vaches à lait...) pour vous aider à prendre des décisions éclairées.", tab: 'summary', subTab: 'overview' },
+    { selector: '#tutorial-section-summary-bysku', content: "Le sous-onglet 'Par SKU' détaille un seul produit à travers ses canaux de vente, et comment ses coûts ont évolué dans le temps.", tab: 'summary', subTab: 'bySku' },
     { selector: '#tutorial-section-summary-byactivity', content: "'Par Activité' liste chaque activité de production avec son propre total agrégé (revenu, marges, point mort) — une vue d'ensemble par segment plutôt que par SKU.", tab: 'summary', subTab: 'byActivity' },
     { selector: '#tutorial-section-summary-bychannel', content: "'Par Canal' fait la même chose pour vos canaux de vente.", tab: 'summary', subTab: 'byChannel' },
     { selector: '#tutorial-section-tracking-ingredient', content: "Le sous-onglet 'Intrants' suit l'évolution du prix de vos ingrédients et de votre emballage dans le temps.", tab: 'summary', subTab: 'intrants' },
@@ -309,9 +309,9 @@ export const TutorialGuide = ({ run, stepIndex, onStepChange, onEnd, setActiveTa
                         <span className="text-sm text-gray-500 mr-4">{stepIndex + 1} / {steps.length}</span>
                         {stepIndex > 0 && <button onClick={handlePrev} className="text-sm text-gray-600 hover:text-gray-900 mr-4">Précédent</button>}
                         {isLastStep ? (
-                            <button onClick={onEnd} className="px-4 py-1 text-sm rounded-md text-white bg-green-600 hover:bg-green-700">Terminer</button>
+                            <button onClick={onEnd} className="px-4 py-1 text-xs rounded-md text-white bg-green-600 hover:bg-green-700">Terminer</button>
                         ) : (
-                            <button onClick={handleNext} className="px-4 py-1 text-sm rounded-md text-white bg-blue-600 hover:bg-blue-700">Suivant</button>
+                            <button onClick={handleNext} className="px-4 py-1 text-xs rounded-md text-white bg-blue-600 hover:bg-blue-700">Suivant</button>
                         )}
                     </div>
                 </div>

@@ -319,7 +319,7 @@ export const partie1 = {
                 { type: 'h', id: 'guide-concept-point-mort-app', text: 'Ce que l\'application fait de particulier' },
                 { type: 'ul', items: [
                     { label: 'La main-d\'œuvre de production est traitée comme un coût fixe.', text: 'Votre personnel est payé qu\'il fabrique beaucoup ou peu. Elle sort donc de la marge de contribution et s\'ajoute aux frais fixes à couvrir, comme dans l\'exemple ci-dessus.' },
-                    { label: 'Le point mort existe à plusieurs niveaux.', text: 'Par format de produit et par canal de vente (en unités), par activité et par canal (en dollars de revenu), et pour le menu entier (en dollars de revenu). Ce dernier est exprimé en dollars parce que des produits très différents n\'ont pas d\'unité commune.' },
+                    { label: 'Le point mort existe à plusieurs niveaux.', text: 'Par format de produit et par canal de vente (en unités), par activité et par canal (en dollars de revenu), et pour l\'ensemble des produits actifs (en dollars de revenu). Ce dernier est exprimé en dollars parce que des produits très différents n\'ont pas d\'unité commune.' },
                     { label: 'Il dépend de vos hypothèses.', text: 'Des volumes réels saisis, d\'une répartition des frais fixes et d\'un prix net : si l\'un change, le point mort change aussi.' },
                 ] },
                 { type: 'callout', kind: 'attention', text: 'Un point mort n\'a de sens que s\'il est atteignable. Comparez-le à ce que vous pouvez réellement produire et vendre : un point mort de 40 000 boîtes par mois est une bonne nouvelle si votre ligne peut en fabriquer 80 000, et une mauvaise si elle plafonne à 35 000.' },
@@ -333,10 +333,10 @@ export const partie1 = {
         // =====================================================================================
         {
             id: 'guide-concept-mix',
-            title: '9. Le mix des ventes et la moyenne pondérée',
+            title: '9. La répartition des ventes et la moyenne pondérée',
             blocks: [
-                { type: 'p', text: 'Une entreprise vend rarement un seul produit. Le **mix des ventes** décrit la part de chaque produit dans les ventes : par exemple, 40 % de produit A, 30 % de produit B et 30 % de produit C. Il compte pour deux raisons. D\'abord parce qu\'il donne le « poids » de chaque produit quand on veut une vue d\'ensemble. Ensuite parce que sa somme doit faire 100 % : si elle ne le fait pas, la vue d\'ensemble est faussée.' },
-                { type: 'p', text: 'Pour résumer plusieurs produits en un seul chiffre (une marge moyenne du menu, un coût matière moyen), on calcule une **moyenne pondérée** : chaque produit y compte selon son importance, non à égalité avec les autres. La difficulté est de choisir le poids.' },
+                { type: 'p', text: 'Une entreprise vend rarement un seul produit. Le **répartition des ventes** décrit la part de chaque produit dans les ventes : par exemple, 40 % de produit A, 30 % de produit B et 30 % de produit C. Il compte pour deux raisons. D\'abord parce qu\'il donne le « poids » de chaque produit quand on veut une vue d\'ensemble. Ensuite parce que sa somme doit faire 100 % : si elle ne le fait pas, la vue d\'ensemble est faussée.' },
+                { type: 'p', text: 'Pour résumer plusieurs produits en un seul chiffre (une marge moyenne des produits actifs, un coût matière moyen), on calcule une **moyenne pondérée** : chaque produit y compte selon son importance, non à égalité avec les autres. La difficulté est de choisir le poids.' },
                 { type: 'callout', kind: 'exemple', blocks: [
                     { type: 'p', text: 'Trois produits ont les ventes suivantes.' },
                     {
@@ -344,7 +344,7 @@ export const partie1 = {
                         rows: MIX.produits.map((p) => [p.nom, money(p.prix), money(p.margeUnit), pct(p.margePct, 0), num(p.volume), money(p.revenu, 0), money(p.margeTotale, 0)]),
                     },
                     {
-                        type: 'table', head: ['Méthode', 'Marge moyenne du menu'], rows: [
+                        type: 'table', head: ['Méthode', 'Marge moyenne des produits actifs'], rows: [
                             ['Moyenne simple des pourcentages (chacun compte pareil)', pct(MIX.moyenneSimple)],
                             ['Pondérée par les unités vendues', pct(MIX.ponderUnites)],
                             ['Pondérée par le revenu (total des marges ÷ total des revenus)', pct(MIX.ponderRevenu)],
@@ -354,7 +354,7 @@ export const partie1 = {
                 ] },
                 { type: 'callout', kind: 'retenir', text: 'Pour résumer la marge d\'un ensemble de produits, pondérez par le revenu : cela revient à diviser le total des marges par le total des ventes. C\'est ce que fait l\'application dans ses indicateurs pondérés de la vue d\'ensemble.' },
                 { type: 'words', items: [
-                    { term: 'Mix des ventes', def: 'la part de chaque produit dans les ventes, en pourcentage. La somme des produits « au menu » doit être de 100 %.' },
+                    { term: 'Part des ventes', def: 'la part de chaque produit dans les ventes, en pourcentage. La somme des produits « actif » doit être de 100 %.' },
                     { term: 'Moyenne pondérée', def: 'une moyenne où chaque élément compte selon son poids.' },
                 ] },
             ],
@@ -442,12 +442,12 @@ export const partie1 = {
         // =====================================================================================
         {
             id: 'guide-concept-menu',
-            title: '12. Quels produits mettre en avant ? L\'ingénierie de menu',
+            title: '12. Quels produits mettre en avant ? La matrice stratégique',
             blocks: [
-                { type: 'p', text: 'Pour décider quels produits promouvoir, améliorer ou abandonner, il ne suffit pas de regarder les ventes : un produit très vendu mais à peine rentable occupe votre usine sans enrichir l\'entreprise. L\'**ingénierie de menu** (ou analyse BCG, d\'après la matrice du Boston Consulting Group) croise deux questions pour chaque produit : se vend-il beaucoup ? rapporte-t-il beaucoup ?' },
+                { type: 'p', text: 'Pour décider quels produits promouvoir, améliorer ou abandonner, il ne suffit pas de regarder les ventes : un produit très vendu mais à peine rentable occupe votre usine sans enrichir l\'entreprise. La **matrice stratégique** (ou analyse BCG, d\'après la matrice du Boston Consulting Group) croise deux questions pour chaque produit : se vend-il beaucoup ? rapporte-t-il beaucoup ?' },
                 { type: 'ul', items: [
                     { label: 'La popularité.', text: 'Un produit est « populaire » si sa part des ventes atteint au moins 70 % de la part moyenne d\'un produit. (Avec dix produits, la part moyenne est de 10 % : le seuil est de 7 %.)' },
-                    { label: 'La rentabilité.', text: 'Un produit est « rentable » si sa marge brute en dollars par unité atteint au moins la marge brute moyenne du menu, pondérée par les volumes vendus.' },
+                    { label: 'La rentabilité.', text: 'Un produit est « rentable » si sa marge brute en dollars par unité atteint au moins la marge brute moyenne des produits actifs, pondérée par les volumes vendus.' },
                 ] },
                 {
                     type: 'table', head: ['', 'Rentable', 'Peu rentable'], wrapCells: true, rows: [
@@ -455,10 +455,10 @@ export const partie1 = {
                         ['**Peu populaire**', '**Dilemme** — rentables mais peu vendus : travaillez leur visibilité, leur présentation, leur promotion.', '**Poids mort** — ils se vendent peu et rapportent peu : réinventez-les ou retirez-les pour simplifier la production.'],
                     ],
                 },
-                { type: 'callout', kind: 'attention', text: 'La classification est relative : un produit est « rentable » par rapport à la moyenne **de votre menu**, pas par rapport à un standard extérieur. Un menu où tous les produits sont très rentables aura quand même des « poids morts », puisque la moyenne bougera. Utilisez la matrice pour comparer vos produits entre eux, pas pour juger la santé absolue de l\'entreprise.' },
+                { type: 'callout', kind: 'attention', text: 'La classification est relative : un produit est « rentable » par rapport à la moyenne **de vos produits**, pas par rapport à un standard extérieur. Un ensemble de produits tous sont très rentables aura quand même des « poids morts », puisque la moyenne bougera. Utilisez la matrice pour comparer vos produits entre eux, pas pour juger la santé absolue de l\'entreprise.' },
                 { type: 'callout', kind: 'retenir', text: 'Étoiles : à protéger. Vaches à lait : à améliorer en marge. Dilemmes : à mieux vendre. Poids morts : à repenser ou à retirer. Le chapitre [[guide-rapport-vue-ensemble|Vue d\'ensemble]] montre la matrice du projet démo.' },
                 { type: 'words', items: [
-                    { term: 'Ingénierie de menu', def: 'méthode qui classe les produits selon leur popularité et leur rentabilité.' },
+                    { term: 'Matrice stratégique', def: 'méthode qui classe les produits selon leur popularité et leur rentabilité.' },
                     { term: 'Popularité', def: 'la part d\'un produit dans les ventes.' },
                 ] },
             ],

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, Label, ResponsiveContainer, Bar, LabelList, Cell } from 'recharts';
 import { ArrowUpDown, FileDown, Pencil, AlertTriangle, Star, HelpCircle as QuestionMark, Milk, Bone, Camera, Trash2, ChevronDown } from 'lucide-react';
-import { unnamedLabel, parseLocaleNumber, formatCurrency, formatPercent } from '../utils.js';
+import { unnamedLabel, parseLocaleNumber, formatCurrency, formatPercent, formatNumber } from '../utils.js';
 import { getCostTargetIndicator, useEscapeKey, useSessionState } from '../ui-utils.jsx';
 import { Tooltip, Pagination, CostNatureBadge, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
@@ -109,10 +109,10 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
                                     <td className="py-2 px-3 text-gray-500">{v.provider || '—'}</td>
                                     <td className="py-2 px-3 text-right text-gray-600">{formatCurrency(v.currentPrice)} $</td>
                                     <td className={`py-2 px-3 text-right ${v.trendPercent > 0.5 ? 'text-red-600' : v.trendPercent < -0.5 ? 'text-green-600' : 'text-gray-500'}`}>
-                                        {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {Math.abs(v.trendPercent).toFixed(0)} %
+                                        {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {formatNumber(Math.abs(v.trendPercent), 0)} %
                                     </td>
                                     <td className={`py-2 px-3 text-right ${tier.className}`}>
-                                        {v.amplitudePercent.toFixed(0)} % · {tier.label}
+                                        {formatNumber(v.amplitudePercent, 0)} % · {tier.label}
                                     </td>
                                 </tr>
                             );
@@ -146,7 +146,7 @@ const LineChartTooltip = ({ active, payload, label }) => {
                 {pointData && <p className="text-xs text-gray-500 mb-2">{pointData.name}</p>}
                 {payload.map(pld => (
                     <p key={pld.dataKey} style={{ color: pld.color }}>
-                        {`${pld.name}: ${pld.value.toFixed(2)}${pld.payload[pld.dataKey + "_unit"] || ''}`}
+                        {`${pld.name}: ${formatNumber(pld.value, 2)}${pld.payload[pld.dataKey + "_unit"] || ''}`}
                     </p>
                 ))}
                  {pointData && pointData.note && <p className="text-xs text-gray-600 mt-2 border-t pt-2">Note: {pointData.note}</p>}
@@ -167,9 +167,9 @@ const SimpleLineChart = ({ data, lines, yAxisLabel }) => {
     if (validLines.length === 0) return <div className="text-center p-4 h-[400px] flex items-center justify-center bg-gray-100 rounded-md">Aucune donnée à afficher pour les indicateurs sélectionnés.</div>;
 
     const yAxisTickFormatter = (value) => {
-        if (yAxisLabel && yAxisLabel.includes('%')) return `${value.toFixed(0)}%`;
-        if (yAxisLabel && yAxisLabel.includes('$')) return `${value.toFixed(2)}$`;
-        return value.toFixed(1);
+        if (yAxisLabel && yAxisLabel.includes('%')) return `${formatNumber(value, 0)}%`;
+        if (yAxisLabel && yAxisLabel.includes('$')) return `${formatNumber(value, 2)}$`;
+        return formatNumber(value, 1);
     };
 
     const dataWithUnits = data.map(d => {
@@ -267,7 +267,7 @@ const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) => {
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                     <button
                         type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-xs"
                         onClick={handleSave}
                     >
                         Enregistrer
@@ -376,7 +376,7 @@ const ManagePointsModal = ({ isOpen, onClose, trackingPoints, selectedSnapshotId
                                     </td>
                                     <td className="px-4 py-2 font-medium text-gray-800">{point.name}</td>
                                     <td className="px-4 py-2 text-sm text-gray-600">{point.note || "-"}</td>
-                                    <td className="px-4 py-2 text-sm text-gray-500">{new Date(point.timestamp).toLocaleString('fr-CA')}</td>
+                                    <td className="px-4 py-2 text-sm text-gray-500">{new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'short' })}</td>
                                     <td className="px-4 py-2 text-right flex items-center justify-end space-x-2">
                                         <button onClick={() => onEditSnapshot(point)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50">
                                             <Pencil size={18} />
@@ -426,9 +426,9 @@ const PointDeReferenceMenu = ({ onNew, onManage }) => {
             <button
                 id="tutorial-snapshot"
                 onClick={() => setIsOpen(o => !o)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
             >
-                <Camera className="h-5 w-5 mr-2" /> Point de référence <ChevronDown className="h-4 w-4 ml-2" />
+                <Camera className="h-4 w-4 mr-2" /> Point de référence <ChevronDown className="h-3.5 w-3.5 ml-2" />
             </button>
             {isOpen && (
                 <div className="absolute right-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-10">
@@ -459,7 +459,7 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
                     <span>• {p.displayName}</span>
                     <span className="text-xs text-gray-600 ml-2 flex-shrink-0">
                         {/* Marge brute (coût matière + emballage + main-d'œuvre) : l'axe de rentabilité de la matrice. */}
-                        {`Pop: ${p.popularity.toFixed(1)}% | Marge: ${formatCurrency(p.margeBruteDollar)}$`}
+                        {`Pop: ${formatNumber(p.popularity, 1)}% | Marge: ${formatCurrency(p.margeBruteDollar)}$`}
                     </span>
                 </li>
             )) : <li className="text-gray-500 list-none">Aucun</li>}
@@ -832,7 +832,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
             if (volume <= 0) continue; // Prix saisi mais aucun volume réel — pas de performance à classer (07/10).
             rows.push({ id: p.id, displayName: p.displayName, popularity: 0, margeBruteDollar: cb.margeBruteDollar, volume });
         }
-        // Popularité propre au canal choisi (part du volume de CE canal), pas le mix global du menu.
+        // Popularité propre au canal choisi (part du volume de CE canal), pas la répartition globale des ventes.
         const totalVolume = rows.reduce((s, r) => s + r.volume, 0);
         rows.forEach(r => { r.popularity = totalVolume > 0 ? (r.volume / totalVolume) * 100 : 0; });
         return computeMenuEngineeringQuadrants(rows);
@@ -878,38 +878,38 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort du Menu Analysé <Tooltip tip="kpi.pointMort" /></div>
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort des Produits Actifs <Tooltip tip="kpi.pointMort" /></div>
                     <p className="text-3xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
                 </div>
             </div>
             {Math.round(totalSalesMix) !== 100 && totalSalesMix > 0 && (
                  <div className="p-3 mb-4 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm">
                     <AlertTriangle className="inline h-4 w-4 mr-2"/>
-                    Attention : Le total de votre mix des ventes est de {totalSalesMix.toFixed(1)}%. Pour une analyse précise, il devrait être de 100%.
+                    Attention : Le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}%. Pour une analyse précise, il devrait être de 100%.
                 </div>
             )}
 
             {/* Évolution des KPI globaux (ex-Suivi, fusionné le 24/10 — retour utilisateur,
-                positionné au-dessus de la Matrice d'ingénierie de menu). Données ABSENTES tant
+                positionné au-dessus de la Matrice stratégique des produits). Données ABSENTES tant
                 qu'aucun point de référence n'existe : SimpleLineChart affiche alors son propre
                 message, jamais un graphique vide forcé. */}
             <div id="tutorial-section-tracking-global" className="mb-8">
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Évolution des marges et coûts moyens</h3>
-                <p className="text-sm text-gray-500 mb-4">Ce graphique montre l'évolution de vos coûts moyens et de votre marge brute, d'un point de référence à l'autre, pour prendre des décisions éclairées sur votre menu.</p>
+                <p className="text-sm text-gray-500 mb-4">Ce graphique montre l'évolution de vos coûts moyens et de votre marge brute, d'un point de référence à l'autre, pour prendre des décisions éclairées sur vos produits.</p>
                 <SimpleLineChart
                     data={globalKpiData}
                     lines={[
                         { dataKey: "Marge Brute Moyenne", color: "#82ca9d", unit: '%' },
                         { dataKey: "Coût Matière Moyen", color: "#ffc658", unit: '%' },
                         { dataKey: "Coût Emballage Moyen", color: "#db2777", unit: '%' },
-                        { dataKey: "Coût M-O Moyen", color: "#ff7300", unit: '%' },
+                        { dataKey: "Coût Main-d'œuvre Moyen", color: "#ff7300", unit: '%' },
                     ]}
                     yAxisLabel="Pourcentage (%)"
                 />
             </div>
 
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Matrice d'ingénierie de menu</h3>
-            <p className="text-sm text-gray-500 mb-4">Classe chaque plat selon sa popularité et sa rentabilité (matrice de Boston Consulting Group).</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Matrice stratégique des produits</h3>
+            <p className="text-sm text-gray-500 mb-4">Classe chaque produit selon sa popularité et sa rentabilité (matrice de Boston Consulting Group).</p>
 
             <div className="flex items-center gap-2 mb-4">
                 <label htmlFor="bcgChannelFilter" className="text-sm font-medium text-gray-700">Analyse BCG pour :</label>
@@ -996,7 +996,7 @@ export const SummaryTable = ({
         [productsWithCosts]
     );
     // Repli robuste : aucun SKU choisi OU un SKU qui n'existe plus (changement de projet) retombe
-    // sur le premier SKU disponible — jamais un tableau figé sur « Aucun SKU » alors que le menu en
+    // sur le premier SKU disponible — jamais un tableau figé sur « Aucun SKU » alors que les produits actifs en
     // contient (l'ancienne condition `!selectedSkuId` seule ne couvrait pas ce second cas).
     useEffect(() => {
         // Préfère un SKU rattaché à au moins un canal : une sous-recette (sans canal) n'offre aucune
@@ -1052,7 +1052,7 @@ export const SummaryTable = ({
             if (!kpis) {
                 return {
                     name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note,
-                    "Point Mort Global": null, "Marge Brute Moyenne": null, "Coût Matière Moyen": null, "Coût Emballage Moyen": null, "Coût M-O Moyen": null,
+                    "Point Mort Global": null, "Marge Brute Moyenne": null, "Coût Matière Moyen": null, "Coût Emballage Moyen": null, "Coût Main-d'œuvre Moyen": null,
                 };
             }
 
@@ -1067,7 +1067,7 @@ export const SummaryTable = ({
                 "Marge Brute Moyenne": weightedGrossMargin * 100,
                 "Coût Matière Moyen": weightedMaterialCost * 100,
                 "Coût Emballage Moyen": weightedPackagingCost * 100,
-                "Coût M-O Moyen": weightedLaborCost * 100,
+                "Coût Main-d'œuvre Moyen": weightedLaborCost * 100,
             };
         });
     }, [displayedTrackingPoints]);
@@ -1432,18 +1432,14 @@ export const SummaryTable = ({
 
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Rapport et suivi</h1>
-                {/* Boutons d'export puis, sous eux, le point de référence (déplacé le 24/10, retour
-                    utilisateur — auparavant un bouton unique « Créer un point de référence » à côté
-                    de l'export). */}
-                <div className="flex flex-col items-end gap-2">
-                    <div className="flex space-x-2">
-                        <button onClick={() => exportToExcel(laborDatabase)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                            <FileDown className="h-5 w-5 mr-2" /> Exporter vers Excel
+                {/* Une seule ligne : Excel, PDF, puis le point de référence (à droite du PDF, 18/11). */}
+                <div className="flex items-center gap-2">
+                        <button onClick={() => exportToExcel(laborDatabase)} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                            <FileDown className="h-4 w-4 mr-2" /> Exporter vers Excel
                         </button>
-                        <button onClick={onOpenPdfModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
-                            <FileDown className="h-5 w-5 mr-2" /> Générer un rapport PDF
+                        <button onClick={onOpenPdfModal} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
+                            <FileDown className="h-4 w-4 mr-2" /> Générer un rapport PDF
                         </button>
-                    </div>
                     <PointDeReferenceMenu
                         onNew={() => { setEditingSnapshot(null); setIsSnapshotModalOpen(true); }}
                         onManage={() => setIsManageModalOpen(true)}
@@ -1452,7 +1448,7 @@ export const SummaryTable = ({
             </div>
             {products.length === 0 && (
                 <EmptyState message="Rien à analyser pour l'instant : ajoutez d'abord des produits.">
-                    <button onClick={() => goToTab('info')} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Aller à Paramètres → Produits et SKUs</button>
+                    <button onClick={() => goToTab('info')} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Aller à Paramètres → Produits et SKUs</button>
                 </EmptyState>
             )}
 
@@ -1544,7 +1540,7 @@ export const SummaryTable = ({
                 </div>
                 {selectedSkuRow
                     ? <BySkuWaterfall row={selectedSkuRow} productionActivities={productionActivities} salesChannels={salesChannels} />
-                    : <p className="text-center text-gray-500 py-8">Aucun SKU dans le menu pour l'instant — cochez la case « Au menu » d'un format dans Paramètres → Produits et SKUs.</p>}
+                    : <p className="text-center text-gray-500 py-8">Aucun SKU actif pour l'instant — cochez la case « Actif » d'un format dans Paramètres → Produits et SKUs.</p>}
 
                 {/* Évolution des coûts de ce SKU (ex-« Analyse par format » de l'onglet Suivi,
                     fusionnée ici le 24/10, retour utilisateur, sous le tableau récapitulatif du
@@ -1611,7 +1607,7 @@ export const SummaryTable = ({
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Classement par contribution totale au profit</h2>
-                        <p className="text-sm text-gray-500 mb-4">Ce graphique montre les plats qui génèrent le plus de profit en dollars pour couvrir vos frais fixes.</p>
+                        <p className="text-sm text-gray-500 mb-4">Ce graphique montre les produits qui génèrent le plus de profit en dollars pour couvrir vos frais fixes.</p>
                     </div>
                     {totalContributionsCount > 10 && (
                         <button
@@ -1762,7 +1758,7 @@ export const SummaryTable = ({
                         <tr>
                             <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
                                 <button onClick={() => requestSort('displayName')} className="flex items-center w-full">
-                                    Plat {getSortIcon('displayName')}
+                                    Produit {getSortIcon('displayName')}
                                 </button>
                             </th>
                             {salesChannels.map(c => (
@@ -1790,7 +1786,7 @@ export const SummaryTable = ({
                                 <td className="px-3 py-1.5 text-right">
                                     <button
                                         onClick={() => onEditProduct(products.findIndex(p => p.id === product.productId), product.formatIndex || 0)}
-                                        title="Éditer le plat"
+                                        title="Éditer le produit"
                                         className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50"
                                     >
                                         <Pencil size={18} />

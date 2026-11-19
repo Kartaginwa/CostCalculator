@@ -1,6 +1,6 @@
 import React, { useMemo, useState, lazy, Suspense } from 'react';
 import { Upload, Trash2, CheckCircle2, AlertCircle, X, Plus, Lock } from 'lucide-react';
-import { parseLocaleNumber, isValidNumber, isNotEmpty, formatCurrency, sumLineAmounts, sumAmountsMap, round2, EXPENSE_CATEGORIES, DIRECT_COST_TYPES, UNIT_BASE_FAMILY_LABELS, looksLikeProductionLabor } from '../utils.js';
+import { parseLocaleNumber, isValidNumber, isNotEmpty, formatCurrency, sumLineAmounts, sumAmountsMap, round2, EXPENSE_CATEGORIES, DIRECT_COST_TYPES, UNIT_BASE_FAMILY_LABELS, looksLikeProductionLabor, formatNumber } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { indirectCostMethodLabels } from '../state/initialState.js';
@@ -224,7 +224,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                                     {activityBuckets.map((b) => (
                                         <div key={b.key} className="flex items-center justify-between gap-2">
                                             <span className="text-xs text-gray-600 truncate">{b.label}</span>
-                                            <span className="text-xs text-gray-500">{pct[b.key] !== undefined ? `${pct[b.key].toFixed(1)} %` : '—'}</span>
+                                            <span className="text-xs text-gray-500">{pct[b.key] !== undefined ? `${formatNumber(pct[b.key], 1)} %` : '—'}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -257,7 +257,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <div className="text-xs font-semibold text-yellow-800 mb-1.5">Activités — {activityTotal.toFixed(1)} %</div>
+                                        <div className="text-xs font-semibold text-yellow-800 mb-1.5">Activités — {formatNumber(activityTotal, 1)} %</div>
                                         <div className="space-y-1">
                                             {activityBuckets.map((b) => (
                                                 <div key={b.key} className="flex items-center justify-between gap-2">
@@ -278,7 +278,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                                         </div>
                                     </div>
                                     <div>
-                                        <div className="text-xs font-semibold text-blue-800 mb-1.5">Canaux — {channelTotal.toFixed(1)} %</div>
+                                        <div className="text-xs font-semibold text-blue-800 mb-1.5">Canaux — {formatNumber(channelTotal, 1)} %</div>
                                         <div className="space-y-1">
                                             {salesChannels.length === 0 && <p className="text-xs text-gray-400 italic">Aucun canal de vente défini — ajoutez-en dans Paramètres → Produits et SKUs.</p>}
                                             {salesChannels.map((c) => (
@@ -652,13 +652,13 @@ export const IncomeStatementTab = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowImportWizard(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"
                     >
-                        <Upload className="h-5 w-5 mr-2" /> Importer l'état des résultats
+                        <Upload className="h-4 w-4 mr-2" /> Importer l'état des résultats
                     </button>
                     <button
                         onClick={() => setShowRepartitionKeysModal(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                     >
                         Gérer les clés de répartition
                     </button>
@@ -1443,7 +1443,7 @@ export const IncomeStatementTab = () => {
                                         <td className="px-4 py-2 text-right">{formatCurrency(row.theoretical)} $</td>
                                         <td className="px-4 py-2 text-right">{row.diff >= 0 ? '+' : ''}{formatCurrency(row.diff)} $</td>
                                         <td className="px-4 py-2 text-right">
-                                            {row.diffPercent != null ? `${row.diffPercent >= 0 ? '+' : ''}${(row.diffPercent * 100).toFixed(1)} %` : '—'}
+                                            {row.diffPercent != null ? `${row.diffPercent >= 0 ? '+' : ''}${formatNumber((row.diffPercent * 100), 1)} %` : '—'}
                                         </td>
                                     </tr>
                                 );

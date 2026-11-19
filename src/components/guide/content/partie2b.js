@@ -55,7 +55,7 @@ export const chapitreIngredients = {
         { type: 'h', id: 'guide-ing-abc', text: 'L\'analyse ABC des ingrédients' },
         { type: 'p', text: 'Sous le tableau, l\'analyse ABC classe vos ingrédients par importance financière (voir [[guide-concept-suivi|chapitre 11]] pour la méthode). Trois cartes présentent les catégories A, B et C, avec la part de chaque ingrédient dans le coût total consommé. Un badge {{volatile}} s\'ajoute aux ingrédients dont le prix bouge beaucoup (il faut au moins deux points de référence pour qu\'il apparaisse).' },
         { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la catégorie A compte quatre ingrédients (bœuf haché, poitrine de poulet, filet de saumon et riz basmati) pour ${d(DEMO.ingredients.abcA)} du coût total. Les trois premiers n'atteignent que 64,8 % : le riz basmati, qui franchit la barre des 70 %, est inclus dans la catégorie A.` },
-        { type: 'p', text: 'L\'analyse porte uniquement sur les ingrédients **réellement consommés** par vos produits au menu, compte tenu des volumes vendus : un ingrédient qui ne sert à aucune recette n\'y figure pas.' },
+        { type: 'p', text: 'L\'analyse porte uniquement sur les ingrédients **réellement consommés** par vos produits actifs, compte tenu des volumes vendus : un ingrédient qui ne sert à aucune recette n\'y figure pas.' },
 
         { type: 'h', id: 'guide-ing-rapport-achats', text: 'Le rapport d\'achats et pertes' },
         { type: 'p', text: 'Ce rapport estime ce que vous devez acheter pour la période, en partant de vos recettes et de vos ventes : pour chaque ingrédient, la quantité requise est la quantité de la recette multipliée par le nombre de lots à produire, ce nombre se déduisant des volumes saisis dans Produits et SKUs. Trois totaux, pour tous les fournisseurs, s\'affichent en premier :' },
@@ -67,7 +67,7 @@ export const chapitreIngredients = {
             ],
         },
         { type: 'p', text: `Dans le projet démo : ${d(DEMO.ingredients.coutNet)} de coût net, ${d(DEMO.ingredients.pertes)} de pertes, soit ${d(DEMO.ingredients.achatRequis)} d'achats requis.` },
-        { type: 'p', text: 'La liste {{Détail par fournisseur}} sert uniquement à afficher, sous les totaux, le détail ligne par ligne : {{Aucun (totaux seulement)}}, {{Tous les fournisseurs}}, ou un fournisseur précis. Le détail indique pour chaque ingrédient la quantité nette, le coût net, la quantité perdue et le coût perdu.' },
+        { type: 'p', text: 'La liste {{Détail par fournisseur}} sert uniquement à afficher, sous les totaux, le détail ligne par ligne : {{Totaux seulement}}, {{Tous les fournisseurs}}, ou un fournisseur précis. Le détail indique pour chaque ingrédient la quantité nette, le coût net, la quantité perdue et le coût perdu.' },
         {
             type: 'table', caption: 'Les colonnes du détail', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
             rowIds: ['guide-ing-ra-qte-nette', 'guide-ing-ra-cout-net', 'guide-ing-ra-qte-perdue', 'guide-ing-ra-cout-perdu', 'guide-ing-ra-achat-requis'],
@@ -164,7 +164,7 @@ export const chapitreMainOeuvre = {
 
         { type: 'h', id: 'guide-mo-capacite', text: 'Capacité de production par activité' },
         { type: 'p', text: 'Ce deuxième tableau répartit les heures de main-d\'œuvre réellement requises entre vos **activités de production**, et indique la part de chaque activité dans le total. Il révèle quelle ligne de production est la plus exigeante en temps. Il n\'y a pas de « heures attendues » par activité : un poste ou un employé n\'est pas rattaché à une seule activité, donc rien n\'est comparable.' },
-        { type: 'p', text: 'Dans le projet démo, les plats principaux surgelés consomment 171,67 heures (66,20 % du total), les soupes et potages 87,63 heures (33,80 %), et les sauces et accompagnements 0 heure : leurs recettes n\'ont pas d\'étapes de production avec du personnel affecté, ou n\'ont pas de ventes saisies.' },
+        { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 171,67 heures (66,20 % du total), les soupes et potages 87,63 heures (33,80 %), et les sauces et accompagnements 0 heure : leurs recettes n\'ont pas d\'étapes de production avec du personnel affecté, ou n\'ont pas de ventes saisies.' },
         {
             type: 'ul', itemIds: ['guide-mo-cap-heures', 'guide-mo-cap-part'], items: [
                 { label: 'Heures productives réelles.', text: 'Les heures de production de l\'activité, calculées à partir des étapes de vos recettes et de vos ventes de la période.' },

@@ -2,24 +2,24 @@ import { describe, it, expect } from 'vitest';
 import { looksLikeProductionLabor, parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
 
 describe('formatCurrency', () => {
-    it('ajoute un espace comme séparateur de milliers, point comme séparateur décimal', () => {
-        expect(formatCurrency(160000)).toBe('160 000.00');
-        expect(formatCurrency(1000)).toBe('1 000.00');
-        expect(formatCurrency(1234567.5)).toBe('1 234 567.50');
+    it('ajoute un espace comme séparateur de milliers, virgule comme séparateur décimal', () => {
+        expect(formatCurrency(160000)).toBe('160 000,00');
+        expect(formatCurrency(1000)).toBe('1 000,00');
+        expect(formatCurrency(1234567.5)).toBe('1 234 567,50');
     });
 
     it("n'ajoute aucun séparateur sous 1000", () => {
-        expect(formatCurrency(999.9)).toBe('999.90');
-        expect(formatCurrency(0)).toBe('0.00');
+        expect(formatCurrency(999.9)).toBe('999,90');
+        expect(formatCurrency(0)).toBe('0,00');
     });
 
     it('gère les valeurs négatives (signe avant les chiffres groupés)', () => {
-        expect(formatCurrency(-160000)).toBe('-160 000.00');
+        expect(formatCurrency(-160000)).toBe('-160 000,00');
     });
 
-    it('retourne « 0.00 » pour une valeur non numérique, sans planter', () => {
-        expect(formatCurrency('abc')).toBe('0.00');
-        expect(formatCurrency(undefined)).toBe('0.00');
+    it('retourne « 0,00 » pour une valeur non numérique, sans planter', () => {
+        expect(formatCurrency('abc')).toBe('0,00');
+        expect(formatCurrency(undefined)).toBe('0,00');
     });
 });
 

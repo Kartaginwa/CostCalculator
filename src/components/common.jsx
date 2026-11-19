@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useContext, useLayoutEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown, Trash2, PlusCircle } from 'lucide-react';
-import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits } from '../utils.js';
+import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits, formatNumber } from '../utils.js';
 import { useValueFlash, useEscapeKey } from '../ui-utils.jsx';
 import { TIPS } from '../tooltips.js';
 import { ProjectContext } from '../state/ProjectContext.jsx';
@@ -486,7 +486,7 @@ export const GanttChart = ({ productionSteps }) => {
                                                 left: `${(task.start / totalDuration) * 100}%`,
                                                 width: `${(task.duration / totalDuration) * 100}%`,
                                             }}
-                                            title={`${task.name} (de ${(task.start / 60).toFixed(1)}' à ${(task.end / 60).toFixed(1)}')`}
+                                            title={`${task.name} (de ${formatNumber((task.start / 60), 1)}' à ${formatNumber((task.end / 60), 1)}')`}
                                         >
                                             <span className="truncate">{task.name}</span>
                                         </div>
@@ -620,7 +620,7 @@ export const AllergenModal = ({ isOpen, onClose, ingredientName, assignedAllerge
                 <div className="mt-6 flex justify-end">
                     <button
                         type="button"
-                        className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:text-sm"
+                        className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:text-xs"
                         onClick={onClose}
                     >
                         Terminé
@@ -687,7 +687,7 @@ export const UnitsModal = ({ isOpen, onClose, activeUnits, onUpdateActiveUnits }
                 <div className="mt-6 flex justify-end">
                     <button
                         type="button"
-                        className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:text-sm"
+                        className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:text-xs"
                         onClick={onClose}
                     >
                         Terminé
@@ -748,7 +748,7 @@ export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdateP
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                     <button
                         type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-xs"
                         onClick={onClose}
                     >
                         Terminé
@@ -814,7 +814,7 @@ export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkC
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                     <button
                         type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-xs"
                         onClick={onClose}
                     >
                         Terminé
@@ -903,7 +903,7 @@ export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, 
 
                 <div className="mt-6 flex justify-end gap-2">
                     <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
-                    <button type="button" onClick={handleSubmit} disabled={!sizeIsValid} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">Créer le format</button>
+                    <button type="button" onClick={handleSubmit} disabled={!sizeIsValid} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">Créer le format</button>
                 </div>
             </div>
         </div>
@@ -984,7 +984,7 @@ export const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children 
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                     <button
                         type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-xs font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-xs"
                         onClick={onConfirm}
                     >
                         Confirmer

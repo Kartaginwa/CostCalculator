@@ -14,6 +14,6 @@ test('Production : un projet vierge affiche son message d\'invitation, sans erre
     if (await skip.count() > 0) await skip.click();
 
     await page.locator('#tab-recipe').click();
-    await expect(page.getByText("Veuillez d'abord sélectionner ou ajouter un plat.")).toBeVisible();
+    await expect(page.getByText("Veuillez d'abord sélectionner ou ajouter un produit.")).toBeVisible();
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

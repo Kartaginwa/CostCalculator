@@ -101,7 +101,7 @@ test("Rapport : Par SKU détaille les frais fixes par Général/Activité/Canal 
 
     await expect(bySku.getByText('Frais fixes — Général', { exact: true })).toBeVisible();
     // Nom de l'activité affiché entre parenthèses — pas une étiquette générique.
-    await expect(bySku.getByText('Frais fixes — Activité (Plats principaux surgelés)', { exact: true })).toBeVisible();
+    await expect(bySku.getByText('Frais fixes — Activité (Mets principaux surgelés)', { exact: true })).toBeVisible();
     await expect(bySku.getByText('Frais fixes — Canal', { exact: true })).toBeVisible();
 
     // Général et Activité ne varient JAMAIS par canal (même ligne de frais fixes, peu importe où le
@@ -109,18 +109,18 @@ test("Rapport : Par SKU détaille les frais fixes par Général/Activité/Canal 
     // Général est désormais réparti au prorata des coûts directs, à l'échelle du menu entier
     // (unifié avec le mécanisme CICI d'Activité le 21/10, salesAllocation retiré) — valeur propre
     // à ce SKU plutôt que la constante uniforme 0.75 $ d'avant (voir initialState.js).
-    await expect(bySku.getByText('0.68 $', { exact: true })).toHaveCount(3);
-    await expect(bySku.getByText('0.76 $', { exact: true })).toHaveCount(3);
+    await expect(bySku.getByText('0,68 $', { exact: true })).toHaveCount(3);
+    await expect(bySku.getByText('0,76 $', { exact: true })).toHaveCount(3);
     // Canal, lui, varie réellement selon le canal (volume réel différent par canal).
-    await expect(bySku.getByText('1.09 $', { exact: true })).toHaveCount(1);
-    await expect(bySku.getByText('0.81 $', { exact: true })).toHaveCount(1);
-    await expect(bySku.getByText('0.44 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('1,09 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0,81 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0,44 $', { exact: true })).toHaveCount(1);
     // Total par unité = Général + Activité + Canal — varie donc avec le canal, contrairement à
     // Général/Activité pris séparément.
     const totalRow = bySku.locator('tr', { hasText: 'Frais fixes totaux par unité' });
-    await expect(totalRow.getByText('2.53 $', { exact: true })).toHaveCount(1);
-    await expect(totalRow.getByText('2.25 $', { exact: true })).toHaveCount(1);
-    await expect(totalRow.getByText('1.88 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('2,53 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('2,25 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('1,88 $', { exact: true })).toHaveCount(1);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

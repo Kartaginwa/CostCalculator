@@ -627,7 +627,7 @@ const App = () => {
         const product = products[productIndex];
         if (product.formats.length <= 1) {
             // Dernier format du produit : supprime le produit entier (même comportement et
-            // même notification annulable que le bouton "Supprimer le plat" existant).
+            // même notification annulable que le bouton "Supprimer le produit" existant).
             handleDeleteProduct(productIndex);
             return;
         }
@@ -728,7 +728,7 @@ const App = () => {
 
         // 3. Affiche la notification avec l'option "Annuler"
         showNotification({
-            message: `Le plat "${productToDelete.platName}" a été supprimé.`,
+            message: `Le produit "${productToDelete.platName}" a été supprimé.`,
             type: 'info',
             onUndo: () => {
                 // Si l'utilisateur clique sur "Annuler"
@@ -1027,7 +1027,7 @@ const App = () => {
             <>
             <div className="w-full max-w-7xl mt-2">
                 <div className="flex justify-between items-end mb-4">
-                    <img src="./Logo_RestoCalculateur3.png" alt="Resto Calculateur Logo" className="h-28 w-auto" />
+                    <img src="./Logo_RestoCalculateur3.png" alt="Logo TransfoCalculateur" className="h-28 w-auto" />
                     <div id="tutorial-main-functions" className="flex space-x-2 items-center">
                         {hasUnsavedChanges && (
                             <span data-testid="unsaved-indicator" title="Votre travail n'est conservé qu'en mémoire : cliquez sur « Sauvegarder » pour l'enregistrer dans un fichier." className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1 mr-1">
@@ -1050,7 +1050,7 @@ const App = () => {
                 </div>
             </div>
             <div className="sticky top-0 z-30 w-full max-w-7xl mb-4">
-                <div id="tutorial-tab-bar" className="flex bg-white rounded-xl shadow-md overflow-hidden">
+                <div id="tutorial-tab-bar" className="flex bg-white rounded-xl shadow-md border border-gray-300 overflow-hidden">
                     <button onClick={() => setActiveTab('info')} className={getTabClasses('info')}><Settings className="h-5 w-5 mr-2" /> Paramètres</button>
                     <button id="tab-ingredients" onClick={() => setActiveTab('ingredients')} className={getTabClasses('ingredients')}><ShoppingCart className="h-5 w-5 mr-2" /> Ingrédients</button>
                     <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Emballage</button>

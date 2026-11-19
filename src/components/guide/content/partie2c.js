@@ -32,8 +32,8 @@ export const chapitreEtatResultats = {
 
         { type: 'h', id: 'guide-ff-revenus', text: 'Revenus' },
         { type: 'p', text: 'Chaque ligne est un poste de revenu réel (par exemple « Ventes — Soupes et potages »), avec son montant. La {{Clé de répartition}} indique à quoi il se rattache : « Général » (un revenu qu\'on ne peut pas attribuer à une activité), une **activité de production** précise, ou « Saisie manuelle » pour ventiler librement un même poste entre plusieurs activités.' },
-        { type: 'p', text: 'À droite, la ventilation par **canal de vente** est calculée automatiquement à partir de votre mix de vente déclaré. C\'est une estimation indicative, pas une donnée vérifiée : elle n\'entre dans aucun calcul.' },
-        { type: 'callout', kind: 'exemple', text: `Revenus du projet démo : 45 000 $ (plats principaux surgelés), 20 000 $ (soupes et potages), 12 500 $ (sauces et accompagnements) et 2 500 $ de revenus divers rattachés à « Général », pour un total de ${d(DEMO.etat.revenus)}.` },
+        { type: 'p', text: 'À droite, la ventilation par **canal de vente** est calculée automatiquement à partir de votre répartition des ventes déclarée. C\'est une estimation indicative, pas une donnée vérifiée : elle n\'entre dans aucun calcul.' },
+        { type: 'callout', kind: 'exemple', text: `Revenus du projet démo : 45 000 $ (mets principaux surgelés), 20 000 $ (soupes et potages), 12 500 $ (sauces et accompagnements) et 2 500 $ de revenus divers rattachés à « Général », pour un total de ${d(DEMO.etat.revenus)}.` },
 
         {
             type: 'table', caption: 'Les colonnes du tableau des revenus', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
@@ -44,7 +44,7 @@ export const chapitreEtatResultats = {
                 ['{{Clé de répartition}}', 'Où compter ce revenu : « Général », une activité précise, ou « Saisie manuelle » pour répartir un même revenu entre plusieurs activités à la fois.'],
                 ['{{Général}}', 'La part du revenu qu\'on ne peut pas rattacher à une activité de production précise (revenus divers, intérêts).'],
                 ['Colonnes des activités', 'La répartition du revenu entre vos activités de production, selon la clé choisie.'],
-                ['{{Canaux de vente (indicatif)}}', 'Estimée automatiquement à partir du mix de vente déclaré : jamais une donnée saisie ni un intrant de calcul, uniquement informative.'],
+                ['{{Canaux de vente (indicatif)}}', 'Estimée automatiquement à partir de la répartition des ventes déclarée : jamais une donnée saisie ni un intrant de calcul, uniquement informative.'],
             ],
         },
         { type: 'h', id: 'guide-ff-charges-directes', text: 'Charges directes réelles' },
@@ -145,7 +145,7 @@ export const chapitreEtatResultats = {
             ],
         },
         { type: 'callout', kind: 'exemple', text: 'Un bassin de 10 000 $ réparti entre deux produits dont les coûts directs totalisent 6 000 $ et 4 000 $ donne 6 000 $ de frais fixes au premier et 4 000 $ au second.' },
-        { type: 'p', text: '« Général » se répartit sur le menu entier ; chaque activité seulement entre ses propres produits. Les canaux n\'ont pas de CICI : leur coût indirect est toujours un % d\'imputation sur le coût direct (Paramètres → Canaux de vente), jamais une règle au choix.' },
+        { type: 'p', text: '« Général » se répartit sur l\'ensemble des produits actifs ; chaque activité seulement entre ses propres produits. Les canaux n\'ont pas de CICI : leur coût indirect est toujours un % d\'imputation sur le coût direct (Paramètres → Canaux de vente), jamais une règle au choix.' },
 
         { type: 'h', id: 'guide-ff-reconciliation', text: 'Réconciliation réel / théorique' },
         { type: 'p', text: 'Compare, pour l\'entreprise entière, vos revenus et vos charges directes réels (saisis plus haut) à ce que prévoit votre modèle de recettes : le prix net et le volume réel saisis par canal pour chaque format (Paramètres → Produits et SKUs), multipliés par les coûts de vos recettes. Ce n\'est jamais un chiffre d\'affaires global déclaré.' },
@@ -281,7 +281,7 @@ export const chapitreProduction = {
             type: 'ul', itemIds: ['guide-prod-ind-duree', 'guide-prod-ind-temps-personnel', 'guide-prod-ind-intensite'], items: [
                 { label: 'Durée Processus.', text: 'Le temps total écoulé entre le début de la première étape et la fin de la dernière.' },
                 { label: 'Temps Personnel.', text: 'La somme du temps de travail de chaque personne. Exemple : 10 minutes avec 2 cuisiniers font 20 minutes de personnel.' },
-                { label: 'Intensité M-O.', text: 'Temps Personnel ÷ Durée Processus. Une intensité de 1,00 signifie qu\'une personne travaille à la fois ; au-dessus de 1, plusieurs personnes travaillent en même temps.' },
+                { label: 'Intensité de main-d\'œuvre.', text: 'Temps Personnel ÷ Durée Processus. Une intensité de 1,00 signifie qu\'une personne travaille à la fois ; au-dessus de 1, plusieurs personnes travaillent en même temps.' },
             ],
         },
         { type: 'callout', kind: 'exemple', text: `Chili con carne mijoté : la durée du processus est de 21,7 minutes, pour une intensité de 1,00 (une personne à la fois). La main-d'œuvre directe du lot est de ${d(DEMO.chili.moDirectRecette)} et la part indirecte de ${d(DEMO.chili.moIndirectRecette)}, soit ${d(DEMO.chili.totalMORecette)} pour le lot, donc **${d(DEMO.chili.coutMO)}** par unité.` },
@@ -322,7 +322,7 @@ export const chapitreProduction = {
             { term: 'Sous-recette', def: 'une recette de base utilisée comme ingrédient d\'autres recettes.' },
             { term: 'Produit de revente', def: 'un format acheté et revendu sans transformation.' },
             { term: 'Grille de rendement', def: 'un calcul de la quantité produite à partir d\'une quantité de départ, d\'étapes de transformation et d\'un taux de rejet.' },
-            { term: 'Intensité M-O', def: 'temps personnel ÷ durée du processus.' },
+            { term: 'Intensité de main-d\'œuvre', def: 'temps personnel ÷ durée du processus.' },
             { term: 'Coût de production', def: 'matière + emballage + main-d\'œuvre + sous-traitance, par unité.' },
         ] },
     ],

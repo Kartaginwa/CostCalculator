@@ -20,7 +20,7 @@ test("Main-d'œuvre : rapport de productivité étendu par activité de producti
     await expect(byPostSection.getByRole('heading', { name: 'Rapport de productivité pour la période' })).toBeVisible();
 
     // Nouveau tableau "Capacité de production par activité" : une ligne par activité du projet
-    // démo (Plats principaux surgelés, Soupes et potages, Sauces et accompagnements), part du
+    // démo (Mets principaux surgelés, Soupes et potages, Sauces et accompagnements), part du
     // total qui somme à 100 %.
     const byActivitySection = page.locator('h2', { hasText: 'Capacité de production par activité' }).locator('xpath=..');
     await expect(byActivitySection.getByRole('heading', { name: 'Capacité de production par activité' })).toBeVisible();
@@ -30,13 +30,13 @@ test("Main-d'œuvre : rapport de productivité étendu par activité de producti
 
     const rows = byActivitySection.locator('tbody tr');
     await expect(rows).toHaveCount(3);
-    await expect(rows.filter({ hasText: 'Plats principaux surgelés' })).toBeVisible();
+    await expect(rows.filter({ hasText: 'Mets principaux surgelés' })).toBeVisible();
     await expect(rows.filter({ hasText: 'Soupes et potages' })).toBeVisible();
     await expect(rows.filter({ hasText: 'Sauces et accompagnements' })).toBeVisible();
 
     // Les parts (3e colonne de CHAQUE ligne) somment à 100 %.
     const shares = await rows.evaluateAll(trs => trs.map(tr => tr.querySelectorAll('td')[2].innerText));
-    const total = shares.reduce((sum, text) => sum + parseFloat(text.replace('%', '').trim()), 0);
+    const total = shares.reduce((sum, text) => sum + parseFloat(text.replace('%', '').replace(',', '.').trim()), 0);
     expect(total).toBeCloseTo(100, 0);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);

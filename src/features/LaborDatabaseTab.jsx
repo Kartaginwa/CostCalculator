@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, XCircle, ChevronDown, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, formatCurrency } from '../utils.js';
+import { parseLocaleNumber, formatCurrency, formatNumber } from '../utils.js';
 import { Tooltip, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
@@ -164,15 +164,15 @@ useEffect(() => {
         <div className="container mx-auto p-6 bg-white rounded-xl shadow-2xl max-w-7xl space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800">Base de données de la main-d'œuvre</h1>
-                <button id="tutorial-add-post" onClick={addPost} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                    <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un poste
+                <button id="tutorial-add-post" onClick={addPost} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                    <PlusCircle className="h-4 w-4 mr-2" /> Ajouter un poste
                 </button>
             </div>
 
 
             {laborDatabase.length === 0 && (
                 <EmptyState message="Aucun poste de main-d'œuvre pour l'instant.">
-                    <button onClick={addPost} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-5 w-5 mr-2" /> Ajouter un poste</button>
+                    <button onClick={addPost} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-4 w-4 mr-2" /> Ajouter un poste</button>
                 </EmptyState>
             )}
 
@@ -310,20 +310,20 @@ useEffect(() => {
                             {productivityReport.rows.map(row => (
                                 <tr key={row.postName}>
                                     <td className="px-4 py-2 font-medium">{row.postName}</td>
-                                    <td className="px-4 py-2">{row.expected.toFixed(2)} h</td>
-                                    <td className="px-4 py-2">{row.actual.toFixed(2)} h</td>
-                                    <td className="px-4 py-2">{row.difference.toFixed(2)} h</td>
-                                    <td className="px-4 py-2">{row.utilization.toFixed(2)} %</td>
+                                    <td className="px-4 py-2">{formatNumber(row.expected, 2)} h</td>
+                                    <td className="px-4 py-2">{formatNumber(row.actual, 2)} h</td>
+                                    <td className="px-4 py-2">{formatNumber(row.difference, 2)} h</td>
+                                    <td className="px-4 py-2">{formatNumber(row.utilization, 2)} %</td>
                                 </tr>
                             ))}
                         </tbody>
                         <tfoot className="bg-gray-100 font-bold">
                             <tr>
                                 <td className="px-4 py-2 text-left">Total</td>
-                                <td className="px-4 py-2">{productivityReport.totals.expected?.toFixed(2)} h</td>
-                                <td className="px-4 py-2">{productivityReport.totals.actual?.toFixed(2)} h</td>
-                                <td className="px-4 py-2">{productivityReport.totals.difference?.toFixed(2)} h</td>
-                                <td className="px-4 py-2">{productivityReport.totals.utilization?.toFixed(2)} %</td>
+                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.expected, 2)} h</td>
+                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.actual, 2)} h</td>
+                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.difference, 2)} h</td>
+                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.utilization, 2)} %</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -353,8 +353,8 @@ useEffect(() => {
                                 {productivityReport.byActivity.map(row => (
                                     <tr key={row.activityId}>
                                         <td className="px-4 py-2 font-medium">{row.activityName}</td>
-                                        <td className="px-4 py-2">{row.actual.toFixed(2)} h</td>
-                                        <td className="px-4 py-2">{row.sharePercent.toFixed(2)} %</td>
+                                        <td className="px-4 py-2">{formatNumber(row.actual, 2)} h</td>
+                                        <td className="px-4 py-2">{formatNumber(row.sharePercent, 2)} %</td>
                                     </tr>
                                 ))}
                             </tbody>

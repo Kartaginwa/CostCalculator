@@ -1,14 +1,14 @@
 // Génération du rapport PDF — extrait de App.jsx (aucune logique modifiée).
 // Fonction pure "données -> document" : reçoit tout son contexte via l'objet `deps`, ne lit
 // aucun état React. jsPDF/autoTable sont fournis en global (window.jspdf) via scripts/copy-libs.
-import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS, MAJOR_ALLERGENS } from '../utils.js';
+import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS, MAJOR_ALLERGENS, formatNumber } from '../utils.js';
 import { indirectCostMethodLabels } from '../state/initialState.js';
 import { computeSnapshotMenuKpis } from '../engine/analysisData.js';
     const getGlobalKpiDataForPdf = (trackingPoints) => {
         return trackingPoints.map(point => {
             const kpis = computeSnapshotMenuKpis(point.productsWithCosts);
             if (!kpis) {
-                return { name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note, "Marge Brute Moyenne": 0, "Coût Matière Moyen": 0, "Coût M-O Moyen": 0 };
+                return { name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note, "Marge Brute Moyenne": 0, "Coût Matière Moyen": 0, "Coût Main-d'œuvre Moyen": 0 };
             }
             const { weightedGrossMargin, weightedMaterialCost, weightedLaborCost } = kpis;
 
@@ -18,7 +18,7 @@ import { computeSnapshotMenuKpis } from '../engine/analysisData.js';
                 note: point.note,
                 "Marge Brute Moyenne": weightedGrossMargin * 100,
                 "Coût Matière Moyen": weightedMaterialCost * 100,
-                "Coût M-O Moyen": weightedLaborCost * 100,
+                "Coût Main-d'œuvre Moyen": weightedLaborCost * 100,
             };
         });
     };
@@ -112,7 +112,7 @@ export const generatePdf = (options, deps) => {
                     doc.setFontSize(8);
                     doc.setTextColor(themeColors.gray);
                     doc.text(`Page ${i} sur ${pageCount}`, pageWidth / 2, pageHeight - 7, { align: 'center' });
-                    doc.text(`Rapport généré le ${new Date().toLocaleDateString('fr-FR')}`, 14, pageHeight - 7);
+                    doc.text(`Rapport généré le ${new Date().toLocaleDateString('fr-CA', { dateStyle: 'long' })}`, 14, pageHeight - 7);
                 }
             };
 
@@ -158,7 +158,7 @@ export const generatePdf = (options, deps) => {
                     doc.setDrawColor(229, 231, 235); // light gray for grid
                     doc.line(chartOriginX, yPosTick, chartOriginX + chartWidth, yPosTick);
                     doc.setDrawColor(themeColors.gray);
-                    doc.text(value.toFixed(0), chartOriginX - 4, yPosTick + 2, { align: 'right' });
+                    doc.text(formatNumber(value, 0), chartOriginX - 4, yPosTick + 2, { align: 'right' });
                 }
 
                 data.forEach((d, i) => {
@@ -248,7 +248,7 @@ export const generatePdf = (options, deps) => {
                 doc.setFontSize(20);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(themeColors.darkText);
-                doc.text('Resto Calculateur', pageWidth / 2, 115, { align: 'center' });
+                doc.text('TransfoCalculateur', pageWidth / 2, 115, { align: 'center' });
                 logoY = 130;
             }
             
@@ -268,7 +268,7 @@ export const generatePdf = (options, deps) => {
             // Date de génération en bas de page
             doc.setFontSize(12);
             doc.setTextColor(themeColors.gray);
-            doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, pageHeight - 30, { align: 'center' });
+            doc.text(`Date : ${new Date().toLocaleDateString('fr-CA', { dateStyle: 'long' })}`, pageWidth / 2, pageHeight - 30, { align: 'center' });
 
     // --- PAGE 2 : TABLEAU DE BORD STRATÉGIQUE ---
             doc.addPage();
@@ -297,7 +297,7 @@ export const generatePdf = (options, deps) => {
                     'Frais Indirects:', `${formatCurrency(calculatedGeneralInfo.totalIndirects)} $`
                 ],
                 [
-                    'Coût M-O Cuisine:', `${formatCurrency(calculatedGeneralInfo.totalKitchenLaborCost)} $`,
+                    'Coût main-d\'œuvre de production:', `${formatCurrency(calculatedGeneralInfo.totalKitchenLaborCost)} $`,
                     '', ''
                 ]
             ];
@@ -320,7 +320,7 @@ export const generatePdf = (options, deps) => {
 
             const kpiBody = [
                 [ 'Coût Matière Moyen Pondéré:', `${formatPercent(weightedMaterialCost)} %`, 'Marge Brute Moyenne Pondérée:', `${formatPercent(weightedGrossMargin)} %`],
-                [ 'Coût Emballage Moyen Pondéré:', `${formatPercent(weightedPackagingCost)} %`, 'Point Mort du Menu:', `${formatCurrency(globalBreakEven)} $`],
+                [ 'Coût Emballage Moyen Pondéré:', `${formatPercent(weightedPackagingCost)} %`, 'Point Mort des Produits Actifs:', `${formatCurrency(globalBreakEven)} $`],
                 [ 'Coût Main-d\'œuvre Moyen Pondéré:', `${formatPercent(weightedLaborCost)} %`, '', '']
             ];
             doc.autoTable({
@@ -343,7 +343,7 @@ export const generatePdf = (options, deps) => {
             const contributionBody = topContributors.map(item => [item.name, `${formatCurrency(item.totalContribution)} $`]);
             doc.autoTable({
                 startY: yPos,
-                head: [['Plat', 'Contribution ($)']],
+                head: [['Produit', 'Contribution ($)']],
                 body: contributionBody,
                 theme: 'striped',
                 headStyles: { fillColor: themeColors.green, fontStyle: 'bold' },
@@ -360,7 +360,7 @@ export const generatePdf = (options, deps) => {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(themeColors.primary);
-            doc.text("Analyse Stratégique du Menu", 14, yPos);
+            doc.text("Analyse Stratégique des Produits", 14, yPos);
             yPos += 8;
 
             const drawQuadrant = (data) => {
@@ -520,10 +520,10 @@ export const generatePdf = (options, deps) => {
             
             const productivityBody = productivityReport.rows.map(row => [
                 row.postName,
-                `${row.expected.toFixed(2)} h`,
-                `${row.actual.toFixed(2)} h`,
-                `${row.difference.toFixed(2)} h`,
-                `${row.utilization.toFixed(2)} %`
+                `${formatNumber(row.expected, 2)} h`,
+                `${formatNumber(row.actual, 2)} h`,
+                `${formatNumber(row.difference, 2)} h`,
+                `${formatNumber(row.utilization, 2)} %`
             ]);
             doc.autoTable({
                 startY: yPos,
@@ -534,10 +534,10 @@ export const generatePdf = (options, deps) => {
                 styles: { fontSize: 8 },
                 foot: [[
                     { content: 'Total', styles: { fontStyle: 'bold' } },
-                    `${productivityReport.totals.expected.toFixed(2)} h`,
-                    `${productivityReport.totals.actual.toFixed(2)} h`,
-                    `${productivityReport.totals.difference.toFixed(2)} h`,
-                    `${productivityReport.totals.utilization.toFixed(2)} %`
+                    `${formatNumber(productivityReport.totals.expected, 2)} h`,
+                    `${formatNumber(productivityReport.totals.actual, 2)} h`,
+                    `${formatNumber(productivityReport.totals.difference, 2)} h`,
+                    `${formatNumber(productivityReport.totals.utilization, 2)} %`
                 ]],
                 footStyles: { fillColor: '#A9A9A9', fontStyle: 'bold' }
             });
@@ -558,7 +558,7 @@ export const generatePdf = (options, deps) => {
                     lines: [
                         { dataKey: "Marge Brute Moyenne", color: "#10B981" },
                         { dataKey: "Coût Matière Moyen", color: "#F59E0B" },
-                        { dataKey: "Coût M-O Moyen", color: "#EF4444" },
+                        { dataKey: "Coût Main-d'œuvre Moyen", color: "#EF4444" },
                     ],
                     x: 14,
                     y: yPos,
@@ -619,7 +619,7 @@ export const generatePdf = (options, deps) => {
                             `Format par Portion: ${product.portionSize || 1} ${product.portionUnit || 'unité'}`
                         ],
                         [
-                            `Statut: ${product.isIngredient ? 'Sous-recette' : reportFormat.isResaleProduct ? 'Produit de revente' : 'Plat principal'}`,
+                            `Statut: ${product.isIngredient ? 'Sous-recette' : reportFormat.isResaleProduct ? 'Produit de revente' : 'Produit fini'}`,
                             { content: `Allergènes: ${allergenText}`, colSpan: 2 }
                         ]
                     ]
@@ -932,7 +932,7 @@ export const generatePdf = (options, deps) => {
                         doc.setFillColor(slice.color[0], slice.color[1], slice.color[2]);
                         doc.rect(14, legendY - 2.5, 3, 3, 'F');
                         doc.setTextColor(themeColors.darkText);
-                        const percentage = (slice.value / totalPrixVente * 100).toFixed(1);
+                        const percentage = formatNumber((slice.value / totalPrixVente * 100), 1);
                         doc.text(`${slice.label}: ${percentage}% (${formatCurrency(slice.value)}$)`, 19, legendY);
                         legendY += 5;
                     }
@@ -957,7 +957,7 @@ export const generatePdf = (options, deps) => {
                         doc.setFillColor(slice.color[0], slice.color[1], slice.color[2]);
                         doc.rect(subLegendX, subLegendY - 2.5, 3, 3, 'F');
                         doc.setTextColor(themeColors.darkText);
-                        const percentage = (slice.value / costs.totalCostPerPortion * 100).toFixed(1);
+                        const percentage = formatNumber((slice.value / costs.totalCostPerPortion * 100), 1);
                         doc.text(`${slice.label}: ${percentage}% (${formatCurrency(slice.value)}$)`, subLegendX + 5, subLegendY);
                         subLegendY += 5;
                     });
@@ -1056,7 +1056,7 @@ export const generatePdf = (options, deps) => {
 
             doc.autoTable({
                 startY: yPos,
-                head: [['Plat', 'Prix Vente ($)', 'Coût Total ($)', 'Marge Brute ($)', 'Marge Brute (% prix)', 'Marge Nette ($)', 'Marge Nette (% prix)']],
+                head: [['Produit', 'Prix Vente ($)', 'Coût Total ($)', 'Marge Brute ($)', 'Marge Brute (% prix)', 'Marge Nette ($)', 'Marge Nette (% prix)']],
                 body: summaryAnnexBody,
                 theme: 'striped',
                 headStyles: { fillColor: themeColors.secondary, fontStyle: 'bold', fontSize: 9 },

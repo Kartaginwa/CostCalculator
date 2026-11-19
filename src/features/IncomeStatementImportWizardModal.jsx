@@ -356,9 +356,9 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                             />
                             <button
                                 onClick={() => fileInputRef.current.click()}
-                                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                                className="inline-flex items-center px-6 py-3 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                             >
-                                <Upload className="h-5 w-5 mr-2" />
+                                <Upload className="h-4 w-4 mr-2" />
                                 Choisir un fichier
                             </button>
                         </div>
@@ -510,17 +510,17 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                             <button onClick={handleBack} className="px-4 py-2 border rounded-md text-sm">Précédent</button>
                         )}
                         {step === 2 && (
-                            <button onClick={handleProceedFromMapping} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez associer tous les champs obligatoires (*)." : ""}>
+                            <button onClick={handleProceedFromMapping} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez associer tous les champs obligatoires (*)." : ""}>
                                 Suivant
                             </button>
                         )}
                         {step === 3 && (
-                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un item." : ""}>
+                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un item." : ""}>
                                 Suivant
                             </button>
                         )}
                         {step === 4 && (
-                            <button onClick={handleConfirmImport} className="px-4 py-2 border rounded-md text-sm text-white bg-green-600 hover:bg-green-700">
+                            <button onClick={handleConfirmImport} className="px-4 py-2 border rounded-md text-xs text-white bg-green-600 hover:bg-green-700">
                                 Confirmer et Importer
                             </button>
                         )}

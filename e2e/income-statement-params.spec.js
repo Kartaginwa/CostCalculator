@@ -33,7 +33,7 @@ test("gestion des frais fixes dans l'onglet État des résultats", async ({ page
 
     // Le total des frais fixes n'est affiché qu'une fois, dans la rangée « Sous-total » du tableau
     // (plus de bloc « Total des frais fixes » redondant sous le tableau).
-    await expect(section.getByText('600.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('600,00 $', { exact: true })).toBeVisible();
 
     // Zones Activités/Canaux de vente (Phase 4.5) : désormais éditables, sur 2 axes indépendants —
     // une ligne fraîchement ajoutée n'a encore rien de réparti (champs vides), avec un badge
@@ -56,14 +56,14 @@ test("gestion des frais fixes dans l'onglet État des résultats", async ({ page
     await secondExpenseRow.locator('input[placeholder="Montant ($)"]').blur();
 
     // Séparateur de milliers (espace) dans l'affichage des montants : "1 000.00 $".
-    await expect(section.getByText('1 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('1 000,00 $', { exact: true })).toBeVisible();
 
     // Supprime "Loyer" (garde "Assurances"), vérifie la notification avec option Annuler et le
     // total recalculé — puis que Paramètres reflète bien ce total en lecture seule.
     await section.locator('button[title="Supprimer cette dépense"]').first().click();
     await expect(rows).toHaveCount(1);
     await expect(page.getByText('a été supprimée')).toBeVisible();
-    await expect(section.getByText('400.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('400,00 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
@@ -83,7 +83,7 @@ test("gestion des charges directes réelles dans l'onglet État des résultats (
     // Démo : 4 lignes pré-remplies (une par type de coût), total 48 000 $.
     const rows = section.locator('input[placeholder="Poste de charge directe (ex. Achats de matières premières)"]');
     await expect(rows).toHaveCount(4);
-    await expect(section.getByText('48 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('48 000,00 $', { exact: true })).toBeVisible();
 
     // Phase 4.3bis : Activités de production et Canaux de vente ventilés INDICATIVEMENT (dérivé du
     // coût théorique du modèle de recette, apparié au type de coût de chaque ligne) — jamais saisi.
@@ -104,16 +104,16 @@ test("gestion des charges directes réelles dans l'onglet État des résultats (
     await section.locator('select').nth(4).selectOption('Sous-traitance');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).fill('2000');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).blur();
-    await expect(section.getByText('50 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('50 000,00 $', { exact: true })).toBeVisible();
     // La nouvelle ligne affiche son montant intégral (2000$) dans UNE colonne d'activité indicative
     // (pas de valeur saisie — purement dérivée du même coût théorique que la ligne démo).
-    await expect(newRow.getByText('2 000.00 $', { exact: true })).toBeVisible();
+    await expect(newRow.getByText('2 000,00 $', { exact: true })).toBeVisible();
 
     // Suppression avec annulation
     await section.locator('button[title="Supprimer cette charge directe"]').last().click();
     await expect(rows).toHaveCount(4);
     await expect(page.getByText('a été supprimée')).toBeVisible();
-    await expect(section.getByText('48 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('48 000,00 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
@@ -134,7 +134,7 @@ test("gestion des revenus dans l'onglet État des résultats, avec répartition 
     const rows = section.locator('input[placeholder="Poste de revenu"]');
     await expect(rows).toHaveCount(4);
     // Le total n'est affiché qu'une fois, dans la rangée « Sous-total » du tableau.
-    await expect(section.getByText('80 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('80 000,00 $', { exact: true })).toBeVisible();
 
     // Une ligne rattachée à une activité affiche une ventilation par canal indicative.
     await expect(section.getByText('Canaux de vente', { exact: false }).first()).toBeVisible();
@@ -146,7 +146,7 @@ test("gestion des revenus dans l'onglet État des résultats, avec répartition 
     await section.locator('select').nth(4).selectOption('general');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).fill('1000');
     await section.locator('input[placeholder="Montant ($)"]').nth(4).blur();
-    await expect(section.getByText('81 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('81 000,00 $', { exact: true })).toBeVisible();
 
     // Suppression avec annulation
     await section.locator('button[title="Supprimer ce revenu"]').last().click();
@@ -168,9 +168,9 @@ test("Revenus : colonnes par contenant (Général + activités) avant les colonn
     const firstRow = section.locator('tbody tr').first();
 
     // Colonnes "Activités de production" (Général + 3 activités) avant les colonnes "canal" — la
-    // 1re ligne (Plats principaux surgelés, 45 000 $) affiche son montant dans SA colonne seulement.
+    // 1re ligne (Mets principaux surgelés, 45 000 $) affiche son montant dans SA colonne seulement.
     await expect(section.getByText('Activités de production', { exact: true })).toBeVisible();
-    await expect(firstRow.getByText('45 000.00 $', { exact: true })).toBeVisible();
+    await expect(firstRow.getByText('45 000,00 $', { exact: true })).toBeVisible();
     await expect(firstRow.locator('td').nth(5)).toHaveText('—'); // colonne Général : non applicable (0=Poste, 1=Catégorie placeholder, 2=Clé de répartition, 3=Montant, 4=écart décoratif, 5=Général)
 
     // Bascule la 1re ligne en Saisie manuelle : Montant devient un total en lecture seule, et les
@@ -178,7 +178,7 @@ test("Revenus : colonnes par contenant (Général + activités) avant les colonn
     await firstRow.locator('select').first().selectOption('manual');
     const bucketInputs = firstRow.locator('td input[inputmode="decimal"]');
     await expect(bucketInputs).toHaveCount(4); // plus de champ Montant éditable en mode manuel
-    await expect(firstRow.getByText('45 000.00 $', { exact: true })).toBeVisible(); // total inchangé
+    await expect(firstRow.getByText('45 000,00 $', { exact: true })).toBeVisible(); // total inchangé
 
     // Ventile manuellement sur 2 contenants à la fois (Général + une 2e activité) — le total se
     // recalcule comme la somme des cellules, pas comme un seul montant.
@@ -186,17 +186,17 @@ test("Revenus : colonnes par contenant (Général + activités) avant les colonn
     await bucketInputs.nth(0).blur();
     await bucketInputs.nth(2).fill('20000'); // Soupes et potages (3e colonne de contenant)
     await bucketInputs.nth(2).blur();
-    // Plats principaux (45000, déjà présent) + Général (10000) + Soupes et potages (20000) = 75000
-    await expect(firstRow.getByText('75 000.00 $', { exact: true })).toBeVisible();
+    // Mets principaux (45000, déjà présent) + Général (10000) + Soupes et potages (20000) = 75000
+    await expect(firstRow.getByText('75 000,00 $', { exact: true })).toBeVisible();
     // Total global : 75000 (ligne 1) + 20000 (Soupes) + 12500 (Sauces) + 2500 (Général) = 110000
-    await expect(section.getByText('110 000.00 $', { exact: true })).toBeVisible();
+    await expect(section.getByText('110 000,00 $', { exact: true })).toBeVisible();
 
     // Rangée « Sous-total » : un sous-total par colonne de contenant, pas seulement le total global —
     // « Soupes et potages » cumule la contribution de 2 lignes (20000 saisis manuellement sur la
     // ligne 1 + 20000 déjà présents sur la ligne 2) = 40000.
     const subtotalRow = section.locator('tfoot tr');
     await expect(subtotalRow.getByText('Sous-total', { exact: true })).toBeVisible();
-    await expect(subtotalRow.getByText('40 000.00 $', { exact: true })).toBeVisible();
+    await expect(subtotalRow.getByText('40 000,00 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
@@ -222,28 +222,28 @@ test("réconciliation réel/théorique dans l'onglet État des résultats (Phase
     // construction, les canaux réels ne couvrant qu'un sous-ensemble des revenus totaux de
     // l'entreprise.
     const revenueRow = section.locator('tbody tr', { hasText: 'Revenus' });
-    await expect(revenueRow.getByText('80 000.00 $', { exact: true }).first()).toBeVisible();
-    await expect(revenueRow.getByText('75 366.10 $', { exact: true })).toBeVisible();
-    await expect(revenueRow.getByText('+6.1 %', { exact: true })).toBeVisible();
+    await expect(revenueRow.getByText('80 000,00 $', { exact: true }).first()).toBeVisible();
+    await expect(revenueRow.getByText('75 366,10 $', { exact: true })).toBeVisible();
+    await expect(revenueRow.getByText('+6,1 %', { exact: true })).toBeVisible();
 
     // Charges directes : réel (48 000 $, saisi) vs théorique (dérivé du modèle de recette, sur
     // le même volume réel par canal) — un écart non nul, comme pour les revenus.
     const directCostsRow = section.locator('tbody tr', { hasText: 'Charges directes' });
-    await expect(directCostsRow.getByText('48 000.00 $', { exact: true })).toBeVisible();
-    await expect(directCostsRow.getByText('46 922.72 $', { exact: true })).toBeVisible();
+    await expect(directCostsRow.getByText('48 000,00 $', { exact: true })).toBeVisible();
+    await expect(directCostsRow.getByText('46 922,72 $', { exact: true })).toBeVisible();
 
     // Bénéfice brut = Revenus - Charges directes, des deux côtés (réel ET théorique).
     const grossProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice brut' });
-    await expect(grossProfitRow.getByText('32 000.00 $', { exact: true })).toBeVisible();
-    await expect(grossProfitRow.getByText('28 443.38 $', { exact: true })).toBeVisible();
+    await expect(grossProfitRow.getByText('32 000,00 $', { exact: true })).toBeVisible();
+    await expect(grossProfitRow.getByText('28 443,38 $', { exact: true })).toBeVisible();
 
     // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo, même total
     // soustrait des deux côtés) - coût de vieillissement théorique (révisé le 02/11, retour
     // utilisateur : manquait entièrement jusqu'ici, alors que le réel bottom-up — Par Activité/
     // Canal/SKU — le déduit déjà ; 28 443.38 - 28 000 - 83.54 $ de vieillissement = 359.84 $).
     const netProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice net' });
-    await expect(netProfitRow.getByText('4 000.00 $', { exact: true })).toBeVisible();
-    await expect(netProfitRow.getByText('359.84 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('4 000,00 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('359,84 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
@@ -265,7 +265,7 @@ test("Revenus : la colonne Montant tient 99 999 999.99 $ sur une seule ligne, sa
 
     // Le sous-total doit s'afficher en un seul nœud de texte (pas de saut de ligne au milieu).
     const subtotalRow = section.locator('tfoot tr');
-    await expect(subtotalRow.getByText('99 999 999.99 $', { exact: true })).toBeVisible();
+    await expect(subtotalRow.getByText('99 999 999,99 $', { exact: true })).toBeVisible();
 
     // Aucun défilement horizontal introduit par cette largeur de colonne. Le conteneur de
     // défilement n'est plus propre à cette section depuis le 20/10 (scroll horizontal UNIQUE
@@ -307,7 +307,7 @@ test("Frais fixes : allocation manuelle à un seul bassin partagé (Activités +
     // la ligne : 0 = Montant, 1 = Général, 2..4 = activités, 5..7 = canaux (démo : Général + 3
     // activités, 3 canaux).
     const bucketInputs = row.locator('td input[inputmode="decimal"]');
-    await bucketInputs.nth(2).fill('1500'); // 1re activité (Plats principaux surgelés)
+    await bucketInputs.nth(2).fill('1500'); // 1re activité (Mets principaux surgelés)
     await bucketInputs.nth(2).blur();
     await bucketInputs.nth(3).fill('1500'); // 2e activité (Soupes et potages)
     await bucketInputs.nth(3).blur();
@@ -343,8 +343,8 @@ test("Frais fixes : la clé de répartition « Selon les ventes » verrouille la
     // 2000 $ réparti au prorata des revenus réels par activité (90000/40000/25000/5000 sur 160000) :
     // Général = 2000×5000/160000 = 62.50 ; Plats = 2000×90000/160000 = 1125.00. Verrouillé : affiché
     // en texte (pas un <input>) — seul Montant reste éditable tant que la clé n'est pas Manuel.
-    await expect(row.getByText('62.50 $', { exact: true })).toBeVisible();
-    await expect(row.getByText('1 125.00 $', { exact: true })).toBeVisible();
+    await expect(row.getByText('62,50 $', { exact: true })).toBeVisible();
+    await expect(row.getByText('1 125,00 $', { exact: true })).toBeVisible();
     await expect(row.locator('td input[inputmode="decimal"]')).toHaveCount(1); // Montant seulement
     // « Selon les ventes » ne touche QUE l'axe Activités (jamais Canaux, purement indicatif côté
     // Revenus) : la répartition par activité couvre déjà 100 % du montant (Général est l'un des
@@ -357,7 +357,7 @@ test("Frais fixes : la clé de répartition « Selon les ventes » verrouille la
     const bucketInputs = row.locator('td input[inputmode="decimal"]');
     await expect(bucketInputs).toHaveCount(8); // Montant + 4 activités + 3 canaux
     await expect(bucketInputs.nth(1)).toHaveValue('62.5'); // Général
-    await expect(bucketInputs.nth(2)).toHaveValue('1125'); // Plats principaux surgelés
+    await expect(bucketInputs.nth(2)).toHaveValue('1125'); // Mets principaux surgelés
 
     await bucketInputs.nth(1).fill('100');
     await bucketInputs.nth(1).blur();
@@ -383,7 +383,7 @@ test("Frais fixes : sélection directe d'une seule activité ou d'un seul canal 
     // 100 % du montant (2500 $) dans cette seule colonne d'activité ; le bassin est un seul tout
     // partagé (Activités + Canaux confondus) — plus rien à verser côté Canaux, donc toute la ligne
     // est verrouillée (seul Montant reste un <input>).
-    await expect(row.getByText('2 500.00 $', { exact: true })).toBeVisible();
+    await expect(row.getByText('2 500,00 $', { exact: true })).toBeVisible();
     const bucketInputs = row.locator('td input[inputmode="decimal"]');
     await expect(bucketInputs).toHaveCount(1);
     await expect(row.locator('[class*="text-green"]')).toBeVisible();
@@ -394,7 +394,7 @@ test("Frais fixes : sélection directe d'une seule activité ou d'un seul canal 
     // touchent que l'axe Activités).
     const row2 = section.locator('tbody tr').filter({ has: page.locator('input[value="Frais bancaires et intérêts"]') });
     await row2.locator('select').nth(1).selectOption({ label: 'Épiceries indépendantes' });
-    await expect(row2.getByText('1 000.00 $', { exact: true })).toBeVisible();
+    await expect(row2.getByText('1 000,00 $', { exact: true })).toBeVisible();
     const bucketInputs2 = row2.locator('td input[inputmode="decimal"]');
     await expect(bucketInputs2).toHaveCount(1);
     await expect(row2.locator('[class*="text-green"]')).toBeVisible();
@@ -416,7 +416,7 @@ test("Frais fixes : les montants saisis dans la grille Activités/Canaux sont ar
     // — ses cellules d'activité restent éditables, contrairement aux lignes verrouillées par clé.
     const row = section.locator('tbody tr').filter({ has: page.locator('input[value="Loyer (espace de production)"]') });
     const bucketInputs = row.locator('td input[inputmode="decimal"]');
-    await bucketInputs.nth(2).fill('33.4567'); // 1re activité (Plats principaux surgelés)
+    await bucketInputs.nth(2).fill('33.4567'); // 1re activité (Mets principaux surgelés)
     await bucketInputs.nth(2).blur();
     await expect(bucketInputs.nth(2)).toHaveValue('33.46');
 
@@ -453,8 +453,8 @@ test("Clés de répartition personnalisées : création dans la fenêtre modale,
     await row.locator('select').nth(1).selectOption({ label: 'Équipe de vente' });
 
     // Marketing = 4000 $ : 40 % en Général = 1 600.00 $, 60 % sur le 1er canal = 2 400.00 $.
-    await expect(row.getByText('1 600.00 $', { exact: true })).toBeVisible();
-    await expect(row.getByText('2 400.00 $', { exact: true })).toBeVisible();
+    await expect(row.getByText('1 600,00 $', { exact: true })).toBeVisible();
+    await expect(row.getByText('2 400,00 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

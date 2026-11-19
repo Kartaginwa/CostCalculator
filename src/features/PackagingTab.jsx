@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowUpDown, Copy, PlusCircle, Trash2, Upload } from 'lucide-react';
-import { todayLocalISO, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits } from '../utils.js';
+import { todayLocalISO, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
@@ -208,19 +208,19 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Base de données des emballages</h1>
                 <div className="flex space-x-2">
-                    <button onClick={() => setIsImportWizardOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700">
-                        <Upload className="h-5 w-5 mr-2" /> Importer une liste
+                    <button onClick={() => setIsImportWizardOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700">
+                        <Upload className="h-4 w-4 mr-2" /> Importer une liste
                     </button>
-                    <button id="tutorial-add-packaging" onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                        <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un emballage
+                    <button id="tutorial-add-packaging" onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                        <PlusCircle className="h-4 w-4 mr-2" /> Ajouter un emballage
                     </button>
                 </div>
             </div>
 
             {basePackaging.length === 0 && (
                 <EmptyState message="Aucun emballage dans la base pour l'instant.">
-                    <button onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-5 w-5 mr-2" /> Ajouter un emballage</button>
-                    <button onClick={() => setIsImportWizardOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"><Upload className="h-5 w-5 mr-2" /> Importer une liste</button>
+                    <button onClick={addRow} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-4 w-4 mr-2" /> Ajouter un emballage</button>
+                    <button onClick={() => setIsImportWizardOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"><Upload className="h-4 w-4 mr-2" /> Importer une liste</button>
                 </EmptyState>
             )}
 
@@ -403,37 +403,37 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 <p className="text-sm text-gray-500 mb-4">Cet outil classe vos emballages en trois catégories selon leur importance dans vos coûts totaux, vous aidant à concentrer vos efforts de gestion là où ils comptent le plus.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                        <h3 className="font-bold text-lg text-red-800 flex items-center">Catégorie A <span className="ml-auto text-sm font-normal">({packagingAbcAnalysisData.totals.A.toFixed(1)}% des coûts)</span></h3>
+                        <h3 className="font-bold text-lg text-red-800 flex items-center">Catégorie A <span className="ml-auto text-sm font-normal">({formatNumber(packagingAbcAnalysisData.totals.A, 1)}% des coûts)</span></h3>
                         <p className="text-xs text-gray-500 mb-2">Très importants. À contrôler de près.</p>
                         <ul className="text-sm space-y-1">
                             {packagingAbcAnalysisData.A.map(item => (
                                 <li key={item.name} className="flex justify-between items-center">
                                     <span>{item.name}</span>
-                                    <span className="font-mono text-gray-600">{item.percent.toFixed(1)}%</span>
+                                    <span className="font-mono text-gray-600">{formatNumber(item.percent, 1)}%</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
                     <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg">
-                        <h3 className="font-bold text-lg text-yellow-800 flex items-center">Catégorie B <span className="ml-auto text-sm font-normal">({packagingAbcAnalysisData.totals.B.toFixed(1)}% des coûts)</span></h3>
+                        <h3 className="font-bold text-lg text-yellow-800 flex items-center">Catégorie B <span className="ml-auto text-sm font-normal">({formatNumber(packagingAbcAnalysisData.totals.B, 1)}% des coûts)</span></h3>
                         <p className="text-xs text-gray-500 mb-2">Importance moyenne.</p>
                         <ul className="text-sm space-y-1">
                             {packagingAbcAnalysisData.B.map(item => (
                                 <li key={item.name} className="flex justify-between items-center">
                                     <span>{item.name}</span>
-                                    <span className="font-mono text-gray-600">{item.percent.toFixed(1)}%</span>
+                                    <span className="font-mono text-gray-600">{formatNumber(item.percent, 1)}%</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
                     <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
-                        <h3 className="font-bold text-lg text-green-800 flex items-center">Catégorie C <span className="ml-auto text-sm font-normal">({packagingAbcAnalysisData.totals.C.toFixed(1)}% des coûts)</span></h3>
+                        <h3 className="font-bold text-lg text-green-800 flex items-center">Catégorie C <span className="ml-auto text-sm font-normal">({formatNumber(packagingAbcAnalysisData.totals.C, 1)}% des coûts)</span></h3>
                         <p className="text-xs text-gray-500 mb-2">Faible importance. Contrôle souple.</p>
                         <ul className="text-sm space-y-1">
                             {packagingAbcAnalysisData.C.map(item => (
                                 <li key={item.name} className="flex justify-between items-center">
                                     <span>{item.name}</span>
-                                    <span className="font-mono text-gray-600">{item.percent.toFixed(1)}%</span>
+                                    <span className="font-mono text-gray-600">{formatNumber(item.percent, 1)}%</span>
                                 </li>
                             ))}
                         </ul>
@@ -472,7 +472,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             onChange={e => setReportFilterProvider(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                         >
-                            <option value="summary">Aucun (totaux seulement)</option>
+                            <option value="summary">Totaux seulement</option>
                             <option value="all">Tous les fournisseurs</option>
                             {Object.keys(packagingPurchasingReportData.groupedByProvider).sort().map(provider => (
                                 <option key={provider} value={provider}>{provider}</option>
@@ -506,9 +506,9 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                         {data.items.map(item => (
                                             <tr key={item.id}>
                                                 <td className="px-4 py-2 font-medium">{item.name}</td>
-                                                <td className="px-4 py-2">{item.totalQuantity.toFixed(2)} {item.unit}</td>
+                                                <td className="px-4 py-2">{formatNumber(item.totalQuantity, 2)} {item.unit}</td>
                                                 <td className="px-4 py-2">{formatCurrency(item.purchaseCost)} $</td>
-                                                <td className="px-4 py-2">{item.lossQuantity.toFixed(2)} {item.unit}</td>
+                                                <td className="px-4 py-2">{formatNumber(item.lossQuantity, 2)} {item.unit}</td>
                                                 <td className="px-4 py-2 text-red-600">{formatCurrency(item.lossCost)} $</td>
                                                 <td className="px-4 py-2 font-bold">{formatCurrency(item.totalCost)} $</td>
                                             </tr>

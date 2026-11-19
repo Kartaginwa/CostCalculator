@@ -43,7 +43,7 @@ export const chapitreParametres = {
         { type: 'h', id: 'guide-param-activites', text: 'Activités de production' },
         { type: 'p', text: 'Une **activité de production** regroupe les produits qui partagent un même procédé de fabrication : une ligne de surgélation, un atelier de mise en conserve, un procédé de pasteurisation. Un projet neuf contient déjà une activité, « Activité 1 » : renommez-la ou ajoutez-en d\'autres avec {{Ajouter une activité}}. Il en faut au moins une.' },
         { type: 'callout', kind: 'pourquoi', text: 'Les activités servent à deux choses. Elles permettent de **répartir vos frais fixes** (le loyer d\'un atelier de surgélation ne se partage pas comme celui d\'une salle de conditionnement) et de **lire la rentabilité par ligne de production** dans les rapports. Créez vos activités avant vos produits, puisque chaque produit doit être rattaché à l\'une d\'elles.' },
-        { type: 'callout', kind: 'exemple', text: 'Le projet démo a trois activités : Plats principaux surgelés, Soupes et potages, Sauces et accompagnements. Chacune porte ses frais fixes propres (par exemple une partie du loyer de l\'espace de production) et a son propre rapport de rentabilité.' },
+        { type: 'callout', kind: 'exemple', text: 'Le projet démo a trois activités : Mets principaux surgelés, Soupes et potages, Sauces et accompagnements. Chacune porte ses frais fixes propres (par exemple une partie du loyer de l\'espace de production) et a son propre rapport de rentabilité.' },
 
         // ---------------------------------------------------------------------------------
         { type: 'h', id: 'guide-param-canaux', text: 'Canaux de vente' },
@@ -65,7 +65,7 @@ export const chapitreParametres = {
         {
             type: 'table', head: ['Niveau', 'Ce que c\'est', 'Exemple (projet démo)'], wrapCells: true, rows: [
                 ['Le **produit**', 'Une recette, avec son nom, son activité et sa catégorie.', 'Pâté chinois traditionnel'],
-                ['Le **format**', 'L\'emballage et la quantité sous lesquels le produit est vendu. Chaque format a sa propre fiche recette, son prix et son mix des ventes.', '340 g et 900 g'],
+                ['Le **format**', 'L\'emballage et la quantité sous lesquels le produit est vendu. Chaque format a sa propre fiche recette, son prix et son répartition des ventes.', '340 g et 900 g'],
                 ['Le **SKU**', 'Le numéro de référence d\'un format (de l\'anglais « stock keeping unit », unité de gestion de stock). Il est déduit automatiquement du produit et du format, mais vous pouvez le remplacer par votre propre codification.', 'Un code propre à chaque format'],
             ],
         },
@@ -91,15 +91,15 @@ export const chapitreParametres = {
                 ['{{SKU}}', 'Le numéro de référence du format, généré à partir du produit et du format ; modifiable.'],
                 ['{{PDS ($)}}', 'Le prix de détail suggéré au consommateur. Sert à générer le prix net de chaque canal.'],
                 ['{{Canaux}}', 'Le nombre de canaux où ce format est vendu ; cliquer ouvre la ligne de détail : prix net et volume par canal. L\'étoile marque le **canal principal**, dont le prix alimente les marges affichées dans l\'onglet Production. Un format n\'est pas forcément vendu dans tous les canaux.'],
-                ['{{Mix (%)}}', 'La part de ce format dans vos ventes. Elle est **calculée automatiquement** à partir des volumes que vous saisissez par canal (c\'est plus précis qu\'un pourcentage tapé à la main). Si aucun volume n\'est saisi, vous pouvez taper le mix vous-même.'],
-                ['{{Menu}}', 'Case à cocher : ce format est-il compris dans les analyses ? Décochez-la pour un format saisonnier ou en développement : il disparaît des moyennes, du point mort du menu, du rapport d\'achats et des classements.'],
+                ['{{Part des ventes (%)}}', 'La part de ce format dans vos ventes. Elle est **calculée automatiquement** à partir des volumes que vous saisissez par canal (c\'est plus précis qu\'un pourcentage tapé à la main). Si aucun volume n\'est saisi, vous pouvez taper cette part vous-même.'],
+                ['{{Actif}}', 'Case à cocher : ce format est-il compris dans les analyses ? Décochez-la pour un format saisonnier ou en développement : il disparaît des moyennes, du point mort des produits actifs, du rapport d\'achats et des classements.'],
                 ['Actions', 'Dupliquer le format, ou le supprimer (avec possibilité d\'annuler pendant quelques secondes).'],
             ],
         },
-        { type: 'callout', kind: 'attention', text: 'Si la somme des mix des formats « au menu » n\'est pas de 100 %, un bandeau jaune vous le signale (il n\'apparaît que lorsque la somme n\'est pas nulle). Une somme de 90 % ou de 120 % fausse toutes les moyennes pondérées du rapport : corrigez-la, ou saisissez les volumes réels par canal, qui calculent le mix à votre place.' },
-        { type: 'callout', kind: 'astuce', text: 'Pour un nouveau format très semblable à un autre (une autre taille de la même recette), utilisez {{Dupliquer ce format}} : vous partez de la même fiche recette et n\'avez qu\'à ajuster ce qui diffère. Pour dupliquer tout le produit, y compris tous ses formats, utilisez {{Dupliquer le plat}}.' },
+        { type: 'callout', kind: 'attention', text: 'Si la somme des parts des ventes des formats « actif » n\'est pas de 100 %, un bandeau jaune vous le signale (il n\'apparaît que lorsque la somme n\'est pas nulle). Une somme de 90 % ou de 120 % fausse toutes les moyennes pondérées du rapport : corrigez-la, ou saisissez les volumes réels par canal, qui calculent cette part à votre place.' },
+        { type: 'callout', kind: 'astuce', text: 'Pour un nouveau format très semblable à un autre (une autre taille de la même recette), utilisez {{Dupliquer ce format}} : vous partez de la même fiche recette et n\'avez qu\'à ajuster ce qui diffère. Pour dupliquer tout le produit, y compris tous ses formats, utilisez {{Dupliquer le produit}}.' },
         { type: 'p', text: 'En haut de la liste, trois filtres (par nom, par activité, par catégorie), deux boutons de tri **A → Z** et **Z → A**, et des contrôles de pagination. Vos filtres et le produit sélectionné sont retrouvés quand vous revenez sur cet onglet.' },
-        { type: 'callout', kind: 'exemple', text: 'Dans le projet démo, le « Pâté chinois traditionnel » est un seul produit à **deux formats** (340 g et 900 g), chacun avec sa recette, son prix et son mix. Dans les rapports, il apparaît donc sur deux lignes distinctes, désambiguïsées par le format entre parenthèses.' },
+        { type: 'callout', kind: 'exemple', text: 'Dans le projet démo, le « Pâté chinois traditionnel » est un seul produit à **deux formats** (340 g et 900 g), chacun avec sa recette, son prix et sa part des ventes. Dans les rapports, il apparaît donc sur deux lignes distinctes, désambiguïsées par le format entre parenthèses.' },
 
         // ---------------------------------------------------------------------------------
         { type: 'h', id: 'guide-param-import-ventes', text: 'Assistant d\'importation d\'un rapport de ventes' },
@@ -107,7 +107,7 @@ export const chapitreParametres = {
         {
             type: 'steps', items: [
                 { label: 'Téléverser.', text: 'Choisissez le fichier (.csv, .xls ou .xlsx). Pour un classeur Excel, l\'assistant lit le **premier onglet** : placez-y vos données.' },
-                { label: 'Faire correspondre les colonnes.', text: 'Associez chaque colonne de votre fichier à un champ de l\'application : le nom du plat, le prix net et la quantité vendue sont obligatoires ; le format, le canal, la catégorie, la date de transaction et le total net de la ligne sont facultatifs. L\'assistant devine les correspondances d\'après les titres des colonnes ; corrigez-les au besoin.' },
+                { label: 'Faire correspondre les colonnes.', text: 'Associez chaque colonne de votre fichier à un champ de l\'application : le nom du produit, le prix net et la quantité vendue sont obligatoires ; le format, le canal, la catégorie, la date de transaction et le total net de la ligne sont facultatifs. L\'assistant devine les correspondances d\'après les titres des colonnes ; corrigez-les au besoin.' },
                 { label: 'Vérifier et résoudre.', text: 'Pour chaque ligne, vous confirmez à quel produit, quel format et quel canal elle correspond. Une ligne dont le format n\'est pas résolu est désélectionnée par défaut. Pour un canal inconnu, l\'assistant propose d\'en créer un, de le lier à un canal existant ou d\'ignorer la ligne. Il ne crée jamais un nouveau format à votre place.' },
                 { label: 'Confirmer.', text: 'Un récapitulatif indique ce qui sera ajouté ou mis à jour avant que vous validiez.' },
             ],
@@ -117,11 +117,11 @@ export const chapitreParametres = {
             type: 'ul', items: [
                 { label: 'Regroupement.', text: 'Toutes les lignes d\'un même produit, format et canal sont regroupées : les quantités s\'additionnent. Le prix net retenu est celui de la première ligne du groupe : assurez-vous donc qu\'il est identique pour toutes les lignes d\'un même regroupement.' },
                 { label: 'Mise à jour.', text: 'Le prix net et le volume du format sont mis à jour pour le canal concerné.' },
-                { label: 'Mix recalculé.', text: 'Le mix des ventes de **tous** les formats au menu est recalculé à partir des volumes par canal (cet import et les précédents). Un format sans aucun volume importé apparaît à 0 %.' },
+                { label: 'Parts des ventes recalculées.', text: 'La répartition des ventes de **tous** les formats actifs est recalculée à partir des volumes par canal (cet import et les précédents). Un format sans aucun volume importé apparaît à 0 %.' },
                 { label: 'Période.', text: 'Si une colonne de date est associée, l\'assistant renseigne la période de référence de l\'État des résultats à partir des dates du rapport.' },
             ],
         },
-        { type: 'callout', kind: 'attention', text: 'Pour un nouveau projet, vérifiez toujours que le canal et le format sont correctement liés avant de confirmer : un volume importé sur le mauvais canal fausse la marge de ce canal, et le mix recalculé change toutes vos moyennes.' },
+        { type: 'callout', kind: 'attention', text: 'Pour un nouveau projet, vérifiez toujours que le canal et le format sont correctement liés avant de confirmer : un volume importé sur le mauvais canal fausse la marge de ce canal, et les parts des ventes recalculées changent toutes vos moyennes.' },
 
         { type: 'callout', kind: 'retenir', text: 'Paramètres définit le cadre : activités, canaux, unités, objectifs, et la liste des produits avec leurs formats, prix nets et volumes. Un produit contient un ou plusieurs formats ; chaque format a sa recette (dans Production) et son SKU.' },
         { type: 'words', items: [
@@ -130,8 +130,8 @@ export const chapitreParametres = {
             { term: 'Produit, format, SKU', def: 'la recette ; sa version vendue (taille et emballage) ; la référence de cette version.' },
             { term: 'PDS', def: 'le prix de détail suggéré au consommateur final.' },
             { term: 'Prix net, volume', def: 'ce qui revient au producteur par unité dans un canal, et le nombre d\'unités vendues dans ce canal pour la période.' },
-            { term: 'Mix des ventes', def: 'la part d\'un format dans vos ventes totales.' },
-            { term: 'Au menu', def: 'indique si un format entre dans les analyses.' },
+            { term: 'Part des ventes', def: 'la part d\'un format dans vos ventes totales.' },
+            { term: 'Actif', def: 'indique si un format entre dans les analyses.' },
         ] },
     ],
 };

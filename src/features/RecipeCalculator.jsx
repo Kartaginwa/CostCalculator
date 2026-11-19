@@ -3,8 +3,7 @@ import { AlertCircle, ChevronDown, GripVertical, Trash2, Scale, PlusCircle } fro
 import {
     unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPositiveNumber, isInvalidPercentage,
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent, formatQuantityLabel,
-    getCompatibleUnits, CONVERSION_FACTORS, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits,
-} from '../utils.js';
+    getCompatibleUnits, CONVERSION_FACTORS, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits, formatNumber } from '../utils.js';
 import { getCostTargetIndicator, useValueFlash, useSessionState } from '../ui-utils.jsx';
 import { Tooltip, EmptyState, CostNatureBadge, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
@@ -84,7 +83,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
     }, [format, ingredientsList]);
 
     // Coûts du FORMAT sélectionné : calculé directement (memo local, vide à chaque rendu — cet
-    // écran ne calcule qu'un seul plat à la fois) plutôt que réutilisé depuis
+    // écran ne calcule qu'un seul produit à la fois) plutôt que réutilisé depuis
     // analysisData.productsWithCosts, pour rester réactif pendant la saisie sans attendre le
     // recalcul global de l'analyse.
     const costs = useMemo(() => {
@@ -203,8 +202,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
 
     if (!product || !format) return (
         <div className="container mx-auto p-6 max-w-3xl">
-            <EmptyState message="Veuillez d'abord sélectionner ou ajouter un plat.">
-                <button onClick={() => goToTab('info')} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Aller à Paramètres → Produits et SKUs</button>
+            <EmptyState message="Veuillez d'abord sélectionner ou ajouter un produit.">
+                <button onClick={() => goToTab('info')} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Aller à Paramètres → Produits et SKUs</button>
             </EmptyState>
         </div>
     );
@@ -780,7 +779,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                             <p className="text-xs text-gray-500 mb-1">Distinct d'une perte de procédé : des unités déjà produites, retirées après coup (ex. contrôle qualité).</p>
                             <input type="text" inputMode="decimal" value={format.yieldGrid.rejectRate || ''} onChange={(e) => handleFormatNestedChange('yieldGrid', 'rejectRate', e.target.value)} className="w-32 p-1.5 border rounded text-right text-sm" />
                         </div>
-                        <p className="text-sm font-semibold text-gray-700">Quantité produite calculée : {(computedYieldUnits ?? 0).toFixed(2)}</p>
+                        <p className="text-sm font-semibold text-gray-700">Quantité produite calculée : {formatNumber(computedYieldUnits ?? 0, 2)}</p>
                     </div>
                 )}
             </div>
@@ -1188,21 +1187,21 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                 Durée Processus
                                 <Tooltip tip="prod.dureeProcessus" />
                             </p>
-                            <p className="font-semibold text-sm text-gray-800">{(productionSummary.totalProductionTime / 60).toFixed(1)} min</p>
+                            <p className="font-semibold text-sm text-gray-800">{formatNumber((productionSummary.totalProductionTime / 60), 1)} min</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 flex items-center justify-end">
                                 Temps Personnel
                                 <Tooltip tip="prod.tempsPersonnel" />
                             </p>
-                            <p className="font-semibold text-sm text-gray-800">{(productionSummary.totalLaborTime / 60).toFixed(1)} min</p>
+                            <p className="font-semibold text-sm text-gray-800">{formatNumber((productionSummary.totalLaborTime / 60), 1)} min</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 flex items-center justify-end">
-                                Intensité M-O
+                                Intensité de main-d'œuvre
                                 <Tooltip tip="prod.intensite" />
                             </p>
-                            <p className="font-semibold text-sm text-gray-800">{productionSummary.laborIntensity.toFixed(2)}x</p>
+                            <p className="font-semibold text-sm text-gray-800">{formatNumber(productionSummary.laborIntensity, 2)}x</p>
                         </div>
                     </div>
                 </div>
@@ -1522,8 +1521,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 <div className="mt-6 pt-4 border-t">
                     {!isSimulating ? (
                         <div className="text-center">
-                            <button onClick={() => setIsSimulating(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                                <Scale className="h-5 w-5 mr-2" /> Simuler un nouveau prix
+                            <button onClick={() => setIsSimulating(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                                <Scale className="h-4 w-4 mr-2" /> Simuler un nouveau prix
                             </button>
                         </div>
                     ) : (

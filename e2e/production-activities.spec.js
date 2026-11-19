@@ -63,7 +63,7 @@ test("État des résultats : Coefficient d'imputation des charges indirectes (CI
     // activité réelle du projet démo (act_plats/act_soupes/act_sauces, voir initialState.js) — un
     // seul sélecteur par ligne, même options pour les deux.
     await expect(section.getByText('Général', { exact: true })).toBeVisible();
-    await expect(section.getByText('Plats principaux surgelés')).toBeVisible();
+    await expect(section.getByText('Mets principaux surgelés')).toBeVisible();
     await expect(section.locator('select')).toHaveCount(4);
 
     const generalSelect = section.locator('#indirectCostMethod');
@@ -71,7 +71,7 @@ test("État des résultats : Coefficient d'imputation des charges indirectes (CI
     await generalSelect.selectOption('laborTime');
     await expect(generalSelect).toHaveValue('laborTime');
 
-    const activityRow = section.locator('div', { hasText: 'Plats principaux surgelés' }).last();
+    const activityRow = section.locator('div', { hasText: 'Mets principaux surgelés' }).last();
     const activitySelect = activityRow.locator('select');
     await expect(activitySelect).toHaveValue('directCost');
     await activitySelect.selectOption('laborTime');

@@ -390,9 +390,9 @@ export const CatalogImportWizardModal = ({
                             />
                             <button
                                 onClick={() => fileInputRef.current.click()}
-                                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                                className="inline-flex items-center px-6 py-3 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                             >
-                                <Upload className="h-5 w-5 mr-2" />
+                                <Upload className="h-4 w-4 mr-2" />
                                 Choisir un fichier
                             </button>
                         </div>
@@ -578,7 +578,7 @@ export const CatalogImportWizardModal = ({
                     )}
                     <div className="flex space-x-2">
                         {step === 1.5 && (
-                            <button onClick={handleSheetSelection} disabled={!selectedSheet} className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400">
+                            <button onClick={handleSheetSelection} disabled={!selectedSheet} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400">
                                 Suivant
                             </button>
                         )}
@@ -586,7 +586,7 @@ export const CatalogImportWizardModal = ({
                             <button
                                 onClick={() => setStep(3)}
                                 disabled={!mappings[Object.keys(mappings).find(h => mappings[h] === 'name')] || !mappings[Object.keys(mappings).find(h => mappings[h] === 'purchasePrice')]}
-                                className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                                className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                                 title={(!mappings[Object.keys(mappings).find(h => mappings[h] === 'name')] || !mappings[Object.keys(mappings).find(h => mappings[h] === 'purchasePrice')]) ? "Veuillez mapper les champs 'Nom' et 'Prix' pour continuer." : ""}
                             >
                                 Suivant
@@ -596,7 +596,7 @@ export const CatalogImportWizardModal = ({
                             <button
                                 onClick={() => setStep(4)}
                                 disabled={selectedItems.size === 0}
-                                className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                                className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                                 title={selectedItems.size === 0 ? "Veuillez sélectionner au moins un item." : ""}
                             >
                                 Suivant
@@ -605,7 +605,7 @@ export const CatalogImportWizardModal = ({
                         {step === 4 && (
                             <button
                                 onClick={handleImport}
-                                className="px-4 py-2 border rounded-md text-sm text-white bg-green-600 hover:bg-green-700"
+                                className="px-4 py-2 border rounded-md text-xs text-white bg-green-600 hover:bg-green-700"
                             >
                                 Confirmer et Importer
                             </button>

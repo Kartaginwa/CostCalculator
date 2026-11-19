@@ -321,7 +321,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                             <h3 className="text-xl font-semibold mb-4">Étape 1: Téléverser votre rapport de ventes</h3>
                             <p className="text-gray-600 mb-8">
                                 Un rapport de ventes par distributeur/circuit, un export comptable (QuickBooks, Odoo...)
-                                ou tout fichier listant plat, quantité vendue et prix — un canal par ligne si vous en
+                                ou tout fichier listant les produits, quantités vendue et prix — un canal par ligne si vous en
                                 avez plusieurs.
                                 <br />
                                 Les formats supportés sont CSV et Excel (.csv, .xls, .xlsx).
@@ -335,9 +335,9 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                             />
                             <button
                                 onClick={() => fileInputRef.current.click()}
-                                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                                className="inline-flex items-center px-6 py-3 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                             >
-                                <Upload className="h-5 w-5 mr-2" />
+                                <Upload className="h-4 w-4 mr-2" />
                                 Choisir un fichier
                             </button>
                         </div>
@@ -375,7 +375,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                         <div>
                             <h3 className="text-xl font-semibold mb-2">Étape 3: Prévisualisation et résolution</h3>
                             <p className="text-gray-600 mb-6">
-                                Vérifiez chaque ligne : à quel plat, quel format et quel canal de vente elle correspond.
+                                Vérifiez chaque ligne : à quel produit, quel format et quel canal de vente elle correspond.
                                 Une ligne dont le format n'est pas résolu est désélectionnée par défaut — elle ne sera
                                 pas importée tant que vous ne la liez pas à un format existant.
                             </p>
@@ -392,7 +392,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                                             <th className="p-2 w-12 text-center">
                                                 <input type="checkbox" checked={selectedItems.size === processedData.length && processedData.length > 0} onChange={handleSelectAll} className="h-4 w-4" />
                                             </th>
-                                            <th className="p-2 text-left">Plat</th>
+                                            <th className="p-2 text-left">Produit</th>
                                             <th className="p-2 text-left">Produit</th>
                                             <th className="p-2 text-left">Format</th>
                                             <th className="p-2 text-left">Canal</th>
@@ -410,7 +410,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                                                 <td className="p-2">
                                                     {item.productStatus === 'new' ? (
                                                         <select className="w-full p-1 border rounded-md text-xs" onChange={(e) => handleManualLink(item.id, e.target.value)} value="new">
-                                                            <option value="new">-- Créer un nouveau plat --</option>
+                                                            <option value="new">-- Créer un nouveau produit --</option>
                                                             {existingProducts.map(p => <option key={p.id} value={p.id}>{p.platName}</option>)}
                                                         </select>
                                                     ) : (
@@ -455,13 +455,13 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                                 <p>Vous êtes sur le point de :</p>
                                 <ul className="list-disc list-inside">
                                     <li><strong>Mettre à jour</strong> {processedData.filter(item => selectedItems.has(item.id) && item.formatResolution !== 'ignore' && item.channelResolution !== 'ignore' && item.productStatus === 'update').length} format(s) existant(s) (prix net + volume par canal).</li>
-                                    <li><strong>Ajouter</strong> {processedData.filter(item => selectedItems.has(item.id) && item.channelResolution !== 'ignore' && item.productStatus === 'new').length} nouveau(x) plat(s).</li>
+                                    <li><strong>Ajouter</strong> {processedData.filter(item => selectedItems.has(item.id) && item.channelResolution !== 'ignore' && item.productStatus === 'new').length} nouveau(x) produit(s).</li>
                                     <li><strong>Créer</strong> {processedData.filter(item => selectedItems.has(item.id) && item.channelResolution === 'create').length} nouveau(x) canal(aux) de vente.</li>
                                 </ul>
-                                <p className="border-t pt-2 mt-2">Le <strong>mix des ventes</strong> de TOUS les formats du menu sera recalculé à partir des volumes par canal déjà saisis (cet import + les précédents), et les <strong>revenus totaux</strong> seront ajustés en conséquence. <strong>Attention</strong> : un format dont aucun volume n'a encore été importé ou saisi apparaîtra à 0 % de mix des ventes après cette opération, même s'il avait une valeur avant.</p>
+                                <p className="border-t pt-2 mt-2">Le <strong>répartition des ventes</strong> de TOUS les formats actifs sera recalculé à partir des volumes par canal déjà saisis (cet import + les précédents), et les <strong>revenus totaux</strong> seront ajustés en conséquence. <strong>Attention</strong> : un format dont aucun volume n'a encore été importé ou saisi apparaîtra à 0 % de répartition des ventes après cette opération, même s'il avait une valeur avant.</p>
                             </div>
                             <p className="text-gray-600 my-8">
-                                Cette action modifiera votre menu et vos canaux de vente. Êtes-vous sûr de vouloir continuer ?
+                                Cette action modifiera vos produits et vos canaux de vente. Êtes-vous sûr de vouloir continuer ?
                             </p>
                         </div>
                     )}
@@ -473,17 +473,17 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                             <button onClick={() => setStep(step - 1)} className="px-4 py-2 border rounded-md text-sm">Précédent</button>
                         )}
                         {step === 2 && (
-                            <button onClick={() => setStep(3)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez associer tous les champs obligatoires (*)." : ""}>
+                            <button onClick={() => setStep(3)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez associer tous les champs obligatoires (*)." : ""}>
                                 Suivant
                             </button>
                         )}
                         {step === 3 && (
-                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un item." : ""}>
+                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un item." : ""}>
                                 Suivant
                             </button>
                         )}
                         {step === 4 && (
-                            <button onClick={handleConfirmImport} className="px-4 py-2 border rounded-md text-sm text-white bg-green-600 hover:bg-green-700">
+                            <button onClick={handleConfirmImport} className="px-4 py-2 border rounded-md text-xs text-white bg-green-600 hover:bg-green-700">
                                 Confirmer et Importer
                             </button>
                         )}

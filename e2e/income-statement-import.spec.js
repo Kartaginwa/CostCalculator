@@ -37,7 +37,7 @@ test("État des résultats : assistant d'import crée des revenus (dont un venti
     const rowByLabel = (label) => modal.locator('tbody tr').filter({ has: page.locator(`input[value="${label}"]`) });
 
     // Le revenu dont le Produit/SKU reconnaît un plat existant est ventilé sur son activité
-    // ("Plats principaux surgelés") plutôt que sur Général.
+    // ("Mets principaux surgelés") plutôt que sur Général.
     const skuRow = rowByLabel('Ventes Chili con carne mijoté');
     await expect(skuRow.locator('select').first()).toHaveValue('revenue');
     await expect(skuRow.locator('select').nth(1)).toHaveValue('act_plats');

@@ -33,7 +33,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     // une carte par produit avec son propre tableau complet, prenait trop de place et rendait la
     // navigation difficile) : `selectedProductId` est le SEUL état de sélection, propre à cet
     // écran — volontairement PAS partagé avec `editingProductIndex`/`editingFormatIndex` d'App.jsx
-    // (qui pilotent l'onglet Recette & Calcul ; les réutiliser ici créerait un couplage surprenant
+    // (qui pilotent l'onglet Production ; les réutiliser ici créerait un couplage surprenant
     // entre les deux onglets, l'un n'ayant pas à changer ce que l'autre affiche).
     const [selectedProductId, setSelectedProductId] = useSessionState('info.selectedProductId', null);
     // Sur petit écran, les deux colonnes ne peuvent pas être côte à côte : bascule entre la liste

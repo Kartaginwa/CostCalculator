@@ -3,18 +3,14 @@
 // aucun état React. jsPDF/autoTable sont fournis en global (window.jspdf) via scripts/copy-libs.
 import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS, MAJOR_ALLERGENS } from '../utils.js';
 import { indirectCostMethodLabels } from '../state/initialState.js';
+import { computeSnapshotMenuKpis } from '../engine/analysisData.js';
     const getGlobalKpiDataForPdf = (trackingPoints) => {
         return trackingPoints.map(point => {
-            const activeProducts = point.productsWithCosts.filter(p => p.onMenu);
-            const totalSalesMix = activeProducts.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix), 0);
-            
-            if (totalSalesMix === 0) {
+            const kpis = computeSnapshotMenuKpis(point.productsWithCosts);
+            if (!kpis) {
                 return { name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note, "Marge Brute Moyenne": 0, "Coût Matière Moyen": 0, "Coût M-O Moyen": 0 };
             }
-
-            const weightedGrossMargin = activeProducts.reduce((sum, p) => sum + (p.costs.margeBrutePercent * (parseLocaleNumber(p.salesMix) / totalSalesMix)), 0);
-            const weightedMaterialCost = activeProducts.reduce((sum, p) => sum + (p.costs.costMatierePercent * (parseLocaleNumber(p.salesMix) / totalSalesMix)), 0);
-            const weightedLaborCost = activeProducts.reduce((sum, p) => sum + (p.costs.costLaborPercent * (parseLocaleNumber(p.salesMix) / totalSalesMix)), 0);
+            const { weightedGrossMargin, weightedMaterialCost, weightedLaborCost } = kpis;
 
             return {
                 name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),

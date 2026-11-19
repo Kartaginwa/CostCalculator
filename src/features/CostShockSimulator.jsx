@@ -102,7 +102,7 @@ const ImpactGroupTable = ({ title, tooltip, rows }) => (
     </div>
 );
 
-// Simulateur de choc sur les coûts (onglet Résumé). Applique un ou plusieurs chocs — sur les prix
+// Simulateur de choc sur les coûts (onglet Rapport et suivi). Applique un ou plusieurs chocs — sur les prix
 // d'INTRANTS et/ou les salaires de MAIN-D'ŒUVRE — et recalcule l'analyse pour montrer l'impact sur
 // le food cost, le coût MO, la marge, le point mort et la marge nette par plat. Transitoire : les
 // scénario (uiSettings.costShocks) est enregistré avec le projet.
@@ -224,7 +224,7 @@ export const CostShockSimulator = ({ collapsible = true }) => {
     const headerContent = (
         <span className="text-lg font-bold text-indigo-800 flex items-center">
             Simulation — choc sur les coûts (intrants & main-d'œuvre)
-            <Tooltip text="Applique un ou plusieurs chocs sur les prix d'achat et/ou les salaires horaires, et montre l'impact sur les marges, le food cost, le coût MO et les cibles. N'est pas sauvegardé dans le projet." />
+            <Tooltip text="Applique un ou plusieurs chocs sur les prix d'achat et/ou les salaires horaires, et montre l'impact sur les marges, le food cost, le coût MO et les cibles. Le scénario est enregistré avec le projet." />
             {activeShocks.length > 0 && (
                 <span className="ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                     {activeShocks.length} choc{activeShocks.length > 1 ? 's' : ''} actif{activeShocks.length > 1 ? 's' : ''}

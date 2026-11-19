@@ -2601,6 +2601,49 @@ classement, matrice d'activités, canal BCG). Non conservés volontairement : nu
 simulation de prix, fenêtres. Scénario de la Simulation de chocs : `uiSettings.costShocks`,
 enregistré dans le fichier du projet. Barre d'onglets collante (`sticky`, en-tête non collant,
 espacement du dessous conservé).
+Point 4 de la Phase 7 (guide, 18/11) — fait : noms d'onglets périmés corrigés (guide + 4 textes
+hors guide), tutoriel « proposé » et non « automatique », période de référence → État des résultats,
+historique de développement retiré (dates, renvois internes), nouvelles sections « Par où commencer ? »,
+« Astuces d'utilisation », « 4. Coûts additionnels », « Capacité de production par activité »,
+« Panneau points à vérifier », « Matrices par canal », « Simulation » ; 12 entrées de glossaire ;
+infobulle du simulateur corrigée (le scénario est maintenant enregistré). Infrastructure pour
+l'étape des infobulles : `openGuide(ancre)` dans le contexte projet + prop `anchor` du guide ;
+test vitest de cohérence des ancres. EN ATTENTE d'aval : réécriture pédagogique des passages denses
+de l'État des résultats (Frais fixes / clés de répartition, CICI, Réconciliation).
+Point 4 (suite, 18/11) : réécriture pédagogique de « Frais fixes » (règle « modélisé dans l'app ou
+non », exemple de double comptage 60 000 $, fixe vs variable, capacité inutilisée), CICI et
+Réconciliation ; rappel dans l'État des résultats quand un frais fixe ressemble à de la
+main-d'œuvre de production (`looksLikeProductionLabor`, bouton « Voir le guide » via `openGuide`).
+À REPROPOSER EN FIN DE PHASE 7 (décision utilisateur) : option B (catégorie « Main-d'œuvre de
+production (déjà dans le modèle) » exclue du pool) et option C (case fixe/variable par poste, effet
+sur le point mort seulement) — voir la mémoire `deferred-labor-classification-options`.
+Point 4 relancé (19/11) — GUIDE D'APPRENTISSAGE entièrement réécrit (vocabulaire spécialisé conservé et
+expliqué ; ton clair, exemples variés non artisanaux) : 5 parties (0 Bien utiliser ce guide, 1 Comprendre le coût
+de revient — 13 chapitres de concepts, 2 Utiliser l'application — 6 onglets, 3 Lire vos résultats et décider,
+4 Aller plus loin — glossaire de 60+ termes, FAQ, limites), ~23 000 mots (8 500 avant), 120 encadrés, 37 tableaux.
+Architecture : contenu en données (`src/components/guide/content/*.js`), rendu `GuideBody.jsx`, sommaire généré,
+ancres stables, `openGuide(ancre)`. Garde-fous : `guideContent.test.js` (ancres, liens, glossaire, lisibilité,
+termes périmés), `guideNumbers.test.js` (arithmétique des exemples), `e2e/guide-demo-numbers.spec.js` (les
+chiffres du projet démo cités s'affichent bien à l'écran). CORRECTION : le coût de main-d'œuvre d'une recette
+absorbe la capacité INUTILISÉE (÷ taux d'utilisation), pas le temps non productif (texte de la veille inexact).
+À signaler (non corrigé) : import du rapport de ventes retient le prix de la 1re ligne d'un regroupement ;
+graphique d'évolution pondère par le mix (unités) alors que les tuiles pondèrent par le revenu ; infobulle de la
+réconciliation mentionne encore le « mix reconstruit » ; libellé « Nom du plat » (étape de langue).
+Préparation de l'étape 5 (infobulles, 19/11) : inventaire complet (95 `<Tooltip text>` + 34 props `tooltip=` +
+indices/titres d'aide = 140 entrées) cartographié vers le guide (`src/components/guide/tooltipMap.js`, chaque
+entrée → ancre précise : lignes de tableaux, colonnes, tuiles, indicateurs) ; ~90 ancres fines ajoutées au guide
+(`rowIds`/`itemIds`, dictionnaires « lignes du tableau » de Par SKU et Par Activité/Canal, colonnes des tableaux
+de l'État des résultats, tuiles, quadrants, résultats de la simulation). Test `guideTooltips.test.js` : toute
+infobulle du code doit être dans la carte et pointer vers une ancre existante. Graphique d'évolution : pondération
+par le REVENU (`computeSnapshotMenuKpis`, repli mix × prix), comme les tuiles. Liste des corrections factuelles à
+faire dans les infobulles : mémoire `pending-finalizations`. Reste à faire à l'étape 5 : raccourcir les textes,
+rendre l'infobulle cliquable/épinglable (le lien « En savoir plus » doit rester atteignable à la souris),
+rabattre dans la fenêtre, brancher `openGuide(ancre)`.
+Guide — compléments (19/11) : « Note sur la rigueur » rétablie comme encadré FINAL de la conclusion (texte de
+l'ancien guide) ; export PDF du guide (`src/reports/generateGuidePdf.js`, bouton « Télécharger en PDF » dans la
+fenêtre du guide) : couverture, sommaire cliquable avec numéros de page, ~68 pages, encadrés colorés, tableaux,
+pieds de page ; même contenu que la fenêtre (une seule source). Jeu de caractères PDF = Windows-1252 : flèches
+et signe moins mathématique remplacés (→ ›, − -) ; « œ » mesuré comme « oe » (jsPDF ignore sa largeur).
 Reste à trancher / reporter : marges négatives d'une sous-recette sans prix dans Production
 (masquer les tuiles ?) ; premier libellé d'axe X coupé des graphiques de suivi (mineur, ne pas
 toucher aux marges du graphique) ; Rapport d'achats (filtre fournisseur « Aucun »).

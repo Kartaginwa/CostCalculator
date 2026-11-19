@@ -172,6 +172,19 @@ export const isValidPercentage = (value) => {
 // Libellé d'un produit sans nom : « Sans nom 3 » (numéro = position dans la liste), partout pareil.
 export const unnamedLabel = (index) => `Sans nom ${index + 1}`;
 
+// Un libellé de FRAIS FIXES qui ressemble à de la main-d'œuvre de production (ex. « Salaires
+// cuisine », « Main-d'œuvre de production ») : si ce personnel est déjà dans l'onglet Main-d'œuvre,
+// son coût est déjà compté dans chaque recette — le saisir aussi en frais fixes le compterait deux
+// fois. Heuristique volontairement simple (un mot de « paie » ET un mot de « production ») ; elle ne
+// bloque jamais rien, elle déclenche seulement un rappel dans l'État des résultats.
+export const looksLikeProductionLabor = (label) => {
+    const t = String(label || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (!t.trim()) return false;
+    const payWord = /(salaire|paie\b|paye\b|remuneration|main[\s-]*d['’ ]?(oeuvre|œuvre)|\bmo\b|employe|personnel)/.test(t) || /m[-\s]*d.?(oeuvre)/.test(t);
+    const productionWord = /(cuisin|production|atelier|usine|transformation|fabrication|boulang|patiss|preparat)/.test(t);
+    return payWord && productionWord;
+};
+
 // Pour l'affichage d'erreurs : un champ vide n'est pas une erreur (une donnée absente reste
 // absente) — seule une valeur saisie et invalide est signalée.
 export const isInvalidPercentage = (value) => isNotEmpty(value) && !isValidPercentage(value);

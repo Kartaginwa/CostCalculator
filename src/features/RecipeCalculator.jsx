@@ -123,7 +123,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
     // brute SEULEMENT — la marge NETTE n'apparaît plus du tout dans ce récapitulatif (elle a
     // besoin de l'allocation des frais fixes, pas encore multi-canal avant la Phase 4) ; le
     // rapport multi-canal pour la marge nette vit dans Résumé → Par SKU. Décision utilisateur du
-    // 06/10 : Recette & Calcul = coût de production + marge brute, rien d'autre côté marge.
+    // 06/10 : Production = coût de production + marge brute, rien d'autre côté marge.
     const channelBreakdown = useMemo(
         () => computeChannelBreakdown(costs, format?.channelPrices, salesChannels),
         [costs, format, salesChannels]

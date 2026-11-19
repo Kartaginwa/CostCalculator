@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
+import { looksLikeProductionLabor, parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
 
 describe('formatCurrency', () => {
     it('ajoute un espace comme séparateur de milliers, point comme séparateur décimal', () => {
@@ -162,4 +162,18 @@ describe('saisie numérique : point OU virgule, milliers tolérés', () => {
         expect(isValidNumber('abc12')).toBe(false);
         expect(isValidNumber('')).toBe(false);
     });
+});
+
+describe('looksLikeProductionLabor', () => {
+    it.each([
+        ['Salaires cuisine', true],
+        ["Main-d'œuvre de production", true],
+        ['Salaires des cuisiniers', true],
+        ['Paie - atelier', true],
+        ['Salaire du gérant', false],
+        ['Loyer atelier', false],
+        ['Salaires administration', false],
+        ['Électricité production', false],
+        ['', false],
+    ])('%s → %s', (label, expected) => { expect(looksLikeProductionLabor(label)).toBe(expected); });
 });

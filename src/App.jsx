@@ -110,6 +110,9 @@ const App = () => {
     const [editingFormatIndex, setEditingFormatIndex] = useState(0);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showInstructions, setShowInstructions] = useState(false);
+    // Ancre de section du guide à atteindre à l'ouverture (ex. depuis une infobulle : openGuide('guide-resume-simulation')).
+    const [guideAnchor, setGuideAnchor] = useState(null);
+    const openGuide = useCallback((anchor = null) => { setGuideAnchor(anchor); setShowInstructions(true); }, []);
     const [notification, setNotification] = useState({ message: '', type: '' });
     const fileInputRef = useRef(null);
     const [appLogoBase64, setAppLogoBase64] = useState(null);
@@ -1031,7 +1034,7 @@ const App = () => {
                                 <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>Modifications non sauvegardées
                             </span>
                         )}
-                        <button onClick={() => setShowInstructions(true)} title="Guide d'utilisation" className="inline-flex items-center p-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gray-200 hover:bg-gray-300">
+                        <button onClick={() => openGuide()} title="Guide d'utilisation" className="inline-flex items-center p-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-gray-200 hover:bg-gray-300">
                             <Info className="h-5 w-5" />
                         </button>
                         <button onClick={() => setShowResetConfirm(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
@@ -1068,6 +1071,7 @@ const App = () => {
         // sans quoi tous les onglets se re-rendraient à chaque rendu de App, quelle qu'en soit la cause.
         const projectContextValue = useMemo(() => ({
             goToTab: setActiveTab,
+            openGuide,
             companyName, onUpdateCompanyName: setCompanyName,
             logoUrl, onUpdateLogoUrl: setLogoUrl,
             generalInfo: calculatedGeneralInfo, onUpdateGeneralInfo: handleUpdateGeneralInfo,
@@ -1232,7 +1236,10 @@ const App = () => {
 
                     <InstructionModal
                         isOpen={showInstructions}
-                        onClose={() => setShowInstructions(false)}
+                        anchor={guideAnchor}
+                        appLogoBase64={appLogoBase64}
+                        appLogoDimensions={appLogoDimensions}
+                        onClose={() => { setShowInstructions(false); setGuideAnchor(null); }}
                     />
 
                     <PdfOptionsModal

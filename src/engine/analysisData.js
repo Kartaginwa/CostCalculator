@@ -817,6 +817,35 @@ export function computeMenuEngineeringQuadrants(rows) {
     return menuEngineeringData;
 }
 
+// KPI pondérés d'un POINT DE RÉFÉRENCE (relevé historique) — pondérés par le REVENU de chaque
+// produit, comme les tuiles de la Vue d'ensemble (computeAnalysisData) : la marge moyenne d'un menu est
+// (somme des marges en $) ÷ (somme des revenus), jamais une moyenne de pourcentages pondérée par des
+// UNITÉS (paradoxe de Simpson). Poids d'un produit : son revenu réel (prix net × volume de chaque
+// canal) quand le relevé en contient pour TOUS les produits au menu ; sinon, repli cohérent sur
+// « part du mix des ventes × prix de vente » (un mix est une part d'UNITÉS : sans multiplier par le
+// prix, on retombe dans le piège). Retourne null quand aucun poids n'est calculable (donnée absente,
+// jamais un 0 forcé).
+export function computeSnapshotMenuKpis(rows) {
+    const active = (rows || []).filter(p => p && p.onMenu);
+    if (active.length === 0) return null;
+    const realRevenue = (p) => (p.channelBreakdown || []).reduce(
+        (s, cb) => s + parseLocaleNumber(cb.netPrice) * parseLocaleNumber(cb.volume), 0);
+    const allHaveReal = active.every(p => realRevenue(p) > 0);
+    const revenueOf = (p) => allHaveReal ? realRevenue(p) : parseLocaleNumber(p.salesMix) * parseLocaleNumber(p.prixVente);
+    const total = active.reduce((s, p) => s + revenueOf(p), 0);
+    if (!(total > 0)) return null;
+    const acc = { weightedGrossMargin: 0, weightedMaterialCost: 0, weightedPackagingCost: 0, weightedLaborCost: 0 };
+    for (const p of active) {
+        const w = revenueOf(p) / total;
+        const m = p.blended || p.costs || {};
+        acc.weightedGrossMargin += (parseLocaleNumber(m.margeBrutePercent) || 0) * w;
+        acc.weightedMaterialCost += (parseLocaleNumber(m.costMatierePercent) || 0) * w;
+        acc.weightedPackagingCost += (parseLocaleNumber(m.costPackagingPercent) || 0) * w;
+        acc.weightedLaborCost += (parseLocaleNumber(m.costLaborPercent) || 0) * w;
+    }
+    return acc;
+}
+
 // Calcule l'ensemble des données d'analyse dérivées du projet : coûts de tous les FORMATS de
 // tous les produits, KPIs pondérés et point mort global, rapport d'achats et pertes, analyse ABC
 // (Pareto), matrice BCG (menu engineering) et classement par contribution au profit. Extrait de

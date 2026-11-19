@@ -440,7 +440,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                     </div>
                 </div>
                 {packagingAbcAnalysisData.A.length === 0 && packagingAbcAnalysisData.B.length === 0 && packagingAbcAnalysisData.C.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-4">Aucun emballage consommé pour la période — rattachez des emballages à vos formats de vente (onglet Recettes et produits) pour voir apparaître cette analyse.</p>
+                    <p className="text-sm text-gray-500 mt-4">Aucun emballage consommé pour la période — rattachez des emballages à vos formats de vente (onglet Production) pour voir apparaître cette analyse.</p>
                 )}
             </div>
 

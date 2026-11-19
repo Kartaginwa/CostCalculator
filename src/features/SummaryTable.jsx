@@ -6,7 +6,7 @@ import { getCostTargetIndicator, useEscapeKey, useSessionState } from '../ui-uti
 import { Tooltip, Pagination, CostNatureBadge, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
-import { computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
+import { computeSnapshotMenuKpis, computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 import { computeProjectChecks } from '../engine/projectChecks.js';
 import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
@@ -661,7 +661,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
 
                             <BySkuSectionHeader label="Coût net et marge nette" colSpan={channelBreakdown.length + 1} />
                             {(costs.costAgingPerPortion || 0) > 0 && (
-                                <BySkuRow label={<>Vieillissement <CostNatureBadge nature="financial" /></>} tooltip="Intérêt de portage sur le capital immobilisé pendant l'affinage de ce format (saisi dans Recettes et produits → Coûts additionnels). Le même montant quel que soit le canal ; déduit du bénéfice net, pas du bénéfice brut." render={channelBreakdown.map(cb => (
+                                <BySkuRow label={<>Vieillissement <CostNatureBadge nature="financial" /></>} tooltip="Intérêt de portage sur le capital immobilisé pendant l'affinage de ce format (saisi dans Production → Coûts additionnels). Le même montant quel que soit le canal ; déduit du bénéfice net, pas du bénéfice brut." render={channelBreakdown.map(cb => (
                                     <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costAgingPerPortion)} $</td>
                                 ))} />
                             )}
@@ -1043,23 +1043,20 @@ export const SummaryTable = ({
 
     const globalKpiData = useMemo(() => {
         return displayedTrackingPoints.map(point => {
-            const activeProductsAtPoint = point.productsWithCosts.filter(p => p.onMenu);
-            const totalSalesMixAtPoint = activeProductsAtPoint.reduce((sum, p) => sum + parseLocaleNumber(p.salesMix), 0);
+            // Pondération par le REVENU (voir computeSnapshotMenuKpis) : même méthode que les tuiles de
+            // la Vue d'ensemble, pour que le dernier point du graphique corresponde à la tuile.
+            const kpis = computeSnapshotMenuKpis(point.productsWithCosts);
 
-            // Aucun produit actif avec un mix des ventes connu à cette date : les KPI pondérés
-            // n'ont pas de sens (division par un mix total nul) — données ABSENTES (null, un trou
-            // dans la ligne), jamais forcées à 0.
-            if (totalSalesMixAtPoint === 0) {
+            // Aucun produit actif avec un poids calculable à cette date : données ABSENTES (null, un
+            // trou dans la ligne), jamais forcées à 0.
+            if (!kpis) {
                 return {
                     name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note,
                     "Point Mort Global": null, "Marge Brute Moyenne": null, "Coût Matière Moyen": null, "Coût Emballage Moyen": null, "Coût M-O Moyen": null,
                 };
             }
 
-            const weightedGrossMargin = activeProductsAtPoint.reduce((sum, p) => sum + (p.costs.margeBrutePercent * (parseLocaleNumber(p.salesMix) / totalSalesMixAtPoint)), 0);
-            const weightedMaterialCost = activeProductsAtPoint.reduce((sum, p) => sum + (p.costs.costMatierePercent * (parseLocaleNumber(p.salesMix) / totalSalesMixAtPoint)), 0);
-            const weightedPackagingCost = activeProductsAtPoint.reduce((sum, p) => sum + (p.costs.costPackagingPercent * (parseLocaleNumber(p.salesMix) / totalSalesMixAtPoint)), 0);
-            const weightedLaborCost = activeProductsAtPoint.reduce((sum, p) => sum + (p.costs.costLaborPercent * (parseLocaleNumber(p.salesMix) / totalSalesMixAtPoint)), 0);
+            const { weightedGrossMargin, weightedMaterialCost, weightedPackagingCost, weightedLaborCost } = kpis;
             const globalBreakEvenAtPoint = weightedGrossMargin > 0 ? parseLocaleNumber(point.generalInfo.totalIndirects) / weightedGrossMargin : 0;
 
             return {

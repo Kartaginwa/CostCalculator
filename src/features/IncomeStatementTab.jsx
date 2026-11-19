@@ -1,6 +1,6 @@
 import React, { useMemo, useState, lazy, Suspense } from 'react';
 import { Upload, Trash2, CheckCircle2, AlertCircle, X, Plus, Lock } from 'lucide-react';
-import { parseLocaleNumber, isValidNumber, isNotEmpty, formatCurrency, sumLineAmounts, sumAmountsMap, round2, EXPENSE_CATEGORIES, DIRECT_COST_TYPES, UNIT_BASE_FAMILY_LABELS } from '../utils.js';
+import { parseLocaleNumber, isValidNumber, isNotEmpty, formatCurrency, sumLineAmounts, sumAmountsMap, round2, EXPENSE_CATEGORIES, DIRECT_COST_TYPES, UNIT_BASE_FAMILY_LABELS, looksLikeProductionLabor } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { indirectCostMethodLabels } from '../state/initialState.js';
@@ -17,7 +17,7 @@ import {
     computeGrossProfitTotals,
     REPARTITION_ACTIVITY_PREFIX, REPARTITION_CHANNEL_PREFIX, REPARTITION_CUSTOM_PREFIX,
 } from '../engine/analysisData.js';
-import { useEscapeKey } from '../ui-utils.jsx';
+import { useEscapeKey, useSessionState } from '../ui-utils.jsx';
 
 // Cellule « — » neutre pour une colonne qui ne s'applique pas à ce tableau (voir
 // Projet_Claude/04-Conception-Modele.md, section 1bis : les 3 tableaux de l'État des résultats
@@ -341,8 +341,11 @@ export const IncomeStatementTab = () => {
         expenseLines, onUpdateExpenseLines, revenueLines, onUpdateRevenueLines,
         directCostLines, onUpdateDirectCostLines,
         repartitionKeys, onUpdateRepartitionKeys,
-        productionActivities, onUpdateProductionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification,
+        productionActivities, onUpdateProductionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification, openGuide,
     } = useProject();
+    // Rappel « main-d'œuvre de production déjà comptée dans les recettes » (voir looksLikeProductionLabor).
+    const [ignoredLaborWarnings, setIgnoredLaborWarnings] = useSessionState('income.ignoredLaborWarnings', []);
+    const suspectLaborLines = expenseLines.filter(l => looksLikeProductionLabor(l.label) && !ignoredLaborWarnings.includes(l.id));
     const [showRepartitionKeysModal, setShowRepartitionKeysModal] = useState(false);
     const [showImportWizard, setShowImportWizard] = useState(false);
 
@@ -1084,6 +1087,20 @@ export const IncomeStatementTab = () => {
                         <Tooltip text="Listez ici chaque poste de dépense qui n'est pas directement lié à la production d'un plat précis (loyer, électricité, marketing, salaires administratifs, assurances, frais bancaires...), avec sa catégorie. Le total (contenant « Général », non rattaché à une activité ou un canal précis) alimente le calcul des frais indirects par plat, selon la méthode d'attribution de Général choisie plus bas." />
                     </h2>
                 </div>
+                {suspectLaborLines.length > 0 && (
+                    <div data-testid="labor-double-count-warning" className="mb-4 flex items-start gap-3 p-3 border border-amber-300 bg-amber-50 rounded-lg text-sm text-amber-900">
+                        <AlertCircle className="h-5 w-5 flex-shrink-0 text-amber-600 mt-0.5" />
+                        <div className="flex-1">
+                            <p>
+                                {suspectLaborLines.map(l => `« ${l.label.trim()} »`).join(', ')} ressemble{suspectLaborLines.length > 1 ? 'nt' : ''} à de la main-d'œuvre de production. Si ce personnel est dans l'onglet Main-d'œuvre, son coût est déjà compté dans chaque recette : saisissez-le plutôt dans Charges directes réelles → Main-d'œuvre directe, sinon il serait compté deux fois.
+                            </p>
+                            <div className="mt-2 flex gap-4">
+                                <button type="button" onClick={() => openGuide('guide-ff-liste')} className="text-blue-700 hover:text-blue-900 underline">Voir le guide</button>
+                                <button type="button" onClick={() => setIgnoredLaborWarnings(prev => [...prev, ...suspectLaborLines.map(l => l.id)])} className="text-gray-600 hover:text-gray-800 underline">Ignorer (c'est du personnel hors modèle)</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {expenseLines.length > 0 ? (
                         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
                             <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />

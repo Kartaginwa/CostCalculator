@@ -392,7 +392,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <button onClick={() => requestSort('lossPercentage')} className="flex items-center">
                                     Taux de perte (%) {getSortIcon('lossPercentage')}
                                 </button>
-                                <Tooltip text="Perte AVANT la production : péremption, produits abîmés, gaspillage en stock. Ne pas confondre avec le Rendement (onglet Recette), qui couvre la perte PENDANT la préparation (ex. épluchage, cuisson) — les deux se cumulent, ne saisissez pas la même perte aux deux endroits sous peine de gonfler le coût matière." />
+                                <Tooltip text="Perte AVANT la production : péremption, produits abîmés, gaspillage en stock. Ne pas confondre avec le Rendement (onglet Production), qui couvre la perte PENDANT la préparation (ex. épluchage, cuisson) — les deux se cumulent, ne saisissez pas la même perte aux deux endroits sous peine de gonfler le coût matière." />
                             </div>
                         </th>
                             <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('unitPrice')} className="flex items-center w-full">Prix unitaire ($) {getSortIcon('unitPrice')}</button></th>

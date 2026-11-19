@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from './analysisData.js';
+import { computeSnapshotMenuKpis, computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -1222,5 +1222,34 @@ describe('computeIndirectCostDriverTotals — driver « volume » (22/10)', () =
 
         expect(generalDriverTotals.volume).toBe(0);
         expect(activityDriverTotals.act1.volume).toBe(0);
+    });
+});
+
+describe('computeSnapshotMenuKpis : pondération par le revenu d\'un point de référence', () => {
+    const row = (over) => ({ onMenu: true, salesMix: 0, prixVente: 0, costs: {}, ...over });
+    const costs = (marge, mat) => ({ margeBrutePercent: marge, costMatierePercent: mat, costPackagingPercent: 0.1, costLaborPercent: 0.1 });
+
+    it('repli : le poids est le mix (unités) × le prix de vente, pas le mix seul', () => {
+        // A : 4 $, 50 % de marge, 20 000 unités ; B : 10 $, 30 %, 5 000 unités ; C : 6 $, 25 %, 10 000 unités
+        const rows = [
+            row({ salesMix: 20000, prixVente: 4, costs: costs(0.5, 0.3) }),
+            row({ salesMix: 5000, prixVente: 10, costs: costs(0.3, 0.4) }),
+            row({ salesMix: 10000, prixVente: 6, costs: costs(0.25, 0.5) }),
+        ];
+        const k = computeSnapshotMenuKpis(rows);
+        // total des marges ÷ total des revenus = 70 000 / 190 000
+        expect(k.weightedGrossMargin).toBeCloseTo(70000 / 190000, 6);
+        // l'ancienne pondération par les unités donnait 40 % : elle est bien écartée
+        expect(k.weightedGrossMargin).not.toBeCloseTo(0.4, 2);
+    });
+    it('utilise les revenus réels (prix net × volume par canal) quand tous les produits en ont', () => {
+        const withCh = (marge, price, vol) => row({ costs: costs(marge, 0.3), channelBreakdown: [{ netPrice: price, volume: vol }], prixVente: price });
+        const k = computeSnapshotMenuKpis([withCh(0.5, 4, 20000), withCh(0.3, 10, 5000)]);
+        expect(k.weightedGrossMargin).toBeCloseTo((0.5 * 80000 + 0.3 * 50000) / 130000, 6);
+    });
+    it('ignore les produits hors menu ; null (donnée absente) quand aucun poids n\'est calculable', () => {
+        expect(computeSnapshotMenuKpis([row({ onMenu: false, salesMix: 100, prixVente: 5 })])).toBeNull();
+        expect(computeSnapshotMenuKpis([row({ salesMix: 0, prixVente: 5 })])).toBeNull();
+        expect(computeSnapshotMenuKpis([])).toBeNull();
     });
 });

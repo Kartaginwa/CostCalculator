@@ -111,7 +111,7 @@ const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues
         <tbody>
             <tr className="font-bold">
                 <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-l-lg">
-                    <span className="flex items-center justify-end">{label}{tooltip && <Tooltip text={tooltip} />}</span>
+                    <span className="flex items-center justify-end">{label}{tooltip && <Tooltip tip={tooltip} />}</span>
                 </td>
                 <td className={`px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 ${montantIsLast ? 'rounded-r-lg' : ''}`}>{formatCurrency(total)} $</td>
                 <td className="w-2 p-0" aria-hidden="true" />
@@ -674,7 +674,7 @@ export const IncomeStatementTab = () => {
             <div id="tutorial-section-income-statement-period" className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 p-4 bg-gray-100 rounded-lg">
                 <div className="md:col-span-2 flex items-center text-sm font-medium text-gray-700">
                     Période de référence
-                    <Tooltip text="La plage de dates précise sur laquelle vos revenus et frais fixes ci-dessous sont basés. L'assistant d'import (bouton ci-dessus) la détecte et la renseigne automatiquement à partir des dates du fichier, quand elles y figurent." />
+                    <Tooltip tip="ff.periode" />
                 </div>
                 <div>
                     <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Date de début</label>
@@ -725,7 +725,7 @@ export const IncomeStatementTab = () => {
             <div id="tutorial-section-revenue">
                 <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
                     Revenus
-                    <Tooltip text="Vos revenus réels (tels qu'ils apparaissent dans votre vraie comptabilité). Choisissez une répartition par ligne : Général (non rattachable à une activité précise), une activité de production précise, ou Saisie manuelle pour ventiler librement entre plusieurs contenants à la fois. Les colonnes par canal sont une estimation dérivée du mix de vente, jamais une donnée réelle — à titre indicatif seulement, pas un calcul." />
+                    <Tooltip tip="ff.revenus" />
                 </h2>
                 {revenueLines.length > 0 ? (
                         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
@@ -741,7 +741,7 @@ export const IncomeStatementTab = () => {
                                             <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente (indicatif)
-                                                    <Tooltip text="Estimée automatiquement à partir du mix de vente déclaré (channelPrices). Jamais une donnée saisie ni un intrant de calcul — uniquement informatif." />
+                                                    <Tooltip tip="ff.revCanaux" />
                                                 </span>
                                             </th>
                                         </>
@@ -753,13 +753,13 @@ export const IncomeStatementTab = () => {
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Catégorie
-                                            <Tooltip text="Les revenus n'ont pas de catégorie comptable à classer, contrairement aux charges ci-dessous — cette colonne existe pour que les 3 tableaux de cet onglet gardent la même forme. Rien à saisir ici." />
+                                            <Tooltip tip="ff.revCategorie" />
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Clé de répartition
-                                            <Tooltip text="Où compter ce revenu : Général (non rattachable à une activité de production précise), une activité précise, ou Saisie manuelle pour répartir un même revenu entre plusieurs activités à la fois." />
+                                            <Tooltip tip="ff.revCle" />
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
@@ -769,7 +769,7 @@ export const IncomeStatementTab = () => {
                                             {b.key === 'general' ? (
                                                 <span className="flex items-center justify-center">
                                                     {b.label}
-                                                    <Tooltip text="Part du revenu non rattachable à une activité de production précise (ex. revenus divers, intérêts)." />
+                                                    <Tooltip tip="ff.revGeneral" />
                                                 </span>
                                             ) : b.label}
                                         </th>
@@ -910,7 +910,7 @@ export const IncomeStatementTab = () => {
             <div id="tutorial-section-direct-costs">
                 <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
                     Charges directes réelles
-                    <Tooltip text="Vos charges directes réelles (telles qu'elles apparaissent dans votre vraie comptabilité), ventilées par type de coût — pas par les catégories de frais fixes ci-dessous. Sert au diagnostic réel vs théorique (comparaison avec le coût de revient calculé par le modèle de recette) ; n'entre pas encore dans un calcul en aval." />
+                    <Tooltip tip="ff.chargesDirectes" />
                 </h2>
                 {directCostLines.length > 0 ? (
                         <table className="w-full table-fixed text-xs border-separate border-spacing-0">
@@ -922,7 +922,7 @@ export const IncomeStatementTab = () => {
                                     <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">
                                         <span className="flex items-center justify-center">
                                             Activités de production (indicatif)
-                                            <Tooltip text="Estimée automatiquement à partir du coût théorique du modèle de recette, apparié au type de coût de la ligne (matière première, main-d'œuvre directe, emballage ou sous-traitance) — jamais une donnée saisie ni un intrant de calcul. Une ligne sans aucune donnée théorique de ce type retombe sur Général." />
+                                            <Tooltip tip="ff.cdActivites" />
                                         </span>
                                     </th>
                                     {salesChannels.length > 0 && (
@@ -931,7 +931,7 @@ export const IncomeStatementTab = () => {
                                             <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente (indicatif)
-                                                    <Tooltip text="Estimée automatiquement à partir du coût théorique et du volume réel par canal — jamais une donnée saisie ni un intrant de calcul. Uniquement informatif." />
+                                                    <Tooltip tip="ff.cdCanaux" />
                                                 </span>
                                             </th>
                                         </>
@@ -943,13 +943,13 @@ export const IncomeStatementTab = () => {
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Catégorie
-                                            <Tooltip text="Le type de dépense selon sa nature : Matière première (ingrédients), Main-d'œuvre directe (salaires de production), Emballage, ou Sous-traitance (services externes de production)." />
+                                            <Tooltip tip="ff.cdCategorie" />
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Clé de répartition
-                                            <Tooltip text="Non applicable ici : contrairement aux revenus, la répartition par activité et par canal (colonnes de droite) se calcule automatiquement à partir du type de coût choisi — rien à saisir dans cette colonne." />
+                                            <Tooltip tip="ff.cdCle" />
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
@@ -959,7 +959,7 @@ export const IncomeStatementTab = () => {
                                             {b.key === 'general' ? (
                                                 <span className="flex items-center justify-center">
                                                     {b.label}
-                                                    <Tooltip text="Part de la charge qui n'a pas pu être rattachée à une activité précise — aucune recette n'a de coût théorique de ce type pour en dériver la répartition." />
+                                                    <Tooltip tip="ff.cdGeneral" />
                                                 </span>
                                             ) : b.label}
                                         </th>
@@ -1071,7 +1071,7 @@ export const IncomeStatementTab = () => {
 
             <ProfitSummaryBar
                 label="Bénéfice brut"
-                tooltip="Revenus moins Charges directes réelles — avant frais fixes. Par activité : deux totaux réels ci-dessus, directement soustraits. Pas de détail par canal (retiré le 20/10) : trop souvent indicatif des deux côtés pour être fiable à ce niveau."
+                tooltip="ff.beneficeBrut"
                 total={grossProfitTotal}
                 activityBuckets={activityBuckets}
                 bucketValues={grossProfit.bucketValues}
@@ -1084,7 +1084,7 @@ export const IncomeStatementTab = () => {
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Frais fixes
-                        <Tooltip text="Listez ici chaque poste de dépense qui n'est pas directement lié à la production d'un plat précis (loyer, électricité, marketing, salaires administratifs, assurances, frais bancaires...), avec sa catégorie. Le total (contenant « Général », non rattaché à une activité ou un canal précis) alimente le calcul des frais indirects par plat, selon la méthode d'attribution de Général choisie plus bas." />
+                        <Tooltip tip="ff.fraisFixes" />
                     </h2>
                 </div>
                 {suspectLaborLines.length > 0 && (
@@ -1111,7 +1111,7 @@ export const IncomeStatementTab = () => {
                                     <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">
                                         <span className="flex items-center justify-center">
                                             Activités de production
-                                            <Tooltip text="Répartissez manuellement le montant de chaque dépense entre Général et vos activités de production — la somme des cellules remplies est comparée au Montant de la ligne (voir l'icône à côté de la Clé de répartition), sans jamais bloquer : certaines dépenses ne s'appliquent naturellement qu'à cet axe, ou qu'à l'autre." />
+                                            <Tooltip tip="ff.fxActivites" />
                                         </span>
                                     </th>
                                     {salesChannels.length > 0 && (
@@ -1120,7 +1120,7 @@ export const IncomeStatementTab = () => {
                                             <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente
-                                                    <Tooltip text="Répartissez manuellement le montant de chaque dépense entre vos canaux de vente — un axe indépendant des Activités (une même dépense peut être répartie sur les deux à la fois, ou sur un seul si l'autre ne s'applique pas)." />
+                                                    <Tooltip tip="ff.fxCanaux" />
                                                 </span>
                                             </th>
                                         </>
@@ -1132,13 +1132,13 @@ export const IncomeStatementTab = () => {
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Catégorie
-                                            <Tooltip text="La fonction de l'entreprise à laquelle cette dépense se rattache, qui suggère (sans l'imposer) un contenant par défaut : Frais généraux de production → Général ou une activité ; Frais de vente/mise en marché → Général ou un canal ; Frais d'administration et Frais financiers → Général (rarement rattachables à une ligne ou un canal précis)." />
+                                            <Tooltip tip="ff.fxCategorie" />
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">
                                         <span className="flex items-center justify-center">
                                             Clé de répartition
-                                            <Tooltip text="Raccourci optionnel qui pré-remplit la grille proportionnellement — Selon les ventes ou Selon les charges directes réelles — modifiable ensuite cellule par cellule. Manuel laisse la grille telle quelle : rien n'est pré-rempli automatiquement." />
+                                            <Tooltip tip="ff.fxCle" />
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
@@ -1148,7 +1148,7 @@ export const IncomeStatementTab = () => {
                                             {b.key === 'general' ? (
                                                 <span className="flex items-center justify-center">
                                                     {b.label}
-                                                    <Tooltip text="Allocation directe à l'entreprise entière, sans lien de causalité avec une activité ou un canal précis (ex. salaire de direction, assurance générale) — un « facility-sustaining cost », pas une activité comme les autres." />
+                                                    <Tooltip tip="ff.fxGeneral" />
                                                 </span>
                                             ) : b.label}
                                         </th>
@@ -1316,7 +1316,7 @@ export const IncomeStatementTab = () => {
 
             <ProfitSummaryBar
                 label="Bénéfice net"
-                tooltip="Bénéfice brut moins Frais fixes — au total de l'entreprise. Pas de détail par activité ni par canal (retiré le 20/10)."
+                tooltip="ff.beneficeNet"
                 total={netProfitTotal}
                 activityBuckets={activityBuckets}
                 bucketValues={{}}
@@ -1346,7 +1346,7 @@ export const IncomeStatementTab = () => {
             <div id="tutorial-section-cici" className="p-4 bg-gray-100 rounded-lg">
                 <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-4">
                     Coefficient d'imputation des charges indirectes
-                    <Tooltip text="Le CICI est le driver utilisé pour convertir un pool de frais fixes déjà dimensionné (par la clé de répartition, ci-dessus) en un taux $ par produit — propre à chaque ligne ci-dessous, sans effet sur les autres : Général (frais de structure non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) se répartit à l'échelle du menu entier ; chaque activité se répartit seulement entre ses propres produits. « Au prorata des coûts directs » (matière + emballage + main-d'œuvre + sous-traitance combinés) : choix par défaut, approprié quand le coût indirect suit globalement la valeur des intrants consommés — capture à la fois le volume et la complexité d'un produit. « Au prorata du temps de production » : plus précis si le coût indirect suit plutôt la CADENCE/le temps machine qu'une pure valeur d'intrants. « Au prorata du volume physique » (inspiré de l'Agro-Calculateur du MAPAQ) : selon le poids ou volume physique total vendu (ex. kg, L) — pertinent quand le frais indirect suit l'encombrement (entreposage réfrigéré, capacité d'entrepôt) plutôt que la valeur ou la cadence ; exige de préciser la famille physique (Masse ou Volume) juste à côté — un format d'une autre famille (ex. vendu à l'unité, ou en volume si Masse est choisi) reste simplement absent de ce calcul, jamais une conversion masse/volume inventée. Canal n'a pas de CICI : son coût indirect est toujours un pourcentage de majoration (Paramètres → Canaux de vente)." />
+                    <Tooltip tip="ff.cici" />
                 </h2>
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 bg-white p-2 rounded-md shadow-sm">
@@ -1394,7 +1394,7 @@ export const IncomeStatementTab = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Réconciliation réel / théorique
-                        <Tooltip text="Compare, au niveau de l'entreprise entière, vos revenus et charges directes réels (saisis ci-dessus) au théorique implicite de votre modèle de recettes (prix de vente × volumes reconstruits à partir du mix des ventes et du chiffre d'affaires du menu, dans Paramètres). Mesure la qualité de vos hypothèses de modélisation contre la réalité comptable — jamais un intrant de calcul, uniquement un diagnostic. Jamais par activité ou canal : à ce niveau de détail, le modèle utilisé pour reconstruire les volumes serait partiellement circulaire." />
+                        <Tooltip tip="ff.reconciliation" />
                     </h2>
                 </div>
                 <div className="overflow-x-auto">
@@ -1404,31 +1404,31 @@ export const IncomeStatementTab = () => {
                                 <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Poste
-                                        <Tooltip text="Bénéfice brut = Revenus moins Charges directes (avant frais fixes). Bénéfice net = Bénéfice brut moins le total des frais fixes (Dépenses ci-dessus) — ce total n'ayant qu'une seule valeur dans l'app, il est soustrait identiquement du réel et du théorique. Toutes ces lignes reprennent les totaux des tableaux ci-dessus, jamais une donnée saisie séparément." />
+                                        <Tooltip tip="ff.recPoste" />
                                     </span>
                                 </th>
                                 <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Réel ($)
-                                        <Tooltip text="Le montant tel que saisi dans les tableaux Revenus et Charges directes réelles ci-dessus." />
+                                        <Tooltip tip="ff.recReel" />
                                     </span>
                                 </th>
                                 <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Théorique ($)
-                                        <Tooltip text="Le montant que prédit votre modèle de recettes (prix de vente et mix de vente déclarés dans Paramètres) — une estimation basée sur vos hypothèses, pas une donnée réelle." />
+                                        <Tooltip tip="ff.recTheorique" />
                                     </span>
                                 </th>
                                 <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Écart ($)
-                                        <Tooltip text="Réel moins Théorique. Positif : votre résultat réel dépasse ce que le modèle prévoyait. Négatif : il est en dessous." />
+                                        <Tooltip tip="ff.recEcart" />
                                     </span>
                                 </th>
                                 <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
                                     <span className="flex items-center justify-center">
                                         Écart (%)
-                                        <Tooltip text="Le même écart, exprimé en pourcentage du théorique — pour comparer plus facilement l'ampleur de l'écart entre les lignes." />
+                                        <Tooltip tip="ff.recEcartPct" />
                                     </span>
                                 </th>
                             </tr>

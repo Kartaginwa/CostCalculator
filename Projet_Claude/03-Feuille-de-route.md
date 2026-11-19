@@ -2551,6 +2551,7 @@ place :
   Mesure du 17/11 (1280×720, projet démo) : sur 137 infobulles, 9 sortent de la fenêtre (le
   composant `Tooltip` ne s'affiche qu'au-dessus, centré, sans repli aux bords), 23 dépassent 260
   caractères, dont une de 1 470 (CICI, État des résultats).
+- **Étape 5 réalisée (18/11)** : registre unique `src/tooltips.js` (132 entrées : 129 + 3 colonnes de volatilité), 132 sites d'appel convertis en `<Tooltip tip="clé" />` ; texte ≤ 150 caractères + lien « En savoir plus dans le guide → » (ouvre le guide à l'ancre, sauf ~30 infobulles « complètes »). Nouveau composant : placé au-dessus, sinon dessous, recadré dans la fenêtre (marge 8 px), reste ouvert du pointeur à la bulle, clic = épingle, Échap/clic ailleurs ferme, accessible au clavier. Corrigé dans le guide : Bénéfice brut (par activité seulement) et Bénéfice net (total seulement). Tests : `guideTooltips.test.js` (registre) et `e2e/tooltips.spec.js` (toutes les bulles de tous les onglets dans la fenêtre à 1280 et 1024 px). Revue ancien→nouveau : `Projet_Claude/07-Revue-Infobulles.md`. Non commité, en attente de validation.
 - Rapport final de fin de projet (programmation, UI, UX, méthodologie).
 
 - **À ajouter à la consolidation du guide (17/11)** : le guide dit que le tutoriel « se lance

@@ -64,9 +64,9 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
     const columns = [
         { key: 'name', label: nameColumnLabel, align: 'left' },
         { key: 'provider', label: 'Fournisseur', align: 'left' },
-        { key: 'currentPrice', label: 'Prix actuel', align: 'right', tip: "Dernier prix unitaire connu (point de référence le plus récent)." },
-        { key: 'trendPercent', label: 'Tendance', align: 'right', tip: "Variation entre le premier et le dernier point de référence (hausse ▲ / baisse ▼)." },
-        { key: 'amplitudePercent', label: 'Volatilité (amplitude)', align: 'right', tip: "Amplitude = écart entre la valeur la plus basse et la plus haute, en % de la moyenne. Mesure l'instabilité." },
+        { key: 'currentPrice', label: 'Prix actuel', align: 'right', tip: "vol.prixActuel" },
+        { key: 'trendPercent', label: 'Tendance', align: 'right', tip: "vol.tendance" },
+        { key: 'amplitudePercent', label: 'Volatilité (amplitude)', align: 'right', tip: "vol.amplitude" },
     ];
 
     return (
@@ -94,7 +94,7 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
                                             {col.label}
                                             <ArrowUpDown className={`h-3.5 w-3.5 ${sort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
                                         </button>
-                                        {col.tip && <Tooltip text={col.tip} />}
+                                        {col.tip && <Tooltip tip={col.tip} />}
                                     </span>
                                 </th>
                             ))}
@@ -451,7 +451,7 @@ const PointDeReferenceMenu = ({ onNew, onManage }) => {
 const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => (
     <div className={`rounded-lg p-4 ${bgColor} ${borderColor} border-2`}>
         <h3 className="font-bold text-lg mb-2 flex items-center">
-            {icon} {title} <Tooltip text={tooltipText} />
+            {icon} {title} <Tooltip tip={tooltipText} />
         </h3>
         <ul className="text-sm space-y-2">
             {items.length > 0 ? items.map(p => (
@@ -489,7 +489,7 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
 const BySkuRow = ({ label, tooltip, render, emphasis }) => (
     <tr className={emphasis ? 'bg-indigo-50' : ''}>
         <th className="px-4 py-2.5 text-left text-sm font-medium text-gray-600 sticky left-0 bg-inherit whitespace-nowrap">
-            <span className="flex items-center">{label}{tooltip && <Tooltip text={tooltip} />}</span>
+            <span className="flex items-center">{label}{tooltip && <Tooltip tip={tooltip} />}</span>
         </th>
         {render}
     </tr>
@@ -590,7 +590,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                     </div>
                 )}
                 <div className="p-3 bg-white border-2 border-gray-300 rounded-lg text-center col-span-2 sm:col-span-1">
-                    <p className="text-xs text-gray-500 flex items-center justify-center">Coût de Production (total) <Tooltip text="Matière + emballage + main-d'œuvre + sous-traitance — avant tout frais indirect. Ne varie jamais par canal." /></p>
+                    <p className="text-xs text-gray-500 flex items-center justify-center">Coût de Production (total) <Tooltip tip="sku.coutProduction" /></p>
                     <p className="text-2xl font-bold text-gray-900">{formatCurrency(costs.totalDirectCostPerPortion)} $</p>
                 </div>
             </div>
@@ -610,13 +610,13 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             <BySkuSectionHeader label="PDS et frais de mise en marché" colSpan={channelBreakdown.length + 1} />
-                            <BySkuRow label="PDS" tooltip="Prix de détail suggéré au consommateur pour ce format — une seule valeur, la même pour tous les canaux (saisie dans Produits et SKUs)." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="PDS" tooltip="sku.pds" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
                                     {pds > 0 ? `${formatCurrency(pds)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
                                 </td>
                             ))} />
                             {linkRows.map(linkRow => (
-                                <BySkuRow key={linkRow.key} label={linkRow.label} tooltip="La majoration ou la marge de ce maillon, en dollars, pour ce canal — une partie de l'écart entre le PDS et le prix net qui lui revient (calculée à partir de la cascade de maillons du canal, pas du prix net réellement saisi)." render={channelBreakdown.map(cb => {
+                                <BySkuRow key={linkRow.key} label={linkRow.label} tooltip="sku.maillons" render={channelBreakdown.map(cb => {
                                     const delta = getLinkDelta(cb, linkRow);
                                     return (
                                         <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
@@ -625,7 +625,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                                     );
                                 })} />
                             ))}
-                            <BySkuRow label="Frais de mise en marché totaux par unité" tooltip="La somme de tous les maillons ci-dessus pour ce canal — PDS moins le prix net QUE PRODUIRAIT la cascade de maillons de ce canal (bouton « Générer » de Produits et SKUs), jamais le prix net réellement saisi." emphasis render={channelBreakdown.map(cb => {
+                            <BySkuRow label="Frais de mise en marché totaux par unité" tooltip="sku.fraisMiseMarche" emphasis render={channelBreakdown.map(cb => {
                                 const totalDelta = getTotalLinkDelta(cb);
                                 return (
                                     <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">
@@ -638,60 +638,60 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                             <BySkuRow label="Prix de vente" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-medium text-gray-800">{formatCurrency(cb.netPrice)} $</td>
                             ))} />
-                            <BySkuRow label="Bénéfice brut" tooltip="Prix net moins le coût de production. Avant frais fixes." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Bénéfice brut" tooltip="sku.beneficeBrut" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatCurrency(cb.margeBruteDollar)} $</td>
                             ))} />
-                            <BySkuRow label="Marge brute" tooltip="En % du prix de vente net de ce canal : (prix − coûts directs) ÷ prix." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Marge brute" tooltip="sku.margeBrute" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatPercent(cb.margeBrutePercent)} %</td>
                             ))} />
 
                             <BySkuSectionHeader label="Répartition des charges fixes" colSpan={channelBreakdown.length + 1} />
-                            <BySkuRow label="Frais fixes — Général" tooltip="Part du pool « Général » (frais de structure, non rattachables à une activité ou un canal précis — ex. salaire de direction, assurances) allouée à ce SKU, au CICI choisi pour Général dans État des résultats, section « Coefficient d'imputation des charges indirectes » — au prorata des coûts directs ou du temps de main-d'œuvre, à l'échelle du menu entier. Le même montant quel que soit le canal — seul le prix change." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Frais fixes — Général" tooltip="sku.ffGeneral" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costIndirectGeneralPerPortion || 0)} $</td>
                             ))} />
-                            <BySkuRow label={`Frais fixes — Activité${activityName ? ` (${activityName})` : ''}`} tooltip="Part du pool de l'activité de production de ce SKU, au CICI choisi pour cette activité dans État des résultats, section « Coefficient d'imputation des charges indirectes » (charges directes ou temps de main-d'œuvre). Le même montant quel que soit le canal." render={channelBreakdown.map(cb => (
+                            <BySkuRow label={`Frais fixes — Activité${activityName ? ` (${activityName})` : ''}`} tooltip="sku.ffActivite" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costIndirectActivityPerPortion || 0)} $</td>
                             ))} />
-                            <BySkuRow label="Frais fixes — Canal" tooltip="Part du pool du CANAL de cette colonne — varie par canal, contrairement à Général/Activité ci-dessus. Aucun driver au choix ici : toujours un % d'imputation sur le coût de production de ce SKU (pool du canal ÷ valeur totale, au coût de production, de tout ce qui transite par ce canal) — le même mécanisme pour tous les canaux, cascadé depuis le coût déjà établi à l'activité." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Frais fixes — Canal" tooltip="sku.ffCanal" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.costIndirectChannelPerPortion || 0)} $</td>
                             ))} />
-                            <BySkuRow label="Frais fixes totaux par unité" tooltip="Général + Activité + Canal ci-dessus — la part des frais fixes totaux allouée à ce SKU sur ce canal. Exclut le vieillissement, une charge financière présentée à part." emphasis render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Frais fixes totaux par unité" tooltip="sku.ffTotal" emphasis render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cb.margeBruteDollar - cb.margeNetteDollar - (costs.costAgingPerPortion || 0))} $</td>
                             ))} />
 
                             <BySkuSectionHeader label="Coût net et marge nette" colSpan={channelBreakdown.length + 1} />
                             {(costs.costAgingPerPortion || 0) > 0 && (
-                                <BySkuRow label={<>Vieillissement <CostNatureBadge nature="financial" /></>} tooltip="Intérêt de portage sur le capital immobilisé pendant l'affinage de ce format (saisi dans Production → Coûts additionnels). Le même montant quel que soit le canal ; déduit du bénéfice net, pas du bénéfice brut." render={channelBreakdown.map(cb => (
+                                <BySkuRow label={<>Vieillissement <CostNatureBadge nature="financial" /></>} tooltip="sku.vieillissement" render={channelBreakdown.map(cb => (
                                     <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costAgingPerPortion)} $</td>
                                 ))} />
                             )}
                             <BySkuRow label="Coût net" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.netPrice - cb.margeNetteDollar)} $</td>
                             ))} />
-                            <BySkuRow label="Bénéfice net" tooltip="Le profit réel par unité une fois tous les coûts déduits (production + frais fixes)." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Bénéfice net" tooltip="sku.beneficeNet" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatCurrency(cb.margeNetteDollar)} $</td>
                             ))} />
-                            <BySkuRow label="Marge nette" tooltip="En % du prix de vente net de ce canal : (prix − coût de revient total) ÷ prix." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Marge nette" tooltip="sku.margeNette" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatPercent(cb.margeNettePercent)} %</td>
                             ))} />
 
                             <BySkuSectionHeader label="Seuil de rentabilité par canal de vente" colSpan={channelBreakdown.length + 1} />
-                            <BySkuRow label="Revenu total" tooltip="Prix de vente × volume réel vendu dans ce canal (saisi dans Produits et SKUs)." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Revenu total" tooltip="sku.revenuTotal" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
                                     {cb.volume > 0 ? `${formatCurrency(cb.netPrice * cb.volume)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
-                            <BySkuRow label="Frais totaux" tooltip="Coût net par unité (production + frais fixes alloués) × volume réel vendu dans ce canal." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Frais totaux" tooltip="sku.fraisTotaux" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
                                     {cb.volume > 0 ? `${formatCurrency((cb.netPrice - cb.margeNetteDollar) * cb.volume)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
-                            <BySkuRow label="Bénéfices / Pertes" tooltip="Revenu total moins frais totaux — le profit réel dans ce canal, au volume réellement vendu." render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Bénéfices / Pertes" tooltip="sku.beneficePerte" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold" style={cb.volume > 0 ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
                                     {cb.volume > 0 ? `${formatCurrency(cb.margeNetteDollar * cb.volume)} $` : <span className="text-gray-400 font-normal" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
-                            <BySkuRow label="Point mort" tooltip="Unités à vendre dans ce canal pour couvrir la part des frais fixes allouée à ce SKU." emphasis render={channelBreakdown.map(cb => (
+                            <BySkuRow label="Point mort" tooltip="sku.pointMort" emphasis render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold text-indigo-700">
                                     {cb.breakEvenUnits != null ? `${cb.breakEvenUnits} unités` : 'N/A'}
                                 </td>
@@ -744,34 +744,34 @@ const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                     <BySkuSectionHeader label="Marge brute" colSpan={sortedRows.length + 1} />
-                    <BySkuRow label="Revenu total" tooltip="Prix de vente × volume réel vendu, tous canaux confondus pour ce segment (volumes saisis dans Produits et SKUs)." render={sortedRows.map(row => (
+                    <BySkuRow label="Revenu total" tooltip="seg.revenu" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.revenueTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Coût de production" tooltip="Matière + emballage + main-d'œuvre + sous-traitance × volume réel vendu — avant tout frais fixe." render={sortedRows.map(row => (
+                    <BySkuRow label="Coût de production" tooltip="seg.cout" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.totalDirectCostTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Bénéfice brut" tooltip="Revenu total moins le coût de production. Avant frais fixes." render={sortedRows.map(row => (
+                    <BySkuRow label="Bénéfice brut" tooltip="seg.brut" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatCurrency(row.margeBruteTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Marge brute" tooltip="Bénéfice brut en % du revenu total — avant frais fixes." render={sortedRows.map(row => (
+                    <BySkuRow label="Marge brute" tooltip="seg.margeBrute" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatPercent(row.margeBrutePercent)} %</td>
                     ))} />
 
                     <BySkuSectionHeader label="Frais fixes et marge nette" colSpan={sortedRows.length + 1} />
-                    <BySkuRow label="Frais fixes" tooltip="Part des frais fixes allouée à ce segment (Général + Activité + Canal), au volume réel vendu." render={sortedRows.map(row => (
+                    <BySkuRow label="Frais fixes" tooltip="seg.fraisFixes" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(row.totalIndirectTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Bénéfice net" tooltip="Le profit réel de ce segment une fois tous les coûts déduits (production + frais fixes)." render={sortedRows.map(row => (
+                    <BySkuRow label="Bénéfice net" tooltip="seg.net" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatCurrency(row.margeNetteTotal)} $</td>
                     ))} />
-                    <BySkuRow label="Marge nette" tooltip="Bénéfice net en % du revenu total." render={sortedRows.map(row => (
+                    <BySkuRow label="Marge nette" tooltip="seg.margeNette" render={sortedRows.map(row => (
                         <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatPercent(row.margeNettePercent)} %</td>
                     ))} />
 
                     <BySkuSectionHeader label="Seuil de rentabilité" colSpan={sortedRows.length + 1} />
                     <BySkuRow
                         label="Point mort"
-                        tooltip="Revenu que ce segment doit générer pour couvrir ses frais fixes (dont la main-d'œuvre, traitée comme fixe pour la période) — en $ DE REVENU, pas en unités : des SKU hétérogènes n'ont pas d'unité de vente commune. Méthode du ratio de marge de contribution pondéré en $ (même principe que le Point Mort du Menu, Vue d'ensemble, mais à l'échelle de ce seul segment)."
+                        tooltip="seg.pointMort"
                         emphasis
                         render={sortedRows.map(row => (
                             <td key={row[idKey]} className="px-4 py-2.5 text-right font-bold text-indigo-700">
@@ -852,7 +852,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">
                         Coût Matière Moyen Pondéré
-                        <Tooltip text="La moyenne du coût matière de tous vos plats, pondérée par leur popularité (mix des ventes)." />
+                        <Tooltip tip="kpi.matiere" />
                         {getCostTargetIndicator(weightedMaterialCost, generalInfo.foodCostTarget)}
                     </div>
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
@@ -860,7 +860,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">
                         Coût Emballage Moyen Pondéré
-                        <Tooltip text="La moyenne du coût d'emballage de tous vos plats, pondérée par leur popularité (mix des ventes) — poste séparé du coût matière." />
+                        <Tooltip tip="kpi.emballage" />
                         {getCostTargetIndicator(weightedPackagingCost, generalInfo.packagingCostTarget)}
                     </div>
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
@@ -868,17 +868,17 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">
                         Coût Main-d'œuvre Moyen Pondéré
-                        <Tooltip text="La moyenne du coût de main-d'œuvre de tous vos plats, pondérée par leur popularité (mix des ventes)." />
+                        <Tooltip tip="kpi.mo" />
                         {getCostTargetIndicator(weightedLaborCost, generalInfo.laborCostTarget)}
                     </div>
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
                 </div>
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip text="Marge brute (en % du prix de vente) de chaque SKU, pondérée par sa part des ventes. Moyenne des marges des SKUs : ce n'est pas la marge globale de l'entreprise." /></div>
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /></div>
                     <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort du Menu Analysé <Tooltip text="Le chiffre d'affaires que votre menu doit générer, au mix des ventes actuel, pour couvrir sa part des frais indirects." /></div>
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort du Menu Analysé <Tooltip tip="kpi.pointMort" /></div>
                     <p className="text-3xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
                 </div>
             </div>
@@ -922,7 +922,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     <option value="">Tous les canaux (pondéré par volume)</option>
                     {(salesChannels || []).map(c => <option key={c.id} value={c.id}>{c.name || 'Sans nom'}</option>)}
                 </select>
-                <Tooltip text="« Tous les canaux » calcule la marge ET la popularité de chaque SKU à partir du volume réel agrégé de tous ses canaux (jamais du mix des ventes saisi à la main, pour éviter toute dilution par les formats en mode manuel). Choisir un canal limite l'analyse à sa seule marge et à sa seule popularité dans ce canal — un SKU peut être une étoile en vente directe et un poids mort en grande surface." />
+                <Tooltip tip="bcg.selecteur" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -932,7 +932,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     items={stars}
                     bgColor="bg-blue-50"
                     borderColor="border-blue-200"
-                    tooltipText="Vos plats les plus populaires ET les plus rentables. Mettez-les en avant !"
+                    tooltipText="bcg.etoiles"
                 />
                 <Quadrant
                     title="Dilemmes"
@@ -940,7 +940,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     items={questions}
                     bgColor="bg-orange-50"
                     borderColor="border-orange-200"
-                    tooltipText="Plats rentables mais peu populaires. Envisagez une promotion ou une meilleure place sur le menu pour stimuler les ventes."
+                    tooltipText="bcg.dilemmes"
                 />
                 <Quadrant
                     title="Vaches à lait"
@@ -948,7 +948,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     items={cows}
                     bgColor="bg-gray-50"
                     borderColor="border-gray-200"
-                    tooltipText="Plats très populaires mais à faible marge. Cherchez à réduire leurs coûts sans sacrifier la qualité."
+                    tooltipText="bcg.vaches"
                 />
                 <Quadrant
                     title="Poids morts"
@@ -956,7 +956,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     items={dogs}
                     bgColor="bg-red-50"
                     borderColor="border-red-200"
-                    tooltipText="Plats ni populaires, ni rentables. Pensez à les réinventer complètement ou à les retirer du menu."
+                    tooltipText="bcg.poidsMorts"
                 />
             </div>
         </div>

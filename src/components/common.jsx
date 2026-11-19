@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useContext, useLayoutEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown, Trash2, PlusCircle } from 'lucide-react';
 import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits } from '../utils.js';
 import { useValueFlash, useEscapeKey } from '../ui-utils.jsx';
+import { TIPS } from '../tooltips.js';
+import { ProjectContext } from '../state/ProjectContext.jsx';
 
 // Composant pour les messages de validation
 export const ValidationMessage = ({ message }) => (
@@ -12,45 +14,138 @@ export const ValidationMessage = ({ message }) => (
     </p>
 );
 
-// Composant pour les info-bulles avec Portal
-export const Tooltip = ({ text }) => {
-    const [isVisible, setIsVisible] = useState(false);
-    const [position, setPosition] = useState({ top: 0, left: 0 });
+// --- INFOBULLE (Phase 7, étape 5) ---------------------------------------------------------------
+// <Tooltip tip="clé" /> : le texte et l'ancre du guide viennent du registre (src/tooltips.js) ; <Tooltip text="…"
+// guide="ancre" /> reste possible pour un texte calculé. Comportement :
+//  - toujours ENTIÈREMENT visible : placée au-dessus de l'icône, sinon dessous, puis recadrée dans la fenêtre ;
+//  - ouverte au survol, au focus clavier ou au clic (un clic l'ÉPINGLE : elle reste jusqu'à un clic ailleurs
+//    ou Échap), et reste ouverte quand la souris passe de l'icône à la bulle — pour que le lien soit cliquable ;
+//  - le lien « En savoir plus dans le guide » ouvre le guide à la section voulue (openGuide, App.jsx).
+const TOOLTIP_WIDTH = 256;
+const TOOLTIP_MARGIN = 8;
+export const Tooltip = ({ tip, text, guide }) => {
+    const ctx = useContext(ProjectContext);
+    const entry = tip ? TIPS[tip] : null;
+    const body = entry ? entry.text : text;
+    const anchor = entry ? (entry.complet ? null : entry.guide) : guide;
+    const openGuide = ctx && ctx.openGuide;
+    const [hover, setHover] = useState(false);
+    const [focus, setFocus] = useState(false);
+    const [pinned, setPinned] = useState(false);
     const triggerRef = useRef(null);
+    const bubbleRef = useRef(null);
+    const arrowRef = useRef(null);
+    const leaveTimer = useRef(null);
+    const tipId = useId();
+    const open = hover || focus || pinned;
 
-    const handleMouseEnter = () => {
-        if (triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            setPosition({
-                top: rect.top - 10, // Position above the trigger
-                left: rect.left + rect.width / 2, // Center horizontally
-            });
+    const enter = () => { clearTimeout(leaveTimer.current); setHover(true); };
+    const leave = () => { clearTimeout(leaveTimer.current); leaveTimer.current = setTimeout(() => setHover(false), 180); };
+    useEffect(() => () => clearTimeout(leaveTimer.current), []);
+
+    // Place la bulle : au-dessus (sinon dessous) de l'icône, puis recadrée dans la fenêtre.
+    const place = () => {
+        const el = bubbleRef.current; const trigger = triggerRef.current;
+        if (!el || !trigger) return;
+        const vw = window.innerWidth; const vh = window.innerHeight;
+        const width = Math.min(TOOLTIP_WIDTH, vw - 2 * TOOLTIP_MARGIN);
+        el.style.width = `${width}px`;
+                const height = el.offsetHeight;
+        const r = trigger.getBoundingClientRect();
+        let top = r.top - height - TOOLTIP_MARGIN; let placement = 'above';
+        if (top < TOOLTIP_MARGIN) {
+            placement = 'below';
+            top = r.bottom + TOOLTIP_MARGIN;
+            if (top + height > vh - TOOLTIP_MARGIN) top = Math.max(TOOLTIP_MARGIN, vh - height - TOOLTIP_MARGIN);
         }
-        setIsVisible(true);
+        const left = Math.min(Math.max(r.left + r.width / 2 - width / 2, TOOLTIP_MARGIN), vw - width - TOOLTIP_MARGIN);
+        el.style.top = `${top}px`; el.style.left = `${left}px`; el.style.visibility = 'visible';
+        el.dataset.placement = placement;
+        const arrow = arrowRef.current;
+        if (arrow) {
+            const cx = Math.min(Math.max(r.left + r.width / 2 - left, 12), width - 12);
+            arrow.style.left = `${cx}px`;
+            arrow.style.top = placement === 'above' ? 'calc(100% - 5px)' : '';
+            arrow.style.bottom = placement === 'below' ? 'calc(100% - 5px)' : '';
+            arrow.className = `absolute -translate-x-1/2 w-2 h-2 rotate-45 bg-white border-gray-300 ${placement === 'above' ? 'border-r border-b' : 'border-l border-t'}`;
+        }
     };
+    useLayoutEffect(() => { if (open) place(); });
+    useEffect(() => {
+        if (!open) return undefined;
+        const reposition = () => place();
+        window.addEventListener('resize', reposition);
+        window.addEventListener('scroll', reposition, true);
+        return () => { window.removeEventListener('resize', reposition); window.removeEventListener('scroll', reposition, true); };
+    });
+    // Ouverte : Échap la ferme (même si elle a le focus) ; épinglée : un clic ailleurs la ferme aussi.
+    useEffect(() => {
+        if (!open) return undefined;
+        const onDown = (e) => {
+            if ((triggerRef.current && triggerRef.current.contains(e.target)) || (bubbleRef.current && bubbleRef.current.contains(e.target))) return;
+            setPinned(false);
+        };
+        const onKey = (e) => {
+            if (e.key !== 'Escape') return;
+            setPinned(false); setHover(false); setFocus(false);
+            if (triggerRef.current && document.activeElement === triggerRef.current) triggerRef.current.blur();
+        };
+        document.addEventListener('mousedown', onDown);
+        document.addEventListener('keydown', onKey);
+        return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+    }, [open]);
 
-    const tooltipContent = isVisible ? (
-        ReactDOM.createPortal(
-            <div
-                className="fixed p-2 w-64 bg-gray-800 text-white text-xs rounded-md shadow-lg z-50 transform -translate-x-1/2 -translate-y-full"
-                style={{ top: position.top, left: position.left }}
-            >
-                {text}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-            </div>,
-            document.getElementById('tooltip-root')
-        )
+    const toggle = (e) => { e.preventDefault(); e.stopPropagation(); setPinned((p) => !p); };
+    const stop = (e) => e.stopPropagation();
+
+    const bubble = open && body ? ReactDOM.createPortal(
+        <div
+            ref={bubbleRef}
+            id={tipId}
+            role="tooltip"
+            data-testid="tooltip-bubble"
+            onMouseEnter={enter}
+            onMouseLeave={leave}
+            onClick={stop}
+            onMouseDown={stop}
+            className="fixed p-2 bg-white text-gray-800 text-xs border border-gray-300 rounded-md shadow-lg z-[65]"
+            style={{ top: 0, left: 0, width: TOOLTIP_WIDTH, visibility: 'hidden' }}
+        >
+            <div>{body}</div>
+            {anchor && openGuide && (
+                <button
+                    type="button"
+                    data-testid="tooltip-guide-link"
+                    onClick={(e) => { e.stopPropagation(); setPinned(false); setHover(false); setFocus(false); openGuide(anchor); }}
+                    className="mt-1.5 block text-blue-600 underline hover:text-blue-800"
+                >
+                    En savoir plus dans le guide →
+                </button>
+            )}
+            <div ref={arrowRef} className="absolute -translate-x-1/2 w-2 h-2 rotate-45 bg-white border-r border-b border-gray-300" />
+        </div>,
+        document.getElementById('tooltip-root')
     ) : null;
 
     return (
         <span
             className="inline-flex items-center ml-2"
             ref={triggerRef}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={() => setIsVisible(false)}
+            role="button"
+            tabIndex={0}
+            data-testid="tooltip-trigger"
+            aria-label="Aide"
+            aria-expanded={open}
+            aria-describedby={open ? tipId : undefined}
+            onMouseEnter={enter}
+            onMouseLeave={leave}
+            onFocus={() => setFocus(true)}
+            onBlur={() => setFocus(false)}
+            onClick={toggle}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggle(e); }}
         >
-            <HelpCircle size={14} className="text-gray-400 cursor-help" />
-            {tooltipContent}
+            <HelpCircle size={14} className={`cursor-help ${pinned ? 'text-blue-500' : 'text-gray-400'}`} />
+            {bubble}
         </span>
     );
 };
@@ -708,7 +803,7 @@ export const ChannelLinksModal = ({ isOpen, onClose, channel, onAddLink, onLinkC
                                 className={`w-20 p-1.5 border rounded text-right text-sm ${!isValidPercentage(link.percent) ? 'border-red-500' : 'border-gray-300'}`}
                             />
                             <span className="text-xs text-gray-500">%</span>
-                            <Tooltip text="Majoration : % ajouté au prix précédent (ex. le coût) — prix = précédent × (1 + %). Marge : % du prix de VENTE résultant, pas du coût — prix = précédent ÷ (1 − %). Pour un même 20 % sur un coût de 10 $ : majoration → 12,00 $ (10 × 1,20) ; marge → 12,50 $ (10 ÷ 0,80), car ces 20 % représentent alors 20 % du prix de vente de 12,50 $, pas du coût de 10 $." />
+                            <Tooltip tip="canaux.maillon" />
                             <button onClick={() => onRemoveLink(channel.id, link.id)} className="text-red-500 hover:text-red-700 p-1 flex-shrink-0"><Trash2 size={16} /></button>
                         </div>
                     ))}

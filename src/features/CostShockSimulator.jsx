@@ -44,7 +44,7 @@ const DeltaRow = ({ label, current, shocked, unit, tooltip, higherIsWorse = true
         : `${delta >= 0 ? '▲' : '▼'} ${(Math.abs(delta) * 100).toFixed(1)} pt`;
     return (
         <div className="flex items-center justify-between py-1.5 border-b border-gray-100 text-sm">
-            <span className="text-gray-600 flex items-center">{label}{tooltip && <Tooltip text={tooltip} />}</span>
+            <span className="text-gray-600 flex items-center">{label}{tooltip && <Tooltip tip={tooltip} />}</span>
             <span className="flex items-center gap-2">
                 <span className="text-gray-500">{fmt(current)}</span>
                 <span className="text-gray-400">→</span>
@@ -78,14 +78,14 @@ const ImpactPctCell = ({ current, shocked, higherIsWorse = true }) => {
 // enrichi d'un champ `after` (même forme, calculé sur shockedAnalysis plutôt que analysisData).
 const ImpactGroupTable = ({ title, tooltip, rows }) => (
     <div className="overflow-x-auto">
-        <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center">{title}{tooltip && <Tooltip text={tooltip} />}</p>
+        <p className="text-sm font-semibold text-gray-700 mb-1 flex items-center">{title}{tooltip && <Tooltip tip={tooltip} />}</p>
         <table className="min-w-full text-sm">
             <thead>
                 <tr className="text-left text-gray-500 border-b">
                     <th className="py-1.5 pr-3">Nom</th>
                     <th className="py-1.5 px-3 text-right">Marge brute</th>
-                    <th className="py-1.5 px-3 text-right"><span className="inline-flex items-center">Food cost<Tooltip text="Coût matière en % du prix de vente." /></span></th>
-                    <th className="py-1.5 pl-3 text-right"><span className="inline-flex items-center">Coût MO<Tooltip text="Coût de main-d'œuvre en % du prix de vente." /></span></th>
+                    <th className="py-1.5 px-3 text-right"><span className="inline-flex items-center">Food cost<Tooltip tip="sim.colMatiere" /></span></th>
+                    <th className="py-1.5 pl-3 text-right"><span className="inline-flex items-center">Coût MO<Tooltip tip="sim.colMo" /></span></th>
                 </tr>
             </thead>
             <tbody>
@@ -224,7 +224,7 @@ export const CostShockSimulator = ({ collapsible = true }) => {
     const headerContent = (
         <span className="text-lg font-bold text-indigo-800 flex items-center">
             Simulation — choc sur les coûts (intrants & main-d'œuvre)
-            <Tooltip text="Applique un ou plusieurs chocs sur les prix d'achat et/ou les salaires horaires, et montre l'impact sur les marges, le food cost, le coût MO et les cibles. Le scénario est enregistré avec le projet." />
+            <Tooltip tip="sim.titre" />
             {activeShocks.length > 0 && (
                 <span className="ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                     {activeShocks.length} choc{activeShocks.length > 1 ? 's' : ''} actif{activeShocks.length > 1 ? 's' : ''}
@@ -337,8 +337,8 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
-                                        <DeltaRow label="Food cost moyen pondéré" current={analysisData.weightedMaterialCost} shocked={shockedAnalysis.weightedMaterialCost} unit="%pt" targetPct={foodTarget} tooltip="Coût matière moyen du menu, pondéré par la popularité." />
-                                        <DeltaRow label="Coût MO moyen pondéré" current={analysisData.weightedLaborCost} shocked={shockedAnalysis.weightedLaborCost} unit="%pt" targetPct={laborTarget} tooltip="Coût de main-d'œuvre moyen du menu, pondéré par la popularité." />
+                                        <DeltaRow label="Food cost moyen pondéré" current={analysisData.weightedMaterialCost} shocked={shockedAnalysis.weightedMaterialCost} unit="%pt" targetPct={foodTarget} tooltip="sim.kpiMatiere" />
+                                        <DeltaRow label="Coût MO moyen pondéré" current={analysisData.weightedLaborCost} shocked={shockedAnalysis.weightedLaborCost} unit="%pt" targetPct={laborTarget} tooltip="sim.kpiMo" />
                                         <DeltaRow label="Marge brute moyenne pondérée" current={analysisData.weightedGrossMargin} shocked={shockedAnalysis.weightedGrossMargin} unit="%pt" higherIsWorse={false} />
                                         <DeltaRow label="Point mort du menu ($)" current={analysisData.globalBreakEven} shocked={shockedAnalysis.globalBreakEven} unit="$" />
                                     </div>
@@ -348,14 +348,14 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                             {activityImpact.length > 0 && (
                                                 <ImpactGroupTable
                                                     title="Impact par activité de production"
-                                                    tooltip="Marge brute et coûts moyens pondérés par le mix de vente DES SEULS formats de cette activité — isole son impact propre plutôt que de le diluer dans la moyenne globale du menu."
+                                                    tooltip="sim.impactActivite"
                                                     rows={activityImpact}
                                                 />
                                             )}
                                             {channelImpact.length > 0 && (
                                                 <ImpactGroupTable
                                                     title="Impact par circuit de vente"
-                                                    tooltip="Marge brute et coûts moyens pondérés par le volume RÉEL de ce canal (pas la vue tous-canaux) — un canal sans aucun volume saisi n'apparaît pas ici."
+                                                    tooltip="sim.impactCanal"
                                                     rows={channelImpact}
                                                 />
                                             )}
@@ -368,9 +368,9 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                             <thead>
                                                 <tr className="text-left text-gray-500 border-b">
                                                     <th className="py-2 pr-4">Plat</th>
-                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette actuelle<Tooltip text="Marge nette par portion avec vos prix et salaires actuels." /></span></th>
-                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette scénario<Tooltip text="Marge nette par portion une fois les chocs appliqués." /></span></th>
-                                                    <th className="py-2 pl-4 text-right"><span className="inline-flex items-center">Écart<Tooltip text="Scénario moins actuel, en $ par portion. Négatif : le choc réduit la marge." /></span></th>
+                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette actuelle<Tooltip tip="sim.margeActuelle" /></span></th>
+                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette scénario<Tooltip tip="sim.margeScenario" /></span></th>
+                                                    <th className="py-2 pl-4 text-right"><span className="inline-flex items-center">Écart<Tooltip tip="sim.ecart" /></span></th>
                                                 </tr>
                                             </thead>
                                             <tbody>

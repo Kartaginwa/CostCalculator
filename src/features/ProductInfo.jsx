@@ -309,7 +309,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         <div>
                             <label htmlFor="foodCostTarget" className="flex items-center text-sm font-medium text-gray-700">
                                 Objectif coût matière (%)
-                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût des ingrédients devrait représenter." />
+                                <Tooltip tip="obj.matiere" />
                             </label>
                             <input type="text" inputMode="decimal" id="foodCostTarget" value={generalInfo.foodCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('foodCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.foodCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
                             {isInvalidPercentage(generalInfo.foodCostTarget) && <ValidationMessage message="Doit être un %." />}
@@ -317,7 +317,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         <div>
                             <label htmlFor="packagingCostTarget" className="flex items-center text-sm font-medium text-gray-700">
                                 Objectif coût d'emballage (%)
-                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût d'emballage devrait représenter." />
+                                <Tooltip tip="obj.emballage" />
                             </label>
                             <input type="text" inputMode="decimal" id="packagingCostTarget" value={generalInfo.packagingCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('packagingCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.packagingCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
                             {isInvalidPercentage(generalInfo.packagingCostTarget) && <ValidationMessage message="Doit être un %." />}
@@ -325,7 +325,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         <div>
                             <label htmlFor="laborCostTarget" className="flex items-center text-sm font-medium text-gray-700">
                                 Objectif coût main-d'œuvre (%)
-                                <Tooltip text="Le pourcentage maximum du prix de vente que le coût de la main-d'œuvre devrait représenter." />
+                                <Tooltip tip="obj.mo" />
                             </label>
                             <input type="text" inputMode="decimal" id="laborCostTarget" value={generalInfo.laborCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('laborCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.laborCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
                             {isInvalidPercentage(generalInfo.laborCostTarget) && <ValidationMessage message="Doit être un %." />}
@@ -349,7 +349,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Activités de production
-                        <Tooltip text="Une activité de production regroupe les produits qui partagent un même procédé de fabrication (ex. Confitures, Produits séchés). Son coefficient d'imputation des charges indirectes (CICI) — le driver utilisé pour répartir ses frais indirects — se choisit dans État des résultats, pas ici." />
+                        <Tooltip tip="param.activites" />
                     </h2>
                     <button onClick={handleAddActivity} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                         <PlusCircle className="h-5 w-5 mr-2" /> Ajouter une activité
@@ -377,7 +377,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                         Canaux de vente
-                        <Tooltip text="Un canal de vente est une chaîne de mise en marché (ex. vente directe, grande distribution via un courtier et un distributeur). Chaque maillon applique une marge ou une majoration sur le prix du maillon précédent, jusqu'au prix de vente suggéré au consommateur. Le rattachement d'un format de vente à un canal, avec son prix net, se fait dans Produits et SKUs ci-dessous." />
+                        <Tooltip tip="param.canaux" />
                     </h2>
                     <button onClick={handleAddChannel} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                         <PlusCircle className="h-5 w-5 mr-2" /> Ajouter un canal
@@ -576,7 +576,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                     <div>
                                         <label className="flex items-center text-xs font-medium text-gray-500 uppercase">
                                             Activité de production
-                                            <Tooltip text="Le procédé de fabrication auquel ce produit appartient (ex. Confitures, Produits séchés) — servira à répartir vos frais indirects par activité dans l'onglet État des résultats." />
+                                            <Tooltip tip="param.produitActivite" />
                                         </label>
                                         <select value={product.activityId || ''} onChange={(e) => handleProductValueChange(productIndex, 'activityId', e.target.value)} className="mt-1 w-full p-1.5 border rounded border-gray-300">
                                             {productionActivities.map(activity => (
@@ -617,25 +617,25 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 Format
-                                                <Tooltip text="L'emballage et la quantité de ce format de vente (ex. 250 ml, 1 kg). Un produit peut avoir plusieurs formats — un pot de 250 ml et un pot de 500 ml, par exemple — chacun avec sa propre fiche recette, son propre prix et mix des ventes." />
+                                                <Tooltip tip="param.format" />
                                             </div>
                                         </th>
                                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 SKU
-                                                <Tooltip text="Numéro de référence de ce format, déduit automatiquement de la recette et du format (librement modifiable)." />
+                                                <Tooltip tip="param.sku" />
                                             </div>
                                         </th>
                                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 PDS ($)
-                                                <Tooltip text="Prix de détail suggéré au consommateur pour ce format — saisi manuellement, une seule valeur pour tous les canaux (le prix tablette visé ne varie généralement pas par canal, contrairement au prix net producteur). Sert à générer le prix net de chaque canal via le bouton « Générer » (section Canaux de vente ci-dessous), qui redescend la cascade de maillons de ce canal à partir de ce prix." />
+                                                <Tooltip tip="param.pds" />
                                             </div>
                                         </th>
                                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 Canaux
-                                                <Tooltip text="Le prix net et le volume de ce format diffèrent selon le canal (vente directe, distributeur...). Un format n'est pas forcément vendu dans tous les canaux — ex. un grand format réservé à la restauration. Le premier canal de la liste détermine le prix utilisé ailleurs dans l'app (marge, rapports) en attendant que ces écrans deviennent eux-mêmes multi-canal." />
+                                                <Tooltip tip="param.canauxFormat" />
                                             </div>
                                         </th>
                                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Mix (%)</th>
@@ -684,7 +684,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                             <td className="px-2 py-2">
                                                 <div className="flex items-center gap-1">
                                                     <input type="text" inputMode="decimal" value={format.salesMix || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'salesMix', e.target.value)} disabled={!format.onMenu || isSalesMixAuto} className={`w-16 p-1 border rounded text-right text-sm ${isInvalidPercentage(format.salesMix) ? 'border-red-500' : 'border-gray-300'} ${!format.onMenu || isSalesMixAuto ? 'bg-gray-100' : ''}`} />
-                                                    {isSalesMixAuto && <Tooltip text="Calculé automatiquement à partir des unités vendues saisies pour ce format (onglet Canaux de vente ci-dessus) — plus précis qu'un % tapé à la main. Pour reprendre la main sur ce %, retirez toutes les unités saisies pour ce format." />}
+                                                    {isSalesMixAuto && <Tooltip tip="param.mix" />}
                                                 </div>
                                                 {isInvalidPercentage(format.salesMix) && <ValidationMessage message="Doit être un %." />}
                                             </td>
@@ -770,7 +770,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                         />
                                                                     </div>
                                                                     {channel?.links?.length > 0 && (
-                                                                        <Tooltip text={`Cascade de ce canal : ${channel.links.map(l => `${l.name || '(sans nom)'} ${l.type === 'markup' ? 'majoration' : 'marge'} ${l.percent || 0}%`).join(' → ')}.`} />
+                                                                        <Tooltip text={`Cascade de ce canal : ${channel.links.map(l => `${l.name || '(sans nom)'} ${l.type === 'markup' ? 'majoration' : 'marge'} ${l.percent || 0}%`).join(' → ')}.`} guide="guide-param-canaux" />
                                                                     )}
                                                                     <button onClick={() => handleRemoveChannelPrice(productIndex, formatIndex, format, cp.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={14} /></button>
                                                                 </div>

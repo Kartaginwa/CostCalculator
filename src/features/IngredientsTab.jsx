@@ -392,14 +392,14 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <button onClick={() => requestSort('lossPercentage')} className="flex items-center">
                                     Taux de perte (%) {getSortIcon('lossPercentage')}
                                 </button>
-                                <Tooltip text="Perte AVANT la production : péremption, produits abîmés, gaspillage en stock. Ne pas confondre avec le Rendement (onglet Production), qui couvre la perte PENDANT la préparation (ex. épluchage, cuisson) — les deux se cumulent, ne saisissez pas la même perte aux deux endroits sous peine de gonfler le coût matière." />
+                                <Tooltip tip="ing.perte" />
                             </div>
                         </th>
                             <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('unitPrice')} className="flex items-center w-full">Prix unitaire ($) {getSortIcon('unitPrice')}</button></th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
                                     <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière màj {getSortIcon('lastUpdated')}</button>
-                                    <Tooltip text="La date de la dernière modification du prix d'achat. Un point jaune apparaît si la date est supérieure à 30 jours." />
+                                    <Tooltip tip="ing.maj" />
                                 </div>
                             </th>
                             <th className="relative px-4 py-3"><span className="sr-only">Actions</span></th>
@@ -555,13 +555,13 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">
                                                     Qté Nette (Production)
-                                                    <Tooltip text="La quantité totale de cet ingrédient qui est réellement utilisée dans vos plats, basée sur vos ventes estimées." />
+                                                    <Tooltip tip="ing.qteNette" />
                                                 </div>
                                             </th>
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">
                                                     Coût Net (Production)
-                                                    <Tooltip text="Le coût de la quantité nette. C'est la valeur de la matière qui est transformée en plats vendus." />
+                                                    <Tooltip tip="ing.coutNet" />
                                                 </div>
                                             </th>
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qté perdue (Stock)</th>
@@ -569,7 +569,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
                                                 <div className="flex items-center">
                                                     Coût d'Achat Requis
-                                                    <Tooltip text="Le coût total que vous devriez budgéter pour cet ingrédient, incluant le coût de la matière productive et le coût de la perte." />
+                                                    <Tooltip tip="ing.achatRequis" />
                                                 </div>
                                             </th>
                                         </tr>

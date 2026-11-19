@@ -425,7 +425,7 @@ export const CatalogImportWizardModal = ({
                             <div className="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg">
                                 <label htmlFor="defaultProvider" className="block text-sm font-medium text-gray-700 flex items-center">
                                     Fournisseur par défaut (Optionnel)
-                                    <Tooltip text={`Si votre fichier ne contient pas de colonne pour le fournisseur, vous pouvez en spécifier un ici. Il sera appliqué à tous les nouveaux ${itemLabel}s importés.`} />
+                                    <Tooltip tip="import.fournisseurDefaut" />
                                 </label>
                                 <input
                                     type="text"

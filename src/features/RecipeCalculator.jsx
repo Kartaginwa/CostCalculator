@@ -697,7 +697,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <div className="flex items-center flex-wrap">
                         <span className="flex items-center text-xs font-medium text-gray-500 uppercase mr-2">
                             Format
-                            <Tooltip text="Un produit peut être vendu sous plusieurs formats — l'emballage et la quantité (ex. pot de 250 ml, pot de 500 ml) — chacun avec sa propre fiche recette, son propre rendement et son propre prix. Le SKU (numéro de référence, géré dans Paramètres → Produits et SKUs) se déduit de la recette et du format ; choisissez ici le format à éditer en détail." />
+                            <Tooltip tip="prod.format" />
                         </span>
                         {formats.map((f, index) => (
                             <button
@@ -728,7 +728,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
             <div className="max-w-xs">
                 <label htmlFor="nbPortions" className="flex items-center text-sm font-medium text-gray-700">
                     Quantité produite
-                    <Tooltip text="La quantité de ce format que la recette produit, dans son unité (ex. 40 unités de 250 ml, ou 47,3 kg pour un format en kg). Un entier est exigé seulement pour une unité de compte (« unité ») ; les unités de poids/volume acceptent les décimales. Peut aussi être calculée automatiquement ci-dessous via une grille de rendement." />
+                    <Tooltip tip="prod.quantite" />
                 </label>
                 <input
                     type="text" inputMode={isDiscreteUnit(format.portionUnit) ? 'numeric' : 'decimal'} id="nbPortions"
@@ -747,7 +747,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 <label className="flex items-center text-sm font-medium text-gray-700">
                     <input type="checkbox" checked={!!format.yieldGrid?.enabled} onChange={(e) => handleFormatNestedToggle('yieldGrid', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" />
                     Calculer le nombre d'unités produites à partir d'une grille de rendement
-                    <Tooltip text="Plutôt que de saisir le nombre d'unités produites directement, calculez-le à partir d'une quantité de matière première de départ, d'une suite d'étapes de transformation (chacune avec son effet en % sur la quantité), puis d'un taux de rejet des produits finis appliqué après coup." />
+                    <Tooltip tip="prod.grille" />
                 </label>
                 {format.yieldGrid?.enabled && (
                     <div className="mt-3 space-y-3">
@@ -789,14 +789,14 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 <label htmlFor="isIngredient" className="flex items-center text-sm font-medium text-gray-700">
                     <input type="checkbox" id="isIngredient" checked={product.isIngredient} onChange={(e) => handleProductChange('isIngredient', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"/>
                     Considérer comme une sous-recette (mise en place) / un ingrédient
-                    <Tooltip text="Cochez cette case si cette recette est utilisée comme ingrédient dans d'autres plats (ex: une sauce de base)." />
+                    <Tooltip tip="prod.sousRecette" />
                 </label>
             </div>
             <div className="mt-2">
                 <label htmlFor="isResaleProduct" className="flex items-center text-sm font-medium text-gray-700">
                     <input type="checkbox" id="isResaleProduct" checked={!!format.isResaleProduct} onChange={(e) => handleFormatResaleToggle(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"/>
                     Considérer comme un produit de revente
-                    <Tooltip text="Cochez cette case pour les formats achetés et revendus sans transformation (ex: boissons, croustilles). Cela simplifiera la fiche de coût à un simple coût d'achat. Propre à ce format : un même produit peut avoir un format cuisiné et un format revendu tel quel." />
+                    <Tooltip tip="prod.revente" />
                 </label>
             </div>
             {recipeAllergens.length > 0 && (
@@ -851,7 +851,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                 <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">
                                     <div className="flex items-center whitespace-nowrap">
                                         Rendement (%)
-                                        <Tooltip text="Perte PENDANT la préparation de cette recette : parage, épluchage, cuisson, etc. Exemple : 1kg de carottes donne 800g après épluchage, le rendement est de 80%. Ne pas confondre avec le Taux de perte (onglet Ingrédients), qui couvre la perte AVANT production (péremption, stock) — les deux se cumulent, ne saisissez pas la même perte aux deux endroits sous peine de gonfler le coût matière." />
+                                        <Tooltip tip="prod.rendement" />
                                     </div>
                                 </th>
                                 <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût total ($)</th>
@@ -1065,38 +1065,38 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center">
                                         Étape de production
-                                        <Tooltip text="Décrivez l'action (ex: 'Taillage des légumes', 'Cuisson de la viande')." />
+                                        <Tooltip tip="prod.etape" />
                                     </div>
                                 </th>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center">
                                         Personnel
-                                        <Tooltip text="Cliquez sur 'Modifier' pour assigner un ou plusieurs employés à cette tâche." />
+                                        <Tooltip tip="prod.personnel" />
                                     </div>
                                 </th>
                                 <th className="w-24 px-1 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         Début
-                                        <Tooltip text="Le moment où l'étape commence, en heures, minutes et secondes, depuis le début de la recette." />
+                                        <Tooltip tip="prod.debut" />
                                     </div>
                                 </th>
                                 <th className="w-24 px-1 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         Durée
-                                        <Tooltip text="La durée totale de l'étape en heures, minutes et secondes." />
+                                        <Tooltip tip="prod.duree" />
                                     </div>
                                 </th>
                                 <th className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">Fin</th>
                                 <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         <div className="flex flex-col items-center"><span>Coût</span><span>Direct ($)</span></div>
-                                        <Tooltip text="Le coût pur de la main-d'œuvre pour cette étape, basé sur le salaire de base des employés et la durée de la tâche." />
+                                        <Tooltip tip="prod.coutDirect" />
                                     </div>
                                 </th>
                                 <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
                                         <div className="flex flex-col items-center"><span>Coût</span><span>Indirect ($)</span></div>
-                                        <Tooltip text="La part du coût de l'inefficacité et du temps non-productif de la cuisine allouée à cette étape, basée sur le taux de productivité global." />
+                                        <Tooltip tip="prod.coutIndirect" />
                                     </div>
                                 </th>
                                 <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
@@ -1186,21 +1186,21 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div>
                             <p className="text-xs text-gray-500 flex items-center justify-end">
                                 Durée Processus
-                                <Tooltip text="Le temps total écoulé entre le début de la première étape et la fin de la dernière." />
+                                <Tooltip tip="prod.dureeProcessus" />
                             </p>
                             <p className="font-semibold text-sm text-gray-800">{(productionSummary.totalProductionTime / 60).toFixed(1)} min</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 flex items-center justify-end">
                                 Temps Personnel
-                                <Tooltip text="La somme du temps de travail de chaque employé. Ex: 10 min avec 2 cuisiniers = 20 min de personnel." />
+                                <Tooltip tip="prod.tempsPersonnel" />
                             </p>
                             <p className="font-semibold text-sm text-gray-800">{(productionSummary.totalLaborTime / 60).toFixed(1)} min</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 flex items-center justify-end">
                                 Intensité M-O
-                                <Tooltip text="Ratio Temps Personnel / Durée Processus. Un ratio > 1 indique que plusieurs personnes travaillent en même temps." />
+                                <Tooltip tip="prod.intensite" />
                             </p>
                             <p className="font-semibold text-sm text-gray-800">{productionSummary.laborIntensity.toFixed(2)}x</p>
                         </div>
@@ -1320,7 +1320,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                             <label className="flex items-center text-sm font-medium text-gray-700">
                                 <input type="checkbox" checked={!!format.subcontracting?.enabled} onChange={(e) => handleFormatNestedToggle('subcontracting', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" />
                                 Sous-traitance <CostNatureBadge nature="direct" />
-                                <Tooltip text="Coût d'une opération de fabrication confiée à un tiers pour ce format (ex. embouteillage externe). S'ajoute aux coûts directs (matière + main-d'œuvre) et affecte donc la marge brute." />
+                                <Tooltip tip="prod.sousTraitance" />
                             </label>
                             {format.subcontracting?.enabled && (
                                 <div className="mt-2 space-y-1">
@@ -1341,7 +1341,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                             <label className="flex items-center text-sm font-medium text-gray-700">
                                 <input type="checkbox" checked={!!format.aging?.enabled} onChange={(e) => handleFormatNestedToggle('aging', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" />
                                 Vieillissement / affinage <CostNatureBadge nature="financial" />
-                                <Tooltip text="Charge d'intérêt de portage pour un format qui doit vieillir ou affiner en inventaire avant la vente (ex. fermentation). Calculée sur le total des charges directes du lot : charges directes × (taux annuel ÷ 12) × durée en mois, puis divisée par le nombre de portions. Incluse dans la marge nette mais pas dans la marge sur coût primaire. Limites : intérêt simple (non composé) et lot supposé immobilisé en entier pendant toute la durée — le calcul est donc prudent (légèrement surestimé), surtout au-delà de 12 mois. En comptabilité financière, les frais d'intérêt sont en principe une charge de la période, hors coût des stocks (IAS 2) ; la capitalisation n'est permise que pour un actif exigeant une longue préparation (IAS 23) — validez le traitement avec votre comptable." />
+                                <Tooltip tip="prod.vieillissement" />
                             </label>
                             {format.aging?.enabled && (
                                 <div className="mt-2 grid grid-cols-2 gap-3 max-w-md">
@@ -1401,7 +1401,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Matière (%)
-                            <Tooltip text="Le pourcentage du prix de vente que représente le coût des ingrédients." />
+                            <Tooltip tip="prod.tuileMatiere" />
                             {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costMatierePercent : marginView.costMatierePercent, generalInfo.foodCostTarget)}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
@@ -1413,7 +1413,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Emballage (%)
-                            <Tooltip text="Le pourcentage du prix de vente que représente le coût de l'emballage — poste séparé du coût matière." />
+                            <Tooltip tip="prod.tuileEmballage" />
                             {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costPackagingPercent : marginView.costPackagingPercent, generalInfo.packagingCostTarget)}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
@@ -1425,7 +1425,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Main-d'œuvre (%)
-                            <Tooltip text="Le pourcentage du prix de vente que représente le coût total de la main-d'œuvre (direct et indirect)." />
+                            <Tooltip tip="prod.tuileMo" />
                             {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costLaborPercent : marginView.costLaborPercent, generalInfo.laborCostTarget)}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
@@ -1440,7 +1440,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     leur place dans cet onglet — voir Résumé → Par SKU. */}
                 <div className="flex justify-center mb-4">
                     <div className={`w-full md:w-1/2 p-3 bg-white rounded-lg shadow text-center ${flashTotalCost ? 'animate-flash' : ''}`}>
-                        <div className="text-sm text-gray-500 flex items-center justify-center">Coût de Production <Tooltip text="La somme des coûts de matières, d'emballage, de main-d'œuvre et de sous-traitance directement attribuables à la production de ce format — avant frais fixes." /></div>
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Coût de Production <Tooltip tip="prod.coutProduction" /></div>
                         <p className="text-2xl font-bold text-gray-800">{formatCurrency(costs.totalDirectCostPerPortion)} $</p>
                     </div>
                 </div>
@@ -1451,7 +1451,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 {hasSalePrice && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
                     <div className="p-3 bg-white rounded-lg shadow">
-                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge de contribution <Tooltip text="Prix de vente moins le coût matière seul. C'est ce qui reste pour couvrir la main-d'œuvre, les frais indirects et le profit. Le % est calculé sur le prix de vente." /></div>
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge de contribution <Tooltip tip="prod.contribution" /></div>
                         <p className={`text-xl font-bold ${getMarginTextColorClass(simulatedCosts ? simulatedCosts.margeContributionPercent : marginView.margeContributionPercent)}`}>
                             {simulatedCosts ? (
                                 <>
@@ -1466,7 +1466,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         </p>
                     </div>
                     <div className="p-3 bg-white rounded-lg shadow">
-                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge brute <Tooltip text="Prix de vente moins les coûts directs (matière + emballage + main-d'œuvre + sous-traitance). Profit avant de déduire les frais indirects et le vieillissement. Le % est calculé sur le prix de vente." /></div>
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Marge brute <Tooltip tip="prod.margeBrute" /></div>
                         <p className={`text-xl font-bold ${getMarginTextColorClass(simulatedCosts ? simulatedCosts.margeBrutePercent : marginView.margeBrutePercent)}`}>
                             {simulatedCosts ? (
                                 <>
@@ -1505,7 +1505,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Point Mort
-                            <Tooltip text="Unités à vendre dans ce canal pour couvrir la part des frais fixes allouée à ce SKU — déjà calculé pour le Rapport (Par SKU), simplement affiché ici. Pendant une simulation, reflète le canal principal (comme le reste du récapitulatif)." />
+                            <Tooltip tip="prod.pointMort" />
                         </div>
                         <p className="text-xl font-bold text-gray-800">
                             {simulatedCosts ? (

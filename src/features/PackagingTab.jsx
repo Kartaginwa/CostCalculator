@@ -318,19 +318,19 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
                                     <button onClick={() => requestSort('lossPercentage')} className="flex items-center">Taux de perte (%) {getSortIcon('lossPercentage')}</button>
-                                    <Tooltip text="Perte AVANT la production : bris, rebuts, format non conforme. Même logique que le taux de perte des ingrédients." />
+                                    <Tooltip tip="emb.perte" />
                                 </div>
                             </th>
                             <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
                                     <button onClick={() => requestSort('unitPrice')} className="flex items-center">Prix unitaire ($) {getSortIcon('unitPrice')}</button>
-                                    <Tooltip text="Calculé automatiquement (Prix d'Achat ÷ Format d'Achat) : c'est ce prix qui sera utilisé pour le coût d'emballage d'une recette." />
+                                    <Tooltip tip="emb.prixUnitaire" />
                                 </div>
                             </th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
                                     <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière màj {getSortIcon('lastUpdated')}</button>
-                                    <Tooltip text="La date de la dernière modification du prix d'achat. Un point jaune apparaît si la date est supérieure à 30 jours, pour vous alerter qu'il est peut-être temps de le vérifier." />
+                                    <Tooltip tip="emb.maj" />
                                 </div>
                             </th>
                             <th className="relative px-4 py-3"><span className="sr-only">Actions</span></th>

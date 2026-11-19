@@ -66,7 +66,7 @@ export const chapitreEtatResultats = {
             ],
         },
         { type: 'h', id: 'guide-ff-benefice-brut', text: 'Bénéfice brut' },
-        { type: 'p', text: 'Une barre de synthèse : **revenus moins charges directes réelles**, avant les frais fixes. Elle reprend les totaux des deux tableaux ci-dessus et se ventile de la même façon : par activité (deux totaux réels, directement soustraits) et, à titre indicatif, par canal. Un canal n\'a de bénéfice brut que si les revenus **et** les charges directes y ont tous deux une part connue ; sinon la case affiche « — », jamais une soustraction avec un côté à zéro inventé.' },
+        { type: 'p', text: 'Une barre de synthèse : **revenus moins charges directes réelles**, avant les frais fixes. Elle reprend les totaux des deux tableaux ci-dessus et se ventile **par activité** (deux totaux réels, directement soustraits). Elle n\'offre pas de détail par canal : les charges directes ne sont pas toutes connues par canal, et l\'application refuse de soustraire un côté inventé.' },
         { type: 'p', text: `Projet démo : ${d(DEMO.etat.revenus)} − ${d(DEMO.etat.chargesDirectes)} = **${d(DEMO.etat.beneficeBrut)}**.` },
 
         { type: 'h', id: 'guide-ff-liste', text: 'Frais fixes' },
@@ -133,7 +133,7 @@ export const chapitreEtatResultats = {
         { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'électricité (3 000 $) utilise la clé « Selon les charges directes » : les activités qui coûtent le plus cher à fabriquer en reçoivent la plus grande part (2 314,18 $, 465,04 $ et 220,78 $). Le loyer de l'espace de production (9 000 $) est réparti manuellement : 5 000 $, 2 500 $ et 1 500 $. Le total des frais fixes est de ${d(DEMO.etat.fraisFixes)}.` },
 
         { type: 'h', id: 'guide-ff-benefice-net', text: 'Bénéfice net' },
-        { type: 'p', text: `Une seconde barre de synthèse : **bénéfice brut moins frais fixes**, avec la même ventilation par activité et par canal. Ici, les deux répartitions de frais fixes sont des montants **réels** (saisis ou répartis par clé), jamais une part indicative : une colonne sans frais fixes alloués affiche 0 $, une vraie valeur. Un canal dont le bénéfice brut était « — » le reste. Projet démo : ${d(DEMO.etat.beneficeBrut)} − ${d(DEMO.etat.fraisFixes)} = **${d(DEMO.etat.beneficeNet)}**.` },
+        { type: 'p', text: `Une seconde barre de synthèse : **bénéfice brut moins frais fixes**, affichée **au total de l'entreprise**, sans détail par activité ni par canal. Projet démo : ${d(DEMO.etat.beneficeBrut)} − ${d(DEMO.etat.fraisFixes)} = **${d(DEMO.etat.beneficeNet)}**.` },
 
         { type: 'h', id: 'guide-ff-cici', text: 'Coefficient d\'imputation des charges indirectes (CICI)' },
         { type: 'p', text: 'Une fois qu\'un bassin de frais fixes est attribué à « Général » ou à une activité (par la clé de répartition ci-dessus), il faut le répartir entre les produits qui le portent : c\'est le rôle du CICI. Vous choisissez, pour « Général » et pour chaque activité, la règle de répartition :' },

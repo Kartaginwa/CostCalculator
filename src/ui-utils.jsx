@@ -1,7 +1,7 @@
 // --- UTILITAIRES DÉPENDANTS DE REACT ---
 // Séparés des utilitaires purs (utils.js) pour que le moteur de calcul puisse importer ces
 // derniers sans tirer React ni lucide-react.
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useContext, createContext } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { parseLocaleNumber } from './utils.js';
 
@@ -67,17 +67,29 @@ export const focusSoon = (selector, delay = 120) => {
 // vidée par `resetSessionMemory()` quand on crée, ouvre ou charge un autre projet. `key` doit être
 // unique par état (ex. 'ingredients.filterName').
 const sessionMemory = new Map();
-export const resetSessionMemory = () => sessionMemory.clear();
+// Portée de la mémoire : la visite guidée (seconde instance de l'application, sur une copie du démo) écrit
+// sous le préfixe « tour: » pour ne jamais lire ni effacer la mémoire de session de l'utilisateur.
+export const TOUR_SCOPE = 'tour:';
+export const SessionScopeContext = createContext('');
+export const resetSessionMemory = (scope = '') => {
+    [...sessionMemory.keys()].forEach((k) => {
+        if (scope ? k.startsWith(scope) : !k.startsWith(TOUR_SCOPE)) sessionMemory.delete(k);
+    });
+};
+// Conteneur où les infobulles s'affichent : celui de l'instance d'application qui les contient (la visite
+// a le sien ; l'application cachée derrière garde le sien).
+export const TooltipHostContext = createContext(null);
 export const useSessionState = (key, initialValue) => {
-    const [value, setValue] = useState(() => (sessionMemory.has(key)
-        ? sessionMemory.get(key)
+    const fullKey = useContext(SessionScopeContext) + key;
+    const [value, setValue] = useState(() => (sessionMemory.has(fullKey)
+        ? sessionMemory.get(fullKey)
         : (typeof initialValue === 'function' ? initialValue() : initialValue)));
     const set = useCallback((next) => {
         setValue(prev => {
             const resolved = typeof next === 'function' ? next(prev) : next;
-            sessionMemory.set(key, resolved);
+            sessionMemory.set(fullKey, resolved);
             return resolved;
         });
-    }, [key]);
+    }, [fullKey]);
     return [value, set];
 };

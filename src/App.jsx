@@ -1,4 +1,5 @@
-import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useReducer, useRef, useMemo, useCallback, useEffect, useContext, lazy, Suspense } from 'react';
+import ReactDOM from 'react-dom';
 import {
     Users, ChefHat, Table, Info, ShoppingCart, Save, FolderOpen,
     PlusCircle, Settings, Package, TrendingUp,
@@ -18,7 +19,8 @@ import { projectReducer, toProjectState } from './state/projectReducer.js';
 import { buildProjectData, parseProjectData } from './state/projectSerialization.js';
 import { ProjectContext } from './state/ProjectContext.jsx';
 
-import { Notification, WelcomeModal, OnboardingModal, TutorialGuide, PdfOptionsModal } from './components/AppDialogs.jsx';
+import { Notification, WelcomeModal, OnboardingModal, PdfOptionsModal } from './components/AppDialogs.jsx';
+import { TourSession } from './tour/TourSession.jsx';
 import { InstructionModal } from './components/InstructionModal.jsx';
 import { ConfirmationModal } from './components/common.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
@@ -28,7 +30,7 @@ import { IngredientsTab } from './features/IngredientsTab.jsx';
 import { PackagingTab } from './features/PackagingTab.jsx';
 import { LaborDatabaseTab } from './features/LaborDatabaseTab.jsx';
 import { IncomeStatementTab } from './features/IncomeStatementTab.jsx';
-import { resetSessionMemory } from './ui-utils.jsx';
+import { resetSessionMemory, SessionScopeContext, TooltipHostContext } from './ui-utils.jsx';
 
 // Code-splitting : ces vues/wizards sont chargés à la demande (chunks séparés). Cela sort du
 // bundle initial les dépendances lourdes qu'ils tirent — notamment recharts (SummaryTable, qui a
@@ -38,14 +40,20 @@ const RecipeCalculator = lazy(() => import('./features/RecipeCalculator.jsx').th
 const SummaryTable = lazy(() => import('./features/SummaryTable.jsx').then(m => ({ default: m.SummaryTable })));
 const SalesReportImportWizardModal = lazy(() => import('./features/SalesReportImportWizardModal.jsx').then(m => ({ default: m.SalesReportImportWizardModal })));
 
-const App = () => {
+// `tourMode` : instance de l'application jouée par la visite guidée (src/tour/). Elle charge sa propre copie du
+// projet démo, ne partage aucune mémoire avec l'instance de l'utilisateur et ne peut rien sauvegarder.
+const App = ({ tourMode = false } = {}) => {
+    const sessionScope = useContext(SessionScopeContext);
+    const [tooltipHost, setTooltipHost] = useState(null);
     // --- ÉTATS ---
-    const [isProjectLoaded, setIsProjectLoaded] = useState(false);
+    const [isProjectLoaded, setIsProjectLoaded] = useState(tourMode);
 
     // Données du projet (produits, ingrédients, main-d'œuvre, infos générales...) : centralisées
     // dans un reducer et exposées via ProjectContext pour éviter de les faire descendre
     // manuellement à travers chaque onglet (voir src/state/projectReducer.js).
-    const [projectState, dispatch] = useReducer(projectReducer, undefined, () => toProjectState(getEmptyState()));
+    // Instance de la visite guidée : elle démarre directement sur sa propre copie du projet démo (rien à charger après coup).
+    const [tourDemo] = useState(() => (tourMode ? getDefaultState() : null));
+    const [projectState, dispatch] = useReducer(projectReducer, undefined, () => toProjectState(tourDemo || getEmptyState()));
     const { companyName, logoUrl, generalInfo, baseIngredients, basePackaging, products, trackingPoints, laborDatabase, productionActivities, salesChannels, activeUnits, expenseLines, revenueLines, directCostLines, repartitionKeys, uiSettings } = projectState;
 
     // Setters stables (dispatch seul en dépendance, garanti stable par React) : la résolution
@@ -85,8 +93,10 @@ const App = () => {
     // pas de montage simultané) : la position ne peut donc pas survivre nativement au changement,
     // d'où ce suivi manuel par onglet, keyé en ref pour ne jamais déclencher de re-render.
     const scrollPositionsRef = useRef({});
+    const tourActiveRef = useRef(false);
     useEffect(() => {
         const handleScroll = () => {
+            if (tourActiveRef.current) return; // pendant la visite, c'est l'autre instance qui fait défiler la page
             scrollPositionsRef.current[activeTab] = window.scrollY;
         };
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -109,6 +119,7 @@ const App = () => {
     // son onglet sélectionné, puis reprend la main sur ses propres clics d'onglet locaux.
     const [editingFormatIndex, setEditingFormatIndex] = useState(0);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [showDemoConfirm, setShowDemoConfirm] = useState(false);
     const [showInstructions, setShowInstructions] = useState(false);
     // Ancre de section du guide à atteindre à l'ouverture (ex. depuis une infobulle : openGuide('guide-resume-simulation')).
     const [guideAnchor, setGuideAnchor] = useState(null);
@@ -118,11 +129,12 @@ const App = () => {
     const [appLogoBase64, setAppLogoBase64] = useState(null);
     const [appLogoDimensions, setAppLogoDimensions] = useState({ width: 1, height: 1 });
     const [showOnboardingModal, setShowOnboardingModal] = useState(false);
-    const [runTutorial, setRunTutorial] = useState(false);
-    const [tutorialStep, setTutorialStep] = useState(0);
+    // Visite guidée : tant qu'elle joue, l'application de l'utilisateur reste montée (donc intacte) mais cachée.
+    const [tourActive, setTourActive] = useState(false);
+    const tourScrollRef = useRef(0);
     const [, setUndoState] = useState(null); // Pour la logique d'annulation
 
-    const [openPostIds, setOpenPostIds] = useState(new Set());
+    const [openPostIds, setOpenPostIds] = useState(() => new Set(tourDemo ? tourDemo.laborDatabase.map(p => p.id) : []));
     const [openRecipeSections, setOpenRecipeSections] = useState(new Set(['ingredients', 'packaging', 'labor', 'indirects', 'recap']));
 
     // Position de l'utilisateur dans Rapport et suivi (24/10, retour utilisateur) : sous-onglet actif
@@ -789,62 +801,29 @@ const App = () => {
     };
 
     // --- GESTION DE PROJET (NOUVEAU / SAUVEGARDE / OUVERTURE) ---
-    const handleStartTutorial = () => {
+    const startTour = useCallback(() => {
+        tourScrollRef.current = window.scrollY;
+        tourActiveRef.current = true;
+        setShowInstructions(false);
         setShowOnboardingModal(false);
-        // Charge les données d'exemple pour le tour
-        const defaultState = getDefaultState();
-        setCompanyName(defaultState.companyName);
-        setLogoUrl(defaultState.logoUrl);
-        setGeneralInfo(defaultState.generalInfo);
-        setBaseIngredients(defaultState.ingredientsList);
-        setBasePackaging(defaultState.basePackaging);
-        setProducts(defaultState.products);
-        setTrackingPoints(defaultState.trackingPoints);
-        setLaborDatabase(defaultState.laborDatabase);
-        setProductionActivities(defaultState.productionActivities);
-        setSalesChannels(defaultState.salesChannels);
-        setActiveUnits(defaultState.activeUnits);
-        setExpenseLines(defaultState.expenseLines);
-        setRevenueLines(defaultState.revenueLines);
-        setDirectCostLines(defaultState.directCostLines);
-        setRepartitionKeys(defaultState.repartitionKeys);
-        // Démarre le tutoriel
-        setTutorialStep(0);
-        setActiveTab('info');
-        setRunTutorial(true);
-    };
+        setTourActive(true);
+        window.scrollTo(0, 0);
+    }, []);
 
     const handleSkipTutorial = () => {
         setShowOnboardingModal(false);
     };
 
-    const handleEndTutorial = () => {
-        setRunTutorial(false);
-        // Réinitialise l'application à un état vierge
-        const emptyState = getEmptyState();
-        setCompanyName(emptyState.companyName);
-        setLogoUrl(emptyState.logoUrl);
-        setGeneralInfo(emptyState.generalInfo);
-        setBaseIngredients(emptyState.ingredientsList);
-        setBasePackaging(emptyState.basePackaging);
-        setProducts(emptyState.products);
-        setTrackingPoints(emptyState.trackingPoints);
-        setLaborDatabase(emptyState.laborDatabase);
-        setProductionActivities(emptyState.productionActivities);
-        setSalesChannels(emptyState.salesChannels);
-        setActiveUnits(emptyState.activeUnits);
-        setExpenseLines(emptyState.expenseLines);
-        setRevenueLines(emptyState.revenueLines);
-        setDirectCostLines(emptyState.directCostLines);
-        setRepartitionKeys(emptyState.repartitionKeys);
-        setEditingProductIndex(0);
-        setActiveTab('info');
-        window.scrollTo(0, 0); // Remonte en haut de la page
-        showNotification("Le tour est terminé. Vous pouvez maintenant commencer votre projet.", "success");
-    };
-
-    const handleStepChange = (newStepIndex) => {
-        setTutorialStep(newStepIndex);
+    // Fin de la visite : `action` = ce que l'utilisateur a choisi sur la carte finale (rien, le démo, un projet neuf, le guide).
+    const endTour = (action) => {
+        tourActiveRef.current = false;
+        setTourActive(false);
+        resetSessionMemory('tour:');
+        const y = tourScrollRef.current;
+        setTimeout(() => window.scrollTo(0, y), 0);
+        if (action === 'guide') openGuide();
+        if (action === 'new') setShowResetConfirm(true);
+        if (action === 'demo') { if (isProjectLoaded) setShowDemoConfirm(true); else handleConfirmLoadExample(); }
     };
 
     const handleConfirmReset = () => {
@@ -868,7 +847,7 @@ const App = () => {
         setEditingProductIndex(0);
         setActiveTab('info');
         setShowResetConfirm(false);
-        resetSessionMemory(); setProjectEpoch(e => e + 1);
+        resetSessionMemory(sessionScope); setProjectEpoch(e => e + 1);
         setIsProjectLoaded(true);
         setBaselineTick(t => t + 1);
         // Affiche la modale d'onboarding pour un nouveau projet
@@ -896,8 +875,8 @@ const App = () => {
         setOpenPostIds(new Set(defaultState.laborDatabase.map(p => p.id)));
         setEditingProductIndex(0);
         setActiveTab('info');
-        showNotification({ message: "Projet d'exemple chargé avec succès !", type: 'success' }); // Appel corrigé
-        resetSessionMemory(); setProjectEpoch(e => e + 1);
+        if (!tourMode) showNotification({ message: "Projet d'exemple chargé avec succès !", type: 'success' });
+        resetSessionMemory(sessionScope); setProjectEpoch(e => e + 1);
         setIsProjectLoaded(true);
         setBaselineTick(t => t + 1);
     };
@@ -917,7 +896,7 @@ const App = () => {
         if (baselineTick > 0) setSavedProjectJson(currentProjectJson);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [baselineTick]);
-    const hasUnsavedChanges = isProjectLoaded && savedProjectJson !== null && currentProjectJson !== savedProjectJson;
+    const hasUnsavedChanges = !tourMode && isProjectLoaded && savedProjectJson !== null && currentProjectJson !== savedProjectJson;
     useEffect(() => {
         if (!hasUnsavedChanges) return undefined;
         const handler = (e) => { e.preventDefault(); e.returnValue = ''; };
@@ -989,7 +968,7 @@ const App = () => {
                 setEditingProductIndex(0);
                 setActiveTab('info');
                 showNotification({ message: 'Projet importé avec succès !', type: 'success' });
-                resetSessionMemory(); setProjectEpoch(e => e + 1);
+                resetSessionMemory(sessionScope); setProjectEpoch(e => e + 1);
                 setIsProjectLoaded(true);
                 setBaselineTick(t => t + 1);
             } catch (error) {
@@ -1051,13 +1030,13 @@ const App = () => {
             </div>
             <div className="sticky top-0 z-30 w-full max-w-7xl mb-4">
                 <div id="tutorial-tab-bar" className="flex bg-white rounded-xl shadow-md border border-gray-300 overflow-hidden">
-                    <button onClick={() => setActiveTab('info')} className={getTabClasses('info')}><Settings className="h-5 w-5 mr-2" /> Paramètres</button>
-                    <button id="tab-ingredients" onClick={() => setActiveTab('ingredients')} className={getTabClasses('ingredients')}><ShoppingCart className="h-5 w-5 mr-2" /> Ingrédients</button>
-                    <button id="tab-packaging" onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Emballage</button>
-                    <button id="tab-labor" onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
-                    <button id="tab-income-statement" onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Table className="h-5 w-5 mr-2" /> État des résultats</button>
-                    <button id="tab-recipe" onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Production</button>
-                    <button id="tab-summary" onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><TrendingUp className="h-5 w-5 mr-2" /> Rapport et suivi</button>
+                    <button id="tab-info" aria-current={activeTab === 'info' ? 'page' : undefined} onClick={() => setActiveTab('info')} className={getTabClasses('info')}><Settings className="h-5 w-5 mr-2" /> Paramètres</button>
+                    <button id="tab-ingredients" aria-current={activeTab === 'ingredients' ? 'page' : undefined} onClick={() => setActiveTab('ingredients')} className={getTabClasses('ingredients')}><ShoppingCart className="h-5 w-5 mr-2" /> Ingrédients</button>
+                    <button id="tab-packaging" aria-current={activeTab === 'packaging' ? 'page' : undefined} onClick={() => setActiveTab('packaging')} className={getTabClasses('packaging')}><Package className="h-5 w-5 mr-2" /> Emballage</button>
+                    <button id="tab-labor" aria-current={activeTab === 'labor' ? 'page' : undefined} onClick={() => setActiveTab('labor')} className={getTabClasses('labor')}><Users className="h-5 w-5 mr-2" /> Main-d'œuvre</button>
+                    <button id="tab-recipe" aria-current={activeTab === 'recipe' ? 'page' : undefined} onClick={() => setActiveTab('recipe')} className={getTabClasses('recipe')}><ChefHat className="h-5 w-5 mr-2" /> Production</button>
+                    <button id="tab-income-statement" aria-current={activeTab === 'income-statement' ? 'page' : undefined} onClick={() => setActiveTab('income-statement')} className={getTabClasses('income-statement')}><Table className="h-5 w-5 mr-2" /> État des résultats</button>
+                    <button id="tab-summary" aria-current={activeTab === 'summary' ? 'page' : undefined} onClick={() => setActiveTab('summary')} className={getTabClasses('summary')}><TrendingUp className="h-5 w-5 mr-2" /> Rapport et suivi</button>
                 </div>
             </div>
             </>
@@ -1072,6 +1051,7 @@ const App = () => {
         const projectContextValue = useMemo(() => ({
             goToTab: setActiveTab,
             openGuide,
+            startTour: tourMode ? null : startTour,
             companyName, onUpdateCompanyName: setCompanyName,
             logoUrl, onUpdateLogoUrl: setLogoUrl,
             generalInfo: calculatedGeneralInfo, onUpdateGeneralInfo: handleUpdateGeneralInfo,
@@ -1091,6 +1071,7 @@ const App = () => {
             uiSettings, setUiSettings,
             showNotification, setNotification,
         }), [
+            tourMode, startTour, openGuide,
             companyName, setCompanyName, logoUrl, setLogoUrl,
             calculatedGeneralInfo, handleUpdateGeneralInfo,
             products, setProducts, baseIngredients, setBaseIngredients, ingredientsList,
@@ -1192,7 +1173,8 @@ const App = () => {
                 animation: fade-in-down 0.5s ease-out forwards;
             }
         `}</style>
-                <div className="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
+                <TooltipHostContext.Provider value={tooltipHost}>
+                <div className="bg-gray-100 min-h-screen p-4 flex flex-col items-center" style={tourActive ? { display: 'none' } : undefined}>
                     {notification && notification.message && (
                         <Notification
                             message={notification.message}
@@ -1201,7 +1183,15 @@ const App = () => {
                             onUndo={notification.onUndo}
                         />
                     )}
-                    <ConfirmationModal 
+                    <ConfirmationModal
+                        isOpen={showDemoConfirm}
+                        onClose={() => setShowDemoConfirm(false)}
+                        onConfirm={() => { setShowDemoConfirm(false); handleConfirmLoadExample(); }}
+                        title="Charger le projet démo"
+                    >
+                        Le projet démo remplacera votre projet actuel. Les modifications non sauvegardées seront perdues. Voulez-vous continuer ?
+                    </ConfirmationModal>
+                    <ConfirmationModal
                         isOpen={showResetConfirm}
                         onClose={() => setShowResetConfirm(false)}
                         onConfirm={handleConfirmReset}
@@ -1220,20 +1210,9 @@ const App = () => {
 
                     <OnboardingModal
                         isOpen={showOnboardingModal}
-                        onStart={handleStartTutorial}
+                        onStart={startTour}
                         onSkip={handleSkipTutorial}
                     />
-                    <TutorialGuide
-                        run={runTutorial}
-                        stepIndex={tutorialStep}
-                        onStepChange={handleStepChange}
-                        onEnd={handleEndTutorial}
-                        setActiveTab={setActiveTab}
-                        activeTab={activeTab}
-                        reportActiveSubTab={reportActiveSubTab}
-                        setReportActiveSubTab={setReportActiveSubTab}
-                    />
-
                     <InstructionModal
                         isOpen={showInstructions}
                         anchor={guideAnchor}
@@ -1275,6 +1254,7 @@ const App = () => {
                             onExample={() => {
                                 handleConfirmLoadExample();
                             }}
+                            onTour={tourMode ? undefined : startTour}
                         />
                     ) : (
                         <>
@@ -1292,7 +1272,12 @@ const App = () => {
                         </>
                     )}
                 </div>
-                <div id="tooltip-root"></div>
+                <div id="tooltip-root" ref={setTooltipHost}></div>
+                </TooltipHostContext.Provider>
+                {tourActive && !tourMode && ReactDOM.createPortal(
+                    <TourSession AppComponent={App} onExit={endTour} />,
+                    document.getElementById('tour-root') || document.body
+                )}
             </ProjectContext.Provider>
         );
     };

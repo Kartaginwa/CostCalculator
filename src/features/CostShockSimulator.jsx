@@ -254,7 +254,7 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                         <>
                             <div className="space-y-3">
                                 {shocks.map(s => (
-                                    <div key={s.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div key={s.id} data-tour="shock-row" className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <select value={s.type} onChange={(e) => changeType(s.id, e.target.value)} className="rounded-md border-gray-300 shadow-sm p-2 border text-sm font-medium">
                                                 <option value="ingredient">Intrants</option>
@@ -329,7 +329,7 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                             </div>
 
                             {shockedAnalysis && (
-                                <div className="mt-5">
+                                <div className="mt-5" data-tour="shock-results">
                                     <div className="p-2 mb-4 bg-amber-100 text-amber-900 rounded-md text-sm flex items-center flex-wrap gap-x-2">
                                         <AlertTriangle className="inline h-4 w-4" />
                                         <span className="font-semibold">Scénario actif :</span>

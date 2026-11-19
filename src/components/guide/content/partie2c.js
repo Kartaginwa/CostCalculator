@@ -20,7 +20,7 @@ const GRILLE = (() => {
 
 export const chapitreEtatResultats = {
     id: 'guide-etat-resultats',
-    title: 'Onglet 5 — État des résultats',
+    title: 'Onglet 6 — État des résultats',
     lead: 'Vos revenus et vos frais réels, tels que votre comptabilité les enregistre : le pont entre le modèle et la réalité.',
     blocks: [
         { type: 'callout', kind: 'pourquoi', text: 'Les onglets précédents construisent un **modèle** : ce que vos recettes et vos prix impliquent. Cet onglet reçoit le **réel** : ce que votre comptabilité a enregistré. Il sert à deux choses : répartir vos frais fixes sur chaque produit, pour obtenir le coût de revient complet, et vérifier que votre modèle colle à la réalité (la réconciliation). Voir le [[guide-concept-reel-theorique|chapitre 13]] de la Partie 1.' },
@@ -198,7 +198,7 @@ export const chapitreEtatResultats = {
 
 export const chapitreProduction = {
     id: 'guide-production',
-    title: 'Onglet 6 — Production',
+    title: 'Onglet 5 — Production',
     lead: 'Le cœur de l\'application : la fiche de coût détaillée de chaque format. Chaque modification met à jour les coûts en temps réel.',
     blocks: [
         { type: 'callout', kind: 'pourquoi', text: 'C\'est ici que se construit le **coût de production** de chaque produit : combien de matière, quel emballage, combien de temps de travail. Tout le reste de l\'application (marges, point mort, rapports) en dépend. Plus la fiche est fidèle à ce qui se passe réellement dans l\'usine, plus vos décisions seront justes.' },

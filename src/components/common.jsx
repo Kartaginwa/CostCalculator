@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useContext, useLayoutEffec
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown, Trash2, PlusCircle } from 'lucide-react';
 import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits, formatNumber } from '../utils.js';
-import { useValueFlash, useEscapeKey } from '../ui-utils.jsx';
+import { useValueFlash, useEscapeKey, TooltipHostContext } from '../ui-utils.jsx';
 import { TIPS } from '../tooltips.js';
 import { ProjectContext } from '../state/ProjectContext.jsx';
 
@@ -25,6 +25,7 @@ const TOOLTIP_WIDTH = 256;
 const TOOLTIP_MARGIN = 8;
 export const Tooltip = ({ tip, text, guide }) => {
     const ctx = useContext(ProjectContext);
+    const tooltipHost = useContext(TooltipHostContext);
     const entry = tip ? TIPS[tip] : null;
     const body = entry ? entry.text : text;
     const anchor = entry ? (entry.complet ? null : entry.guide) : guide;
@@ -124,7 +125,7 @@ export const Tooltip = ({ tip, text, guide }) => {
             )}
             <div ref={arrowRef} className="absolute -translate-x-1/2 w-2 h-2 rotate-45 bg-white border-r border-b border-gray-300" />
         </div>,
-        document.getElementById('tooltip-root')
+        tooltipHost || document.getElementById('tooltip-root')
     ) : null;
 
     return (

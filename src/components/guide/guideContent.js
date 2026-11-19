@@ -12,7 +12,7 @@ export const partie2 = {
     id: 'guide-partie-2',
     title: 'Partie 2 — Utiliser l\'application, onglet par onglet',
     lead: 'Un chapitre par onglet : à quoi il sert, comment le remplir, et ce que montrent les chiffres du projet démo.',
-    chapters: [chapitreParametres, chapitreIngredients, chapitreEmballage, chapitreMainOeuvre, chapitreEtatResultats, chapitreProduction],
+    chapters: [chapitreParametres, chapitreIngredients, chapitreEmballage, chapitreMainOeuvre, chapitreProduction, chapitreEtatResultats],
 };
 
 export const PARTS = [partie0, partie1, partie2, partie3, partie4];

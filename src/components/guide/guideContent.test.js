@@ -44,7 +44,7 @@ describe('guide : structure et ancres', () => {
     });
     it('chaque lien interne [[ancre|libellé]] pointe vers une ancre existante', () => {
         expect(links.length).toBeGreaterThan(25);
-        const missing = [...new Set(links.filter((l) => !ids.includes(l)))];
+        const missing = [...new Set(links.filter((l) => l !== 'action-visite' && !ids.includes(l)))]; // « action-visite » = lien d'action (lance la visite), pas une section
         expect(missing).toEqual([]);
     });
     it('contient les cinq parties et les chapitres attendus', () => {

@@ -106,7 +106,7 @@ const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues
     const hasVisibleChannels = showSalesChannels && salesChannels.length > 0;
     const montantIsLast = !hasVisibleChannels && !(showActivityBuckets && activityBuckets.length > 0);
     return (
-    <table className="w-full table-fixed text-xs border-separate border-spacing-0">
+    <table data-tour="profit-bar" className="w-full table-fixed text-xs border-separate border-spacing-0">
         <IncomeStatementColGroup activityBuckets={activityBuckets} salesChannels={salesChannels} />
         <tbody>
             <tr className="font-bold">

@@ -15,7 +15,7 @@ const walk = (d, out = []) => {
     }
     return out;
 };
-const FILES = ['src/components', 'src/features', 'src/reports', 'src/tooltips.js', 'src/state/initialState.js', 'src/engine/projectChecks.js']
+const FILES = ['src/components', 'src/features', 'src/reports', 'src/tooltips.js', 'src/state/initialState.js', 'src/engine/projectChecks.js', 'src/tour']
     .flatMap((p) => { const full = join(ROOT, p); return statSync(full).isDirectory() ? walk(full) : [full]; });
 
 const lines = [];

@@ -848,7 +848,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
 
             {/* flex + largeur fixe (plutôt que grid-cols-3) pour que la dernière ligne (2 tuiles sur
                 5) reste centrée au lieu de coller à gauche — un grid laisserait un trou à droite. */}
-            <div className="flex flex-wrap justify-center gap-6 mb-6 text-center">
+            <div data-tour="kpi-tiles" className="flex flex-wrap justify-center gap-6 mb-6 text-center">
                 <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">
                         Coût Matière Moyen Pondéré
@@ -908,7 +908,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                 />
             </div>
 
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Matrice stratégique des produits</h3>
+            <h3 data-tour="bcg-title" className="text-xl font-bold text-gray-800 mb-2">Matrice stratégique des produits</h3>
             <p className="text-sm text-gray-500 mb-4">Classe chaque produit selon sa popularité et sa rentabilité (matrice de Boston Consulting Group).</p>
 
             <div className="flex items-center gap-2 mb-4">
@@ -1479,37 +1479,37 @@ export const SummaryTable = ({
 
             <div className="flex gap-1 border-b border-gray-200 mb-6">
                 <button
-                    onClick={() => onActiveSubTabChange('overview')}
+                    data-tour="subtab-overview" aria-current={activeSubTab === 'overview' ? 'page' : undefined} onClick={() => onActiveSubTabChange('overview')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'overview' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     Vue d'ensemble
                 </button>
                 <button
-                    onClick={() => onActiveSubTabChange('bySku')}
+                    data-tour="subtab-bySku" aria-current={activeSubTab === 'bySku' ? 'page' : undefined} onClick={() => onActiveSubTabChange('bySku')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'bySku' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     Par SKU
                 </button>
                 <button
-                    onClick={() => onActiveSubTabChange('byActivity')}
+                    data-tour="subtab-byActivity" aria-current={activeSubTab === 'byActivity' ? 'page' : undefined} onClick={() => onActiveSubTabChange('byActivity')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'byActivity' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     Par Activité
                 </button>
                 <button
-                    onClick={() => onActiveSubTabChange('byChannel')}
+                    data-tour="subtab-byChannel" aria-current={activeSubTab === 'byChannel' ? 'page' : undefined} onClick={() => onActiveSubTabChange('byChannel')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'byChannel' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     Par Canal
                 </button>
                 <button
-                    onClick={() => onActiveSubTabChange('intrants')}
+                    data-tour="subtab-intrants" aria-current={activeSubTab === 'intrants' ? 'page' : undefined} onClick={() => onActiveSubTabChange('intrants')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'intrants' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     Intrants
                 </button>
                 <button
-                    onClick={() => onActiveSubTabChange('simulation')}
+                    data-tour="subtab-simulation" aria-current={activeSubTab === 'simulation' ? 'page' : undefined} onClick={() => onActiveSubTabChange('simulation')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'simulation' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     Simulation

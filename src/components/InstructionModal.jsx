@@ -17,7 +17,7 @@ const tocEntries = (chapter) => chapter.blocks
 
 export const InstructionModal = ({ isOpen, onClose, anchor = null, appLogoBase64 = null, appLogoDimensions }) => {
     useEscapeKey(isOpen, onClose);
-    const { showNotification } = useProject();
+    const { showNotification, startTour } = useProject();
     const [isExporting, setIsExporting] = useState(false);
     const downloadPdf = () => {
         setIsExporting(true);
@@ -40,6 +40,8 @@ export const InstructionModal = ({ isOpen, onClose, anchor = null, appLogoBase64
 
     const handleLinkClick = (e, id) => {
         e.preventDefault();
+        // Lien d'action (pas une section) : lance la visite guidée. Absent dans l'instance jouée par la visite.
+        if (id === 'action-visite') { if (startTour) startTour(); return; }
         const element = contentRef.current && contentRef.current.querySelector(`#${id}`);
         if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
@@ -108,6 +110,7 @@ export const InstructionModal = ({ isOpen, onClose, anchor = null, appLogoBase64
                         <div className="flex items-center space-x-2">
                             <input
                                 type="text"
+                                data-testid="guide-search"
                                 placeholder="Rechercher un terme (ex. « marge nette », « point mort », « CICI »)…"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}

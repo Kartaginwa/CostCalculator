@@ -1,0 +1,2417 @@
+{
+ "companyName": "Boréal Mets Préparés inc.",
+ "logoUrl": "./demo_logo.png",
+ "generalInfo": {
+  "period": "custom",
+  "totalIndirects": 28000,
+  "totalRevenue": 80000,
+  "foodCostTarget": 32,
+  "packagingCostTarget": 8,
+  "laborCostTarget": 22,
+  "menuRevenuePercentage": 100,
+  "indirectCostMethod": "directCost"
+ },
+ "ingredientsList": [
+  {
+   "id": "ing_poulet",
+   "name": "Poitrine de poulet désossée",
+   "provider": "Boucherie Nordique",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 62,
+   "unitPrice": 6.2,
+   "isRecipe": false,
+   "lossPercentage": 6,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_boeuf",
+   "name": "Bœuf haché mi-maigre",
+   "provider": "Boucherie Nordique",
+   "purchaseFormat": 5,
+   "unit": "kg",
+   "purchasePrice": 48.75,
+   "unitPrice": 9.75,
+   "isRecipe": false,
+   "lossPercentage": 8,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_saumon",
+   "name": "Filet de saumon surgelé IQF",
+   "provider": "Poissonnerie Boréale",
+   "purchaseFormat": 5,
+   "unit": "kg",
+   "purchasePrice": 92.5,
+   "unitPrice": 18.5,
+   "isRecipe": false,
+   "lossPercentage": 4,
+   "lastUpdated": "2026-11-20",
+   "allergens": [
+    "fish"
+   ]
+  },
+  {
+   "id": "ing_carotte",
+   "name": "Carottes en dés surgelées",
+   "provider": "Maraîcher du Nord",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 18,
+   "unitPrice": 1.8,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_brocoli",
+   "name": "Brocoli en bouquets surgelé",
+   "provider": "Maraîcher du Nord",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 26,
+   "unitPrice": 2.6,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_pois",
+   "name": "Petits pois surgelés",
+   "provider": "Maraîcher du Nord",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 17,
+   "unitPrice": 1.7,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_oignon",
+   "name": "Oignon jaune haché",
+   "provider": "Maraîcher du Nord",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 12,
+   "unitPrice": 1.2,
+   "isRecipe": false,
+   "lossPercentage": 5,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_mais",
+   "name": "Maïs en grains surgelé",
+   "provider": "Maraîcher du Nord",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 15,
+   "unitPrice": 1.5,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_courge",
+   "name": "Courge musquée en dés surgelée",
+   "provider": "Maraîcher du Nord",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 19,
+   "unitPrice": 1.9,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_pdt_flocons",
+   "name": "Pommes de terre en flocons",
+   "provider": "Épicerie Grossiste Boréal",
+   "purchaseFormat": 10,
+   "unit": "kg",
+   "purchasePrice": 38,
+   "unitPrice": 3.8,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_riz",
+   "name": "Riz basmati",
+   "provider": "Épicerie Grossiste Boréal",
+   "purchaseFormat": 20,
+   "unit": "kg",
+   "purchasePrice": 48,
+   "unitPrice": 2.4,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_creme",
+   "name": "Crème 35 %",
+   "provider": "Fromagerie du Lac",
+   "purchaseFormat": 4,
+   "unit": "L",
+   "purchasePrice": 42,
+   "unitPrice": 10.5,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": [
+    "milk"
+   ]
+  },
+  {
+   "id": "ing_beurre",
+   "name": "Beurre non salé",
+   "provider": "Fromagerie du Lac",
+   "purchaseFormat": 5,
+   "unit": "kg",
+   "purchasePrice": 52,
+   "unitPrice": 10.4,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": [
+    "milk"
+   ]
+  },
+  {
+   "id": "ing_farine",
+   "name": "Farine tout usage",
+   "provider": "Épicerie Grossiste Boréal",
+   "purchaseFormat": 20,
+   "unit": "kg",
+   "purchasePrice": 23,
+   "unitPrice": 1.15,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": [
+    "gluten"
+   ]
+  },
+  {
+   "id": "ing_tomates",
+   "name": "Tomates broyées en conserve",
+   "provider": "Épicerie Grossiste Boréal",
+   "purchaseFormat": 3,
+   "unit": "kg",
+   "purchasePrice": 9,
+   "unitPrice": 3,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_haricots",
+   "name": "Haricots rouges en conserve",
+   "provider": "Épicerie Grossiste Boréal",
+   "purchaseFormat": 3,
+   "unit": "kg",
+   "purchasePrice": 10.5,
+   "unitPrice": 3.5,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  },
+  {
+   "id": "ing_epices_asiat",
+   "name": "Prémélange gingembre-ail-soya",
+   "provider": "Épicerie Grossiste Boréal",
+   "purchaseFormat": 2,
+   "unit": "kg",
+   "purchasePrice": 19,
+   "unitPrice": 9.5,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": [
+    "soy"
+   ]
+  },
+  {
+   "id": "ing_epices",
+   "name": "Épices et assaisonnements maison",
+   "provider": "Épicerie Grossiste Boréal",
+   "purchaseFormat": 1,
+   "unit": "kg",
+   "purchasePrice": 20,
+   "unitPrice": 20,
+   "isRecipe": false,
+   "lossPercentage": 0,
+   "lastUpdated": "2026-11-20",
+   "allergens": []
+  }
+ ],
+ "basePackaging": [
+  {
+   "id": "pkg_barq_s",
+   "name": "Barquette operable 340 ml",
+   "provider": "Emballages Boréal",
+   "purchaseFormat": 200,
+   "unit": "unité",
+   "purchasePrice": 84,
+   "unitPrice": 0.42,
+   "lossPercentage": 1,
+   "lastUpdated": "2026-11-20"
+  },
+  {
+   "id": "pkg_barq_f",
+   "name": "Barquette operable 900 ml (familiale)",
+   "provider": "Emballages Boréal",
+   "purchaseFormat": 150,
+   "unit": "unité",
+   "purchasePrice": 102,
+   "unitPrice": 0.68,
+   "lossPercentage": 1,
+   "lastUpdated": "2026-11-20"
+  },
+  {
+   "id": "pkg_pellicule",
+   "name": "Pellicule scellante operable",
+   "provider": "Emballages Boréal",
+   "purchaseFormat": 500,
+   "unit": "unité",
+   "purchasePrice": 40,
+   "unitPrice": 0.08,
+   "lossPercentage": 2,
+   "lastUpdated": "2026-11-20"
+  },
+  {
+   "id": "pkg_boite",
+   "name": "Manchon de carton imprimé",
+   "provider": "Cartons Pro-Nord",
+   "purchaseFormat": 100,
+   "unit": "unité",
+   "purchasePrice": 55,
+   "unitPrice": 0.55,
+   "lossPercentage": 1,
+   "lastUpdated": "2026-11-20"
+  },
+  {
+   "id": "pkg_etiquette",
+   "name": "Étiquette nutritionnelle / code-barres",
+   "provider": "Impression Boréale",
+   "purchaseFormat": 1000,
+   "unit": "unité",
+   "purchasePrice": 70,
+   "unitPrice": 0.07,
+   "lossPercentage": 2,
+   "lastUpdated": "2026-11-20"
+  },
+  {
+   "id": "pkg_sac_soupe",
+   "name": "Sac sous-vide pour soupe 750 ml",
+   "provider": "Emballages Boréal",
+   "purchaseFormat": 300,
+   "unit": "unité",
+   "purchasePrice": 90,
+   "unitPrice": 0.3,
+   "lossPercentage": 1,
+   "lastUpdated": "2026-11-20"
+  },
+  {
+   "id": "pkg_pot_verre",
+   "name": "Pot de verre 500 ml",
+   "provider": "Emballages Boréal",
+   "purchaseFormat": 24,
+   "unit": "unité",
+   "purchasePrice": 26.4,
+   "unitPrice": 1.1,
+   "lossPercentage": 2,
+   "lastUpdated": "2026-11-20"
+  },
+  {
+   "id": "pkg_couvercle",
+   "name": "Couvercle twist-off 70 mm",
+   "provider": "Emballages Boréal",
+   "purchaseFormat": 100,
+   "unit": "unité",
+   "purchasePrice": 14,
+   "unitPrice": 0.14,
+   "lossPercentage": 1,
+   "lastUpdated": "2026-11-20"
+  }
+ ],
+ "products": [
+  {
+   "id": "sub_bouillon",
+   "platName": "Bouillon de poulet maison",
+   "category": "Sous-recette",
+   "activityId": "act_soupes",
+   "isIngredient": true,
+   "onMenu": false,
+   "salesMix": 0,
+   "prixVente": 0,
+   "nbPortions": 40,
+   "portionSize": 1,
+   "portionUnit": "L",
+   "formats": [
+    {
+     "id": "fmt_sub_bouillon",
+     "sku": "SR-BOUILLON-40L",
+     "prixVente": 0,
+     "nbPortions": 40,
+     "portionSize": 1,
+     "portionUnit": "L",
+     "salesMix": 0,
+     "onMenu": false,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [],
+     "channelPrices": [
+      {
+       "id": "cp_bouillon",
+       "channelId": "channel_direct",
+       "netPrice": 0,
+       "volume": 0
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_bo_1",
+       "id": "ing_poulet",
+       "quantity": 2000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_bo_2",
+       "id": "ing_carotte",
+       "quantity": 750,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_bo_3",
+       "id": "ing_oignon",
+       "quantity": 750,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_bo_4",
+       "id": "ing_epices",
+       "quantity": 50,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [],
+     "productionSteps": [
+      {
+       "stepId": "s_bo_1",
+       "stepName": "Mijotage du bouillon",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 7200
+      },
+      {
+       "stepId": "s_bo_2",
+       "stepName": "Refroidissement rapide",
+       "personnel": [],
+       "startTime": 7200,
+       "duration": 3600
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sub_puree_vrac",
+   "platName": "Purée de base en vrac (usage interne)",
+   "category": "Sous-recette",
+   "activityId": "act_plats",
+   "isIngredient": true,
+   "onMenu": false,
+   "salesMix": 0,
+   "prixVente": 0,
+   "nbPortions": 5,
+   "portionSize": 1000,
+   "portionUnit": "g",
+   "formats": [
+    {
+     "id": "fmt_sub_puree_vrac",
+     "sku": "SR-PUREE-VRAC-5KG",
+     "prixVente": 0,
+     "nbPortions": 5,
+     "portionSize": 1000,
+     "portionUnit": "g",
+     "salesMix": 0,
+     "onMenu": false,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "milk"
+     ],
+     "channelPrices": [
+      {
+       "id": "cp_puree_vrac",
+       "channelId": "channel_direct",
+       "netPrice": 0,
+       "volume": 0
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_puv_1",
+       "id": "ing_pdt_flocons",
+       "quantity": 4000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_puv_2",
+       "id": "ing_beurre",
+       "quantity": 300,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_puv_3",
+       "id": "ing_creme",
+       "quantity": 400,
+       "recipeUnit": "ml",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_puv_4",
+       "id": "ing_epices",
+       "quantity": 60,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [],
+     "productionSteps": [
+      {
+       "stepId": "s_puv_1",
+       "stepName": "Cuisson et pilage (lot de 5 kg)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 400
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sub_puree",
+   "platName": "Purée de pommes de terre maison",
+   "category": "Accompagnement",
+   "activityId": "act_plats",
+   "isIngredient": true,
+   "onMenu": true,
+   "salesMix": 4.33,
+   "prixVente": 4.94,
+   "nbPortions": 20,
+   "portionSize": 250,
+   "portionUnit": "g",
+   "formats": [
+    {
+     "id": "fmt_sub_puree",
+     "sku": "ACC-PUREE-250G",
+     "prixVente": 4.94,
+     "nbPortions": 20,
+     "portionSize": 250,
+     "portionUnit": "g",
+     "salesMix": 4.33,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "milk"
+     ],
+     "pds": 5.79,
+     "channelPrices": [
+      {
+       "id": "cp_1_d",
+       "channelId": "channel_direct",
+       "netPrice": 5.21,
+       "volume": 66
+      },
+      {
+       "id": "cp_1_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 4.05,
+       "volume": 114
+      },
+      {
+       "id": "cp_1_g",
+       "channelId": "channel_gs",
+       "netPrice": 3.52,
+       "volume": 295
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_pu_1",
+       "id": "ing_pdt_flocons",
+       "quantity": 4000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_pu_2",
+       "id": "ing_beurre",
+       "quantity": 300,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_pu_3",
+       "id": "ing_creme",
+       "quantity": 400,
+       "recipeUnit": "ml",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_pu_4",
+       "id": "ing_epices",
+       "quantity": 60,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_pu_1",
+       "id": "pkg_barq_s",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_pu_2",
+       "id": "pkg_pellicule",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_pu_3",
+       "id": "pkg_etiquette",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_pu_1",
+       "stepName": "Cuisson et pilage (lot de 20 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 400
+      },
+      {
+       "stepId": "s_pu_2",
+       "stepName": "Portionnement et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 400,
+       "duration": 315
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_pate",
+   "platName": "Pâté chinois traditionnel",
+   "category": "Mets principal",
+   "activityId": "act_plats",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 9.08,
+   "prixVente": 8.09,
+   "nbPortions": 20,
+   "portionSize": 340,
+   "portionUnit": "g",
+   "formats": [
+    {
+     "id": "fmt_pate_s",
+     "sku": "PP-PATECHINOIS-340G",
+     "prixVente": 8.09,
+     "nbPortions": 20,
+     "portionSize": 340,
+     "portionUnit": "g",
+     "salesMix": 9.08,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "milk"
+     ],
+     "pds": 9.49,
+     "channelPrices": [
+      {
+       "id": "cp_2_d",
+       "channelId": "channel_direct",
+       "netPrice": 8.54,
+       "volume": 128
+      },
+      {
+       "id": "cp_2_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 6.64,
+       "volume": 228
+      },
+      {
+       "id": "cp_2_g",
+       "channelId": "channel_gs",
+       "netPrice": 5.76,
+       "volume": 640
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_pa_1",
+       "id": "ing_boeuf",
+       "quantity": 3000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_pa_2",
+       "id": "ing_mais",
+       "quantity": 1800,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_pa_3",
+       "id": "sub_puree_vrac",
+       "quantity": 1800,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_pa_4",
+       "id": "ing_oignon",
+       "quantity": 200,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_pa_5",
+       "id": "ing_epices",
+       "quantity": 40,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_pa_1",
+       "id": "pkg_barq_s",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_pa_2",
+       "id": "pkg_pellicule",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_pa_3",
+       "id": "pkg_etiquette",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_pa_1",
+       "stepName": "Cuisson du bœuf et assemblage (lot de 20 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 400
+      },
+      {
+       "stepId": "s_pa_2",
+       "stepName": "Portionnement et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 400,
+       "duration": 470
+      }
+     ]
+    },
+    {
+     "id": "fmt_pate_f",
+     "sku": "PP-PATECHINOIS-900G",
+     "prixVente": 19.79,
+     "nbPortions": 10,
+     "portionSize": 900,
+     "portionUnit": "g",
+     "salesMix": 4.04,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "milk"
+     ],
+     "pds": 22.99,
+     "channelPrices": [
+      {
+       "id": "cp_3_d",
+       "channelId": "channel_direct",
+       "netPrice": 20.69,
+       "volume": 43
+      },
+      {
+       "id": "cp_3_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 16.09,
+       "volume": 100
+      },
+      {
+       "id": "cp_3_g",
+       "channelId": "channel_gs",
+       "netPrice": 13.96,
+       "volume": 300
+      }
+     ],
+     "aging": {
+      "enabled": true,
+      "interestRate": 7,
+      "months": 1.5
+     },
+     "ingredients": [
+      {
+       "rowId": "r_paf_1",
+       "id": "ing_boeuf",
+       "quantity": 4000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_paf_2",
+       "id": "ing_mais",
+       "quantity": 2400,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_paf_3",
+       "id": "sub_puree_vrac",
+       "quantity": 2400,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_paf_4",
+       "id": "ing_oignon",
+       "quantity": 250,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_paf_5",
+       "id": "ing_epices",
+       "quantity": 50,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_paf_1",
+       "id": "pkg_barq_f",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_paf_2",
+       "id": "pkg_pellicule",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_paf_3",
+       "id": "pkg_boite",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_paf_4",
+       "id": "pkg_etiquette",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_paf_1",
+       "stepName": "Cuisson du bœuf et assemblage (lot familial de 10 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 470
+      },
+      {
+       "stepId": "s_paf_2",
+       "stepName": "Portionnement et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 470,
+       "duration": 570
+      },
+      {
+       "stepId": "s_paf_3",
+       "stepName": "Contrôle qualité",
+       "personnel": [
+        {
+         "postId": "Contrôleur qualité"
+        }
+       ],
+       "startTime": 1040,
+       "duration": 240
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_tao",
+   "platName": "Poulet général Tao, riz et légumes",
+   "category": "Mets principal",
+   "activityId": "act_plats",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 9.06,
+   "prixVente": 8.54,
+   "nbPortions": 20,
+   "portionSize": 400,
+   "portionUnit": "g",
+   "formats": [
+    {
+     "id": "fmt_tao",
+     "sku": "PP-GENERALTAO-400G",
+     "prixVente": 8.54,
+     "nbPortions": 20,
+     "portionSize": 400,
+     "portionUnit": "g",
+     "salesMix": 9.06,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "soy"
+     ],
+     "pds": 9.99,
+     "channelPrices": [
+      {
+       "id": "cp_4_d",
+       "channelId": "channel_direct",
+       "netPrice": 8.99,
+       "volume": 105
+      },
+      {
+       "id": "cp_4_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 6.99,
+       "volume": 214
+      },
+      {
+       "id": "cp_4_g",
+       "channelId": "channel_gs",
+       "netPrice": 6.07,
+       "volume": 675
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_tao_1",
+       "id": "ing_poulet",
+       "quantity": 3600,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_tao_2",
+       "id": "ing_riz",
+       "quantity": 2400,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_tao_3",
+       "id": "ing_brocoli",
+       "quantity": 1200,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_tao_4",
+       "id": "ing_epices_asiat",
+       "quantity": 500,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_tao_5",
+       "id": "ing_epices",
+       "quantity": 40,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_tao_1",
+       "id": "pkg_barq_s",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_tao_2",
+       "id": "pkg_pellicule",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_tao_3",
+       "id": "pkg_etiquette",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_tao_1",
+       "stepName": "Cuisson du poulet et de la sauce (lot de 20 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 670
+      },
+      {
+       "stepId": "s_tao_2",
+       "stepName": "Cuisson du riz et des légumes",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 670,
+       "duration": 540
+      },
+      {
+       "stepId": "s_tao_3",
+       "stepName": "Portionnement et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 1210,
+       "duration": 630
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_saumon",
+   "platName": "Saumon teriyaki, riz et légumes",
+   "category": "Mets principal",
+   "activityId": "act_plats",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 6.47,
+   "prixVente": 12.59,
+   "nbPortions": 15,
+   "portionSize": 380,
+   "portionUnit": "g",
+   "formats": [
+    {
+     "id": "fmt_saumon",
+     "sku": "saumon-teriyaki-riz-et-legumes-380-g",
+     "prixVente": 12.59,
+     "nbPortions": 15,
+     "portionSize": 380,
+     "portionUnit": "g",
+     "salesMix": 6.47,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "fish",
+      "soy"
+     ],
+     "pds": 14.49,
+     "channelPrices": [
+      {
+       "id": "cp_5_d",
+       "channelId": "channel_direct",
+       "netPrice": 13.04,
+       "volume": 100
+      },
+      {
+       "id": "cp_5_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 10.14,
+       "volume": 180
+      },
+      {
+       "id": "cp_5_g",
+       "channelId": "channel_gs",
+       "netPrice": 8.8,
+       "volume": 430
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_sa_1",
+       "id": "ing_saumon",
+       "quantity": 2700,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_sa_2",
+       "id": "ing_riz",
+       "quantity": 1650,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_sa_3",
+       "id": "ing_brocoli",
+       "quantity": 750,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_sa_4",
+       "id": "ing_pois",
+       "quantity": 600,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_sa_5",
+       "id": "ing_epices_asiat",
+       "quantity": 225,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_sa_1",
+       "id": "pkg_barq_s",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_sa_2",
+       "id": "pkg_pellicule",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_sa_3",
+       "id": "pkg_etiquette",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_sa_1",
+       "stepName": "Cuisson du saumon (lot de 15 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 465
+      },
+      {
+       "stepId": "s_sa_2",
+       "stepName": "Cuisson du riz et des légumes",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 465,
+       "duration": 465
+      },
+      {
+       "stepId": "s_sa_3",
+       "stepName": "Portionnement et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 930,
+       "duration": 510
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_thai",
+   "platName": "Sauté de poulet thaï, riz et légumes",
+   "category": "Mets principal",
+   "activityId": "act_plats",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 7.11,
+   "prixVente": 8.36,
+   "nbPortions": 20,
+   "portionSize": 350,
+   "portionUnit": "g",
+   "formats": [
+    {
+     "id": "fmt_thai_s",
+     "sku": "PP-POULETTHAI-350G",
+     "prixVente": 8.36,
+     "nbPortions": 20,
+     "portionSize": 350,
+     "portionUnit": "g",
+     "salesMix": 7.11,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "soy"
+     ],
+     "pds": 9.79,
+     "channelPrices": [
+      {
+       "id": "cp_6_d",
+       "channelId": "channel_direct",
+       "netPrice": 8.81,
+       "volume": 95
+      },
+      {
+       "id": "cp_6_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 6.85,
+       "volume": 185
+      },
+      {
+       "id": "cp_6_g",
+       "channelId": "channel_gs",
+       "netPrice": 5.94,
+       "volume": 500
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_th_1",
+       "id": "ing_poulet",
+       "quantity": 3400,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_th_2",
+       "id": "ing_riz",
+       "quantity": 2200,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_th_3",
+       "id": "ing_brocoli",
+       "quantity": 1000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_th_4",
+       "id": "ing_epices_asiat",
+       "quantity": 560,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_th_1",
+       "id": "pkg_barq_s",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_th_2",
+       "id": "pkg_pellicule",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_th_3",
+       "id": "pkg_etiquette",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_th_1",
+       "stepName": "Cuisson du poulet et des légumes (lot de 20 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 670
+      },
+      {
+       "stepId": "s_th_2",
+       "stepName": "Portionnement et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 670,
+       "duration": 630
+      }
+     ]
+    },
+    {
+     "id": "fmt_thai_f",
+     "sku": "PP-POULETTHAI-900G",
+     "prixVente": 20.69,
+     "nbPortions": 10,
+     "portionSize": 900,
+     "portionUnit": "g",
+     "salesMix": 3.58,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "soy"
+     ],
+     "pds": 23.99,
+     "channelPrices": [
+      {
+       "id": "cp_7_d",
+       "channelId": "channel_direct",
+       "netPrice": 21.59,
+       "volume": 38
+      },
+      {
+       "id": "cp_7_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 16.79,
+       "volume": 85
+      },
+      {
+       "id": "cp_7_g",
+       "channelId": "channel_gs",
+       "netPrice": 14.57,
+       "volume": 270
+      }
+     ],
+     "subcontracting": {
+      "enabled": true,
+      "items": [
+       {
+        "id": "sub_thai_item_1",
+        "name": "Cuisine Sous-Vide Boréal",
+        "operation": "Cuisson sous vide du poulet et des légumes (lot familial de 10 portions)",
+        "cost": 26
+       }
+      ]
+     },
+     "aging": {
+      "enabled": true,
+      "interestRate": 8,
+      "months": 1
+     },
+     "ingredients": [
+      {
+       "rowId": "r_thf_1",
+       "id": "ing_poulet",
+       "quantity": 4400,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_thf_2",
+       "id": "ing_riz",
+       "quantity": 2800,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_thf_3",
+       "id": "ing_brocoli",
+       "quantity": 1300,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_thf_4",
+       "id": "ing_epices_asiat",
+       "quantity": 650,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_thf_1",
+       "id": "pkg_barq_f",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_thf_2",
+       "id": "pkg_pellicule",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_thf_3",
+       "id": "pkg_boite",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_thf_4",
+       "id": "pkg_etiquette",
+       "quantity": 10,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_thf_1",
+       "stepName": "Portionnement familial de 10 portions (cuisson reçue du sous-traitant)",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 0,
+       "duration": 715
+      },
+      {
+       "stepId": "s_thf_2",
+       "stepName": "Contrôle qualité",
+       "personnel": [
+        {
+         "postId": "Contrôleur qualité"
+        }
+       ],
+       "startTime": 715,
+       "duration": 240
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_chili",
+   "platName": "Chili con carne mijoté",
+   "category": "Mets principal",
+   "activityId": "act_plats",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 10.65,
+   "prixVente": 7.64,
+   "nbPortions": 20,
+   "portionSize": 400,
+   "portionUnit": "g",
+   "formats": [
+    {
+     "id": "fmt_chili",
+     "sku": "PP-CHILICONCARNE-400G",
+     "prixVente": 7.64,
+     "nbPortions": 20,
+     "portionSize": 400,
+     "portionUnit": "g",
+     "salesMix": 10.65,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [],
+     "pds": 8.99,
+     "channelPrices": [
+      {
+       "id": "cp_8_d",
+       "channelId": "channel_direct",
+       "netPrice": 8.09,
+       "volume": 114
+      },
+      {
+       "id": "cp_8_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 6.29,
+       "volume": 270
+      },
+      {
+       "id": "cp_8_g",
+       "channelId": "channel_gs",
+       "netPrice": 5.46,
+       "volume": 785
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_ch_1",
+       "id": "ing_boeuf",
+       "quantity": 3200,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_ch_2",
+       "id": "ing_haricots",
+       "quantity": 2400,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_ch_3",
+       "id": "ing_tomates",
+       "quantity": 3000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_ch_4",
+       "id": "ing_oignon",
+       "quantity": 600,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_ch_5",
+       "id": "ing_epices",
+       "quantity": 60,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_ch_1",
+       "id": "pkg_barq_s",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_ch_2",
+       "id": "pkg_pellicule",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_ch_3",
+       "id": "pkg_etiquette",
+       "quantity": 20,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_ch_1",
+       "stepName": "Mijotage du chili (lot de 20 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 670
+      },
+      {
+       "stepId": "s_ch_2",
+       "stepName": "Portionnement et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 670,
+       "duration": 630
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_soupe",
+   "platName": "Soupe-repas aux légumes et poulet",
+   "category": "Soupe",
+   "activityId": "act_soupes",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 21.65,
+   "prixVente": 6.74,
+   "nbPortions": 46.65,
+   "portionSize": 0.75,
+   "portionUnit": "L",
+   "formats": [
+    {
+     "id": "fmt_soupe",
+     "sku": "SO-LEGUMESPOULET-750ML",
+     "prixVente": 6.74,
+     "nbPortions": 46.65,
+     "portionSize": 0.75,
+     "portionUnit": "L",
+     "salesMix": 21.65,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [],
+     "pds": 8.99,
+     "channelPrices": [
+      {
+       "id": "cp_9_d",
+       "channelId": "channel_direct",
+       "netPrice": 8.09,
+       "volume": 285
+      },
+      {
+       "id": "cp_9_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 6.29,
+       "volume": 610
+      },
+      {
+       "id": "cp_9_g",
+       "channelId": "channel_gs",
+       "netPrice": 5.46,
+       "volume": 1480
+      }
+     ],
+     "yieldGrid": {
+      "enabled": true,
+      "baseQuantity": 40,
+      "baseUnit": "L",
+      "stages": [
+       {
+        "id": "y_so_1",
+        "name": "Réduction à la cuisson",
+        "percentEffect": -15
+       },
+       {
+        "id": "y_so_2",
+        "name": "Incorporation des légumes et du poulet",
+        "percentEffect": 5
+       }
+      ],
+      "rejectRate": 2
+     },
+     "ingredients": [
+      {
+       "rowId": "r_so_1",
+       "id": "sub_bouillon",
+       "quantity": 20,
+       "recipeUnit": "L",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_so_2",
+       "id": "ing_poulet",
+       "quantity": 3000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_so_3",
+       "id": "ing_carotte",
+       "quantity": 2500,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_so_4",
+       "id": "ing_pois",
+       "quantity": 1500,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_so_5",
+       "id": "ing_oignon",
+       "quantity": 1000,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_so_6",
+       "id": "ing_epices",
+       "quantity": 60,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_so_1",
+       "id": "pkg_sac_soupe",
+       "quantity": 47,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_so_2",
+       "id": "pkg_etiquette",
+       "quantity": 47,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_so_1",
+       "stepName": "Mijotage du lot (40 L)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 5400
+      },
+      {
+       "stepId": "s_so_2",
+       "stepName": "Mise en sacs et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 5400,
+       "duration": 2700
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_potage",
+   "platName": "Potage à la courge musquée",
+   "category": "Soupe",
+   "activityId": "act_soupes",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 7.81,
+   "prixVente": 6.74,
+   "nbPortions": 15,
+   "portionSize": 0.75,
+   "portionUnit": "L",
+   "formats": [
+    {
+     "id": "fmt_potage",
+     "sku": "SO-COURGEMUSQUEE-750ML",
+     "prixVente": 6.74,
+     "nbPortions": 15,
+     "portionSize": 0.75,
+     "portionUnit": "L",
+     "salesMix": 7.81,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [
+      "milk"
+     ],
+     "pds": 11.49,
+     "channelPrices": [
+      {
+       "id": "cp_10_d",
+       "channelId": "channel_direct",
+       "netPrice": 10.34,
+       "volume": 114
+      },
+      {
+       "id": "cp_10_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 8.04,
+       "volume": 228
+      },
+      {
+       "id": "cp_10_g",
+       "channelId": "channel_gs",
+       "netPrice": 6.98,
+       "volume": 515
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_po_1",
+       "id": "ing_courge",
+       "quantity": 5250,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_po_2",
+       "id": "ing_creme",
+       "quantity": 2250,
+       "recipeUnit": "ml",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_po_3",
+       "id": "sub_bouillon",
+       "quantity": 3750,
+       "recipeUnit": "ml",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_po_4",
+       "id": "ing_beurre",
+       "quantity": 300,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_po_5",
+       "id": "ing_farine",
+       "quantity": 225,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_po_6",
+       "id": "ing_oignon",
+       "quantity": 450,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_po_7",
+       "id": "ing_epices",
+       "quantity": 45,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_po_1",
+       "id": "pkg_sac_soupe",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_po_2",
+       "id": "pkg_etiquette",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_po_1",
+       "stepName": "Mijotage et velouté (lot de 15 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 1630
+      },
+      {
+       "stepId": "s_po_2",
+       "stepName": "Mise en sac et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 1630,
+       "duration": 510
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_sauce_spag",
+   "platName": "Sauce à spaghetti maison",
+   "category": "Sauce",
+   "activityId": "act_sauces",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 2.55,
+   "prixVente": 7.19,
+   "nbPortions": 15,
+   "portionSize": 500,
+   "portionUnit": "ml",
+   "formats": [
+    {
+     "id": "fmt_sauce_spag",
+     "sku": "SA-SPAGHETTI-500ML",
+     "prixVente": 7.19,
+     "nbPortions": 15,
+     "portionSize": 500,
+     "portionUnit": "ml",
+     "salesMix": 2.55,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": false,
+     "purchaseCost": 0,
+     "manualAllergens": [],
+     "pds": 9.99,
+     "channelPrices": [
+      {
+       "id": "cp_11_d",
+       "channelId": "channel_direct",
+       "netPrice": 8.99,
+       "volume": 40
+      },
+      {
+       "id": "cp_11_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 6.99,
+       "volume": 80
+      },
+      {
+       "id": "cp_11_g",
+       "channelId": "channel_gs",
+       "netPrice": 6.07,
+       "volume": 160
+      }
+     ],
+     "ingredients": [
+      {
+       "rowId": "r_ss_1",
+       "id": "ing_tomates",
+       "quantity": 5250,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_ss_2",
+       "id": "ing_boeuf",
+       "quantity": 1500,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_ss_3",
+       "id": "ing_oignon",
+       "quantity": 600,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      },
+      {
+       "rowId": "r_ss_4",
+       "id": "ing_epices",
+       "quantity": 75,
+       "recipeUnit": "g",
+       "yieldPercentage": 100
+      }
+     ],
+     "packagingItems": [
+      {
+       "rowId": "p_ss_1",
+       "id": "pkg_pot_verre",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_ss_2",
+       "id": "pkg_couvercle",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      },
+      {
+       "rowId": "p_ss_3",
+       "id": "pkg_etiquette",
+       "quantity": 15,
+       "recipeUnit": "unité"
+      }
+     ],
+     "productionSteps": [
+      {
+       "stepId": "s_ss_1",
+       "stepName": "Mijotage de la sauce (lot de 15 portions)",
+       "personnel": [
+        {
+         "postId": "Cuisinier de production"
+        }
+       ],
+       "startTime": 0,
+       "duration": 930
+      },
+      {
+       "stepId": "s_ss_2",
+       "stepName": "Mise en pot et scellage",
+       "personnel": [
+        {
+         "postId": "Opérateur d'emballage"
+        }
+       ],
+       "startTime": 930,
+       "duration": 510
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "prod_sauce_terroir",
+   "platName": "Sauce artisanale du Terroir",
+   "category": "Sauce",
+   "activityId": "act_sauces",
+   "isIngredient": false,
+   "onMenu": true,
+   "salesMix": 13.67,
+   "prixVente": 7.19,
+   "nbPortions": 1,
+   "portionSize": 500,
+   "portionUnit": "ml",
+   "formats": [
+    {
+     "id": "fmt_sauce_terroir",
+     "sku": "SA-TERROIR-REVENTE-500ML",
+     "prixVente": 7.19,
+     "nbPortions": 1,
+     "portionSize": 500,
+     "portionUnit": "ml",
+     "salesMix": 13.67,
+     "onMenu": true,
+     "indirectCosts": {
+      "portionsSold": 0
+     },
+     "isResaleProduct": true,
+     "purchaseCost": 4.2,
+     "manualAllergens": [],
+     "pds": 10.49,
+     "channelPrices": [
+      {
+       "id": "cp_12_d",
+       "channelId": "channel_direct",
+       "netPrice": 9.44,
+       "volume": 200
+      },
+      {
+       "id": "cp_12_e",
+       "channelId": "channel_epiceries",
+       "netPrice": 7.34,
+       "volume": 400
+      },
+      {
+       "id": "cp_12_g",
+       "channelId": "channel_gs",
+       "netPrice": 6.37,
+       "volume": 900
+      }
+     ],
+     "ingredients": [],
+     "packagingItems": [],
+     "productionSteps": []
+    }
+   ]
+  }
+ ],
+ "laborDatabase": [
+  {
+   "id": "post_resp",
+   "postName": "Responsable de production",
+   "employees": [
+    {
+     "id": "emp_resp",
+     "employeeName": "Mireille",
+     "hourlyRate": 32,
+     "socialCharges": 16,
+     "vacationPercentage": 6,
+     "productiveTimePercentage": 85,
+     "workedHours": 20
+    }
+   ]
+  },
+  {
+   "id": "post_cuisinier",
+   "postName": "Cuisinier de production",
+   "employees": [
+    {
+     "id": "emp_cuisinier_1",
+     "employeeName": "Hugo",
+     "hourlyRate": 22,
+     "socialCharges": 16,
+     "vacationPercentage": 4,
+     "productiveTimePercentage": 92,
+     "workedHours": 96
+    },
+    {
+     "id": "emp_cuisinier_2",
+     "employeeName": "Félix",
+     "hourlyRate": 22,
+     "socialCharges": 16,
+     "vacationPercentage": 4,
+     "productiveTimePercentage": 90,
+     "workedHours": 96
+    },
+    {
+     "id": "emp_cuisinier_3",
+     "employeeName": "Sarah",
+     "hourlyRate": 21,
+     "socialCharges": 16,
+     "vacationPercentage": 4,
+     "productiveTimePercentage": 92,
+     "workedHours": 86
+    }
+   ]
+  },
+  {
+   "id": "post_emballage",
+   "postName": "Opérateur d'emballage",
+   "employees": [
+    {
+     "id": "emp_emballage_1",
+     "employeeName": "Chantal",
+     "hourlyRate": 19,
+     "socialCharges": 16,
+     "vacationPercentage": 4,
+     "productiveTimePercentage": 95,
+     "workedHours": 42
+    },
+    {
+     "id": "emp_emballage_2",
+     "employeeName": "Nadia",
+     "hourlyRate": 19,
+     "socialCharges": 16,
+     "vacationPercentage": 4,
+     "productiveTimePercentage": 94,
+     "workedHours": 42
+    },
+    {
+     "id": "emp_emballage_3",
+     "employeeName": "Patrick",
+     "hourlyRate": 18,
+     "socialCharges": 16,
+     "vacationPercentage": 4,
+     "productiveTimePercentage": 93,
+     "workedHours": 40
+    }
+   ]
+  },
+  {
+   "id": "post_qualite",
+   "postName": "Contrôleur qualité",
+   "employees": [
+    {
+     "id": "emp_qualite",
+     "employeeName": "David",
+     "hourlyRate": 24,
+     "socialCharges": 16,
+     "vacationPercentage": 4,
+     "productiveTimePercentage": 90,
+     "workedHours": 7
+    }
+   ]
+  }
+ ],
+ "productionActivities": [
+  {
+   "id": "act_plats",
+   "name": "Mets principaux surgelés",
+   "indirectCostDriver": "directCost"
+  },
+  {
+   "id": "act_soupes",
+   "name": "Soupes et potages",
+   "indirectCostDriver": "directCost"
+  },
+  {
+   "id": "act_sauces",
+   "name": "Sauces et accompagnements",
+   "indirectCostDriver": "directCost"
+  }
+ ],
+ "salesChannels": [
+  {
+   "id": "channel_direct",
+   "name": "Vente directe (boutique en ligne)",
+   "links": []
+  },
+  {
+   "id": "channel_epiceries",
+   "name": "Épiceries indépendantes",
+   "links": [
+    {
+     "id": "link_epi_1",
+     "name": "Épicier indépendant",
+     "type": "margin",
+     "percent": 30
+    }
+   ]
+  },
+  {
+   "id": "channel_gs",
+   "name": "Grandes surfaces",
+   "links": [
+    {
+     "id": "link_gs_1",
+     "name": "Centre de distribution",
+     "type": "markup",
+     "percent": 12
+    },
+    {
+     "id": "link_gs_2",
+     "name": "Détaillant national",
+     "type": "margin",
+     "percent": 32
+    }
+   ]
+  }
+ ],
+ "activeUnits": [
+  "g",
+  "kg",
+  "ml",
+  "L",
+  "unité"
+ ],
+ "expenseLines": [
+  {
+   "id": "exp_loyer_prod",
+   "label": "Loyer (espace de production)",
+   "category": "Frais généraux de production",
+   "amount": 9000,
+   "repartitionKey": "manual",
+   "activityAllocations": {
+    "act_plats": 5000,
+    "act_soupes": 2500,
+    "act_sauces": 1500
+   },
+   "channelAllocations": {}
+  },
+  {
+   "id": "exp_elec",
+   "label": "Électricité et chauffage",
+   "category": "Frais généraux de production",
+   "amount": 3000,
+   "repartitionKey": "directCosts",
+   "activityAllocations": {},
+   "channelAllocations": {}
+  },
+  {
+   "id": "exp_marketing",
+   "label": "Marketing et promotion",
+   "category": "Frais de vente / mise en marché",
+   "amount": 4000,
+   "repartitionKey": "manual",
+   "activityAllocations": {},
+   "channelAllocations": {
+    "channel_direct": 1000,
+    "channel_epiceries": 1500,
+    "channel_gs": 1500
+   }
+  },
+  {
+   "id": "exp_commissions",
+   "label": "Commissions et frais de distribution",
+   "category": "Frais de vente / mise en marché",
+   "amount": 3500,
+   "repartitionKey": "custom:rk_ventes_canal",
+   "activityAllocations": {},
+   "channelAllocations": {}
+  },
+  {
+   "id": "exp_salaire_admin",
+   "label": "Salaire de direction",
+   "category": "Frais d'administration",
+   "amount": 3000,
+   "repartitionKey": "activity:general",
+   "activityAllocations": {},
+   "channelAllocations": {}
+  },
+  {
+   "id": "exp_assurances",
+   "label": "Assurances",
+   "category": "Frais d'administration",
+   "amount": 2500,
+   "repartitionKey": "activity:general",
+   "activityAllocations": {},
+   "channelAllocations": {}
+  },
+  {
+   "id": "exp_comptabilite",
+   "label": "Comptabilité et services professionnels",
+   "category": "Frais d'administration",
+   "amount": 2000,
+   "repartitionKey": "activity:general",
+   "activityAllocations": {},
+   "channelAllocations": {}
+  },
+  {
+   "id": "exp_bancaire",
+   "label": "Frais bancaires et intérêts",
+   "category": "Frais financiers",
+   "amount": 1000,
+   "repartitionKey": "activity:general",
+   "activityAllocations": {},
+   "channelAllocations": {}
+  }
+ ],
+ "revenueLines": [
+  {
+   "id": "rev_plats",
+   "label": "Ventes — Mets principaux surgelés",
+   "repartition": "act_plats",
+   "amounts": {
+    "act_plats": 45000
+   }
+  },
+  {
+   "id": "rev_soupes",
+   "label": "Ventes — Soupes et potages",
+   "repartition": "act_soupes",
+   "amounts": {
+    "act_soupes": 20000
+   }
+  },
+  {
+   "id": "rev_sauces",
+   "label": "Ventes — Sauces et accompagnements",
+   "repartition": "act_sauces",
+   "amounts": {
+    "act_sauces": 12500
+   }
+  },
+  {
+   "id": "rev_divers",
+   "label": "Revenus divers (non rattachés à une activité)",
+   "repartition": "general",
+   "amounts": {
+    "general": 2500
+   }
+  }
+ ],
+ "directCostLines": [
+  {
+   "id": "dc_matiere",
+   "label": "Achats de matières premières",
+   "category": "Matière première",
+   "amount": 31800
+  },
+  {
+   "id": "dc_mo_prod",
+   "label": "Main-d'œuvre de production (plancher)",
+   "category": "Main-d'œuvre directe",
+   "amount": 9300
+  },
+  {
+   "id": "dc_emballage",
+   "label": "Achats d'emballage",
+   "category": "Emballage",
+   "amount": 5900
+  },
+  {
+   "id": "dc_soustraitance",
+   "label": "Sous-traitance — surgélation",
+   "category": "Sous-traitance",
+   "amount": 1000
+  }
+ ],
+ "repartitionKeys": [
+  {
+   "id": "rk_ventes_canal",
+   "name": "Ventes par canal (hors Général)",
+   "activityShares": {},
+   "channelShares": {
+    "channel_direct": 16.05,
+    "channel_epiceries": 25.55,
+    "channel_gs": 58.4
+   }
+  }
+ ],
+ "uiSettings": {
+  "infoItemsPerPage": 10,
+  "ingredientsItemsPerPage": 10,
+  "packagingItemsPerPage": 10,
+  "summaryItemsPerPage": 10,
+  "costShocks": []
+ }
+}

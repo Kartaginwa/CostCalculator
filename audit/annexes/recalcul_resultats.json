@@ -1,0 +1,1575 @@
+{
+ "productivite_pct": 77.2162015998652,
+ "paie_totale": 11058.2336,
+ "paie_absorbee_heures_necessaires": 8538.747949960032,
+ "pools": {
+  "act": {
+   "general": 8500.0,
+   "act_plats": 6721.9,
+   "act_soupes": 3313.69,
+   "act_sauces": 1964.41
+  },
+  "chan": {
+   "channel_direct": 1561.75,
+   "channel_epiceries": 2394.25,
+   "channel_gs": 3544.0
+  },
+  "general_total": 45642.099924487484,
+  "unalloc": 0.0,
+  "total_exp": 28000.0
+ },
+ "comparaison": [
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "matiere",
+   "app": 0.412221444568869,
+   "recalcul": 0.412221444568869,
+   "ecart": -1.9036954087346025e-17,
+   "ecart_pct": -4.618137735957975e-15
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "emb",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "mo",
+   "app": 1.6944369562428612,
+   "recalcul": 1.6944369562428618,
+   "ecart": 5.499162816800342e-16,
+   "ecart_pct": 3.245421906397652e-14
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "direct",
+   "app": 2.10665840081173,
+   "recalcul": 2.106658400811731,
+   "ecart": 7.308793275926882e-16,
+   "ecart_pct": 3.4693775094769436e-14
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "indGen",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "indAct",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "indCan",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_bouillon",
+   "champ": "total",
+   "app": 2.10665840081173,
+   "recalcul": 2.106658400811731,
+   "ecart": 7.308793275926882e-16,
+   "ecart_pct": 3.4693775094769436e-14
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "matiere",
+   "app": 1.186,
+   "recalcul": 1.186,
+   "ecart": 0.0,
+   "ecart_pct": 0.0
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "emb",
+   "app": 0.5773036487322202,
+   "recalcul": 0.5773036487322202,
+   "ecart": -3.9208410636982067e-17,
+   "ecart_pct": -6.791644349223352e-15
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "mo",
+   "app": 0.31593752848315426,
+   "recalcul": 0.3159375284831544,
+   "ecart": 1.0758352493995188e-16,
+   "ecart_pct": 3.4052151213713193e-14
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "direct",
+   "app": 2.0792411772153745,
+   "recalcul": 2.0792411772153745,
+   "ecart": 2.837511430296981e-17,
+   "ecart_pct": 1.3646860505605804e-15
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "indGen",
+   "app": 0.38722035216544953,
+   "recalcul": 0.3872203521654496,
+   "ecart": 8.03709028347086e-17,
+   "ecart_pct": 2.075585706826901e-14
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "indAct",
+   "app": 0.5337566413504194,
+   "recalcul": 0.5337566413504194,
+   "ecart": 7.865190586272886e-17,
+   "ecart_pct": 1.4735536716458893e-14
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "indCan",
+   "app": 0.3482124956251654,
+   "recalcul": 0.3482124956251654,
+   "ecart": -3.192714329005902e-17,
+   "ecart_pct": -9.168867772174123e-15
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "total",
+   "app": 3.3484306663564087,
+   "recalcul": 3.348430666356409,
+   "ecart": 2.8547077971034826e-16,
+   "ecart_pct": 8.52550965378008e-15
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "margeNette@channel_direct",
+   "app": 1.6088727178649869,
+   "recalcul": 1.6088727178649866,
+   "ecart": -3.056509198840805e-16,
+   "ecart_pct": -1.8997830996207498e-14
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "margeNette@channel_epiceries",
+   "app": 0.601096792188347,
+   "recalcul": 0.6010967921883473,
+   "ecart": 3.0536097264833673e-16,
+   "ecart_pct": 5.0800632546489326e-14
+  },
+  {
+   "id": "fmt_sub_puree",
+   "champ": "margeNette@channel_gs",
+   "app": 0.2669315247191357,
+   "recalcul": 0.26693152471913567,
+   "ecart": -2.588749332873389e-17,
+   "ecart_pct": -9.698177596659896e-15
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "matiere",
+   "app": 2.525832315788381,
+   "recalcul": 2.5258323157883815,
+   "ecart": 5.121372379454078e-16,
+   "ecart_pct": 2.0275979317556394e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "emb",
+   "app": 0.5773036487322202,
+   "recalcul": 0.5773036487322202,
+   "ecart": -3.9208410636982067e-17,
+   "ecart_pct": -6.791644349223352e-15
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "mo",
+   "app": 0.37875767804800675,
+   "recalcul": 0.37875767804800686,
+   "ecart": 9.431791422772174e-17,
+   "ecart_pct": 2.490191478462046e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "direct",
+   "app": 3.481893642568608,
+   "recalcul": 3.4818936425686084,
+   "ecart": 5.172467415361475e-16,
+   "ecart_pct": 1.4855328583631645e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "indGen",
+   "app": 0.6484385251949054,
+   "recalcul": 0.6484385251949055,
+   "ecart": 1.5432101937971576e-16,
+   "ecart_pct": 2.3798866566931767e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "indAct",
+   "app": 0.893827939039652,
+   "recalcul": 0.8938279390396522,
+   "ecart": 1.943931870662153e-16,
+   "ecart_pct": 2.1748390106833708e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "indCan",
+   "app": 0.5733998428371154,
+   "recalcul": 0.5733998428371155,
+   "ecart": 1.0224187197765e-16,
+   "ecart_pct": 1.7830816184352123e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "total",
+   "app": 5.5975599496402815,
+   "recalcul": 5.5975599496402815,
+   "ecart": 2.6820281995972854e-16,
+   "ecart_pct": 4.7914238055987984e-15
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "margeNette@channel_direct",
+   "app": 2.5095585451328954,
+   "recalcul": 2.509558545132895,
+   "ecart": -2.768848724089701e-16,
+   "ecart_pct": -1.1033210320833838e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "margeNette@channel_epiceries",
+   "app": 0.864472714032841,
+   "recalcul": 0.8644727140328404,
+   "ecart": -6.070763705514689e-16,
+   "ecart_pct": -7.022504709482435e-14
+  },
+  {
+   "id": "fmt_pate_s",
+   "champ": "margeNette@channel_gs",
+   "app": 0.31241721497153385,
+   "recalcul": 0.3124172149715331,
+   "ecart": -7.663677070715728e-16,
+   "ecart_pct": -2.4530264990083884e-13
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "matiere",
+   "app": 6.726780912277789,
+   "recalcul": 6.726780912277789,
+   "ecart": 2.9552386259126294e-16,
+   "ecart_pct": 4.393243461398746e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "emb",
+   "app": 1.3954854669140384,
+   "recalcul": 1.3954854669140384,
+   "ecart": -5.739022881880025e-17,
+   "ecart_pct": -4.112563704852648e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "mo",
+   "app": 1.1544470103673077,
+   "recalcul": 1.154447010367308,
+   "ecart": 2.9706059898742024e-16,
+   "ecart_pct": 2.573185224784853e-14
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "direct",
+   "app": 9.276713389559136,
+   "recalcul": 9.276713389559136,
+   "ecart": -3.648057672401171e-16,
+   "ecart_pct": -3.932489362565658e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "indGen",
+   "app": 1.7276169138078519,
+   "recalcul": 1.7276169138078519,
+   "ecart": 1.2927229485382597e-17,
+   "ecart_pct": 7.482694445778262e-16
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "indAct",
+   "app": 2.381401174544292,
+   "recalcul": 2.3814011745442922,
+   "ecart": 2.3351116890123273e-16,
+   "ecart_pct": 9.805620799944291e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "indCan",
+   "app": 1.4760768312624337,
+   "recalcul": 1.4760768312624337,
+   "ecart": -3.12707574415629e-17,
+   "ecart_pct": -2.1185047268046463e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "aging",
+   "app": 0.08117124215864244,
+   "recalcul": 0.08117124215864244,
+   "ecart": -3.1920504633510246e-18,
+   "ecart_pct": -3.932489362565658e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "total",
+   "app": 14.942979551332357,
+   "recalcul": 14.942979551332355,
+   "ecart": -1.1128301767584157e-15,
+   "ecart_pct": -7.447177271009467e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "margeNette@channel_direct",
+   "app": 4.542089583106261,
+   "recalcul": 4.542089583106261,
+   "ecart": -3.5718010404839507e-16,
+   "ecart_pct": -7.863783783060602e-15
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "margeNette@channel_epiceries",
+   "app": 0.6212503865585912,
+   "recalcul": 0.6212503865585921,
+   "ecart": 9.32537608475426e-16,
+   "ecart_pct": 1.5010656389949411e-13
+  },
+  {
+   "id": "fmt_pate_f",
+   "champ": "margeNette@channel_gs",
+   "app": -0.6350161065655406,
+   "recalcul": -0.6350161065655403,
+   "ecart": 3.3696250643505513e-16,
+   "ecart_pct": 5.3063615702206904e-14
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "matiere",
+   "app": 1.9087340425531913,
+   "recalcul": 1.9087340425531916,
+   "ecart": 1.8936170212765957e-16,
+   "ecart_pct": 9.920800798122851e-15
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "emb",
+   "app": 0.5773036487322202,
+   "recalcul": 0.5773036487322202,
+   "ecart": -3.9208410636982067e-17,
+   "ecart_pct": -6.791644349223352e-15
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "mo",
+   "app": 0.8248525992050787,
+   "recalcul": 0.8248525992050791,
+   "ecart": 4.0112973751568543e-16,
+   "ecart_pct": 4.863047505727198e-14
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "direct",
+   "app": 3.3108902904904904,
+   "recalcul": 3.310890290490491,
+   "ecart": 3.5128302900636294e-16,
+   "ecart_pct": 1.0609926581237528e-14
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "indGen",
+   "app": 0.6165923021887602,
+   "recalcul": 0.6165923021887602,
+   "ecart": -5.80958914094213e-17,
+   "ecart_pct": -9.42209158356248e-15
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "indAct",
+   "app": 0.8499301094539959,
+   "recalcul": 0.8499301094539962,
+   "ecart": 2.291071849681784e-16,
+   "ecart_pct": 2.6956002901857338e-14
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "indCan",
+   "app": 0.5283094764799118,
+   "recalcul": 0.5283094764799119,
+   "ecart": 4.8949721388483435e-17,
+   "ecart_pct": 9.265349869290993e-15
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "total",
+   "app": 5.305722178613158,
+   "recalcul": 5.305722178613159,
+   "ecart": 8.712440439536034e-16,
+   "ecart_pct": 1.6420838005154173e-14
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "margeNette@channel_direct",
+   "app": 3.2557266103160636,
+   "recalcul": 3.2557266103160627,
+   "ecart": -9.497038678632652e-16,
+   "ecart_pct": -2.917025848712367e-14
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "margeNette@channel_epiceries",
+   "app": 1.4981213912481604,
+   "recalcul": 1.4981213912481604,
+   "ecart": 2.6470156124287636e-17,
+   "ecart_pct": 1.766889938220161e-15
+  },
+  {
+   "id": "fmt_tao",
+   "champ": "margeNette@channel_gs",
+   "app": 0.8899598261455228,
+   "recalcul": 0.8899598261455217,
+   "ecart": -1.0630552399627208e-15,
+   "ecart_pct": -1.1944980084852663e-13
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "matiere",
+   "app": 4.073250000000001,
+   "recalcul": 4.07325,
+   "ecart": -1e-15,
+   "ecart_pct": -2.4550420425949788e-14
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "emb",
+   "app": 0.5773036487322202,
+   "recalcul": 0.5773036487322202,
+   "ecart": -3.9208410636982067e-17,
+   "ecart_pct": -6.791644349223352e-15
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "mo",
+   "app": 0.8592374715495283,
+   "recalcul": 0.8592374715495285,
+   "ecart": 1.791750794182136e-16,
+   "ecart_pct": 2.085280092534763e-14
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "direct",
+   "app": 5.50979112028175,
+   "recalcul": 5.509791120281749,
+   "ecart": -1.3600333312187685e-15,
+   "ecart_pct": -2.4683936314979967e-14
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "indGen",
+   "app": 1.0260970595103651,
+   "recalcul": 1.0260970595103651,
+   "ecart": 4.6717154406211404e-17,
+   "ecart_pct": 4.552898185723676e-15
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "indAct",
+   "app": 1.4144042716788332,
+   "recalcul": 1.414404271678833,
+   "ecart": -1.4532912163634574e-16,
+   "ecart_pct": -1.0274935147349826e-14
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "indCan",
+   "app": 0.931496947282645,
+   "recalcul": 0.9314969472826448,
+   "ecart": -2.6183067798411436e-16,
+   "ecart_pct": -2.8108592169617367e-14
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "total",
+   "app": 8.881789398753593,
+   "recalcul": 8.881789398753591,
+   "ecart": -1.4204759764330172e-15,
+   "ecart_pct": -1.599312832876173e-14
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "margeNette@channel_direct",
+   "app": 3.497355625918999,
+   "recalcul": 3.4973556259190026,
+   "ecart": 3.4274390993938666e-15,
+   "ecart_pct": 9.800087454627207e-14
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "margeNette@channel_epiceries",
+   "app": 1.0007349270750225,
+   "recalcul": 1.000734927075024,
+   "ecart": 1.6914589460867025e-15,
+   "ecart_pct": 1.690216760027102e-13
+  },
+  {
+   "id": "fmt_saumon",
+   "champ": "margeNette@channel_gs",
+   "app": 0.1796783195803382,
+   "recalcul": 0.1796783195803381,
+   "ecart": -1.0388041155244408e-16,
+   "ecart_pct": -5.781466110940381e-14
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "matiere",
+   "app": 1.781276595744681,
+   "recalcul": 1.7812765957446808,
+   "ecart": -1.4893617021276595e-16,
+   "ecart_pct": -8.361204013377926e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "emb",
+   "app": 0.5773036487322202,
+   "recalcul": 0.5773036487322202,
+   "ecart": -3.9208410636982067e-17,
+   "ecart_pct": -6.791644349223352e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "mo",
+   "app": 0.5706870557686498,
+   "recalcul": 0.5706870557686499,
+   "ecart": 3.86422952636803e-17,
+   "ecart_pct": 6.771188319951217e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "direct",
+   "app": 2.929267300245551,
+   "recalcul": 2.929267300245551,
+   "ecart": -1.4950228558606771e-16,
+   "ecart_pct": -5.103743368641552e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "indGen",
+   "app": 0.5455220529572682,
+   "recalcul": 0.5455220529572681,
+   "ecart": -9.497940505564033e-17,
+   "ecart_pct": -1.74107361087894e-14
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "indAct",
+   "app": 0.7519646556300967,
+   "recalcul": 0.7519646556300967,
+   "ecart": 2.1713484817857506e-17,
+   "ecart_pct": 2.887567208815558e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "indCan",
+   "app": 0.48137827468193395,
+   "recalcul": 0.48137827468193395,
+   "ecart": -2.2510661307726517e-17,
+   "ecart_pct": -4.6762935702904786e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "total",
+   "app": 4.70813228351485,
+   "recalcul": 4.70813228351485,
+   "ecart": -3.9527886713157705e-16,
+   "ecart_pct": -8.395661874574223e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "margeNette@channel_direct",
+   "app": 3.73667589158294,
+   "recalcul": 3.73667589158294,
+   "ecart": -2.850509190930139e-16,
+   "ecart_pct": -7.628462498851081e-15
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "margeNette@channel_epiceries",
+   "app": 1.9911315343971836,
+   "recalcul": 1.9911315343971838,
+   "ecart": 2.774768968961528e-16,
+   "ecart_pct": 1.3935638711088926e-14
+  },
+  {
+   "id": "fmt_thai_s",
+   "champ": "margeNette@channel_gs",
+   "app": 1.3570265505891177,
+   "recalcul": 1.3570265505891181,
+   "ecart": 3.3612825550135633e-16,
+   "ecart_pct": 2.476946787484998e-14
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "matiere",
+   "app": 4.5296276595744684,
+   "recalcul": 4.5296276595744684,
+   "ecart": -3.148936170212766e-16,
+   "ecart_pct": -6.9518653780663946e-15
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "emb",
+   "app": 1.3954854669140384,
+   "recalcul": 1.3954854669140384,
+   "ecart": -5.739022881880025e-17,
+   "ecart_pct": -4.112563704852648e-15
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "mo",
+   "app": 0.8295451673944063,
+   "recalcul": 0.8295451673944066,
+   "ecart": 3.148883770799843e-16,
+   "ecart_pct": 3.795915996582149e-14
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "st",
+   "app": 2.6,
+   "recalcul": 2.6,
+   "ecart": 0.0,
+   "ecart_pct": 0.0
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "direct",
+   "app": 9.354658293882913,
+   "recalcul": 9.354658293882913,
+   "ecart": 4.2604531239907476e-17,
+   "ecart_pct": 4.554365312067777e-16
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "indGen",
+   "app": 1.7421327158381754,
+   "recalcul": 1.7421327158381754,
+   "ecart": 1.1193969843949402e-16,
+   "ecart_pct": 6.425440348018351e-15
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "indAct",
+   "app": 2.4014102099549683,
+   "recalcul": 2.401410209954969,
+   "ecart": 4.8033433946067805e-16,
+   "ecart_pct": 2.0002177781599645e-14
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "indCan",
+   "app": 1.479569529906728,
+   "recalcul": 1.4795695299067277,
+   "ecart": -2.9242379616349774e-16,
+   "ecart_pct": -1.9764113159449296e-14
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "aging",
+   "app": 0.06236438862588609,
+   "recalcul": 0.062364388625886086,
+   "ecart": -3.0493031250672834e-18,
+   "ecart_pct": -4.889494136404609e-15
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "total",
+   "app": 15.04013513820867,
+   "recalcul": 15.04013513820867,
+   "ecart": 1.1294054698515147e-15,
+   "ecart_pct": 7.50927740657276e-15
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "margeNette@channel_direct",
+   "app": 5.325900302212862,
+   "recalcul": 5.325900302212864,
+   "ecart": 2.532287582653594e-15,
+   "ecart_pct": 4.754665763460597e-14
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "margeNette@channel_epiceries",
+   "app": 1.2107675581147372,
+   "recalcul": 1.2107675581147384,
+   "ecart": 1.1423197936576297e-15,
+   "ecart_pct": 9.434674607868696e-14
+  },
+  {
+   "id": "fmt_thai_f",
+   "champ": "margeNette@channel_gs",
+   "app": -0.1281576416290715,
+   "recalcul": -0.12815764162907173,
+   "ecart": -2.2289059353103825e-16,
+   "ecart_pct": -1.7391908176350006e-13
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "matiere",
+   "app": 2.663546910755149,
+   "recalcul": 2.663546910755149,
+   "ecart": -2.585812356979405e-16,
+   "ecart_pct": -9.708153990223115e-15
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "emb",
+   "app": 0.5773036487322202,
+   "recalcul": 0.5773036487322202,
+   "ecart": -3.9208410636982067e-17,
+   "ecart_pct": -6.791644349223352e-15
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "mo",
+   "app": 0.5706870557686498,
+   "recalcul": 0.5706870557686499,
+   "ecart": 3.86422952636803e-17,
+   "ecart_pct": 6.771188319951217e-15
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "direct",
+   "app": 3.8115376152560185,
+   "recalcul": 3.8115376152560185,
+   "ecart": 2.4085264892875773e-16,
+   "ecart_pct": 6.319041637283693e-15
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "indGen",
+   "app": 0.7098286402965048,
+   "recalcul": 0.7098286402965049,
+   "ecart": 1.3579018782053553e-16,
+   "ecart_pct": 1.9129995623142816e-14
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "indAct",
+   "app": 0.9784499932924838,
+   "recalcul": 0.978449993292484,
+   "ecart": 2.956565470585698e-16,
+   "ecart_pct": 3.0216827542068415e-14
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "indCan",
+   "app": 0.6086461169896951,
+   "recalcul": 0.608646116989695,
+   "ecart": -1.1208767578289787e-16,
+   "ecart_pct": -1.8415902550610638e-14
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "total",
+   "app": 6.108462365834702,
+   "recalcul": 6.108462365834702,
+   "ecart": 7.602117080249652e-16,
+   "ecart_pct": 1.2445222095120244e-14
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "margeNette@channel_direct",
+   "app": 1.4886339614702084,
+   "recalcul": 1.4886339614702084,
+   "ecart": 7.528636059943253e-17,
+   "ecart_pct": 5.057412537134248e-15
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "margeNette@channel_epiceries",
+   "app": -0.032318186078128086,
+   "recalcul": -0.03231818607812885,
+   "ecart": -7.620395353156828e-16,
+   "ecart_pct": -2.3579279278653785e-12
+  },
+  {
+   "id": "fmt_chili",
+   "champ": "margeNette@channel_gs",
+   "app": -0.5033259452576768,
+   "recalcul": -0.503325945257677,
+   "ecart": -2.75031155737943e-16,
+   "ecart_pct": -5.464275353362547e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "matiere",
+   "app": 1.5313316745310546,
+   "recalcul": 1.5313316745310548,
+   "ecart": 2.8364370202101183e-16,
+   "ecart_pct": 1.852268236454216e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "emb",
+   "app": 0.3772844945028104,
+   "recalcul": 0.3772844945028104,
+   "ecart": 5.980871012597989e-19,
+   "ecart_pct": 1.5852416676915508e-16
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "mo",
+   "app": 1.558884372601299,
+   "recalcul": 1.5588843726012995,
+   "ecart": 6.277913558997422e-16,
+   "ecart_pct": 4.0271835867605196e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "direct",
+   "app": 3.467500541635164,
+   "recalcul": 3.467500541635165,
+   "ecart": 9.120331450220137e-16,
+   "ecart_pct": 2.6302321631128793e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "indGen",
+   "app": 0.6457580753878921,
+   "recalcul": 0.6457580753878923,
+   "ecart": 2.327319557070823e-16,
+   "ecart_pct": 3.604011542051341e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "indAct",
+   "app": 0.9328722419601458,
+   "recalcul": 0.932872241960146,
+   "ecart": 1.9172764229085613e-16,
+   "ecart_pct": 2.0552400818358483e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "indCan",
+   "app": 0.575208067863535,
+   "recalcul": 0.5752080678635351,
+   "ecart": 5.988189582911256e-17,
+   "ecart_pct": 1.0410475647799713e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "total",
+   "app": 5.621338926846738,
+   "recalcul": 5.621338926846739,
+   "ecart": 2.9637463884906473e-16,
+   "ecart_pct": 5.272313993266274e-15
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "margeNette@channel_direct",
+   "app": 2.041747457347272,
+   "recalcul": 2.041747457347271,
+   "ecart": -7.501732627167802e-16,
+   "ecart_pct": -3.674172630984629e-14
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "margeNette@channel_epiceries",
+   "app": 0.49560788775346065,
+   "recalcul": 0.49560788775345965,
+   "ecart": -9.82004507879643e-16,
+   "ecart_pct": -1.9814142029316118e-13
+  },
+  {
+   "id": "fmt_soupe",
+   "champ": "margeNette@channel_gs",
+   "app": -0.007803235226070626,
+   "recalcul": -0.007803235226071728,
+   "ecart": -1.1020862416119353e-15,
+   "ecart_pct": -1.4123452769049724e-11
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "matiere",
+   "app": 3.0898093370450375,
+   "recalcul": 3.089809337045038,
+   "ecart": 4.458777266350141e-16,
+   "ecart_pct": 1.443059030501321e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "emb",
+   "app": 0.3744588744588745,
+   "recalcul": 0.37445887445887444,
+   "ecart": -4.112554112554112e-17,
+   "ecart_pct": -1.0982658959537572e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "mo",
+   "app": 1.2985359416865663,
+   "recalcul": 1.2985359416865667,
+   "ecart": 4.1063485615007434e-16,
+   "ecart_pct": 3.162291030749083e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "direct",
+   "app": 4.762804153190478,
+   "recalcul": 4.762804153190479,
+   "ecart": 1.1153870416595473e-15,
+   "ecart_pct": 2.3418704733268924e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "indGen",
+   "app": 0.8869845026652476,
+   "recalcul": 0.8869845026652478,
+   "ecart": 1.9803816785156663e-16,
+   "ecart_pct": 2.2327128293278335e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "indAct",
+   "app": 1.2813517215223493,
+   "recalcul": 1.281351721522349,
+   "ecart": -9.387765512343441e-17,
+   "ecart_pct": -7.326454832549816e-15
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "indCan",
+   "app": 0.8045904760694188,
+   "recalcul": 0.8045904760694189,
+   "ecart": 1.0884823665496842e-16,
+   "ecart_pct": 1.3528402322969726e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "total",
+   "app": 7.735730853447494,
+   "recalcul": 7.735730853447495,
+   "ecart": 1.028395791042648e-15,
+   "ecart_pct": 1.3294099943825407e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "margeNette@channel_direct",
+   "app": 2.0323899552999123,
+   "recalcul": 2.032389955299912,
+   "ecart": -3.5654632742811063e-16,
+   "ecart_pct": -1.7543204565557715e-14
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "margeNette@channel_epiceries",
+   "app": 0.08108132470317386,
+   "recalcul": 0.08108132470317349,
+   "ecart": -3.693128871782816e-16,
+   "ecart_pct": -4.554845256047293e-13
+  },
+  {
+   "id": "fmt_potage",
+   "champ": "margeNette@channel_gs",
+   "app": -0.5303307540602251,
+   "recalcul": -0.5303307540602267,
+   "ecart": -1.612166161786595e-15,
+   "ecart_pct": -3.0399258376849014e-13
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "matiere",
+   "app": 2.2603089244851255,
+   "recalcul": 2.260308924485126,
+   "ecart": 3.5812356979405035e-16,
+   "ecart_pct": 1.5844009901240694e-14
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "emb",
+   "app": 1.3352916924345497,
+   "recalcul": 1.3352916924345495,
+   "ecart": -1.2259327973613689e-16,
+   "ecart_pct": -9.181011192589734e-15
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "mo",
+   "app": 0.8592374715495283,
+   "recalcul": 0.8592374715495285,
+   "ecart": 1.791750794182136e-16,
+   "ecart_pct": 2.085280092534763e-14
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "direct",
+   "app": 4.454838088469204,
+   "recalcul": 4.454838088469204,
+   "ecart": -8.529463052387292e-17,
+   "ecart_pct": -1.9146516400819928e-15
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "indGen",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "indAct",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "indCan",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "total",
+   "app": 4.454838088469204,
+   "recalcul": 4.454838088469204,
+   "ecart": -8.529463052387292e-17,
+   "ecart_pct": -1.9146516400819928e-15
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "margeNette@channel_direct",
+   "app": 2.7351619115307964,
+   "recalcul": 2.735161911530796,
+   "ecart": -3.1470536947612707e-16,
+   "ecart_pct": -1.1505913713897653e-14
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "margeNette@channel_epiceries",
+   "app": 1.1351619115307958,
+   "recalcul": 1.135161911530796,
+   "ecart": 2.852946305238729e-16,
+   "ecart_pct": 2.5132505559418003e-14
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "champ": "margeNette@channel_gs",
+   "app": 0.3951619115307956,
+   "recalcul": 0.3951619115307961,
+   "ecart": 4.85294630523873e-16,
+   "ecart_pct": 1.2280906037829334e-13
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "matiere",
+   "app": 4.2,
+   "recalcul": 4.2,
+   "ecart": 0.0,
+   "ecart_pct": 0.0
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "emb",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "mo",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "st",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "direct",
+   "app": 4.2,
+   "recalcul": 4.2,
+   "ecart": 0.0,
+   "ecart_pct": 0.0
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "indGen",
+   "app": 0.7821726007143366,
+   "recalcul": 0.7821726007143366,
+   "ecart": 1.712779991953289e-17,
+   "ecart_pct": 2.1897724241287083e-15
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "indAct",
+   "app": 1.155535294117647,
+   "recalcul": 1.155535294117647,
+   "ecart": 5.882352941176471e-17,
+   "ecart_pct": 5.0905869955864616e-15
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "indCan",
+   "app": 0.7052834960221868,
+   "recalcul": 0.7052834960221868,
+   "ecart": -4.2801110751024545e-17,
+   "ecart_pct": -6.0686392057128345e-15
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "aging",
+   "app": 0.0,
+   "recalcul": 0.0,
+   "ecart": 0.0,
+   "ecart_pct": null
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "total",
+   "app": 6.842991390854171,
+   "recalcul": 6.842991390854171,
+   "ecart": -5.668497814197269e-16,
+   "ecart_pct": -8.2836547504259e-15
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "margeNette@channel_direct",
+   "app": 2.088475114838948,
+   "recalcul": 2.088475114838949,
+   "ecart": 8.611659060457369e-16,
+   "ecart_pct": 4.123419522344394e-14
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "margeNette@channel_epiceries",
+   "app": 0.29596282678122243,
+   "recalcul": 0.2959628267812225,
+   "ecart": 5.4823195924655675e-17,
+   "ecart_pct": 1.852367627410902e-14
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "champ": "margeNette@channel_gs",
+   "app": -0.2784573407094717,
+   "recalcul": -0.278457340709471,
+   "ecart": 6.93663581542997e-16,
+   "ecart_pct": 2.491094613543446e-13
+  }
+ ],
+ "ecart_absolu_max": 3.4274390993938666e-15,
+ "productivite_app_pct": 77.21620159986523,
+ "coherence": {
+  "frais_fixes_absorbes": 28000.0,
+  "frais_fixes_saisis": 28000.0,
+  "ecart_absorption_frais_fixes": 0.0,
+  "revenu_theorique": 79202.64,
+  "cout_direct_theorique": 45642.099924487484,
+  "vieillissement": 60.468065006251834,
+  "benefice_net_somme_lignes": 5500.072010506267,
+  "benefice_net_bilan": 5500.072010506267,
+  "ecart_bilan_vs_lignes": 1.9e-35,
+  "paie_totale": 11058.2336,
+  "mo_absorbee_lignes_MO": 8722.17109680062,
+  "mo_sous_recettes_dans_matiere": 2336.062503199381,
+  "mo_absorbee_totale": 11058.2336,
+  "ecart_paie_vs_absorbee": 0.0,
+  "matiere_totale_app": 30556.4371513874,
+  "dont_emballage_de_sous_recettes": 452.51369202226346,
+  "dont_MO_de_sous_recettes": 2336.062503199381,
+  "dont_sous_traitance_de_sous_recettes": 0.0
+ },
+ "bilan_matieres": [
+  {
+   "id": "fmt_sub_bouillon",
+   "intrants_g_eq": 3550.0,
+   "extrant_nominal_g_eq": 40000.0,
+   "ratio": 11.267605633802816
+  },
+  {
+   "id": "fmt_sub_puree",
+   "intrants_g_eq": 4760.0,
+   "extrant_nominal_g_eq": 5000.0,
+   "ratio": 1.050420168067227
+  },
+  {
+   "id": "fmt_pate_s",
+   "intrants_g_eq": 6840.0,
+   "extrant_nominal_g_eq": 6800.0,
+   "ratio": 0.9941520467836257
+  },
+  {
+   "id": "fmt_pate_f",
+   "intrants_g_eq": 9100.0,
+   "extrant_nominal_g_eq": 9000.0,
+   "ratio": 0.989010989010989
+  },
+  {
+   "id": "fmt_tao",
+   "intrants_g_eq": 7740.0,
+   "extrant_nominal_g_eq": 8000.0,
+   "ratio": 1.0335917312661498
+  },
+  {
+   "id": "fmt_saumon",
+   "intrants_g_eq": 5925.0,
+   "extrant_nominal_g_eq": 5700.0,
+   "ratio": 0.9620253164556962
+  },
+  {
+   "id": "fmt_thai_s",
+   "intrants_g_eq": 7160.0,
+   "extrant_nominal_g_eq": 7000.0,
+   "ratio": 0.9776536312849162
+  },
+  {
+   "id": "fmt_thai_f",
+   "intrants_g_eq": 9150.0,
+   "extrant_nominal_g_eq": 9000.0,
+   "ratio": 0.9836065573770492
+  },
+  {
+   "id": "fmt_chili",
+   "intrants_g_eq": 9260.0,
+   "extrant_nominal_g_eq": 8000.0,
+   "ratio": 0.8639308855291576
+  },
+  {
+   "id": "fmt_soupe",
+   "intrants_g_eq": 28060.0,
+   "extrant_nominal_g_eq": 34986.0,
+   "ratio": 1.2468282252316465
+  },
+  {
+   "id": "fmt_potage",
+   "intrants_g_eq": 12270.0,
+   "extrant_nominal_g_eq": 11250.0,
+   "ratio": 0.9168704156479217
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "intrants_g_eq": 7425.0,
+   "extrant_nominal_g_eq": 7500.0,
+   "ratio": 1.0101010101010102
+  }
+ ],
+ "prix_unitaires_derives": [],
+ "variante_IAS2": [
+  {
+   "id": "fmt_sub_puree",
+   "total_app": 3.348430666356409,
+   "mo_app": 0.3159375284831544,
+   "total_capacite_normale": 3.2946681775098106,
+   "mo_capacite_normale": 0.24395495892318403,
+   "total_capacite_normale_prod_seulement": 2.543136617676725,
+   "direct_capacite_normale": 2.007258607655404,
+   "cout_stock_IAS2_indicatif": 2.543136617676725
+  },
+  {
+   "id": "fmt_pate_s",
+   "total_app": 5.5975599496402815,
+   "mo_app": 0.37875767804800686,
+   "total_capacite_normale": 5.520951522754453,
+   "mo_capacite_normale": 0.2924622922565174,
+   "total_capacite_normale_prod_seulement": 4.269289512568205,
+   "direct_capacite_normale": 3.3696845317355297,
+   "cout_stock_IAS2_indicatif": 4.269289512568205
+  },
+  {
+   "id": "fmt_pate_f",
+   "total_app": 14.942979551332355,
+   "mo_app": 1.154447010367308,
+   "total_capacite_normale": 14.680494184627934,
+   "mo_capacite_normale": 0.8914201308888373,
+   "total_capacite_normale_prod_seulement": 11.410784535178434,
+   "direct_capacite_normale": 8.944583243303093,
+   "cout_stock_IAS2_indicatif": 11.332519431799533
+  },
+  {
+   "id": "fmt_tao",
+   "total_app": 5.305722178613159,
+   "mo_app": 0.8248525992050791,
+   "total_capacite_normale": 5.099781038730355,
+   "mo_capacite_normale": 0.636919845903922,
+   "total_capacite_normale_prod_seulement": 3.9566937902199686,
+   "direct_capacite_normale": 3.122957537189334,
+   "cout_stock_IAS2_indicatif": 3.9566937902199686
+  },
+  {
+   "id": "fmt_saumon",
+   "total_app": 8.881789398753591,
+   "mo_app": 0.8592374715495285,
+   "total_capacite_normale": 8.731292631852352,
+   "mo_capacite_normale": 0.6634705382532684,
+   "total_capacite_normale_prod_seulement": 6.732709699488133,
+   "direct_capacite_normale": 5.314024186985488,
+   "cout_stock_IAS2_indicatif": 6.732709699488133
+  },
+  {
+   "id": "fmt_thai_s",
+   "total_app": 4.70813228351485,
+   "mo_app": 0.5706870557686499,
+   "total_capacite_normale": 4.585308022044039,
+   "mo_capacite_normale": 0.44066286748665584,
+   "total_capacite_normale_prod_seulement": 3.546557295937624,
+   "direct_capacite_normale": 2.799243111963557,
+   "cout_stock_IAS2_indicatif": 3.546557295937624
+  },
+  {
+   "id": "fmt_thai_f",
+   "total_app": 15.04013513820867,
+   "mo_app": 0.8295451673944066,
+   "total_capacite_normale": 15.014971003946188,
+   "mo_capacite_normale": 0.6405432688172042,
+   "total_capacite_normale_prod_seulement": 11.673716878934474,
+   "direct_capacite_normale": 9.16565639530571,
+   "cout_stock_IAS2_indicatif": 11.61261250296577
+  },
+  {
+   "id": "fmt_chili",
+   "total_app": 6.108462365834702,
+   "mo_app": 0.5706870557686499,
+   "total_capacite_normale": 6.012375008539957,
+   "mo_capacite_normale": 0.44066286748665584,
+   "total_capacite_normale_prod_seulement": 4.664367395859483,
+   "direct_capacite_normale": 3.681513426974025,
+   "cout_stock_IAS2_indicatif": 4.664367395859483
+  },
+  {
+   "id": "fmt_soupe",
+   "total_app": 5.621338926846739,
+   "mo_app": 1.5588843726012995,
+   "total_capacite_normale": 4.9473746692293705,
+   "mo_capacite_normale": 1.2037112998566133,
+   "total_capacite_normale_prod_seulement": 3.849007601543176,
+   "direct_capacite_normale": 2.9468082182783393,
+   "cout_stock_IAS2_indicatif": 3.849007601543176
+  },
+  {
+   "id": "fmt_potage",
+   "total_app": 7.735730853447495,
+   "mo_app": 1.2985359416865667,
+   "total_capacite_normale": 7.351606195219047,
+   "mo_capacite_normale": 1.0026801305794075,
+   "total_capacite_normale_prod_seulement": 5.708492952402621,
+   "direct_capacite_normale": 4.370434067051382,
+   "cout_stock_IAS2_indicatif": 5.708492952402621
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "total_app": 4.454838088469204,
+   "mo_app": 0.8592374715495285,
+   "total_capacite_normale": 4.259071155172943,
+   "mo_capacite_normale": 0.6634705382532684,
+   "total_capacite_normale_prod_seulement": 4.259071155172943,
+   "direct_capacite_normale": 4.259071155172943,
+   "cout_stock_IAS2_indicatif": 4.259071155172943
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "total_app": 6.842991390854171,
+   "mo_app": 0.0,
+   "total_capacite_normale": 6.934925878626626,
+   "mo_capacite_normale": 0.0,
+   "total_capacite_normale_prod_seulement": 5.3603764705882355,
+   "direct_capacite_normale": 4.2,
+   "cout_stock_IAS2_indicatif": 5.3603764705882355
+  }
+ ],
+ "capacite_inutilisee_dollars": 2519.4856500399683,
+ "diagnostic_heures_nbPortions_stocke": {
+  "productivite_pct": 77.21457672589555,
+  "ecart_vs_application_pts": -0.001624873969671323
+ }
+}

@@ -1,0 +1,784 @@
+{
+ "kitchenProductivity": 78.19738234326908,
+ "totalIndirects": 28000,
+ "pools": {
+  "generalPool": {
+   "amount": 8500,
+   "driver": "directCost",
+   "driverTotal": 45356.35440520273
+  },
+  "activityPools": {
+   "act_plats": {
+    "amount": 6723.98,
+    "driver": "directCost",
+    "driverTotal": 25581.60456361675
+   },
+   "act_soupes": {
+    "amount": 3239.45,
+    "driver": "directCost",
+    "driverTotal": 12230.413933018877
+   },
+   "act_sauces": {
+    "amount": 2036.56,
+    "driver": "directCost",
+    "driverTotal": 7544.335908567104
+   }
+  },
+  "channelPools": {
+   "channel_direct": {
+    "amount": 1561.75,
+    "driverTotal": 5419.687568776394
+   },
+   "channel_epiceries": {
+    "amount": 2394.25,
+    "driverTotal": 11102.001261346597
+   },
+   "channel_gs": {
+    "amount": 3544,
+    "driverTotal": 28834.66557507974
+   }
+  },
+  "meta": {
+   "total": 28000,
+   "allocated": 27999.99,
+   "unallocated": 0,
+   "overAllocated": 0
+  }
+ },
+ "rows": [
+  {
+   "id": "fmt_sub_bouillon",
+   "name": "Bouillon de poulet maison",
+   "active": false,
+   "nbPortions": 40,
+   "portionSize": 1,
+   "portionsSold": null,
+   "matiere": 0.412221444568869,
+   "emb": 0,
+   "mo": 1.6731760282864865,
+   "st": 0,
+   "direct": 2.0853974728553553,
+   "indGen": 0,
+   "indTot": 0,
+   "aging": 0,
+   "total": 2.0853974728553553,
+   "lot": {
+    "ingredients": 16.48885778275476,
+    "base": 15.65,
+    "loss": 0.8388577827547598,
+    "pack": 0,
+    "labor": 66.92704113145946,
+    "laborDirectRaw": 52.33519424460432
+   },
+   "channels": []
+  },
+  {
+   "id": "fmt_sub_puree_vrac",
+   "name": "Purée de base en vrac (usage interne)",
+   "active": false,
+   "nbPortions": 5,
+   "portionSize": 1000,
+   "portionsSold": null,
+   "matiere": 4.744,
+   "emb": 0,
+   "mo": 0.7436337903495496,
+   "st": 0,
+   "direct": 5.487633790349549,
+   "indGen": 0,
+   "indTot": 0,
+   "aging": 0,
+   "total": 5.487633790349549,
+   "lot": {
+    "ingredients": 23.72,
+    "base": 23.72,
+    "loss": 0,
+    "pack": 0,
+    "labor": 3.7181689517477476,
+    "laborDirectRaw": 2.9075107913669065
+   },
+   "channels": []
+  },
+  {
+   "id": "fmt_sub_puree",
+   "name": "Purée de pommes de terre maison",
+   "active": true,
+   "nbPortions": 20,
+   "portionSize": 250,
+   "portionsSold": 475,
+   "matiere": 1.186,
+   "emb": 0.5773036487322202,
+   "mo": 0.3119733060274014,
+   "st": 0,
+   "direct": 2.0752769547596213,
+   "indGen": 0.38891693009245365,
+   "indAct": 0.545474804114154,
+   "indCan": 0.3489157681244372,
+   "indTot": 1.283307502331045,
+   "aging": 0,
+   "total": 3.358584457090666,
+   "lot": {
+    "ingredients": 23.72,
+    "base": 23.72,
+    "loss": 0,
+    "pack": 11.546072974644403,
+    "labor": 6.239466120548029,
+    "laborDirectRaw": 4.87909917846368
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 5.21,
+     "vol": 66,
+     "indCan": 0.5980167201460241,
+     "margeBrute": 3.1347230452403787,
+     "margeNette": 1.602314590887747,
+     "be": 184
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 4.05,
+     "vol": 114,
+     "indCan": 0.44755280890055943,
+     "margeBrute": 1.9747230452403786,
+     "margeNette": 0.5927785021332115,
+     "be": 282
+    },
+    {
+     "id": "channel_gs",
+     "price": 3.52,
+     "vol": 295,
+     "indCan": 0.25506734276205517,
+     "margeBrute": 1.4447230452403788,
+     "margeNette": 0.25526396827171594,
+     "be": 380
+    }
+   ]
+  },
+  {
+   "id": "fmt_pate_s",
+   "name": "Pâté chinois traditionnel (340 g)",
+   "active": true,
+   "nbPortions": 20,
+   "portionSize": 340,
+   "portionsSold": 996,
+   "matiere": 2.2042654919908466,
+   "emb": 0.5773036487322202,
+   "mo": 0.44093226162934407,
+   "st": 0,
+   "direct": 3.222501402352411,
+   "indGen": 0.6039123355305094,
+   "indAct": 0.8470162583236379,
+   "indCan": 0.5329291973683075,
+   "indTot": 1.9838577912224549,
+   "aging": 0,
+   "total": 5.206359193574865,
+   "lot": {
+    "ingredients": 44.08530983981693,
+    "base": 41.529199999999996,
+    "loss": 2.5561098398169313,
+    "pack": 11.546072974644403,
+    "labor": 8.818645232586881,
+    "laborDirectRaw": 6.895949730022434
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 8.54,
+     "vol": 128,
+     "indCan": 0.9286036328216097,
+     "margeBrute": 5.317498597647589,
+     "margeNette": 2.9379663709718313,
+     "be": 348
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 6.64,
+     "vol": 228,
+     "indCan": 0.6949624487474094,
+     "margeBrute": 3.417498597647589,
+     "margeNette": 1.2716075550460326,
+     "be": 530
+    },
+    {
+     "id": "channel_gs",
+     "price": 5.76,
+     "vol": 640,
+     "indCan": 0.39606996447384185,
+     "margeBrute": 2.537498597647589,
+     "margeNette": 0.6905000393196001,
+     "be": 718
+    }
+   ]
+  },
+  {
+   "id": "fmt_pate_f",
+   "name": "Pâté chinois traditionnel (900 g)",
+   "active": true,
+   "nbPortions": 10,
+   "portionSize": 900,
+   "portionsSold": 443,
+   "matiere": 5.86926938215103,
+   "emb": 1.3954854669140384,
+   "mo": 1.3184337096460257,
+   "st": 0,
+   "direct": 8.583188558711095,
+   "indGen": 1.6085310141389044,
+   "indAct": 2.2560425426591255,
+   "indCan": 1.3723258766361939,
+   "indTot": 5.236899433434224,
+   "aging": 0.07510289988872207,
+   "total": 13.89519089203404,
+   "lot": {
+    "ingredients": 58.6926938215103,
+    "base": 55.2856,
+    "loss": 3.4070938215102964,
+    "pack": 13.954854669140385,
+    "labor": 13.184337096460256,
+    "laborDirectRaw": 10.309806488744488
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 20.69,
+     "vol": 43,
+     "indCan": 2.473351934305959,
+     "margeBrute": 12.106811441288906,
+     "margeNette": 5.693783050296194,
+     "be": 179
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 16.09,
+     "vol": 100,
+     "indCan": 1.851044575021191,
+     "margeBrute": 7.506811441288905,
+     "margeNette": 1.7160904095809606,
+     "be": 282
+    },
+    {
+     "id": "channel_gs",
+     "price": 13.96,
+     "vol": 300,
+     "indCan": 1.0549392422418618,
+     "margeBrute": 5.376811441288906,
+     "margeNette": 0.38219574236029175,
+     "be": 391
+    }
+   ]
+  },
+  {
+   "id": "fmt_tao",
+   "name": "Poulet général Tao, riz et légumes",
+   "active": true,
+   "nbPortions": 20,
+   "portionSize": 400,
+   "portionsSold": 994,
+   "matiere": 1.9087340425531913,
+   "emb": 0.5773036487322202,
+   "mo": 0.8145027708318748,
+   "st": 0,
+   "direct": 3.3005404621172865,
+   "indGen": 0.618537232454001,
+   "indAct": 0.8675283835803986,
+   "indCan": 0.5291848265112686,
+   "indTot": 2.0152504425456685,
+   "aging": 0,
+   "total": 5.315790904662955,
+   "lot": {
+    "ingredients": 38.174680851063826,
+    "base": 36.75,
+    "loss": 1.4246808510638296,
+    "pack": 11.546072974644403,
+    "labor": 16.290055416637497,
+    "laborDirectRaw": 12.73839691807844
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 8.99,
+     "vol": 105,
+     "indCan": 0.9510915530275545,
+     "margeBrute": 5.689459537882714,
+     "margeNette": 3.252302368820759,
+     "be": 367
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 6.99,
+     "vol": 214,
+     "indCan": 0.7117922990098648,
+     "margeBrute": 3.6894595378827137,
+     "margeNette": 1.4916016228384494,
+     "be": 542
+    },
+    {
+     "id": "channel_gs",
+     "price": 6.07,
+     "vol": 675,
+     "indCan": 0.40566155925362474,
+     "margeBrute": 2.769459537882714,
+     "margeNette": 0.8777323625946893,
+     "be": 715
+    }
+   ]
+  },
+  {
+   "id": "fmt_saumon",
+   "name": "Saumon teriyaki, riz et légumes",
+   "active": true,
+   "nbPortions": 15,
+   "portionSize": 380,
+   "portionsSold": 710,
+   "matiere": 4.073250000000001,
+   "emb": 0.5773036487322202,
+   "mo": 0.8484561993914075,
+   "st": 0,
+   "direct": 5.499009848123629,
+   "indGen": 1.0305410194891949,
+   "indAct": 1.4453836211343078,
+   "indCan": 0.9331679407095633,
+   "indTot": 3.409092581333066,
+   "aging": 0,
+   "total": 8.908102429456696,
+   "lot": {
+    "ingredients": 61.09875000000002,
+    "base": 59.01750000000001,
+    "loss": 2.0812500000000043,
+    "pack": 8.659554730983302,
+    "labor": 12.726842990871113,
+    "laborDirectRaw": 9.952058073799027
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 13.04,
+     "vol": 100,
+     "indCan": 1.5846076957986,
+     "margeBrute": 7.54099015187637,
+     "margeNette": 3.480457815454267,
+     "be": 301
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 10.14,
+     "vol": 180,
+     "indCan": 1.185912703388853,
+     "margeBrute": 4.640990151876371,
+     "margeNette": 0.9791528078640148,
+     "be": 469
+    },
+    {
+     "id": "channel_gs",
+     "price": 8.8,
+     "vol": 430,
+     "indCan": 0.6758701900324102,
+     "margeBrute": 3.3009901518763716,
+     "margeNette": 0.14919532122045887,
+     "be": 639
+    }
+   ]
+  },
+  {
+   "id": "fmt_thai_s",
+   "name": "Sauté de poulet thaï, riz et légumes (350 g)",
+   "active": true,
+   "nbPortions": 20,
+   "portionSize": 350,
+   "portionsSold": 780,
+   "matiere": 1.781276595744681,
+   "emb": 0.5773036487322202,
+   "mo": 0.563526366588902,
+   "st": 0,
+   "direct": 2.922106611065803,
+   "indGen": 0.5476168999863497,
+   "indAct": 0.7680591872887726,
+   "indCan": 0.4822457672997346,
+   "indTot": 1.797921854574857,
+   "aging": 0,
+   "total": 4.72002846564066,
+   "lot": {
+    "ingredients": 35.62553191489362,
+    "base": 34.28,
+    "loss": 1.3455319148936198,
+    "pack": 11.546072974644403,
+    "labor": 11.27052733177804,
+    "laborDirectRaw": 8.813257349733117
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 8.81,
+     "vol": 95,
+     "indCan": 0.8420411586312797,
+     "margeBrute": 5.887893388934197,
+     "margeNette": 3.730176143027796,
+     "be": 240
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 6.85,
+     "vol": 185,
+     "indCan": 0.630179513481311,
+     "margeBrute": 3.9278933889341965,
+     "margeNette": 1.982037788177763,
+     "be": 353
+    },
+    {
+     "id": "channel_gs",
+     "price": 5.94,
+     "vol": 500,
+     "indCan": 0.35914915685955784,
+     "margeBrute": 3.0178933889341972,
+     "margeNette": 1.343068144799517,
+     "be": 460
+    }
+   ]
+  },
+  {
+   "id": "fmt_thai_f",
+   "name": "Sauté de poulet thaï, riz et légumes (900 g)",
+   "active": true,
+   "nbPortions": 10,
+   "portionSize": 900,
+   "portionsSold": 393,
+   "matiere": 4.5296276595744684,
+   "emb": 1.3954854669140384,
+   "mo": 0.8191364590765481,
+   "st": 2.6,
+   "direct": 9.344249585565054,
+   "indGen": 1.7511575283967744,
+   "indAct": 2.4560831269242582,
+   "indCan": 1.4852427479406722,
+   "indTot": 5.692483403261705,
+   "aging": 0.06229499723710037,
+   "total": 15.09902798606386,
+   "lot": {
+    "ingredients": 45.296276595744686,
+    "base": 43.55500000000001,
+    "loss": 1.741276595744683,
+    "pack": 13.954854669140385,
+    "labor": 8.191364590765481,
+    "laborDirectRaw": 6.405432688172042
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 21.59,
+     "vol": 38,
+     "indCan": 2.692661081485732,
+     "margeBrute": 12.245750414434946,
+     "margeNette": 5.28355368039108,
+     "be": 160
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 16.79,
+     "vol": 85,
+     "indCan": 2.0151744756265235,
+     "margeBrute": 7.445750414434945,
+     "margeNette": 1.161040286250289,
+     "be": 260
+    },
+    {
+     "id": "channel_gs",
+     "price": 14.57,
+     "vol": 270,
+     "indCan": 1.1484794385776735,
+     "margeBrute": 5.2257504144349465,
+     "margeNette": -0.19226467670085867,
+     "be": 379
+    }
+   ]
+  },
+  {
+   "id": "fmt_chili",
+   "name": "Chili con carne mijoté",
+   "active": true,
+   "nbPortions": 20,
+   "portionSize": 400,
+   "portionsSold": 1169,
+   "matiere": 2.663546910755149,
+   "emb": 0.5773036487322202,
+   "mo": 0.563526366588902,
+   "st": 0,
+   "direct": 3.8043769260762708,
+   "indGen": 0.7129586205883199,
+   "indAct": 0.9999589470544814,
+   "indCan": 0.6103958551474084,
+   "indTot": 2.3233134227902097,
+   "aging": 0,
+   "total": 6.12769034886648,
+   "lot": {
+    "ingredients": 53.27093821510298,
+    "base": 50.52,
+    "loss": 2.750938215102977,
+    "pack": 11.546072974644403,
+    "labor": 11.27052733177804,
+    "laborDirectRaw": 8.813257349733117
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 8.09,
+     "vol": 114,
+     "indCan": 1.0962782612284472,
+     "margeBrute": 4.285623073923729,
+     "margeNette": 1.4764272450524807,
+     "be": 575
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 6.29,
+     "vol": 270,
+     "indCan": 0.8204493262823946,
+     "margeBrute": 2.4856230739237293,
+     "margeNette": -0.04774382000146726,
+     "be": 946
+    },
+    {
+     "id": "channel_gs",
+     "price": 5.46,
+     "vol": 785,
+     "indCan": 0.46758689782296936,
+     "margeBrute": 1.6556230739237292,
+     "margeNette": -0.5248813915420412,
+     "be": 1365
+    }
+   ]
+  },
+  {
+   "id": "fmt_soupe",
+   "name": "Soupe-repas aux légumes et poulet",
+   "active": true,
+   "nbPortions": 46.648,
+   "portionSize": 0.75,
+   "portionsSold": 2375,
+   "matiere": 0.8048538164265867,
+   "emb": 0.3772844945028104,
+   "mo": 2.2566866747564958,
+   "st": 0,
+   "direct": 3.438824985685893,
+   "indGen": 0.6444524204303593,
+   "indAct": 0.910836024102617,
+   "indCan": 0.5727731931091312,
+   "indTot": 2.1280616376421073,
+   "aging": 0,
+   "total": 5.566886623328,
+   "lot": {
+    "ingredients": 37.54482082866742,
+    "base": 36.294428891377386,
+    "loss": 1.2503919372900352,
+    "pack": 17.5995670995671,
+    "labor": 105.26992000404101,
+    "laborDirectRaw": 82.31832183801346
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 8.09,
+     "vol": 285,
+     "indCan": 0.990939948703992,
+     "margeBrute": 4.6511750143141075,
+     "margeNette": 2.104946621077138,
+     "be": 1352
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 6.29,
+     "vol": 610,
+     "indCan": 0.7416146447978148,
+     "margeBrute": 2.8511750143141072,
+     "margeNette": 0.5542719249833157,
+     "be": 1862
+    },
+    {
+     "id": "channel_gs",
+     "price": 5.46,
+     "vol": 1480,
+     "indCan": 0.42265778035600127,
+     "margeBrute": 2.021175014314107,
+     "margeNette": 0.043228789425129754,
+     "be": 2263
+    }
+   ]
+  },
+  {
+   "id": "fmt_potage",
+   "name": "Potage à la courge musquée",
+   "active": true,
+   "nbPortions": 15,
+   "portionSize": 0.75,
+   "portionsSold": 857,
+   "matiere": 2.6662000979843223,
+   "emb": 0.3744588744588745,
+   "mo": 1.7005365841669329,
+   "st": 0,
+   "direct": 4.74119555661013,
+   "indGen": 0.888522959123967,
+   "indAct": 1.255792815351557,
+   "indCan": 0.8039466397301308,
+   "indTot": 2.948262414205655,
+   "aging": 0,
+   "total": 7.689457970815784,
+   "lot": {
+    "ingredients": 39.993001469764835,
+    "base": 39.964580417133256,
+    "loss": 0.028421052631579014,
+    "pack": 5.616883116883117,
+    "labor": 25.508048762503993,
+    "laborDirectRaw": 19.946626419122765
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 10.34,
+     "vol": 114,
+     "indCan": 1.366234135560623,
+     "margeBrute": 5.59880444338987,
+     "margeNette": 2.088254533353723,
+     "be": 473
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 8.04,
+     "vol": 228,
+     "indCan": 1.0224829915067881,
+     "margeBrute": 3.2988044433898693,
+     "margeNette": 0.1320056774075571,
+     "be": 706
+    },
+    {
+     "id": "channel_gs",
+     "price": 6.98,
+     "vol": 515,
+     "indCan": 0.582729042196628,
+     "margeBrute": 2.2388044433898706,
+     "margeNette": -0.48824037328228087,
+     "be": 913
+    }
+   ]
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "name": "Sauce à spaghetti maison",
+   "active": true,
+   "nbPortions": 15,
+   "portionSize": 500,
+   "portionsSold": 280,
+   "matiere": 2.2603089244851255,
+   "emb": 1.3352916924345497,
+   "mo": 0.8484561993914075,
+   "st": 0,
+   "direct": 4.4440568163110825,
+   "indGen": 0.8328377232697339,
+   "indAct": 1.1996534167505641,
+   "indCan": 0.7688925932652124,
+   "indTot": 2.80138373328551,
+   "aging": 0,
+   "total": 7.245440549596593,
+   "lot": {
+    "ingredients": 33.904633867276885,
+    "base": 32.595,
+    "loss": 1.3096338672768866,
+    "pack": 20.029375386518247,
+    "labor": 12.726842990871113,
+    "laborDirectRaw": 9.952058073799027
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 8.99,
+     "vol": 40,
+     "indCan": 1.2806099327310108,
+     "margeBrute": 4.545943183688918,
+     "margeNette": 1.232842110937609,
+     "be": 160
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 6.99,
+     "vol": 80,
+     "indCan": 0.9584022539700403,
+     "margeBrute": 2.5459431836889177,
+     "margeNette": -0.44495021030142023,
+     "be": 261
+    },
+    {
+     "id": "channel_gs",
+     "price": 6.07,
+     "vol": 160,
+     "indCan": 0.546208428046349,
+     "margeBrute": 1.6259431836889178,
+     "margeNette": -0.9527563843777287,
+     "be": 362
+    }
+   ]
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "name": "Sauce artisanale du Terroir",
+   "active": true,
+   "nbPortions": 1,
+   "portionSize": 500,
+   "portionsSold": 1500,
+   "matiere": 4.2,
+   "emb": 0,
+   "mo": 0,
+   "st": 0,
+   "direct": 4.2,
+   "indGen": 0.7871002964891051,
+   "indAct": 1.1337713622065613,
+   "indCan": 0.7126365517715112,
+   "indTot": 2.633508210467178,
+   "aging": 0,
+   "total": 6.833508210467178,
+   "lot": {
+    "ingredients": 4.2,
+    "base": 4.2,
+    "loss": 0,
+    "pack": 0,
+    "labor": 0,
+    "laborDirectRaw": 0
+   },
+   "channels": [
+    {
+     "id": "channel_direct",
+     "price": 9.44,
+     "vol": 200,
+     "indCan": 1.2102819427801275,
+     "margeBrute": 5.239999999999999,
+     "margeNette": 2.1088463985242054,
+     "be": 597
+    },
+    {
+     "id": "channel_epiceries",
+     "price": 7.34,
+     "vol": 400,
+     "indCan": 0.9057691278608533,
+     "margeBrute": 3.1399999999999997,
+     "margeNette": 0.31335921344347994,
+     "be": 1033
+    },
+    {
+     "id": "channel_gs",
+     "price": 6.37,
+     "vol": 900,
+     "indCan": 0.516211986618778,
+     "margeBrute": 2.17,
+     "margeNette": -0.26708364531444406,
+     "be": 1542
+    }
+   ]
+  }
+ ],
+ "globalBreakEven": 68555.31990565229,
+ "menuRevenue": 79713.59,
+ "weighted": {
+  "gm": 0.4310085092742313,
+  "mat": 0.3457471612434165,
+  "pk": 0.07170136673283861,
+  "lab": 0.13872457130584637
+ },
+ "sumIndirectAbsorbed": 27999.989999999998,
+ "checks": []
+}

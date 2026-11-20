@@ -353,6 +353,12 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
 // mémoïsation de postColorMap ci-dessous à chaque fois.
 const GANTT_POST_COLORS = ['bg-blue-500', 'bg-green-500', 'bg-indigo-500', 'bg-pink-500', 'bg-amber-500', 'bg-teal-500'];
 
+// Ligne ajoutée au diagramme quand des étapes n'ont aucun poste affecté (cuisson, repos, refroidissement…) : sans elle,
+// ces étapes n'apparaissaient nulle part et le diagramme ne montrait pas toute la recette. Clé interne, jamais un nom de poste.
+const GANTT_NO_LABOR_KEY = '__sans_main_d_oeuvre__';
+const GANTT_NO_LABOR_COLOR = 'bg-gray-500';
+const GANTT_NO_LABOR_LABEL = 'Sans main-d\'œuvre';
+
 export const GanttChart = ({ productionSteps }) => {
     // Les hooks doivent s'exécuter dans le même ordre à chaque rendu : on ne peut pas les
     // placer après un retour anticipé (sinon React plante dès qu'on passe de 0 à 1 étape).
@@ -380,21 +386,27 @@ export const GanttChart = ({ productionSteps }) => {
     // The core layout logic to handle overlapping tasks
     const layoutData = useMemo(() => {
         const postsData = {};
-        const allPosts = Object.keys(postColorMap);
+        const stepsWithoutLabor = steps.filter(step => (step.personnel || []).length === 0);
+        const allPosts = [...Object.keys(postColorMap), ...(stepsWithoutLabor.length > 0 ? [GANTT_NO_LABOR_KEY] : [])];
+        const toTask = (step) => ({
+            name: step.stepName,
+            start: parseLocaleNumber(step.startTime),
+            duration: parseLocaleNumber(step.duration),
+            end: parseLocaleNumber(step.startTime) + parseLocaleNumber(step.duration),
+            id: step.stepId
+        });
 
         allPosts.forEach(post => {
             // 1. Get all individual tasks for this post
-            // An "étape" with 2 cooks becomes 2 separate tasks for the chart
-            const tasks = steps.flatMap(step =>
-                (step.personnel || [])
-                .filter(p => p.postId === post)
-                .map(() => ({ // Create one task per person
-                    name: step.stepName,
-                    start: parseLocaleNumber(step.startTime),
-                    duration: parseLocaleNumber(step.duration),
-                    end: parseLocaleNumber(step.startTime) + parseLocaleNumber(step.duration),
-                    id: step.stepId
-                }))
+            // An "étape" with 2 cooks becomes 2 separate tasks for the chart ; les étapes sans personne vont dans la
+            // ligne « Sans main-d'œuvre » (une tâche par étape).
+            const tasks = (post === GANTT_NO_LABOR_KEY
+                ? stepsWithoutLabor.map(toTask)
+                : steps.flatMap(step =>
+                    (step.personnel || [])
+                    .filter(p => p.postId === post)
+                    .map(() => toTask(step)) // Create one task per person
+                )
             ).sort((a, b) => a.start - b.start);
 
             // 2. Assign tasks to vertical "tracks" to avoid visual overlap
@@ -474,14 +486,16 @@ export const GanttChart = ({ productionSteps }) => {
                     {Object.entries(layoutData).map(([post, data]) => {
                         // The row height is now dynamic based on the number of tracks
                         const rowHeight = data.trackCount * (BAR_HEIGHT + BAR_GAP) + BAR_GAP;
+                        const isNoLabor = post === GANTT_NO_LABOR_KEY;
+                        const barColor = isNoLabor ? GANTT_NO_LABOR_COLOR : postColorMap[post];
                         return (
-                            <div key={post} className="flex" style={{ minHeight: `${rowHeight}px` }}>
-                                <div className="w-28 text-sm font-medium text-gray-600 pr-2 text-right border-r border-gray-200 pt-2 flex-shrink-0">{post}</div>
+                            <div key={post} className="flex" style={{ minHeight: `${rowHeight}px` }} data-testid={isNoLabor ? 'gantt-row-sans-main-doeuvre' : 'gantt-row'}>
+                                <div className={`w-28 text-sm font-medium pr-2 text-right border-r border-gray-200 pt-2 flex-shrink-0 ${isNoLabor ? 'text-gray-500 italic' : 'text-gray-600'}`}>{isNoLabor ? GANTT_NO_LABOR_LABEL : post}</div>
                                 <div className="flex-1 relative ml-2">
                                     {data.tasks.map((task, index) => (
                                         <div
                                             key={`${task.id}-${index}`}
-                                            className={`absolute h-6 rounded-md text-white text-xs flex items-center px-2 overflow-hidden ${postColorMap[post]}`}
+                                            className={`absolute h-6 rounded-md text-white text-xs flex items-center px-2 overflow-hidden ${barColor}`}
                                             style={{
                                                 top: `${task.track * (BAR_HEIGHT + BAR_GAP) + BAR_GAP}px`,
                                                 left: `${(task.start / totalDuration) * 100}%`,

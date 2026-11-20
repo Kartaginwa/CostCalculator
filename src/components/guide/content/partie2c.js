@@ -50,7 +50,7 @@ export const chapitreEtatResultats = {
         { type: 'h', id: 'guide-ff-charges-directes', text: 'Charges directes réelles' },
         { type: 'p', text: 'Ici, vous saisissez vos charges de production, classées par **nature** : {{Matière première}}, {{Main-d\'œuvre directe}}, {{Emballage}} ou {{Sous-traitance}}. Ces quatre types correspondent exactement aux familles de coûts de vos recettes ([[guide-concept-familles|chapitre 2]]), ce qui rend la comparaison avec le modèle possible.' },
         { type: 'p', text: 'Contrairement aux revenus, vous ne choisissez pas l\'activité ni le canal ligne par ligne : chaque montant est réparti automatiquement selon le coût théorique de **même type** (une charge de matière première se répartit selon le coût théorique de matière première de chaque activité, jamais selon un autre type). Cette répartition est indicative.' },
-        { type: 'callout', kind: 'exemple', text: `Charges directes du projet démo : 31 000 $ de matières premières, 8 000 $ de main-d'œuvre de production, 7 500 $ d'emballage et 1 500 $ de sous-traitance (surgélation), soit ${d(DEMO.etat.chargesDirectes)}.` },
+        { type: 'callout', kind: 'exemple', text: `Charges directes du projet démo : 31 800 $ de matières premières, 9 300 $ de main-d'œuvre de production, 5 900 $ d'emballage et 1 000 $ de sous-traitance (surgélation), soit ${d(DEMO.etat.chargesDirectes)}.` },
         { type: 'callout', kind: 'attention', text: 'La main-d\'œuvre qui figure dans votre onglet Main-d\'œuvre se saisit **ici**, dans « Main-d\'œuvre directe », même si votre comptable la range sous « Salaires ». Voir la règle expliquée dans la section Frais fixes ci-dessous.' },
 
         {
@@ -130,7 +130,7 @@ export const chapitreEtatResultats = {
                 ['Colonnes des canaux', 'La part attribuée à chaque canal de vente : un axe **indépendant** des activités. Une même dépense peut être répartie sur les deux à la fois, ou sur un seul si l\'autre ne s\'applique pas. Les valeurs dérivées d\'une clé sont verrouillées ; passez la ligne en Manuel pour les modifier.'],
             ],
         },
-        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'électricité (3 000 $) utilise la clé « Selon les charges directes » : les activités qui coûtent le plus cher à fabriquer en reçoivent la plus grande part (2 308,73 $, 471,64 $ et 219,63 $). Le loyer de l'espace de production (9 000 $) est réparti manuellement : 5 000 $, 2 500 $ et 1 500 $. Le total des frais fixes est de ${d(DEMO.etat.fraisFixes)}.` },
+        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'électricité (3 000 $) utilise la clé « Selon les charges directes » : les activités qui coûtent le plus cher à fabriquer en reçoivent la plus grande part (1 721,90 $, 813,69 $ et 464,41 $). Le loyer de l'espace de production (9 000 $) est réparti manuellement : 5 000 $, 2 500 $ et 1 500 $. Le total des frais fixes est de ${d(DEMO.etat.fraisFixes)}.` },
 
         { type: 'h', id: 'guide-ff-benefice-net', text: 'Bénéfice net' },
         { type: 'p', text: `Une seconde barre de synthèse : **bénéfice brut moins frais fixes**, affichée **au total de l'entreprise**, sans détail par activité ni par canal. Projet démo : ${d(DEMO.etat.beneficeBrut)} − ${d(DEMO.etat.fraisFixes)} = **${d(DEMO.etat.beneficeNet)}**.` },
@@ -152,10 +152,10 @@ export const chapitreEtatResultats = {
         { type: 'p', text: 'Pourquoi : un grand écart signale que le modèle ne reflète plus la réalité comptable. Les causes habituelles : des prix, des volumes ou des coûts de recette à mettre à jour, ou des ventes réelles dont le volume n\'a pas encore été saisi par canal. C\'est la même logique que le rapport de productivité de l\'onglet Main-d\'œuvre (heures attendues contre heures réelles).' },
         {
             type: 'table', caption: 'Réconciliation du projet démo', head: ['Poste', 'Réel', 'Théorique', 'Écart'], rows: [
-                ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+4 633,90 $ (+6,1 %)'],
-                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+21,55 $ (+0,0 %)'],
-                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '+4 612,35 $ (+16,8 %)'],
-                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '+4 697,06 $ (+673,8 %)'],
+                ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+797,36 $ (+1,0 %)'],
+                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+2 357,67 $ (+5,2 %)'],
+                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '-1 560,31 $ (-4,6 %)'],
+                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '-1 499,84 $ (-27,3 %)'],
             ],
         },
         {
@@ -169,7 +169,7 @@ export const chapitreEtatResultats = {
                 ['{{Écart (%)}}', 'Le même écart, exprimé en pourcentage du théorique, pour comparer l\'ampleur des écarts d\'une ligne à l\'autre.'],
             ],
         },
-        { type: 'p', text: 'Lecture : le réel dépasse le théorique pour les revenus (+6,1 %), alors que les charges directes réelles sont presque égales à celles du modèle (+0,0 %). Le bénéfice net du modèle est légèrement négatif (−697,06 $) alors que le réel est de 4 000,00 $ : en pourcentage, l\'écart du bénéfice net (+673,8 %) paraît énorme parce que le théorique est proche de zéro, donc le moindre écart en dollars y devient un grand pourcentage. Regardez d\'abord les écarts en dollars.' },
+        { type: 'p', text: 'Lecture : le réel dépasse légèrement le théorique pour les revenus (+1,0 %), mais les charges directes réelles dépassent aussi celles du modèle (+5,2 %) : le bénéfice net réel (4 000,00 $) est inférieur de 27,3 % à celui du modèle (5 499,84 $). Un écart de charges directes de cet ordre signale en général des coûts que les recettes ne voient pas (rebuts, gaspillage, prix d\'achat plus élevés que ceux saisis). Regardez d\'abord les écarts en dollars : le pourcentage du bénéfice net est amplifié parce que ce bénéfice est une petite différence entre de grands montants.' },
         { type: 'p', text: 'La comparaison se fait toujours à l\'échelle de l\'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Bénéfice brut = revenus moins charges directes ; bénéfice net = bénéfice brut moins le total des frais fixes (sous-total du tableau des dépenses). Ce total est soustrait identiquement du réel et du théorique : l\'écart entre les deux colonnes vient donc du bénéfice brut, auquel s\'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n\'existe pas dans les charges directes réelles).' },
 
         { type: 'h', id: 'guide-ff-import', text: 'Importer l\'état des résultats' },
@@ -267,7 +267,7 @@ export const chapitreProduction = {
                 'Saisissez le **Début** (le moment où l\'étape commence, mesuré depuis le début de la recette) et la **Durée** (la durée totale de l\'étape), tous deux au format HH:MM:SS. La colonne **Fin** se calcule seule.',
             ],
         },
-        { type: 'p', text: 'Le début d\'une étape n\'est pas forcément la fin de la précédente : deux étapes peuvent se chevaucher quand plusieurs personnes travaillent en parallèle. Le **diagramme de production** (de Gantt) sous le tableau montre le déroulement du lot dans le temps, en gérant les chevauchements.' },
+        { type: 'p', text: 'Le début d\'une étape n\'est pas forcément la fin de la précédente : deux étapes peuvent se chevaucher quand plusieurs personnes travaillent en parallèle. Le **diagramme de production** (de Gantt) sous le tableau montre le déroulement du lot dans le temps, en gérant les chevauchements. Chaque poste a sa ligne ; les étapes sans personne affectée (refroidissement, repos, cuisson sans surveillance) sont regroupées dans une ligne grise {{Sans main-d\'œuvre}}, pour que toute la recette soit visible. Elles n\'ajoutent aucun coût de main-d\'œuvre.' },
         { type: 'p', text: 'Pour chaque étape, trois coûts s\'affichent :' },
         {
             type: 'ul', itemIds: ['guide-prod-col-cout-direct', 'guide-prod-col-cout-indirect', 'guide-prod-col-cout-total'], items: [

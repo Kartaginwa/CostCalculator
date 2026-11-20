@@ -326,6 +326,7 @@ export const SCENES = [
             { at: 300, do: 'scroll', target: '[data-tour="bcg-title"]', block: 'start' },
             { at: 1200, do: 'highlight', target: { text: 'Étoiles', within: '#strategic-analysis', up: 2 } },
             { at: 1500, do: 'note', id: 'etoiles', target: { text: 'Étoiles', within: '#strategic-analysis', up: 2 }, text: 'À promouvoir', side: 'bottom' },
+            { at: 3400, do: 'unnote' },
             { at: 3500, do: 'highlight', target: { text: 'Poids morts', within: '#strategic-analysis', up: 2 } },
             { at: 3600, do: 'note', id: 'poids', target: { text: 'Poids morts', within: '#strategic-analysis', up: 2 }, text: 'À repenser ou retirer', side: 'bottom' },
             { at: 6000, do: 'unnote' },

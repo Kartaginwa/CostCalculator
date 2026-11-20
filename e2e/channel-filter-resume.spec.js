@@ -109,18 +109,18 @@ test("Rapport : Par SKU détaille les frais fixes par Général/Activité/Canal 
     // Général est désormais réparti au prorata des coûts directs, à l'échelle du menu entier
     // (unifié avec le mécanisme CICI d'Activité le 21/10, salesAllocation retiré) — valeur propre
     // à ce SKU plutôt que la constante uniforme 0.75 $ d'avant (voir initialState.js).
-    await expect(bySku.getByText('0,68 $', { exact: true })).toHaveCount(3);
-    await expect(bySku.getByText('0,76 $', { exact: true })).toHaveCount(3);
+    await expect(bySku.getByText('0,71 $', { exact: true })).toHaveCount(3);
+    await expect(bySku.getByText('0,98 $', { exact: true })).toHaveCount(3);
     // Canal, lui, varie réellement selon le canal (volume réel différent par canal).
-    await expect(bySku.getByText('1,08 $', { exact: true })).toHaveCount(1);
-    await expect(bySku.getByText('0,80 $', { exact: true })).toHaveCount(1);
-    await expect(bySku.getByText('0,44 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('1,10 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0,82 $', { exact: true })).toHaveCount(1);
+    await expect(bySku.getByText('0,46 $', { exact: true })).toHaveCount(1);
     // Total par unité = Général + Activité + Canal — varie donc avec le canal, contrairement à
     // Général/Activité pris séparément.
     const totalRow = bySku.locator('tr', { hasText: 'Frais fixes totaux par unité' });
+    await expect(totalRow.getByText('2,79 $', { exact: true })).toHaveCount(1);
     await expect(totalRow.getByText('2,51 $', { exact: true })).toHaveCount(1);
-    await expect(totalRow.getByText('2,24 $', { exact: true })).toHaveCount(1);
-    await expect(totalRow.getByText('1,87 $', { exact: true })).toHaveCount(1);
+    await expect(totalRow.getByText('2,15 $', { exact: true })).toHaveCount(1);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

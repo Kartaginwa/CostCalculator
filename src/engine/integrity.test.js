@@ -8,6 +8,7 @@ import { computeProjectAnalysis } from './analysisPipeline.js';
 import { computeProjectChecks } from './projectChecks.js';
 import { findIngredientUsages, findPackagingUsages, findSubRecipeUsages, formatNameList } from './usage.js';
 import { clearFormatVolumes, mirrorFirstFormat, removeChannelFromProducts } from './productEdits.js';
+import { computeLaborHoursNeeded } from './laborHours.js';
 
 // Corrections de l'audit complémentaire du 19/11 : fiche produit, points de référence, unités de mesure.
 
@@ -99,6 +100,49 @@ describe('Relevés du projet démo', () => {
             fixedCosts: pools.meta, now: new Date(),
         });
         expect(checks.map(c => c.id)).toEqual([]);
+    });
+});
+
+describe('Calibrage du projet démo (20/11)', () => {
+    const state = getDefaultState();
+    const { data } = analysisOf(state);
+    const rows = data.productsWithCosts.filter((r) => r.onMenu);
+    const aggregate = (keyOf) => {
+        const groups = {};
+        rows.forEach((r) => r.channelBreakdown.forEach((cb) => {
+            const volume = Number(cb.volume) || 0;
+            const g = (groups[keyOf(r, cb)] = groups[keyOf(r, cb)] || { revenue: 0, net: 0 });
+            g.revenue += Number(cb.netPrice) * volume;
+            g.net += Number(cb.margeNetteDollar) * volume;
+        }));
+        return groups;
+    };
+    it('le bénéfice net théorique est positif et proche du réel (4 000 $)', () => {
+        const net = Object.values(aggregate(() => 'tout'))[0].net;
+        expect(net).toBeGreaterThan(3000);
+        expect(net).toBeLessThan(7000);
+    });
+    it('chaque activité et chaque canal est rentable', () => {
+        Object.entries(aggregate((r) => r.activityId)).forEach(([id, g]) => expect(g.net, `activité ${id}`).toBeGreaterThan(0));
+        Object.entries(aggregate((r, cb) => cb.channelId)).forEach(([id, g]) => expect(g.net, `canal ${id}`).toBeGreaterThan(0));
+    });
+    it('les revenus théoriques par activité restent proches des revenus réels saisis (±10 %)', () => {
+        const byActivity = aggregate((r) => r.activityId);
+        const real = { act_plats: 45000, act_soupes: 20000, act_sauces: 12500 };
+        Object.entries(real).forEach(([id, amount]) => expect(Math.abs(byActivity[id].revenue - amount) / amount, id).toBeLessThan(0.1));
+        const total = Object.values(byActivity).reduce((s, g) => s + g.revenue, 0);
+        expect(Math.abs(total - 80000) / 80000).toBeLessThan(0.03);
+    });
+    it('l\'équipe est utilisée entre 80 % et 95 % (ni sous-capacité, ni inoccupée)', () => {
+        const hours = computeLaborHoursNeeded(state.products, state.ingredientsList).byPost;
+        const expected = state.laborDatabase.reduce((s, post) => s + (post.employees || []).reduce((t, e) => t + Number(e.workedHours) * Number(e.productiveTimePercentage) / 100, 0), 0);
+        const needed = Object.values(hours).reduce((s, h) => s + h, 0);
+        expect(needed / expected).toBeGreaterThan(0.8);
+        expect(needed / expected).toBeLessThan(0.95);
+    });
+    it('les parts de ventes du démo totalisent 100 %', () => {
+        const total = state.products.flatMap((p) => p.formats).filter((f) => f.onMenu).reduce((s, f) => s + Number(f.salesMix), 0);
+        expect(total).toBeCloseTo(100, 1);
     });
 });
 

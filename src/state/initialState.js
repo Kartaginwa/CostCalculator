@@ -1,4 +1,5 @@
 import { computeProjectAnalysis } from '../engine/analysisPipeline.js';
+import { computeSalesMixFromChannelPrices } from '../engine/salesMixFromChannels.js';
 import { todayLocalISO, generateSlug, sumLineAmounts, sumAmountsMap, DEFAULT_ACTIVE_UNITS } from '../utils.js';
 
 // Construit le format de vente par défaut d'un produit à partir de ses champs "à plat"
@@ -275,7 +276,7 @@ export const getDefaultState = () => {
     // une formule — une clé personnalisée est un gabarit réutilisable, pas une valeur recalculée à
     // chaque usage, contrairement à « Selon les ventes »/« Selon les charges directes »).
     const demoRepartitionKeys = [
-        { id: 'rk_ventes_canal', name: 'Ventes par canal (hors Général)', activityShares: {}, channelShares: { channel_direct: 16.01, channel_epiceries: 25.52, channel_gs: 58.47 } },
+        { id: 'rk_ventes_canal', name: 'Ventes par canal (hors Général)', activityShares: {}, channelShares: { channel_direct: 16.05, channel_epiceries: 25.55, channel_gs: 58.40 } },
     ];
 
     // --- CHARGES DIRECTES RÉELLES (Phase 4.3) : même patron que les frais fixes, mais catégorisées
@@ -290,10 +291,10 @@ export const getDefaultState = () => {
     // jamais par le calcul de coût de revient lui-même (ces montants réels catégorisés n'ont pas
     // vocation à remplacer le modèle de recette).
     const demoDirectCostLines = [
-        { id: 'dc_matiere', label: 'Achats de matières premières', category: 'Matière première', amount: 31000 },
-        { id: 'dc_mo_prod', label: "Main-d'œuvre de production (plancher)", category: "Main-d'œuvre directe", amount: 8000 },
-        { id: 'dc_emballage', label: "Achats d'emballage", category: 'Emballage', amount: 7500 },
-        { id: 'dc_soustraitance', label: 'Sous-traitance — surgélation', category: 'Sous-traitance', amount: 1500 },
+        { id: 'dc_matiere', label: 'Achats de matières premières', category: 'Matière première', amount: 31800 },
+        { id: 'dc_mo_prod', label: "Main-d'œuvre de production (plancher)", category: "Main-d'œuvre directe", amount: 9300 },
+        { id: 'dc_emballage', label: "Achats d'emballage", category: 'Emballage', amount: 5900 },
+        { id: 'dc_soustraitance', label: 'Sous-traitance — surgélation', category: 'Sous-traitance', amount: 1000 },
     ];
 
     // --- INGRÉDIENTS (18 références, 5 fournisseurs) ---
@@ -348,14 +349,19 @@ export const getDefaultState = () => {
     // sous-recettes (bouillon, purée) consommées par les autres produits (engine/laborHours.js) : environ
     // +42 h pour les cuisiniers. Les heures des cuisiniers passent de 60/60/55 à 80/80/72 pour retrouver
     // ~86 % d'utilisation globale (sans quoi le démo montrerait ~101 %, une équipe en sous-capacité).
+    // Recalibrage d'ensemble du 20/11 (le démo ne doit plus être déficitaire) : prix de détail, volumes par canal et
+    // coût d'achat de la sauce revendue revus pour que le bénéfice net théorique soit positif (~5 500 $ contre 4 000 $ réel),
+    // que chaque activité et chaque canal soit rentable, et que les revenus par activité rejoignent les revenus réels
+    // saisis plus haut (45 000 / 20 000 / 12 500 $). Heures des cuisiniers 96/96/86 et du contrôleur qualité 7 h
+    // (utilisation globale ~86 %) ; charges directes réelles réparties à 31 800 / 9 300 / 5 900 / 1 000 $ (total inchangé).
     const labor = [
         { id: 'post_resp', postName: 'Responsable de production', employees: [
             { id: 'emp_resp', employeeName: 'Mireille', hourlyRate: 32, socialCharges: 16, vacationPercentage: 6, productiveTimePercentage: 85, workedHours: 20 },
         ] },
         { id: 'post_cuisinier', postName: 'Cuisinier de production', employees: [
-            { id: 'emp_cuisinier_1', employeeName: 'Hugo', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 80 },
-            { id: 'emp_cuisinier_2', employeeName: 'Félix', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 80 },
-            { id: 'emp_cuisinier_3', employeeName: 'Sarah', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 72 },
+            { id: 'emp_cuisinier_1', employeeName: 'Hugo', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 96 },
+            { id: 'emp_cuisinier_2', employeeName: 'Félix', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 96 },
+            { id: 'emp_cuisinier_3', employeeName: 'Sarah', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 86 },
         ] },
         { id: 'post_emballage', postName: "Opérateur d'emballage", employees: [
             { id: 'emp_emballage_1', employeeName: 'Chantal', hourlyRate: 19, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 95, workedHours: 42 },
@@ -363,7 +369,7 @@ export const getDefaultState = () => {
             { id: 'emp_emballage_3', employeeName: 'Patrick', hourlyRate: 18, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 93, workedHours: 40 },
         ] },
         { id: 'post_qualite', postName: 'Contrôleur qualité', employees: [
-            { id: 'emp_qualite', employeeName: 'David', hourlyRate: 24, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 10 },
+            { id: 'emp_qualite', employeeName: 'David', hourlyRate: 24, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 7 },
         ] },
     ];
 
@@ -390,6 +396,8 @@ export const getDefaultState = () => {
                 packagingItems: [],
                 productionSteps: [
                     { stepId: 's_bo_1', stepName: 'Mijotage du bouillon', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 7200 },
+                    // Étape sans personne (refroidissement en cellule) : elle apparaît dans la ligne « Sans main-d'œuvre » du diagramme de production.
+                    { stepId: 's_bo_2', stepName: 'Refroidissement rapide', personnel: [], startTime: 7200, duration: 3600 },
                 ],
             }],
         },
@@ -403,7 +411,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_sub_puree', sku: 'ACC-PUREE-250G', prixVente: 4.94, nbPortions: 20, portionSize: 250, portionUnit: 'g',
                 salesMix: 5.36, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                ...demoFormatPricing(5.49, { volumeDirect: 90, volumeEpi: 160, volumeGs: 420 }),
+                ...demoFormatPricing(5.79, { volumeDirect: 66, volumeEpi: 114, volumeGs: 295 }),
                 ingredients: [
                     { rowId: 'r_pu_1', id: 'ing_pdt_flocons', quantity: 4000, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_pu_2', id: 'ing_beurre', quantity: 300, recipeUnit: 'g', yieldPercentage: 100 },
@@ -434,7 +442,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_pate_s', sku: 'PP-PATECHINOIS-340G', prixVente: 8.09, nbPortions: 20, portionSize: 340, portionUnit: 'g',
                     salesMix: 11.21, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                    ...demoFormatPricing(8.99, { volumeDirect: 180, volumeEpi: 320, volumeGs: 900 }),
+                    ...demoFormatPricing(9.49, { volumeDirect: 128, volumeEpi: 228, volumeGs: 640 }),
                     ingredients: [
                         { rowId: 'r_pa_1', id: 'ing_boeuf', quantity: 3000, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_pa_2', id: 'ing_mais', quantity: 1800, recipeUnit: 'g', yieldPercentage: 100 },
@@ -455,7 +463,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_pate_f', sku: 'PP-PATECHINOIS-900G', prixVente: 19.79, nbPortions: 10, portionSize: 900, portionUnit: 'g',
                     salesMix: 4.96, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                    ...demoFormatPricing(21.99, { volumeDirect: 60, volumeEpi: 140, volumeGs: 420 }),
+                    ...demoFormatPricing(22.99, { volumeDirect: 43, volumeEpi: 100, volumeGs: 300 }),
                     aging: { enabled: true, interestRate: 7, months: 1.5 },
                     ingredients: [
                         { rowId: 'r_paf_1', id: 'ing_boeuf', quantity: 4000, recipeUnit: 'g', yieldPercentage: 100 },
@@ -486,7 +494,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_tao', sku: 'PP-GENERALTAO-400G', prixVente: 8.54, nbPortions: 20, portionSize: 400, portionUnit: 'g',
                 salesMix: 11.21, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
-                ...demoFormatPricing(9.49, { volumeDirect: 150, volumeEpi: 300, volumeGs: 950 }),
+                ...demoFormatPricing(9.99, { volumeDirect: 105, volumeEpi: 214, volumeGs: 675 }),
                 ingredients: [
                     { rowId: 'r_tao_1', id: 'ing_poulet', quantity: 3600, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_tao_2', id: 'ing_riz', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
@@ -519,7 +527,7 @@ export const getDefaultState = () => {
                 // App.jsx).
                 id: 'fmt_saumon', sku: buildFormatSku('Saumon teriyaki, riz et légumes', 380, 'g', 'fmt_saumon'), prixVente: 12.59, nbPortions: 15, portionSize: 380, portionUnit: 'g',
                 salesMix: 7.93, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['fish', 'soy'],
-                ...demoFormatPricing(13.99, { volumeDirect: 140, volumeEpi: 250, volumeGs: 600 }),
+                ...demoFormatPricing(14.49, { volumeDirect: 100, volumeEpi: 180, volumeGs: 430 }),
                 ingredients: [
                     { rowId: 'r_sa_1', id: 'ing_saumon', quantity: 2700, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_sa_2', id: 'ing_riz', quantity: 1650, recipeUnit: 'g', yieldPercentage: 100 },
@@ -553,7 +561,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_thai_s', sku: 'PP-POULETTHAI-350G', prixVente: 8.36, nbPortions: 20, portionSize: 350, portionUnit: 'g',
                     salesMix: 8.73, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
-                    ...demoFormatPricing(9.29, { volumeDirect: 130, volumeEpi: 260, volumeGs: 700 }),
+                    ...demoFormatPricing(9.79, { volumeDirect: 95, volumeEpi: 185, volumeGs: 500 }),
                     ingredients: [
                         { rowId: 'r_th_1', id: 'ing_poulet', quantity: 3400, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_th_2', id: 'ing_riz', quantity: 2200, recipeUnit: 'g', yieldPercentage: 100 },
@@ -573,7 +581,7 @@ export const getDefaultState = () => {
                 {
                     id: 'fmt_thai_f', sku: 'PP-POULETTHAI-900G', prixVente: 20.69, nbPortions: 10, portionSize: 900, portionUnit: 'g',
                     salesMix: 4.4, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['soy'],
-                    ...demoFormatPricing(22.99, { volumeDirect: 50, volumeEpi: 120, volumeGs: 380 }),
+                    ...demoFormatPricing(23.99, { volumeDirect: 38, volumeEpi: 85, volumeGs: 270 }),
                     subcontracting: { enabled: true, items: [{ id: 'sub_thai_item_1', name: 'Cuisine Sous-Vide Boréal', operation: 'Cuisson sous vide du poulet et des légumes (lot familial de 10 portions)', cost: 26.00 }] },
                     aging: { enabled: true, interestRate: 8, months: 1 },
                     ingredients: [
@@ -610,7 +618,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_chili', sku: 'PP-CHILICONCARNE-400G', prixVente: 7.64, nbPortions: 20, portionSize: 400, portionUnit: 'g',
                 salesMix: 13.13, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
-                ...demoFormatPricing(8.49, { volumeDirect: 160, volumeEpi: 380, volumeGs: 1100 }),
+                ...demoFormatPricing(8.99, { volumeDirect: 114, volumeEpi: 270, volumeGs: 785 }),
                 ingredients: [
                     { rowId: 'r_ch_1', id: 'ing_boeuf', quantity: 3200, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_ch_2', id: 'ing_haricots', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
@@ -637,7 +645,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_soupe', sku: 'SO-LEGUMESPOULET-750ML', prixVente: 6.74, nbPortions: 46.65, portionSize: 0.75, portionUnit: 'L',
                 salesMix: 10.01, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
-                ...demoFormatPricing(7.49, { volumeDirect: 150, volumeEpi: 320, volumeGs: 780 }),
+                ...demoFormatPricing(8.99, { volumeDirect: 285, volumeEpi: 610, volumeGs: 1480 }),
                 yieldGrid: {
                     enabled: true, baseQuantity: 40, baseUnit: 'L',
                     stages: [
@@ -677,7 +685,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_potage', sku: 'SO-COURGEMUSQUEE-750ML', prixVente: 6.74, nbPortions: 15, portionSize: 0.75, portionUnit: 'L',
                 salesMix: 5.53, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
-                ...demoFormatPricing(7.49, { volumeDirect: 90, volumeEpi: 180, volumeGs: 420 }),
+                ...demoFormatPricing(11.49, { volumeDirect: 114, volumeEpi: 228, volumeGs: 515 }),
                 ingredients: [
                     { rowId: 'r_po_1', id: 'ing_courge', quantity: 5250, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_po_2', id: 'ing_creme', quantity: 2250, recipeUnit: 'ml', yieldPercentage: 100 },
@@ -735,8 +743,8 @@ export const getDefaultState = () => {
             isIngredient: false, onMenu: true, salesMix: 5.53, prixVente: 7.19, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
             formats: [{
                 id: 'fmt_sauce_terroir', sku: 'SA-TERROIR-REVENTE-500ML', prixVente: 7.19, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
-                salesMix: 5.53, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: true, purchaseCost: 5.20, manualAllergens: [],
-                ...demoFormatPricing(7.99, { volumeDirect: 90, volumeEpi: 180, volumeGs: 420 }),
+                salesMix: 5.53, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: true, purchaseCost: 4.20, manualAllergens: [],
+                ...demoFormatPricing(10.49, { volumeDirect: 220, volumeEpi: 445, volumeGs: 1035 }),
                 ingredients: [], packagingItems: [], productionSteps: [],
             }],
         },
@@ -753,7 +761,7 @@ export const getDefaultState = () => {
     };
 
     // Champs « à plat » du produit = miroir de son premier format (même convention que buildDefaultFormat/App.jsx).
-    const demoProducts = rawProducts.map((p) => {
+    const demoProductsRaw = rawProducts.map((p) => {
         const formats = p.formats;
         return {
             ...p,
@@ -765,6 +773,10 @@ export const getDefaultState = () => {
             onMenu: formats[0].onMenu,
         };
     });
+
+    // La part des ventes (salesMix) est DÉRIVÉE des volumes réels par canal, comme dans l'application : le démo ne peut
+    // donc jamais afficher un total différent de 100 % quand on change un volume.
+    const demoProducts = computeSalesMixFromChannelPrices(demoProductsRaw).products;
 
     // --- DONNÉES FINALES ---
     return {

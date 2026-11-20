@@ -115,7 +115,7 @@ export const chapitreEmballage = {
         { type: 'h', id: 'guide-emb-import', text: 'Importer une liste d\'emballages' },
         { type: 'p', text: 'C\'est le même assistant que pour les ingrédients (quatre étapes : téléverser, associer les colonnes, prévisualiser et valider, confirmer). Il reconnaît un emballage déjà présent (mise à jour) ou un nouveau (ajout).' },
         { type: 'h', id: 'guide-emb-abc', text: 'Analyse ABC et rapport d\'achats' },
-        { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et pertes existent aussi pour l\'emballage, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 70,5 % des coûts.' },
+        { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et pertes existent aussi pour l\'emballage, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 71,5 % des coûts.' },
         { type: 'callout', kind: 'retenir', text: 'L\'emballage se saisit comme les ingrédients, mais seule la perte en stock s\'y applique. Il pèse souvent bien plus qu\'on le croit : regardez son pourcentage dans vos rapports.' },
         { type: 'words', items: [
             { term: 'Emballage', def: 'tout ce qui contient, protège ou présente le produit : pot, bouteille, couvercle, étiquette, boîte.' },
@@ -158,13 +158,13 @@ export const chapitreMainOeuvre = {
                 { label: 'Taux d\'utilisation (%).', text: 'Les heures réelles ÷ les heures attendues.' },
             ],
         },
-        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 88,80 %, l'« Opérateur d'emballage » à 94,12 %, le « Contrôleur qualité » à 86,67 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
+        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 90,31 %, l'« Opérateur d'emballage » à 90,55 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
         { type: 'callout', kind: 'pourquoi', text: 'Un taux d\'utilisation bas signale de la capacité payée et inutilisée : trop de personnel pour le volume vendu, des recettes qui ne reflètent pas le travail réel, ou des ventes qui n\'ont pas encore été saisies. C\'est un levier de rentabilité majeur, car **ce coût est réparti sur tous vos produits** (voir [[guide-concept-capacite|chapitre 10]]).' },
         { type: 'callout', kind: 'attention', text: 'Une personne présente dans cet onglet mais affectée à aucune étape, comme le responsable de production du démo, fait baisser le taux d\'utilisation global. Son coût n\'est pas perdu : il est réparti sur toutes les recettes sous forme de coût indirect de main-d\'œuvre. Si cette personne ne fait pas de production, mieux vaut la retirer de l\'onglet et la saisir dans les frais fixes.' },
 
         { type: 'h', id: 'guide-mo-capacite', text: 'Capacité de production par activité' },
         { type: 'p', text: 'Ce deuxième tableau répartit les heures de main-d\'œuvre réellement requises entre vos **activités de production**, et indique la part de chaque activité dans le total. Il révèle quelle ligne de production est la plus exigeante en temps. Il n\'y a pas de « heures attendues » par activité : un poste ou un employé n\'est pas rattaché à une seule activité, donc rien n\'est comparable.' },
-        { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 182,59 heures (59,74 % du total), les soupes et potages 123,05 heures (40,26 %), et les sauces et accompagnements 0 heure : leurs recettes n\'ont pas d\'étapes de production avec du personnel affecté, ou n\'ont pas de ventes saisies.' },
+        { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 130,24 heures (38,26 % du total), les soupes et potages 210,14 heures (61,74 %), et les sauces et accompagnements 0 heure : leurs recettes n\'ont pas d\'étapes de production avec du personnel affecté, ou n\'ont pas de ventes saisies.' },
         {
             type: 'ul', itemIds: ['guide-mo-cap-heures', 'guide-mo-cap-part'], items: [
                 { label: 'Heures productives réelles.', text: 'Les heures de production de l\'activité, calculées à partir des étapes de vos recettes et de vos ventes de la période.' },

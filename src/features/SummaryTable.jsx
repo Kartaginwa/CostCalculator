@@ -981,7 +981,9 @@ export const SummaryTable = ({
     const [sortConfig, setSortConfig] = useSessionState('summary.contributionSort', { key: 'costs.margeNettePercent', direction: 'descending' });
     const [showAllContributions, setShowAllContributions] = useState(false);
     const [showChecks, setShowChecks] = useState(false);
-    const projectChecks = useMemo(() => computeProjectChecks({ products, baseIngredients, basePackaging, fixedCosts: indirectPools?.meta }), [products, baseIngredients, basePackaging, indirectPools]);
+    const projectChecks = useMemo(() => computeProjectChecks({
+        products, baseIngredients, basePackaging, productionActivities, salesChannels, trackingPoints, fixedCosts: indirectPools?.meta,
+    }), [products, baseIngredients, basePackaging, productionActivities, salesChannels, trackingPoints, indirectPools]);
     const [currentPage, setCurrentPage] = useState(1);
     useEffect(() => {
         setCurrentPage(1);

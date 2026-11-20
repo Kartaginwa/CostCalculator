@@ -1,4 +1,4 @@
-import { parseLocaleNumber, CONVERSION_FACTORS, buildRowDisplayName, round2, sumLineAmounts, sumAmountsMap } from '../utils.js';
+import { parseLocaleNumber, CONVERSION_FACTORS, buildRowDisplayName, round2, sumLineAmounts, sumAmountsMap, unitConversionFactor } from '../utils.js';
 import { calculateCosts, computeChannelBreakdown, computeMarginsForPrice } from './calculateCosts.js';
 
 // Phase 4.5bis/4.6 — contenants « Activité » partagés entre Revenus, Charges directes réelles et
@@ -230,7 +230,7 @@ function computePurchasingAndAbc(catalogue, activeProducts, unitsSoldById, recip
             for (const item of (product.format?.[recipeField] || [])) {
                 if (item.id === catItem.id) {
                     const recipeUnit = item.recipeUnit || catItem.unit;
-                    const conv = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[catItem.unit]?.factor || 1);
+                    const conv = unitConversionFactor(recipeUnit, catItem.unit);
                     totalQty += parseLocaleNumber(item.quantity) * conv * batchesNeeded;
                 }
             }

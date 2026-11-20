@@ -2,7 +2,7 @@
 // Fonction pure "données -> classeur" : reçoit tout son contexte via l'objet `deps`. XLSX est
 // fourni en global via scripts/copy-libs. Le contenu des feuilles est intentionnellement un
 // export de données brutes (handoff spécialiste), volontairement distinct de l'analyse du PDF.
-import { parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS } from '../utils.js';
+import { parseLocaleNumber, formatSecondsToTime, unitConversionFactor } from '../utils.js';
 import { indirectCostMethodLabels } from '../state/initialState.js';
 
 export const exportToExcel = (deps) => {
@@ -211,12 +211,12 @@ export const exportToExcel = (deps) => {
                         if (ingredientSource) {
                             ingredientName = ingredientSource.name;
                             recipeUnit = i.recipeUnit || ingredientSource.unit;
-                            const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[ingredientSource.unit]?.factor || 1);
+                            const conversionFactor = unitConversionFactor(recipeUnit, ingredientSource.unit);
                             const quantityInBaseUnit = parseLocaleNumber(i.quantity) * conversionFactor;
                             const baseCost = quantityInBaseUnit * parseLocaleNumber(ingredientSource.unitPrice);
                             const yieldPercent = parseLocaleNumber(i.yieldPercentage);
                             totalCost = (yieldPercent && yieldPercent > 0) ? baseCost / (yieldPercent / 100) : baseCost;
-                            displayedUnitPrice = (ingredientSource.unitPrice || 0) / (CONVERSION_FACTORS[ingredientSource.unit]?.factor || 1) * (CONVERSION_FACTORS[recipeUnit]?.factor || 1);
+                            displayedUnitPrice = (ingredientSource.unitPrice || 0) * unitConversionFactor(recipeUnit, ingredientSource.unit);
                         }
                         
                         sheetData.push([ 
@@ -244,12 +244,12 @@ export const exportToExcel = (deps) => {
                             if (pkgSource) {
                                 pkgName = pkgSource.name;
                                 recipeUnit = i.recipeUnit || pkgSource.unit;
-                                const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[pkgSource.unit]?.factor || 1);
+                                const conversionFactor = unitConversionFactor(recipeUnit, pkgSource.unit);
                                 const quantityInBaseUnit = parseLocaleNumber(i.quantity) * conversionFactor;
                                 const baseCost = quantityInBaseUnit * parseLocaleNumber(pkgSource.unitPrice);
                                 const lossPercentage = (parseLocaleNumber(pkgSource.lossPercentage) || 0) / 100;
                                 totalCost = lossPercentage > 0 && lossPercentage < 1 ? baseCost / (1 - lossPercentage) : baseCost;
-                                displayedUnitPrice = (pkgSource.unitPrice || 0) / (CONVERSION_FACTORS[pkgSource.unit]?.factor || 1) * (CONVERSION_FACTORS[recipeUnit]?.factor || 1);
+                                displayedUnitPrice = (pkgSource.unitPrice || 0) * unitConversionFactor(recipeUnit, pkgSource.unit);
                             }
                             sheetData.push([
                                 pkgName,

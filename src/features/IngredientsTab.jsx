@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowUpDown, Upload, PlusCircle, AlertCircle, Copy, Trash2 } from 'lucide-react';
-import { todayLocalISO, parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber } from '../utils.js';
+import { todayLocalISO, parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel, areUnitsCompatible } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
+import { findIngredientUsages, formatNameList } from '../engine/usage.js';
 import { computeIngredientVolatility } from '../engine/priceVolatility.js';
 
 // Chargé à la demande : l'assistant d'import est volumineux et rarement ouvert.
@@ -33,7 +34,7 @@ const AbcItem = ({ item, volatilityByName }) => {
 };
 
 export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, analysisData, trackingPoints, activeUnits } = useProject();
+    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, requestConfirmation, products, analysisData, trackingPoints, activeUnits } = useProject();
     const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
 
     // --- LOGIQUE CENTRALISÉE : ON EXTRAIT LES DONNÉES DU CERVEAU ---
@@ -204,6 +205,18 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
 
         newList[originalIndex] = itemToUpdate;
         onUpdateIngredientsList(newList);
+
+        // Changer l'unité d'un ingrédient déjà utilisé vers une AUTRE famille (kg → unité, L → kg) laisse les lignes de
+        // recette dans leur ancienne unité : le coût serait faux sans erreur visible. On prévient tout de suite.
+        if (field === 'unit' && !areUnitsCompatible(value, originalItem.unit)) {
+            const usages = findIngredientUsages(products, id);
+            if (usages.length > 0) {
+                showNotification({
+                    message: `L'unité de « ${originalItem.name || 'cet ingrédient'} » est passée de ${unitLabel(originalItem.unit)} à ${unitLabel(value)}, une autre famille d'unités. Les recettes qui l'utilisent (${formatNameList(usages)}) gardent l'ancienne unité : corrigez-la dans chaque recette, sinon leur coût est faux.`,
+                    type: 'error',
+                });
+            }
+        }
     };
     const handleUpdateAllergens = (ingredientId, newAllergens) => {
         const newList = baseIngredients.map(item => 
@@ -216,18 +229,31 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
         const ingredientToDelete = baseIngredients.find(item => item.id === id);
         if (!ingredientToDelete) return;
 
-        const originalList = [...baseIngredients];
-        const newList = baseIngredients.filter(item => item.id !== id);
-        onUpdateIngredientsList(newList);
+        const performDelete = () => {
+            const originalList = [...baseIngredients];
+            const newList = baseIngredients.filter(item => item.id !== id);
+            onUpdateIngredientsList(newList);
 
-        showNotification({
-            message: `L'ingrédient "${ingredientToDelete.name}" a été supprimé.`,
-            type: 'info',
-            onUndo: () => {
-                onUpdateIngredientsList(originalList);
-                setNotification(null);
-            }
-        });
+            showNotification({
+                message: `L'ingrédient "${ingredientToDelete.name}" a été supprimé.`,
+                type: 'info',
+                onUndo: () => {
+                    onUpdateIngredientsList(originalList);
+                    setNotification(null);
+                }
+            });
+        };
+        // Un ingrédient utilisé par des recettes : le moteur compterait leur ligne à 0 $ (le coût baisserait sans bruit).
+        const usages = findIngredientUsages(products, id);
+        if (usages.length > 0) {
+            requestConfirmation({
+                title: 'Supprimer cet ingrédient ?',
+                message: `« ${ingredientToDelete.name || 'Sans nom'} » est utilisé dans : ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0 $ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
+                onConfirm: performDelete,
+            });
+            return;
+        }
+        performDelete();
     };
     const duplicateRow = (id) => {
         const ingredientIndex = baseIngredients.findIndex(item => item.id === id);
@@ -422,7 +448,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <td className="px-4 py-2">
                                     <select value={item.unit} onChange={e => handleUpdate(item.id, 'unit', e.target.value)} className="w-full p-1 border rounded" disabled={item.isRecipe}>
                                         {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, item.unit).map(u => (
-                                            <option key={u} value={u}>{u}</option>
+                                            <option key={u} value={u}>{unitLabel(u)}</option>
                                         ))}
                                     </select>
                                 </td>

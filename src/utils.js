@@ -219,7 +219,11 @@ export const CONVERSION_FACTORS = {
     'cl': { base: 'ml', factor: 10, type: 'continuous' },
     'hL': { base: 'ml', factor: 100000, type: 'continuous' },
     'fl oz': { base: 'ml', factor: 29.5735, type: 'continuous' },
+    // « gal » et « fl oz » sont les unités AMÉRICAINES ; les unités impériales (courantes au Canada) sont
+    // distinctes — 1 gallon impérial = 4 546,09 ml (+20 % sur le gallon américain).
     'gal': { base: 'ml', factor: 3785.41, type: 'continuous' },
+    'fl oz imp': { base: 'ml', factor: 28.4131, type: 'continuous' },
+    'gal imp': { base: 'ml', factor: 4546.09, type: 'continuous' },
     // Discrète (base 'unité')
     'unité': { base: 'unité', factor: 1, type: 'discrete' },
     'douzaine': { base: 'unité', factor: 12, type: 'discrete' },
@@ -244,6 +248,23 @@ export const getCompatibleUnits = (baseUnit) => {
     if (!baseType) return [baseUnit]; // Si l'unité est inconnue, elle est la seule option
     return Object.keys(CONVERSION_FACTORS).filter(u => CONVERSION_FACTORS[u].base === baseType);
 };
+
+// Facteur pour convertir une quantité exprimée en `fromUnit` vers `toUnit` (même famille). Formule UNIQUE du moteur,
+// des rapports PDF/Excel et de la fiche recette (avant le 19/11 elle était recopiée à neuf endroits). Une unité
+// inconnue vaut 1 ; une conversion entre familles différentes n'a pas de sens physique (densité inconnue) :
+// l'application la signale (`areUnitsCompatible`, panneau « Points à vérifier ») au lieu de la deviner.
+export const unitConversionFactor = (fromUnit, toUnit) => (CONVERSION_FACTORS[fromUnit]?.factor || 1) / (CONVERSION_FACTORS[toUnit]?.factor || 1);
+
+export const unitFamily = (unit) => CONVERSION_FACTORS[unit]?.base || null;
+
+// Vrai seulement si les deux unités sont connues ET de la même famille (masse, volume, unités).
+export const areUnitsCompatible = (unitA, unitB) => {
+    const familyA = unitFamily(unitA);
+    return familyA !== null && familyA === unitFamily(unitB);
+};
+
+// Libellé d'une unité dans les listes : « gal » et « fl oz » sont américains, précisé pour éviter la confusion.
+export const unitLabel = (unit) => (unit === 'gal' ? 'gal US' : unit === 'fl oz' ? 'fl oz US' : unit);
 
 // Filtre une liste d'unités (déjà compatibles ou non) sur celles activées par le projet (voir
 // `activeUnits`, state de projet) — EN GARDANT TOUJOURS `currentValue` même si désactivée depuis :

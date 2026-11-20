@@ -32,11 +32,11 @@ export const chapitreParametres = {
         {
             type: 'table', head: ['Famille', 'Unités disponibles', 'Particularité'], wrapCells: true, rows: [
                 ['Masse', 'g, kg, oz, lb, tonne', 'Les conversions entre unités d\'une même famille sont automatiques (1 kg = 1 000 g).'],
-                ['Volume', 'ml, L, cl, hL, fl oz, gal', 'Idem au sein de la famille.'],
+                ['Volume', 'ml, L, cl, hL, fl oz US, gal US, fl oz imp, gal imp', 'Idem au sein de la famille. Les gallons et les onces liquides existent en version américaine (US : 1 gal = 3,785 L) et impériale (imp : 1 gal = 4,546 L, courante au Canada) : choisissez celle de votre fournisseur.'],
                 ['Discrètes (comptables)', 'unité, douzaine', 'Se comptent entier. Une quantité produite exprimée en unités doit être un nombre entier ; en kg ou en L, elle peut avoir des décimales.'],
             ],
         },
-        { type: 'callout', kind: 'attention', text: 'L\'application ne convertit **jamais** entre familles : on ne passe pas de kilogrammes à des litres, car cela demanderait la densité du produit, une donnée qu\'elle ne peut pas deviner. Si vous achetez de l\'huile au litre, vos recettes devront donc l\'exprimer en volume (ml, L…) et non en poids : seules les unités de la même famille que celle de l\'ingrédient sont proposées.' },
+        { type: 'callout', kind: 'attention', text: 'L\'application ne convertit **jamais** entre familles : on ne passe pas de kilogrammes à des litres, car cela demanderait la densité du produit, une donnée qu\'elle ne peut pas deviner. Si vous achetez de l\'huile au litre, vos recettes devront donc l\'exprimer en volume (ml, L…) et non en poids : seules les unités de la même famille que celle de l\'ingrédient sont proposées. Si vous changez plus tard l\'unité d\'un ingrédient déjà utilisé pour celle d\'une autre famille, l\'application vous avertit et le panneau {{Points à vérifier}} signale les recettes à corriger : sans cela, le coût serait calculé avec une densité de 1.' },
         { type: 'p', text: 'Décocher une unité déjà utilisée par une donnée existante ne supprime pas cette donnée : elle garde sa valeur.' },
 
         // ---------------------------------------------------------------------------------

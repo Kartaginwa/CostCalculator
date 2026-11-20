@@ -216,7 +216,8 @@ export function parseProjectData(data, emptyState) {
             category: p.category || '',
             // Migration : produits antérieurs à l'ajout des activités de production — rattachés à
             // la première activité disponible (« Général » par défaut).
-            activityId: p.activityId || productionActivities[0]?.id || '',
+            // Une activité supprimée depuis (projet sauvegardé avant le correctif du 19/11) est remplacée par la première.
+            activityId: (p.activityId && productionActivities.some(a => a.id === p.activityId)) ? p.activityId : (productionActivities[0]?.id || ''),
             portionSize: p.portionSize !== undefined ? p.portionSize : 1,
             portionUnit: p.portionUnit || 'unité',
             isIngredient: p.isIngredient || false,

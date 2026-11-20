@@ -10,6 +10,8 @@ import {
     computeAnalysisData, computeIndirectPools,
 } from './engine/analysisData.js';
 import { computeSalesMixFromChannelPrices } from './engine/salesMixFromChannels.js';
+import { findSubRecipeUsages, formatNameList } from './engine/usage.js';
+import { clearFormatVolumes, mirrorFirstFormat } from './engine/productEdits.js';
 import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
 import { exportToExcel as exportToExcelReport } from './reports/exportToExcel.js';
 import { getDefaultState, getEmptyState, buildDefaultFormat, stripFormatOwnedFields, buildFormatSku } from './state/initialState.js';
@@ -116,6 +118,9 @@ const App = ({ tourMode = false } = {}) => {
     // désormais un format, pas un produit). RecipeCalculator le consomme une fois pour initialiser
     // son onglet sélectionné, puis reprend la main sur ses propres clics d'onglet locaux.
     const [editingFormatIndex, setEditingFormatIndex] = useState(0);
+    // Confirmation générique avant une suppression à conséquences (ex. une sous-recette utilisée par d'autres recettes).
+    const [pendingConfirmation, setPendingConfirmation] = useState(null);
+    const requestConfirmation = useCallback((confirmation) => setPendingConfirmation(confirmation), []);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showDemoConfirm, setShowDemoConfirm] = useState(false);
     const [showInstructions, setShowInstructions] = useState(false);
@@ -584,7 +589,7 @@ const App = ({ tourMode = false } = {}) => {
         // production), donc « dupliquer » en copie l'intégralité — le point de départ « copier à
         // la base » d'un nouveau SKU (voir 04-Conception-Modele.md). Nouveaux id pour ne jamais
         // partager une référence avec l'original (même précédent que handleDuplicateProduct).
-        const newFormat = JSON.parse(JSON.stringify(formatToDuplicate));
+        const newFormat = clearFormatVolumes(JSON.parse(JSON.stringify(formatToDuplicate)));
         const formatChanged = overrides.portionSize !== undefined || overrides.portionUnit !== undefined;
         if (overrides.portionSize !== undefined) newFormat.portionSize = overrides.portionSize;
         if (overrides.portionUnit !== undefined) newFormat.portionUnit = overrides.portionUnit;
@@ -613,6 +618,7 @@ const App = ({ tourMode = false } = {}) => {
         const newProducts = [...products];
         newProducts[productIndex] = { ...product, formats: newFormats };
         setProducts(newProducts);
+        showNotification({ message: 'Format copié sans ses volumes de vente : saisissez-les dans la colonne Canaux.', type: 'info' });
     };
 
     const handleDeleteFormat = (productIndex, formatIndex) => {
@@ -623,29 +629,42 @@ const App = ({ tourMode = false } = {}) => {
             handleDeleteProduct(productIndex);
             return;
         }
-        if (formatIndex === 0) {
-            // Le format par défaut (index 0) alimente le miroir vers les champs à plat
-            // (FORMAT_FLAT_MIRROR_FIELDS) tant que Résumé/rapports/analyse ne lisent pas encore
-            // formats[] directement (Phase 1.6) — on ne peut pas le supprimer tant qu'il reste
-            // d'autres formats. Dupliquez-le si vous voulez en changer.
-            showNotification({ message: "Le format par défaut ne peut pas être supprimé — dupliquez-le si vous voulez en changer.", type: 'error' });
+        const formatToDelete = product.formats[formatIndex];
+        // Une sous-recette dont CE format est utilisé ailleurs : prévenir avant de laisser des lignes de recette sans référence.
+        const usages = findSubRecipeUsages(products, product, formatToDelete.id);
+        const performDelete = () => {
+            const newFormats = product.formats.filter((_, i) => i !== formatIndex);
+            // Le premier format alimente les champs « à plat » du produit : si c'est lui qu'on retire, le suivant prend le relais.
+            const updated = mirrorFirstFormat({ ...product, formats: newFormats });
+            const newProducts = [...products];
+            newProducts[productIndex] = updated;
+            setProducts(newProducts);
+            setEditingFormatIndex(prev => (editingProductIndex !== productIndex ? prev : Math.max(0, Math.min(prev > formatIndex ? prev - 1 : prev, newFormats.length - 1))));
+
+            showNotification({
+                message: `Le format "${formatToDelete.sku || 'sans SKU'}" a été supprimé.`,
+                type: 'info',
+                // Annuler remet CE format à sa place, sans toucher au reste du projet (les modifications faites entre-temps sont conservées).
+                onUndo: () => {
+                    setProducts(current => current.map(p => {
+                        if (p.id !== product.id) return p;
+                        const restored = [...(p.formats || [])];
+                        restored.splice(Math.min(formatIndex, restored.length), 0, formatToDelete);
+                        return mirrorFirstFormat({ ...p, formats: restored });
+                    }));
+                    setNotification(null);
+                }
+            });
+        };
+        if (usages.length > 0) {
+            requestConfirmation({
+                title: 'Supprimer ce format ?',
+                message: `Le format « ${formatToDelete.sku || 'sans SKU'} » de la sous-recette « ${product.platName || 'Sans nom'} » est utilisé dans : ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0 $ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
+                onConfirm: performDelete,
+            });
             return;
         }
-        const formatToDelete = product.formats[formatIndex];
-        const originalProducts = JSON.parse(JSON.stringify(products));
-        const newFormats = product.formats.filter((_, i) => i !== formatIndex);
-        const newProducts = [...products];
-        newProducts[productIndex] = { ...product, formats: newFormats };
-        setProducts(newProducts);
-
-        showNotification({
-            message: `Le format "${formatToDelete.sku || 'sans SKU'}" a été supprimé.`,
-            type: 'info',
-            onUndo: () => {
-                setProducts(originalProducts);
-                setNotification(null);
-            }
-        });
+        performDelete();
     };
 
     // `overrides` (optionnel) : { sku, portionSize, portionUnit } — voir handleDuplicateFormat.
@@ -704,6 +723,22 @@ const App = ({ tourMode = false } = {}) => {
     const handleDeleteProduct = (indexToDelete) => {
         const productToDelete = products[indexToDelete];
         if (!productToDelete) return;
+        // Une sous-recette utilisée par d'autres recettes : prévenir avant de leur retirer un ingrédient (le moteur le compterait à 0 $).
+        const usages = findSubRecipeUsages(products, productToDelete);
+        if (usages.length > 0) {
+            requestConfirmation({
+                title: 'Supprimer cette sous-recette ?',
+                message: `« ${productToDelete.platName || 'Sans nom'} » est utilisée comme ingrédient dans : ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0 $ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
+                onConfirm: () => performDeleteProduct(indexToDelete),
+            });
+            return;
+        }
+        performDeleteProduct(indexToDelete);
+    };
+
+    const performDeleteProduct = (indexToDelete) => {
+        const productToDelete = products[indexToDelete];
+        if (!productToDelete) return;
 
         // 1. Sauvegarde l'état d'origine pour pouvoir l'annuler
         setUndoState({
@@ -741,7 +776,7 @@ const App = ({ tourMode = false } = {}) => {
         // Nouveaux id pour chaque format dupliqué, et pour les ingrédients/étapes de production
         // qu'il porte (chaque format est sa propre fiche recette depuis la correction du 23/09) —
         // ne doivent jamais être partagés avec l'original (voir Phase 1.3).
-        newProduct.formats = (newProduct.formats || []).map(f => {
+        newProduct.formats = (newProduct.formats || []).map(clearFormatVolumes).map(f => {
             const newFormatId = `fmt_${Date.now()}_${Math.random()}`;
             // Si le SKU de l'original était encore auto-généré, on le régénère directement sur le
             // NOUVEAU nom ("... (Copie)") plutôt que de lui accoler un suffixe "-copie" figé : sinon,
@@ -763,8 +798,11 @@ const App = ({ tourMode = false } = {}) => {
         });
 
         const newProducts = [...products];
+        // Les champs « à plat » (miroir du premier format) repartent eux aussi sans ventes.
+        newProduct.salesMix = 0;
         newProducts.splice(indexToDuplicate + 1, 0, newProduct);
         setProducts(newProducts);
+        showNotification({ message: 'Produit copié sans ses volumes de vente : saisissez-les dans la colonne Canaux de chaque format.', type: 'info' });
     };
 
     const editProduct = (index, formatIndex = 0) => {
@@ -1049,9 +1087,9 @@ const App = ({ tourMode = false } = {}) => {
             repartitionKeys, onUpdateRepartitionKeys: setRepartitionKeys,
             analysisData, indirectPools,
             uiSettings, setUiSettings,
-            showNotification, setNotification,
+            showNotification, setNotification, requestConfirmation,
         }), [
-            tourMode, startTour, openGuide,
+            tourMode, startTour, openGuide, requestConfirmation,
             companyName, setCompanyName, logoUrl, setLogoUrl,
             calculatedGeneralInfo, handleUpdateGeneralInfo,
             products, setProducts, baseIngredients, setBaseIngredients, ingredientsList,
@@ -1163,6 +1201,14 @@ const App = ({ tourMode = false } = {}) => {
                             onUndo={notification.onUndo}
                         />
                     )}
+                    <ConfirmationModal
+                        isOpen={!!pendingConfirmation}
+                        onClose={() => setPendingConfirmation(null)}
+                        onConfirm={() => { const action = pendingConfirmation?.onConfirm; setPendingConfirmation(null); if (action) action(); }}
+                        title={pendingConfirmation?.title || ''}
+                    >
+                        {pendingConfirmation?.message}
+                    </ConfirmationModal>
                     <ConfirmationModal
                         isOpen={showDemoConfirm}
                         onClose={() => setShowDemoConfirm(false)}

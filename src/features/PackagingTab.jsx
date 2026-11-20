@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowUpDown, Copy, PlusCircle, Trash2, Upload } from 'lucide-react';
-import { todayLocalISO, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber } from '../utils.js';
+import { todayLocalISO, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel, areUnitsCompatible } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
+import { findPackagingUsages, formatNameList } from '../engine/usage.js';
 
 // Chargé à la demande : l'assistant d'import est volumineux et rarement ouvert.
 const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.jsx').then(m => ({ default: m.CatalogImportWizardModal })));
@@ -14,7 +15,7 @@ const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.j
 // assistant d'import (même composant générique que les ingrédients — voir
 // CatalogImportWizardModal.jsx). Sans allergènes (non pertinent pour un emballage).
 export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, analysisData, activeUnits } = useProject();
+    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, requestConfirmation, products, analysisData, activeUnits } = useProject();
     const { packagingPurchasingReportData, packagingAbcAnalysisData } = analysisData;
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
     const [reportFilterProvider, setReportFilterProvider] = useSessionState('packaging.reportFilter', 'summary');
@@ -147,23 +148,46 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
 
         newList[originalIndex] = itemToUpdate;
         onUpdatePackagingList(newList);
+
+        // Même avertissement que pour les ingrédients : un changement de FAMILLE d'unités laisse les recettes dans l'ancienne unité.
+        if (field === 'unit' && !areUnitsCompatible(value, originalItem.unit)) {
+            const usages = findPackagingUsages(products, id);
+            if (usages.length > 0) {
+                showNotification({
+                    message: `L'unité de « ${originalItem.name || 'cet emballage'} » est passée de ${unitLabel(originalItem.unit)} à ${unitLabel(value)}, une autre famille d'unités. Les recettes qui l'utilisent (${formatNameList(usages)}) gardent l'ancienne unité : corrigez-la dans chaque recette, sinon leur coût est faux.`,
+                    type: 'error',
+                });
+            }
+        }
     };
 
     const removeRow = (id) => {
         const itemToDelete = basePackaging.find(item => item.id === id);
         if (!itemToDelete) return;
 
-        const originalList = [...basePackaging];
-        onUpdatePackagingList(basePackaging.filter(item => item.id !== id));
+        const performDelete = () => {
+            const originalList = [...basePackaging];
+            onUpdatePackagingList(basePackaging.filter(item => item.id !== id));
 
-        showNotification({
-            message: `L'emballage "${itemToDelete.name}" a été supprimé.`,
-            type: 'info',
-            onUndo: () => {
-                onUpdatePackagingList(originalList);
-                setNotification(null);
-            }
-        });
+            showNotification({
+                message: `L'emballage "${itemToDelete.name}" a été supprimé.`,
+                type: 'info',
+                onUndo: () => {
+                    onUpdatePackagingList(originalList);
+                    setNotification(null);
+                }
+            });
+        };
+        const usages = findPackagingUsages(products, id);
+        if (usages.length > 0) {
+            requestConfirmation({
+                title: 'Supprimer cet emballage ?',
+                message: `« ${itemToDelete.name || 'Sans nom'} » est utilisé dans : ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0 $ jusqu'à ce que vous choisissiez un autre emballage. Vous pourrez annuler juste après.`,
+                onConfirm: performDelete,
+            });
+            return;
+        }
+        performDelete();
     };
 
     const duplicateRow = (id) => {
@@ -353,7 +377,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <td className="px-4 py-2">
                                     <select value={item.unit} onChange={e => handleUpdate(item.id, 'unit', e.target.value)} className="w-full p-1 border rounded">
                                         {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, item.unit).map(u => (
-                                            <option key={u} value={u}>{u}</option>
+                                            <option key={u} value={u}>{unitLabel(u)}</option>
                                         ))}
                                     </select>
                                 </td>

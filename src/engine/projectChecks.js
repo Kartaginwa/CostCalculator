@@ -1,13 +1,28 @@
 // Vérifications de cohérence du projet (Phase 7, 18/11) : regroupe à un seul endroit des problèmes
 // de données qui, autrement, n'apparaissent que dans l'onglet concerné. Fonction pure — aucune
 // donnée n'est modifiée ; chaque constat dit où aller pour le corriger (`tab`).
-import { parseLocaleNumber, isNotEmpty, formatNumber } from '../utils.js';
+import { parseLocaleNumber, isNotEmpty, formatNumber, areUnitsCompatible } from '../utils.js';
 
 const STALE_DAYS = 30;
 
-export function computeProjectChecks({ products = [], baseIngredients = [], basePackaging = [], fixedCosts = null, now = new Date() }) {
+const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+
+// Les noms des 3 premiers éléments concernés, puis « et N autres » — assez pour retrouver le problème sans noyer le panneau.
+const listNames = (names) => {
+    const unique = [...new Set(names.filter(Boolean))];
+    if (unique.length <= 3) return unique.join(', ');
+    const rest = unique.length - 3;
+    return `${unique.slice(0, 3).join(', ')} et ${rest} autre${rest > 1 ? 's' : ''}`;
+};
+
+// Les contrôles de références (ingrédients, emballages, activités, canaux, relevés) ne s'exécutent que si l'appelant
+// fournit les listes correspondantes : une liste absente (`undefined`) veut dire « pas d'information », jamais « liste vide ».
+export function computeProjectChecks({
+    products = [], baseIngredients, basePackaging, productionActivities, salesChannels, trackingPoints, fixedCosts = null, now = new Date(),
+}) {
     const checks = [];
     const formatsOf = (p) => (p.formats && p.formats.length > 0 ? p.formats : [p]);
+    const nameOf = (p) => (isNotEmpty(p.platName) ? p.platName : 'Sans nom');
 
     const unnamed = products.filter(p => !isNotEmpty(p.platName)).length;
     if (unnamed > 0) {
@@ -45,24 +60,116 @@ export function computeProjectChecks({ products = [], baseIngredients = [], base
             message: `Les frais fixes répartis dépassent le total saisi de ${formatNumber(fixedCosts.overAllocated, 2)} $ : les coûts par produit sont surévalués.` });
     }
 
+    // --- Intégrité des données (19/11, audit complémentaire) : des erreurs que le calcul absorbe sans les signaler. ---
+    const everyFormat = products.flatMap(p => formatsOf(p).map(f => ({ p, f })));
+    const recipeFormats = everyFormat.filter(({ f }) => !f.isResaleProduct);
+
+    if (Array.isArray(baseIngredients)) {
+        const subRecipes = products.filter(p => p.isIngredient);
+        // Même résolution que calculateCosts : l'id d'une ligne désigne un FORMAT de sous-recette, ou (anciens projets) un produit.
+        const subRecipeFormat = (id) => {
+            for (const sp of subRecipes) {
+                const match = (sp.formats || []).find(sf => sf.id === id);
+                if (match) return match;
+            }
+            const byProduct = subRecipes.find(sp => sp.id === id);
+            return byProduct ? (byProduct.formats?.[0] || byProduct) : null;
+        };
+        const missing = [];
+        const incompatible = [];
+        for (const { p, f } of recipeFormats) {
+            for (const row of (f.ingredients || [])) {
+                const base = baseIngredients.find(i => i.id === row.id);
+                const sub = base ? null : subRecipeFormat(row.id);
+                if (!base && !sub) { missing.push(p); continue; }
+                const stockUnit = base ? base.unit : sub.portionUnit;
+                if (row.recipeUnit && stockUnit && !areUnitsCompatible(row.recipeUnit, stockUnit)) incompatible.push(p);
+            }
+        }
+        if (missing.length > 0) {
+            checks.push({ id: 'missing-references', tab: 'recipe', tabLabel: 'Production',
+                message: `${plural(missing.length, 'ligne de recette fait', 'lignes de recette font')} référence à un ingrédient ou une sous-recette qui n'existe plus (${listNames(missing.map(nameOf))}) : ${missing.length > 1 ? 'elles sont comptées' : 'elle est comptée'} à 0 $.` });
+        }
+        if (incompatible.length > 0) {
+            checks.push({ id: 'unit-mismatch', tab: 'recipe', tabLabel: 'Production',
+                message: `${plural(incompatible.length, 'ligne de recette utilise', 'lignes de recette utilisent')} une unité d'une autre famille que celle de l'ingrédient, par exemple des grammes pour un ingrédient en litres (${listNames(incompatible.map(nameOf))}) : la conversion suppose une densité de 1, et le coût est faux si elle est différente.` });
+        }
+    }
+    if (Array.isArray(basePackaging)) {
+        const affected = [];
+        for (const { p, f } of recipeFormats) {
+            for (const row of (f.packagingItems || [])) {
+                if (!basePackaging.some(i => i.id === row.id)) affected.push(p);
+            }
+        }
+        if (affected.length > 0) {
+            checks.push({ id: 'missing-packaging', tab: 'recipe', tabLabel: 'Production',
+                message: `${plural(affected.length, 'ligne d\'emballage fait', 'lignes d\'emballage font')} référence à un emballage qui n'existe plus (${listNames(affected.map(nameOf))}) : ${affected.length > 1 ? 'elles sont comptées' : 'elle est comptée'} à 0 $.` });
+        }
+    }
+    const hugeLoss = (list) => (Array.isArray(list) ? list.filter(i => !i.isRecipe && parseLocaleNumber(i.lossPercentage) >= 100) : []);
+    const lossItems = [...hugeLoss(baseIngredients), ...hugeLoss(basePackaging)];
+    if (lossItems.length > 0) {
+        checks.push({ id: 'loss-100', tab: 'ingredients', tabLabel: 'Ingrédients / Emballage',
+            message: `${plural(lossItems.length, 'article a', 'articles ont')} un pourcentage de perte de 100 % ou plus (${listNames(lossItems.map(i => i.name))}) : la perte est ignorée dans le calcul.` });
+    }
+
+    const withDuplicateChannel = everyFormat.filter(({ f }) => {
+        const ids = (f.channelPrices || []).map(cp => cp.channelId);
+        return new Set(ids).size !== ids.length;
+    });
+    if (withDuplicateChannel.length > 0) {
+        checks.push({ id: 'duplicate-channel', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
+            message: `${plural(withDuplicateChannel.length, 'SKU est rattaché', 'SKUs sont rattachés')} deux fois au même canal de vente (${listNames(withDuplicateChannel.map(({ p }) => nameOf(p)))}) : les volumes sont comptés en double.` });
+    }
+    if (Array.isArray(salesChannels)) {
+        const channelIds = new Set(salesChannels.map(c => c.id));
+        const withMissingChannel = everyFormat.filter(({ f }) => (f.channelPrices || []).some(cp => !channelIds.has(cp.channelId)));
+        if (withMissingChannel.length > 0) {
+            checks.push({ id: 'missing-channel', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
+                message: `${plural(withMissingChannel.length, 'SKU garde', 'SKUs gardent')} des prix et des volumes pour un canal de vente supprimé (${listNames(withMissingChannel.map(({ p }) => nameOf(p)))}) : ces ventes ne sont comptées nulle part.` });
+        }
+    }
+    if (Array.isArray(productionActivities)) {
+        const activityIds = new Set(productionActivities.map(a => a.id));
+        const orphans = products.filter(p => !activityIds.has(p.activityId));
+        if (orphans.length > 0) {
+            checks.push({ id: 'missing-activity', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
+                message: `${plural(orphans.length, 'produit est lié', 'produits sont liés')} à une activité de production qui n'existe plus (${listNames(orphans.map(nameOf))}) : choisissez une activité dans sa fiche.` });
+        }
+    }
+    const badPortion = everyFormat.filter(({ f }) => !(parseLocaleNumber(f.portionSize) > 0));
+    if (badPortion.length > 0) {
+        checks.push({ id: 'portion-size', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
+            message: `${plural(badPortion.length, 'format a', 'formats ont')} une quantité nulle ou vide (${listNames(badPortion.map(({ p }) => nameOf(p)))}) : elle est remplacée par 1 dans certains calculs.` });
+    }
+    if (Array.isArray(trackingPoints) && trackingPoints.length > 0) {
+        const legacy = trackingPoints.filter(pt => (pt.productsWithCosts || []).some(r => r.onMenu && !(r.channelBreakdown && r.channelBreakdown.length > 0)));
+        if (legacy.length > 0) {
+            checks.push({ id: 'legacy-snapshots', tab: 'summary', tabLabel: 'Rapport et suivi',
+                message: `${plural(legacy.length, 'point de référence a été enregistré', 'points de référence ont été enregistrés')} sans le détail par canal : leur point mort et leurs moyennes sont approximatifs et ne se comparent pas exactement aux points récents.` });
+        }
+    }
+
+    const ingredientsList = baseIngredients || [];
+    const packagingList = basePackaging || [];
     const missingPrice = (list) => list.filter(i => !i.isRecipe && !(parseLocaleNumber(i.purchasePrice) > 0)).length;
     const stale = (list) => {
         const limit = new Date(now); limit.setDate(limit.getDate() - STALE_DAYS);
         return list.filter(i => !i.isRecipe && i.lastUpdated && new Date(i.lastUpdated) < limit).length;
     };
-    const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
 
-    const ingNoPrice = missingPrice(baseIngredients);
+    const ingNoPrice = missingPrice(ingredientsList);
     if (ingNoPrice > 0) checks.push({ id: 'ingredients-no-price', tab: 'ingredients', tabLabel: 'Ingrédients',
         message: `${plural(ingNoPrice, 'ingrédient', 'ingrédients')} sans prix d'achat.` });
-    const pkgNoPrice = missingPrice(basePackaging);
+    const pkgNoPrice = missingPrice(packagingList);
     if (pkgNoPrice > 0) checks.push({ id: 'packaging-no-price', tab: 'packaging', tabLabel: 'Emballage',
         message: `${plural(pkgNoPrice, 'emballage', 'emballages')} sans prix d'achat.` });
 
-    const ingStale = stale(baseIngredients);
+    const ingStale = stale(ingredientsList);
     if (ingStale > 0) checks.push({ id: 'ingredients-stale', tab: 'ingredients', tabLabel: 'Ingrédients',
         message: `${plural(ingStale, 'ingrédient', 'ingrédients')} dont le prix n'a pas été mis à jour depuis plus de ${STALE_DAYS} jours.` });
-    const pkgStale = stale(basePackaging);
+    const pkgStale = stale(packagingList);
     if (pkgStale > 0) checks.push({ id: 'packaging-stale', tab: 'packaging', tabLabel: 'Emballage',
         message: `${plural(pkgStale, 'emballage', 'emballages')} dont le prix n'a pas été mis à jour depuis plus de ${STALE_DAYS} jours.` });
 

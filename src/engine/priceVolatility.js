@@ -1,4 +1,4 @@
-import { parseLocaleNumber } from '../utils.js';
+import { parseLocaleNumber, CONVERSION_FACTORS, unitFamily } from '../utils.js';
 
 // Dérive la volatilité d'un prix/coût à partir des points de référence (snapshots) — sans journal
 // de transactions. Sur ≥ 2 points, on reconstitue une série dans le temps par item et on calcule :
@@ -27,14 +27,23 @@ function computeCatalogVolatility(trackingPoints, extractItems) {
 
     // Série de prix/coûts par item, dans l'ordre chronologique. Les valeurs nulles/absentes (item
     // pas encore présent à cette date, ou sans prix de vente pour un format) sont ignorées.
+    // Unité (19/11) : un prix est comparé PAR UNITÉ DE BASE (g, ml, unité). Un ingrédient dont l'unité passe de kg à g
+    // entre deux relevés (10 $/kg puis 0,01 $/g) n'a pas bougé ; sans cette normalisation il affichait −99,9 %.
+    // Si l'unité change de FAMILLE (kg → unité), les relevés précédents ne sont plus comparables : la série repart.
     const seriesById = {};
     for (const pt of points) {
         for (const item of extractItems(pt)) {
             if (!(item.price > 0)) continue;
-            if (!seriesById[item.id]) seriesById[item.id] = { id: item.id, name: item.name, provider: item.provider, prices: [] };
-            seriesById[item.id].name = item.name;
-            seriesById[item.id].provider = item.provider;
-            seriesById[item.id].prices.push(item.price);
+            const family = unitFamily(item.unit);
+            const factor = CONVERSION_FACTORS[item.unit]?.factor || 1;
+            let series = seriesById[item.id];
+            if (!series || (series.family !== null && family !== null && series.family !== family)) {
+                series = seriesById[item.id] = { id: item.id, name: item.name, provider: item.provider, family, prices: [], lastRaw: item.price };
+            }
+            series.name = item.name;
+            series.provider = item.provider;
+            series.prices.push(item.price / factor);
+            series.lastRaw = item.price;
         }
     }
 
@@ -54,7 +63,7 @@ function computeCatalogVolatility(trackingPoints, extractItems) {
             : 'faible';
         return {
             id: s.id, name: s.name, provider: s.provider, count: prices.length,
-            currentPrice: last, trendPercent, amplitudePercent, tier,
+            currentPrice: s.lastRaw, trendPercent, amplitudePercent, tier,
             isVolatile: enough && amplitudePercent >= VOLATILE_THRESHOLD,
         };
     }).sort((a, b) => b.amplitudePercent - a.amplitudePercent);
@@ -70,7 +79,7 @@ function computeCatalogVolatility(trackingPoints, extractItems) {
 
 export function computeIngredientVolatility(trackingPoints) {
     return computeCatalogVolatility(trackingPoints, pt => (pt.baseIngredients || []).map(ing => ({
-        id: ing.id, name: ing.name, provider: ing.provider, price: parseLocaleNumber(ing.unitPrice),
+        id: ing.id, name: ing.name, provider: ing.provider, unit: ing.unit, price: parseLocaleNumber(ing.unitPrice),
     })));
 }
 
@@ -78,6 +87,6 @@ export function computeIngredientVolatility(trackingPoints) {
 // principe que la Phase 2 (coût d'emballage comme poste distinct du coût matière).
 export function computePackagingVolatility(trackingPoints) {
     return computeCatalogVolatility(trackingPoints, pt => (pt.basePackaging || []).map(pkg => ({
-        id: pkg.id, name: pkg.name, provider: pkg.provider, price: parseLocaleNumber(pkg.unitPrice),
+        id: pkg.id, name: pkg.name, provider: pkg.provider, unit: pkg.unit, price: parseLocaleNumber(pkg.unitPrice),
     })));
 }

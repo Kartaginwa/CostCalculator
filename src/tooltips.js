@@ -79,7 +79,7 @@ export const TIPS = {
     "prod.grille": { text: "Calcule la quantité produite à partir d'une quantité de départ, d'étapes de transformation (en %) et d'un taux de rejet.", guide: "guide-prod-grille" },
     "prod.sousRecette": { text: "Cochez si cette recette sert d'ingrédient à d'autres recettes (sauce de base, bouillon…). Elle n'apporte que son coût direct.", guide: "guide-prod-sous-recette" },
     "prod.revente": { text: "Pour un format acheté et revendu tel quel : la fiche se réduit à un coût d'achat. Propre à chaque format.", guide: "guide-prod-sous-recette" },
-    "prod.rendement": { text: "Perte pendant la préparation (épluchage, parage, cuisson) : 1 kg donnant 800 g, c'est 80 %. Ne la saisissez pas aussi comme perte en stock.", guide: "guide-prod-col-rendement" },
+    "prod.rendement": { text: "Part utilisable après préparation : 1 kg donnant 800 g, c'est 80 %. Peut dépasser 100 % (riz cuit : 250 %). Pas de double saisie avec la perte.", guide: "guide-prod-col-rendement" },
     "prod.etape": { text: "Décrivez l'action (ex. Taillage des légumes, Cuisson).", guide: "guide-prod-col-etape", complet: true },
     "prod.personnel": { text: "Cliquez sur Modifier pour affecter des employés à l'étape.", guide: "guide-prod-col-personnel", complet: true },
     "prod.debut": { text: "Moment où l'étape commence, depuis le début de la recette (h:min:s).", guide: "guide-prod-col-debut-duree" },

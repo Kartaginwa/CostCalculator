@@ -1,4 +1,4 @@
-import { parseLocaleNumber, CONVERSION_FACTORS } from '../utils.js';
+import { parseLocaleNumber, unitConversionFactor } from '../utils.js';
 import { computeYieldUnits } from './yieldCalculator.js';
 
 // `format` est un paramètre optionnel de fin de liste (Phase 1.4) : quand un appelant en passe un
@@ -128,7 +128,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                 }
 
                 const recipeUnit = item.recipeUnit || ingredientUnit;
-                const conversionFactorFromRecipeToBase = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[ingredientUnit]?.factor || 1);
+                const conversionFactorFromRecipeToBase = unitConversionFactor(recipeUnit, ingredientUnit);
                 const quantityInBaseUnit = parseLocaleNumber(item.quantity) * conversionFactorFromRecipeToBase;
                 const baseCost = quantityInBaseUnit * unitPrice;
 
@@ -197,7 +197,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             const unitPrice = parseLocaleNumber(basePkg.unitPrice);
             const lossPercentage = (parseLocaleNumber(basePkg.lossPercentage) || 0) / 100;
             const recipeUnit = item.recipeUnit || basePkg.unit;
-            const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[basePkg.unit]?.factor || 1);
+            const conversionFactor = unitConversionFactor(recipeUnit, basePkg.unit);
             const quantityInBaseUnit = parseLocaleNumber(item.quantity) * conversionFactor;
             const baseCost = quantityInBaseUnit * unitPrice;
             const costAfterLoss = lossPercentage > 0 && lossPercentage < 1 ? baseCost / (1 - lossPercentage) : baseCost;

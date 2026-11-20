@@ -3,7 +3,7 @@ import { AlertCircle, ChevronDown, GripVertical, Trash2, Scale, PlusCircle } fro
 import {
     unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPositiveNumber, isInvalidPercentage,
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent, formatQuantityLabel,
-    getCompatibleUnits, CONVERSION_FACTORS, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits, formatNumber } from '../utils.js';
+    getCompatibleUnits, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits, formatNumber, unitConversionFactor, unitLabel } from '../utils.js';
 import { getCostTargetIndicator, useValueFlash, useSessionState } from '../ui-utils.jsx';
 import { Tooltip, EmptyState, CostNatureBadge, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
@@ -861,12 +861,12 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                             {(format.ingredients || []).map((item, index) => {
                                 const baseIngredient = ingredientsList.find(ing => ing.id === item.id);
                                 const recipeUnit = item.recipeUnit || baseIngredient?.unit;
-                                const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[baseIngredient?.unit]?.factor || 1);
+                                const conversionFactor = unitConversionFactor(recipeUnit, baseIngredient?.unit);
                                 const quantityInBaseUnit = parseLocaleNumber(item.quantity) * conversionFactor;
                                 const baseCost = quantityInBaseUnit * parseLocaleNumber(baseIngredient?.unitPrice || 0);
 
                                 const yieldPercent = parseLocaleNumber(item.yieldPercentage);
-                                const displayedUnitPrice = (baseIngredient?.unitPrice || 0) / (CONVERSION_FACTORS[baseIngredient?.unit]?.factor || 1) * (CONVERSION_FACTORS[recipeUnit]?.factor || 1);
+                                const displayedUnitPrice = (baseIngredient?.unitPrice || 0) * unitConversionFactor(recipeUnit, baseIngredient?.unit);
                                 const totalCost = (yieldPercent && yieldPercent > 0) ? baseCost / (yieldPercent / 100) : baseCost;
 
                                 return (
@@ -903,7 +903,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                                 disabled={!baseIngredient}
                                             >
                                                 {filterActiveUnits(getCompatibleUnits(baseIngredient?.unit), activeUnits, item.recipeUnit || baseIngredient?.unit).map(unit => (
-                                                    <option key={unit} value={unit}>{unit}</option>
+                                                    <option key={unit} value={unit}>{unitLabel(unit)}</option>
                                                 ))}
                                             </select>
                                         </td>
@@ -974,11 +974,11 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                             {(format.packagingItems || []).map((item, index) => {
                                 const basePkg = basePackaging.find(pkg => pkg.id === item.id);
                                 const recipeUnit = item.recipeUnit || basePkg?.unit;
-                                const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[basePkg?.unit]?.factor || 1);
+                                const conversionFactor = unitConversionFactor(recipeUnit, basePkg?.unit);
                                 const quantityInBaseUnit = parseLocaleNumber(item.quantity) * conversionFactor;
                                 const baseCost = quantityInBaseUnit * parseLocaleNumber(basePkg?.unitPrice || 0);
                                 const lossPercentage = (parseLocaleNumber(basePkg?.lossPercentage) || 0) / 100;
-                                const displayedUnitPrice = (basePkg?.unitPrice || 0) / (CONVERSION_FACTORS[basePkg?.unit]?.factor || 1) * (CONVERSION_FACTORS[recipeUnit]?.factor || 1);
+                                const displayedUnitPrice = (basePkg?.unitPrice || 0) * unitConversionFactor(recipeUnit, basePkg?.unit);
                                 const totalCost = lossPercentage > 0 && lossPercentage < 1 ? baseCost / (1 - lossPercentage) : baseCost;
 
                                 return (
@@ -1007,7 +1007,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                                 disabled={!basePkg}
                                             >
                                                 {filterActiveUnits(getCompatibleUnits(basePkg?.unit), activeUnits, item.recipeUnit || basePkg?.unit).map(unit => (
-                                                    <option key={unit} value={unit}>{unit}</option>
+                                                    <option key={unit} value={unit}>{unitLabel(unit)}</option>
                                                 ))}
                                             </select>
                                         </td>

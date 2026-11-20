@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useContext, useLayoutEffect, useId } from 'react';
 import ReactDOM from 'react-dom';
 import { AlertTriangle, HelpCircle, ChevronDown, Trash2, PlusCircle } from 'lucide-react';
-import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits, formatNumber } from '../utils.js';
+import { formatCurrency, parseLocaleNumber, MAJOR_ALLERGENS, formatQuantityLabel, isValidNumber, isValidPercentage, CONVERSION_FACTORS, UNIT_BASE_FAMILY_LABELS, filterActiveUnits, formatNumber, unitLabel } from '../utils.js';
 import { useValueFlash, useEscapeKey, TooltipHostContext } from '../ui-utils.jsx';
 import { TIPS } from '../tooltips.js';
 import { ProjectContext } from '../state/ProjectContext.jsx';
@@ -678,7 +678,7 @@ export const UnitsModal = ({ isOpen, onClose, activeUnits, onUpdateActiveUnits }
                                             onChange={(e) => handleCheckboxChange(unitKey, e.target.checked)}
                                             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                         />
-                                        <span className="text-sm text-gray-700">{unitKey}</span>
+                                        <span className="text-sm text-gray-700">{unitLabel(unitKey)}</span>
                                     </label>
                                 ))}
                             </div>
@@ -877,7 +877,7 @@ export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, 
                         <label htmlFor="newFormatUnit" className="block text-sm font-medium text-gray-700">Unité</label>
                         <select id="newFormatUnit" value={portionUnit} onChange={(e) => setPortionUnit(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
                             {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, portionUnit).map(unit => (
-                                <option key={unit} value={unit}>{unit}</option>
+                                <option key={unit} value={unit}>{unitLabel(unit)}</option>
                             ))}
                         </select>
                     </div>

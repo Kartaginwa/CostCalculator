@@ -1,5 +1,5 @@
-import { calculateCosts } from '../engine/calculateCosts.js';
-import { todayLocalISO, generateSlug, buildRowDisplayName, sumLineAmounts, sumAmountsMap, DEFAULT_ACTIVE_UNITS } from '../utils.js';
+import { computeProjectAnalysis } from '../engine/analysisPipeline.js';
+import { todayLocalISO, generateSlug, sumLineAmounts, sumAmountsMap, DEFAULT_ACTIVE_UNITS } from '../utils.js';
 
 // Construit le format de vente par défaut d'un produit à partir de ses champs "à plat"
 // (prixVente, nbPortions, etc.) ET de sa fiche recette (ingrédients, étapes de production, statut
@@ -93,12 +93,9 @@ const round = (value, decimals = 2) => {
 // Génère 18 mois + le point actuel de points de suivi. Pour chaque mois, on reconstruit les prix
 // d'ingrédients (dérive + oscillation) puis on calcule les coûts de chaque plat via le moteur —
 // données historiques cohérentes, sans avoir à coder les coûts à la main.
-function buildTrackingHistory(ingredients, labor, products, generalInfo, packaging) {
+function buildTrackingHistory(ingredients, labor, products, generalInfo, packaging, context) {
     const MONTHS = 18;
     const now = new Date();
-    // La productivité cuisine dépend des volumes réels et n'est pas recalculée ici : on fige à 100 %
-    // (pas de majoration de MO oisive) pour l'historique de démonstration.
-    const snapBase = { ...generalInfo, kitchenProductivity: 100 };
     const notes = {
         [MONTHS]: 'Première analyse de référence — ouverture de l\'activité de production.',
         12: 'Renégociation des contrats avec le boucher et le maraîcher.',
@@ -126,22 +123,11 @@ function buildTrackingHistory(ingredients, labor, products, generalInfo, packagi
             return { ...pkg, unitPrice, purchasePrice: round(unitPrice * pkg.purchaseFormat, 2), lastUpdated: dateStr };
         });
 
-        const snapGeneral = { ...snapBase, totalRevenue: round(generalInfo.totalRevenue * (1 - 0.008 * m), 0) };
-        const memo = {};
-        // Une entrée par FORMAT, pas par produit (Phase 1.6) — mêmes règles que analysisData.js, pour
-        // que les relevés historiques générés ici aient exactement la même forme que ceux produits en
-        // temps réel par computeAnalysisData (voir SummaryTable.jsx).
-        const productsWithCosts = products.flatMap((p) => {
-            const formatsList = (p.formats && p.formats.length > 0) ? p.formats : [p];
-            return formatsList.map((fmt, formatIndex) => ({
-                ...p,
-                prixVente: fmt.prixVente, nbPortions: fmt.nbPortions, portionSize: fmt.portionSize,
-                portionUnit: fmt.portionUnit, salesMix: fmt.salesMix, onMenu: fmt.onMenu, sku: fmt.sku,
-                id: fmt.id, productId: p.id, formatIndex, format: fmt,
-                // Même règle de désambiguïsation qu'analysisData.js — voir buildRowDisplayName.
-                displayName: buildRowDisplayName(p.platName, formatsList, fmt, formatIndex),
-                costs: calculateCosts(p, snapGeneral, monthIngredients, products, labor, null, memo, new Set(), fmt, monthPackaging),
-            }));
+        // Chaîne de calcul COMPLÈTE de l'application (absorption de toute la paie, frais fixes répartis, détail par
+        // canal) : chaque relevé a la même forme et suit la même méthode que ceux enregistrés par l'utilisateur, et le
+        // dernier rejoint exactement les tuiles du rapport (audit du 19/11 : avant, ils étaient calculés sans cela).
+        const { data } = computeProjectAnalysis({
+            products, baseIngredients: monthIngredients, basePackaging: monthPackaging, laborDatabase: labor, generalInfo, ...context,
         });
 
         points.push({
@@ -149,10 +135,10 @@ function buildTrackingHistory(ingredients, labor, products, generalInfo, packagi
             name: `Relevé ${date.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })}`,
             note: notes[m] || '',
             timestamp: iso,
-            generalInfo: { ...snapGeneral },
+            generalInfo: { ...generalInfo, totalRevenue: round(generalInfo.totalRevenue * (1 - 0.008 * m), 0) },
             baseIngredients: monthIngredients,
             basePackaging: monthPackaging,
-            productsWithCosts,
+            productsWithCosts: data.productsWithCosts,
         });
     }
     return points;
@@ -762,6 +748,20 @@ export const getDefaultState = () => {
         indirectCostMethod: 'directCost',
     };
 
+    // Champs « à plat » du produit = miroir de son premier format (même convention que buildDefaultFormat/App.jsx).
+    const demoProducts = rawProducts.map((p) => {
+        const formats = p.formats;
+        return {
+            ...p,
+            prixVente: formats[0].prixVente,
+            nbPortions: formats[0].nbPortions,
+            portionSize: formats[0].portionSize,
+            portionUnit: formats[0].portionUnit,
+            salesMix: formats[0].salesMix,
+            onMenu: formats[0].onMenu,
+        };
+    });
+
     // --- DONNÉES FINALES ---
     return {
         companyName: 'Boréal Mets Préparés inc.',
@@ -773,20 +773,12 @@ export const getDefaultState = () => {
         // de buildDefaultFormat ici (il ne gère qu'un format unique dérivé des champs à plat). Les
         // champs à plat du produit sont simplement mis en miroir sur son premier format — même
         // convention que buildDefaultFormat/App.jsx (canal "principal" = channelPrices[0]).
-        products: rawProducts.map((p) => {
-            const formats = p.formats;
-            return {
-                ...p,
-                prixVente: formats[0].prixVente,
-                nbPortions: formats[0].nbPortions,
-                portionSize: formats[0].portionSize,
-                portionUnit: formats[0].portionUnit,
-                salesMix: formats[0].salesMix,
-                onMenu: formats[0].onMenu,
-            };
-        }),
+        products: demoProducts,
         laborDatabase: labor,
-        trackingPoints: buildTrackingHistory(ingredients, labor, rawProducts, generalInfo, packaging),
+        trackingPoints: buildTrackingHistory(ingredients, labor, demoProducts, generalInfo, packaging, {
+            salesChannels: demoSalesChannels, productionActivities: demoProductionActivities,
+            expenseLines: demoExpenseLines, revenueLines: demoRevenueLines, directCostLines: demoDirectCostLines, repartitionKeys: demoRepartitionKeys,
+        }),
         productionActivities: demoProductionActivities,
         salesChannels: demoSalesChannels,
         // Unités de mesure activées (19/10) : les 5 historiques par défaut, projet démo compris —

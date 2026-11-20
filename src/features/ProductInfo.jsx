@@ -1,14 +1,15 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowDownAZ, ArrowDownZA, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
-import { unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveNumber, isInvalidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits, formatNumber } from '../utils.js';
+import { unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveNumber, isInvalidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal, UnitsModal } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeNetPriceFromPds } from '../engine/salesChannelCascade.js';
+import { removeChannelFromProducts } from '../engine/productEdits.js';
 
 export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct, handleProductValueChange, handleFormatValueChange, handleFormatChannelPricesChange, onAddFormat, onDuplicateFormat, onDeleteFormat, itemsPerPage, onItemsPerPageChange, onOpenSalesImport }) => {
     const {
-        companyName, onUpdateCompanyName, logoUrl, onUpdateLogoUrl, generalInfo, onUpdateGeneralInfo, products,
+        companyName, onUpdateCompanyName, logoUrl, onUpdateLogoUrl, generalInfo, onUpdateGeneralInfo, products, onUpdateProducts,
         productionActivities, onUpdateProductionActivities, salesChannels, onUpdateSalesChannels,
         activeUnits, onUpdateActiveUnits,
         showNotification, setNotification,
@@ -168,13 +169,22 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         }
         const activityToDelete = productionActivities.find(a => a.id === id);
         const originalList = [...productionActivities];
+        const originalProducts = products;
         const newList = productionActivities.filter(a => a.id !== id);
+        // Les produits de l'activité supprimée passent à la première activité restante : sans cela ils gardaient un
+        // identifiant disparu, affichaient une autre activité à l'écran et ne recevaient plus leurs frais d'activité.
+        const fallbackActivity = newList[0];
+        const movedCount = products.filter(p => p.activityId === id).length;
         onUpdateProductionActivities(newList);
+        if (movedCount > 0) {
+            onUpdateProducts(products.map(p => (p.activityId === id ? { ...p, activityId: fallbackActivity.id } : p)));
+        }
         showNotification({
-            message: `L'activité de production "${activityToDelete.name || 'Sans nom'}" a été supprimée.`,
+            message: `L'activité de production "${activityToDelete.name || 'Sans nom'}" a été supprimée.${movedCount > 0 ? ` ${movedCount} produit${movedCount > 1 ? 's ont été déplacés' : ' a été déplacé'} vers « ${fallbackActivity.name || 'Sans nom'} ».` : ''}`,
             type: 'info',
             onUndo: () => {
                 onUpdateProductionActivities(originalList);
+                if (movedCount > 0) onUpdateProducts(originalProducts);
                 setNotification(null);
             }
         });
@@ -200,12 +210,17 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         }
         const channelToDelete = salesChannels.find(c => c.id === channelId);
         const originalList = [...salesChannels];
+        const originalProducts = products;
         onUpdateSalesChannels(salesChannels.filter(c => c.id !== channelId));
+        // Les prix et volumes de ce canal partent avec lui : ils restaient cachés dans les formats sans être comptés nulle part.
+        const { products: cleanedProducts, removedCount } = removeChannelFromProducts(products, channelId);
+        if (removedCount > 0) onUpdateProducts(cleanedProducts);
         showNotification({
-            message: `Le circuit de vente "${channelToDelete.name || 'Sans nom'}" a été supprimé.`,
+            message: `Le circuit de vente "${channelToDelete.name || 'Sans nom'}" a été supprimé.${removedCount > 0 ? ` ${removedCount} prix et volume${removedCount > 1 ? 's' : ''} de vente associé${removedCount > 1 ? 's' : ''} ${removedCount > 1 ? 'ont été retirés' : 'a été retiré'}.` : ''}`,
             type: 'info',
             onUndo: () => {
                 onUpdateSalesChannels(originalList);
+                if (removedCount > 0) onUpdateProducts(originalProducts);
                 setNotification(null);
             }
         });
@@ -666,14 +681,14 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                         <tr id={`format-row-${format.id}`}>
                                             <td className="px-2 py-2">
                                                 <div className="flex items-center gap-1">
-                                                    <input type="text" inputMode="decimal" value={format.portionSize || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionSize', e.target.value)} className={`w-12 p-1 border rounded text-right text-sm ${!isValidNumber(format.portionSize) ? 'border-red-500' : 'border-gray-300'}`} />
+                                                    <input type="text" inputMode="decimal" value={format.portionSize || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionSize', e.target.value)} className={`w-12 p-1 border rounded text-right text-sm ${!isValidPositiveNumber(format.portionSize) ? 'border-red-500' : 'border-gray-300'}`} />
                                                     <select value={format.portionUnit || 'unité'} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'portionUnit', e.target.value)} className="p-1 border rounded border-gray-300 text-sm">
                                                         {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, format.portionUnit || 'unité').map(u => (
-                                                            <option key={u} value={u}>{u}</option>
+                                                            <option key={u} value={u}>{unitLabel(u)}</option>
                                                         ))}
                                                     </select>
                                                 </div>
-                                                {!isValidNumber(format.portionSize) && <ValidationMessage message="Quantité invalide." />}
+                                                {!isValidPositiveNumber(format.portionSize) && <ValidationMessage message="Quantité invalide (supérieure à 0)." />}
                                             </td>
                                             <td className="px-2 py-2">
                                                 <input type="text" value={format.sku || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'sku', e.target.value)} placeholder="ex. CONF-250ML" className="w-28 p-1 border rounded border-gray-300 text-sm" />
@@ -741,7 +756,8 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                         onChange={(e) => handleChannelPriceFieldChange(productIndex, formatIndex, format, cp.id, 'channelId', e.target.value)}
                                                                         className="flex-1 p-1 border rounded text-xs border-gray-300"
                                                                     >
-                                                                        {salesChannels.map(c => <option key={c.id} value={c.id}>{c.name || 'Sans nom'}</option>)}
+                                                                        {/* Un canal déjà utilisé par une autre ligne de ce format n'est plus proposé : le choisir compterait ses volumes deux fois. */}
+                                                                        {salesChannels.filter(c => c.id === cp.channelId || !usedChannelIds.has(c.id)).map(c => <option key={c.id} value={c.id}>{c.name || 'Sans nom'}</option>)}
                                                                     </select>
                                                                     <div>
                                                                         <label className="sr-only">Prix net ($)</label>

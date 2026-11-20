@@ -1,7 +1,7 @@
 // Génération du rapport PDF — extrait de App.jsx (aucune logique modifiée).
 // Fonction pure "données -> document" : reçoit tout son contexte via l'objet `deps`, ne lit
 // aucun état React. jsPDF/autoTable sont fournis en global (window.jspdf) via scripts/copy-libs.
-import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, CONVERSION_FACTORS, MAJOR_ALLERGENS, formatNumber } from '../utils.js';
+import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, MAJOR_ALLERGENS, formatNumber, unitConversionFactor } from '../utils.js';
 import { indirectCostMethodLabels } from '../state/initialState.js';
 import { computeSnapshotMenuKpis } from '../engine/analysisData.js';
     const getGlobalKpiDataForPdf = (trackingPoints) => {
@@ -640,7 +640,7 @@ export const generatePdf = (options, deps) => {
                         const baseIngredient = ingredientsList.find(ing => ing.id === i.id);
                         if (!baseIngredient) return [i.name || 'N/A', '', '', '', '', '', ''];
                         const recipeUnit = i.recipeUnit || baseIngredient.unit;
-                        const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[baseIngredient.unit]?.factor || 1);
+                        const conversionFactor = unitConversionFactor(recipeUnit, baseIngredient.unit);
                         const quantityInBaseUnit = parseLocaleNumber(i.quantity) * conversionFactor;
                         const baseCost = quantityInBaseUnit * parseLocaleNumber(baseIngredient.unitPrice);
                         const lossPercentage = (parseLocaleNumber(baseIngredient.lossPercentage) || 0) / 100;
@@ -681,7 +681,7 @@ export const generatePdf = (options, deps) => {
                             const basePkg = basePackaging.find(pkg => pkg.id === i.id);
                             if (!basePkg) return [i.name || 'N/A', '', '', '', '', ''];
                             const recipeUnit = i.recipeUnit || basePkg.unit;
-                            const conversionFactor = (CONVERSION_FACTORS[recipeUnit]?.factor || 1) / (CONVERSION_FACTORS[basePkg.unit]?.factor || 1);
+                            const conversionFactor = unitConversionFactor(recipeUnit, basePkg.unit);
                             const quantityInBaseUnit = parseLocaleNumber(i.quantity) * conversionFactor;
                             const baseCost = quantityInBaseUnit * parseLocaleNumber(basePkg.unitPrice);
                             const lossPercentage = (parseLocaleNumber(basePkg.lossPercentage) || 0) / 100;

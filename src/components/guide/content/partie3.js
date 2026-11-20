@@ -179,10 +179,10 @@ export const partie3 = {
                 { type: 'p', text: 'Ce qu\'il faut en conclure :' },
                 {
                     type: 'ul', items: [
-                        'Le même produit, avec le même coût de fabrication, est **rentable en vente directe** (marge nette de 17,11 %), à peine **à l\'équilibre en épicerie** (−1,98 %) et **déficitaire en grande surface** (−10,49 %). La seule différence est le prix net, que les maillons font baisser de 7,64 $ à 5,15 $.',
+                        'Le même produit, avec le même coût de fabrication, est **rentable en vente directe** (marge nette de 17,16 %), à peine **à l\'équilibre en épicerie** (−1,92 %) et **déficitaire en grande surface** (−10,41 %). La seule différence est le prix net, que les maillons font baisser de 7,64 $ à 5,15 $.',
                         'Le produit est un des produits actifs les plus vendus : le canal où il perd le plus est aussi celui où il se vend le plus (5 665,00 $ de revenus contre 1 222,40 $ en vente directe).',
                         'La part de frais fixes propre à chaque canal (« Canal ») change aussi : 1,08 $ en vente directe, 0,80 $ en épicerie, 0,44 $ en grande surface, parce que ces coûts se répartissent sur des volumes différents.',
-                        'Le point mort grimpe de 791 unités en vente directe à 1 981 en grande surface : il faut vendre bien plus pour couvrir les mêmes frais quand la marge unitaire est plus faible.',
+                        'Le point mort grimpe de 789 unités en vente directe à 1 978 en grande surface : il faut vendre bien plus pour couvrir les mêmes frais quand la marge unitaire est plus faible.',
                     ],
                 },
                 { type: 'callout', kind: 'pourquoi', text: 'Voilà pourquoi la marge brute d\'un produit ne suffit pas à décider. Les décisions possibles : relever le prix net en grande surface (renégocier le PDS ou la marge du distributeur), réduire le coût de production, ne plus offrir ce produit dans ce canal, ou accepter la perte comme coût d\'accès à ce client si d\'autres produits y sont rentables.' },
@@ -229,7 +229,7 @@ export const partie3 = {
                         ['Point mort', d(A.plats.pointMort), d(A.sauces.pointMort), d(A.soupes.pointMort)],
                     ],
                 },
-                { type: 'p', text: 'Une seule activité, les mets principaux surgelés, est rentable (marge nette de 9,03 %) et porte l\'entreprise. Les deux autres perdent de l\'argent. Les sauces et accompagnements ont une marge brute de seulement 2,77 % : elle ne couvre presque rien des frais fixes, qui sont de 2 931,63 $. Leur point mort (105 753,49 $) est près de trente fois leur chiffre d\'affaires réel (3 690,30 $) : l\'activité, telle qu\'elle est aujourd\'hui, ne peut pas devenir rentable sans changer son prix ou son coût.' },
+                { type: 'p', text: 'Une seule activité, les mets principaux surgelés, est rentable (marge nette de 9,10 %) et porte l\'entreprise. Les deux autres perdent de l\'argent. Les sauces et accompagnements ont une marge brute de seulement 2,77 % : elle ne couvre presque rien des frais fixes, qui sont de 2 933,71 $. Leur point mort (105 828,74 $) est près de trente fois leur chiffre d\'affaires réel (3 690,30 $) : l\'activité, telle qu\'elle est aujourd\'hui, ne peut pas devenir rentable sans changer son prix ou son coût.' },
                 { type: 'h', id: 'guide-canal-exemple', text: 'Lire Par Canal : le projet démo' },
                 {
                     type: 'table', head: ['', 'Vente directe', 'Épiceries', 'Grandes surfaces'], rows: [
@@ -239,7 +239,7 @@ export const partie3 = {
                         ['Point mort', d(C.directe.pointMort), d(C.epiceries.pointMort), d(C.grandes.pointMort)],
                     ],
                 },
-                { type: 'p', text: 'Les grandes surfaces représentent près de 60 % du chiffre d\'affaires des produits actifs, mais perdent 3 040,95 $. La vente directe, la plus petite, est la plus rentable (marge nette de 19,18 %). Remarquez que la somme des bénéfices nets des canaux (2 252,14 $ + 12,88 $ − 3 040,95 $) est de −775,95 $ : c\'est le bénéfice net théorique de la réconciliation. Les trois rapports (par SKU, par activité, par canal) se recoupent exactement.' },
+                { type: 'p', text: 'Les grandes surfaces représentent près de 60 % du chiffre d\'affaires des produits actifs, mais perdent 2 990,38 $. La vente directe, la plus petite, est la plus rentable (marge nette de 19,26 %). Remarquez que la somme des bénéfices nets des canaux (2 261,37 $ + 31,95 $ − 2 990,38 $) est de −697,06 $ : c\'est le bénéfice net théorique de la réconciliation. Les trois rapports (par SKU, par activité, par canal) se recoupent exactement.' },
                 { type: 'callout', kind: 'pourquoi', text: 'Ces deux rapports transforment des dizaines de produits en quelques lignes lisibles, celles sur lesquelles on peut agir : revoir le prix d\'une ligne de production, renégocier un canal, ou décider d\'en abandonner un.' },
                 { type: 'callout', kind: 'retenir', text: 'Par Activité et Par Canal additionnent vos produits en segments. Comparez la marge nette des segments : ceux qui perdent de l\'argent sont vos priorités.' },
             ],

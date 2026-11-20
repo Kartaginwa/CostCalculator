@@ -230,30 +230,30 @@ export const SALAIRE = (() => {
 export const DEMO = {
     // Production — Chili con carne mijoté (format 400 g, lot de 20 unités, canal « Vente directe »)
     chili: {
-        coutMatiere: '2.66 $', coutEmballage: '0.58 $', coutMO: '0.58 $', coutProduction: '3.82 $',
+        coutMatiere: '2.66 $', coutEmballage: '0.58 $', coutMO: '0.57 $', coutProduction: '3.82 $',
         baseMatiere: '50.52 $', pertesMatiere: '2.75 $', baseEmballage: '11.40 $', pertesEmballage: '0.15 $',
-        totalMatiereRecette: '53.27 $', totalEmballageRecette: '11.55 $', totalMORecette: '11.59 $',
-        moDirectRecette: '8.81 $', moIndirectRecette: '2.78 $',
-        prixVente: '7.64 $', margeContribution: '4.98$ / 65.14%', margeBrute: '3.82$ / 50.00%', pointMort: '791 unités',
+        totalMatiereRecette: '53.27 $', totalEmballageRecette: '11.55 $', totalMORecette: '11.50 $',
+        moDirectRecette: '8.81 $', moIndirectRecette: '2.68 $',
+        prixVente: '7.64 $', margeContribution: '4.98$ / 65.14%', margeBrute: '3.82$ / 50.06%', pointMort: '789 unités',
         coutMatierePct: '34.86%',
     },
     // Rapport — Par SKU, Chili con carne mijoté
     bySku: {
         pds: '8.49 $', margeEpicier: '2.55 $', margeDetaillant: '2.72 $', majorationDistribution: '0.62 $',
         prixEpiceries: '5.94 $', prixGrandesSurfaces: '5.15 $',
-        margeNetteDirecte: '17.11 %', margeNetteEpiceries: '-1.98 %', margeNetteGrandesSurfaces: '-10.49 %',
+        margeNetteDirecte: '17.16 %', margeNetteEpiceries: '-1.92 %', margeNetteGrandesSurfaces: '-10.41 %',
         fraisFixesGeneral: '0.68 $', fraisFixesActivite: '0.76 $', fraisFixesCanalDirecte: '1.08 $',
-        pointMortDirecte: '791 unités', pointMortEpiceries: '1337 unités', pointMortGrandesSurfaces: '1981 unités',
+        pointMortDirecte: '789 unités', pointMortEpiceries: '1335 unités', pointMortGrandesSurfaces: '1978 unités',
     },
     // État des résultats
     etat: { revenus: '80 000.00 $', chargesDirectes: '48 000.00 $', beneficeBrut: '32 000.00 $', fraisFixes: '28 000.00 $', beneficeNet: '4 000.00 $',
-        revenusTheorique: '75 366.10 $', chargesDirectesTheorique: '48 057.25 $', beneficeBrutTheorique: '27 308.85 $', beneficeNetTheorique: '-775.95 $' },
+        revenusTheorique: '75 366.10 $', chargesDirectesTheorique: '47 978.45 $', beneficeBrutTheorique: '27 387.65 $', beneficeNetTheorique: '-697.06 $' },
     // Main-d'œuvre
-    mo: { coutCuisinier: '26.16 $/h', utilisation: '85.76 %', heuresAttendues: '302.38 h', heuresReelles: '259.31 h' },
+    mo: { coutCuisinier: '26.17 $/h', utilisation: '86.24 %', heuresAttendues: '354.42 h', heuresReelles: '305.64 h' },
     // Ingrédients
     ingredients: { abcA: '70.4% des coûts', coutNet: '23 218.67 $', pertes: '1 056.75 $', achatRequis: '24 275.42 $' },
     // Rapport — Vue d'ensemble
-    apercu: { coutMatiere: '42.01 %', coutEmballage: '8.64 %', coutMO: '11.21 %', margeBrute: '36.23 %', pointMortMenu: '76 822.83 $' },
+    apercu: { coutMatiere: '42.00 %', coutEmballage: '8.64 %', coutMO: '11.12 %', margeBrute: '36.34 %', pointMortMenu: '76 656.30 $' },
 };
 
 // Chaînes que le guide cite et qui doivent s'afficher à l'écran du projet démo, par écran.
@@ -264,7 +264,7 @@ export const DEMO_SCREEN_CHECKS = {
         DEMO.chili.totalEmballageRecette, DEMO.chili.totalMORecette, DEMO.chili.moDirectRecette, DEMO.chili.moIndirectRecette,
         DEMO.chili.baseMatiere, DEMO.chili.pertesMatiere, DEMO.chili.baseEmballage, DEMO.chili.pertesEmballage,
         DEMO.chili.prixVente, DEMO.chili.margeContribution, DEMO.chili.margeBrute, DEMO.chili.pointMort, DEMO.chili.coutMatierePct,
-        '21.7 min', '7.56%', '7.58%',
+        '21.7 min', '7.56%', '7.52%',
     ],
     'summary:Par SKU': [
         DEMO.bySku.pds, DEMO.bySku.margeEpicier, DEMO.bySku.margeDetaillant, DEMO.bySku.majorationDistribution, DEMO.bySku.prixEpiceries,
@@ -275,11 +275,11 @@ export const DEMO_SCREEN_CHECKS = {
     'income-statement': [
         DEMO.etat.revenus, DEMO.etat.chargesDirectes, DEMO.etat.beneficeBrut, DEMO.etat.fraisFixes, DEMO.etat.beneficeNet,
         DEMO.etat.revenusTheorique, DEMO.etat.chargesDirectesTheorique, DEMO.etat.beneficeBrutTheorique, DEMO.etat.beneficeNetTheorique,
-        '2 308.33 $', '472.12 $', '219.54 $', '+4 633.90 $', '+6.1 %', '-57.25 $', '-0.1 %', '+4 691.15 $', '+17.2 %', '+4 775.95 $', '+615.5 %',
+        '2 308.73 $', '471.64 $', '219.63 $', '+4 633.90 $', '+6.1 %', '+21.55 $', '+0.0 %', '+4 612.35 $', '+16.8 %', '+4 697.06 $', '+673.8 %',
     ],
     labor: [
         DEMO.mo.coutCuisinier, DEMO.mo.utilisation, DEMO.mo.heuresAttendues, DEMO.mo.heuresReelles,
-        '91.74 %', '89.99 %', '86.67 %', '171.67 h', '66.20 %', '87.63 h', '33.80 %',
+        '88.80 %', '94.12 %', '86.67 %', '182.59 h', '59.74 %', '123.05 h', '40.26 %',
     ],
     ingredients: [DEMO.ingredients.abcA, DEMO.ingredients.coutNet, DEMO.ingredients.pertes, DEMO.ingredients.achatRequis],
     "summary:Vue d'ensemble": [DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute, DEMO.apercu.pointMortMenu],
@@ -289,28 +289,28 @@ export const DEMO_SCREEN_CHECKS = {
 export const DEMO_RAPPORT = {
     bySkuDetail: {
         revenuDirecte: '1 222.40 $', revenuEpiceries: '2 257.20 $', revenuGrandesSurfaces: '5 665.00 $',
-        fraisTotauxDirecte: '1 013.21 $', fraisTotauxEpiceries: '2 301.93 $', fraisTotauxGrandesSurfaces: '6 259.00 $',
-        resultatDirecte: '209.19 $', resultatEpiceries: '-44.73 $', resultatGrandesSurfaces: '-594.00 $',
+        fraisTotauxDirecte: '1 012.63 $', fraisTotauxEpiceries: '2 300.49 $', fraisTotauxGrandesSurfaces: '6 254.62 $',
+        resultatDirecte: '209.77 $', resultatEpiceries: '-43.29 $', resultatGrandesSurfaces: '-589.62 $',
         beneficeBrutDirecte: '3.82 $', beneficeBrutEpiceries: '2.12 $', beneficeBrutGrandesSurfaces: '1.33 $',
-        margeBruteDirecte: '50.00 %', margeBruteEpiceries: '35.69 %', margeBruteGrandesSurfaces: '25.82 %',
+        margeBruteDirecte: '50.06 %', margeBruteEpiceries: '35.76 %', margeBruteGrandesSurfaces: '25.91 %',
         fraisFixesTotalDirecte: '2.51 $', fraisFixesTotalEpiceries: '2.24 $', fraisFixesTotalGrandesSurfaces: '1.87 $',
         fraisFixesCanalEpiceries: '0.80 $', fraisFixesCanalGrandesSurfaces: '0.44 $',
-        coutNetDirecte: '6.33 $', coutNetEpiceries: '6.06 $', coutNetGrandesSurfaces: '5.69 $',
-        beneficeNetDirecte: '1.31 $', beneficeNetEpiceries: '-0.12 $', beneficeNetGrandesSurfaces: '-0.54 $',
+        coutNetDirecte: '6.33 $', coutNetEpiceries: '6.05 $', coutNetGrandesSurfaces: '5.69 $',
+        beneficeNetDirecte: '1.31 $', beneficeNetEpiceries: '-0.11 $', beneficeNetGrandesSurfaces: '-0.54 $',
     },
     activites: {
-        plats: { revenu: '61 978.20 $', cout: '36 787.05 $', brut: '25 191.15 $', margeBrute: '40.65 %', fraisFixes: '19 510.80 $', net: '5 595.56 $', margeNette: '9.03 %', pointMort: '50 529.96 $' },
-        sauces: { revenu: '3 690.30 $', cout: '3 588.00 $', brut: '102.30 $', margeBrute: '2.77 %', fraisFixes: '2 931.63 $', net: '-2 829.33 $', margeNette: '-76.67 %', pointMort: '105 753.49 $' },
-        soupes: { revenu: '9 697.60 $', cout: '7 682.20 $', brut: '2 015.40 $', margeBrute: '20.78 %', fraisFixes: '5 557.56 $', net: '-3 542.17 $', margeNette: '-36.53 %', pointMort: '16 703.21 $' },
+        plats: { revenu: '61 978.20 $', cout: '36 740.42 $', brut: '25 237.78 $', margeBrute: '40.72 %', fraisFixes: '19 515.79 $', net: '5 637.29 $', margeNette: '9.10 %', pointMort: '50 447.07 $' },
+        sauces: { revenu: '3 690.30 $', cout: '3 588.00 $', brut: '102.30 $', margeBrute: '2.77 %', fraisFixes: '2 933.71 $', net: '-2 831.41 $', margeNette: '-76.73 %', pointMort: '105 828.74 $' },
+        soupes: { revenu: '9 697.60 $', cout: '7 650.03 $', brut: '2 047.57 $', margeBrute: '21.11 %', fraisFixes: '5 550.50 $', net: '-3 502.93 $', margeNette: '-36.12 %', pointMort: '16 612.20 $' },
     },
     canaux: {
-        directe: { revenu: '11 740.20 $', brut: '6 208.99 $', margeBrute: '52.89 %', net: '2 252.14 $', margeNette: '19.18 %', pointMort: '8 050.40 $' },
-        epiceries: { revenu: '18 725.50 $', brut: '7 337.43 $', margeBrute: '39.18 %', net: '12.88 $', margeNette: '0.07 %', pointMort: '18 661.96 $' },
-        grandes: { revenu: '44 900.40 $', brut: '13 762.43 $', margeBrute: '30.65 %', net: '-3 040.95 $', margeNette: '-6.77 %', pointMort: '51 874.41 $' },
+        directe: { revenu: '11 740.20 $', brut: '6 218.19 $', margeBrute: '52.96 %', net: '2 261.37 $', margeNette: '19.26 %', pointMort: '8 036.10 $' },
+        epiceries: { revenu: '18 725.50 $', brut: '7 356.43 $', margeBrute: '39.29 %', net: '31.95 $', margeNette: '0.17 %', pointMort: '18 623.87 $' },
+        grandes: { revenu: '44 900.40 $', brut: '13 813.03 $', margeBrute: '30.76 %', net: '-2 990.38 $', margeNette: '-6.66 %', pointMort: '51 753.56 $' },
     },
     bcg: {
-        etoileTao: 'Pop: 12.7% | Marge: 2.92$', vacheChili: 'Pop: 14.9% | Marge: 1.76$', poidsMortSauce: 'Pop: 6.3% | Marge: 0.15$',
-        dilemmePate900: 'Pop: 5.6% | Marge: 5.13$',
+        etoileTao: 'Pop: 12.7% | Marge: 2.93$', vacheChili: 'Pop: 14.9% | Marge: 1.76$', poidsMortSauce: 'Pop: 6.3% | Marge: 0.15$',
+        dilemmePate900: 'Pop: 5.6% | Marge: 5.15$',
     },
 };
 

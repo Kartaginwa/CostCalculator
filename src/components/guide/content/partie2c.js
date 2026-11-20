@@ -130,7 +130,7 @@ export const chapitreEtatResultats = {
                 ['Colonnes des canaux', 'La part attribuée à chaque canal de vente : un axe **indépendant** des activités. Une même dépense peut être répartie sur les deux à la fois, ou sur un seul si l\'autre ne s\'applique pas. Les valeurs dérivées d\'une clé sont verrouillées ; passez la ligne en Manuel pour les modifier.'],
             ],
         },
-        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'électricité (3 000 $) utilise la clé « Selon les charges directes » : les activités qui coûtent le plus cher à fabriquer en reçoivent la plus grande part (2 308,33 $, 472,12 $ et 219,54 $). Le loyer de l'espace de production (9 000 $) est réparti manuellement : 5 000 $, 2 500 $ et 1 500 $. Le total des frais fixes est de ${d(DEMO.etat.fraisFixes)}.` },
+        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'électricité (3 000 $) utilise la clé « Selon les charges directes » : les activités qui coûtent le plus cher à fabriquer en reçoivent la plus grande part (2 308,73 $, 471,64 $ et 219,63 $). Le loyer de l'espace de production (9 000 $) est réparti manuellement : 5 000 $, 2 500 $ et 1 500 $. Le total des frais fixes est de ${d(DEMO.etat.fraisFixes)}.` },
 
         { type: 'h', id: 'guide-ff-benefice-net', text: 'Bénéfice net' },
         { type: 'p', text: `Une seconde barre de synthèse : **bénéfice brut moins frais fixes**, affichée **au total de l'entreprise**, sans détail par activité ni par canal. Projet démo : ${d(DEMO.etat.beneficeBrut)} − ${d(DEMO.etat.fraisFixes)} = **${d(DEMO.etat.beneficeNet)}**.` },
@@ -153,9 +153,9 @@ export const chapitreEtatResultats = {
         {
             type: 'table', caption: 'Réconciliation du projet démo', head: ['Poste', 'Réel', 'Théorique', 'Écart'], rows: [
                 ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+4 633,90 $ (+6,1 %)'],
-                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '-57,25 $ (-0,1 %)'],
-                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '+4 691,15 $ (+17,2 %)'],
-                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '+4 775,95 $ (+615,5 %)'],
+                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+21,55 $ (+0,0 %)'],
+                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '+4 612,35 $ (+16,8 %)'],
+                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '+4 697,06 $ (+673,8 %)'],
             ],
         },
         {
@@ -169,7 +169,7 @@ export const chapitreEtatResultats = {
                 ['{{Écart (%)}}', 'Le même écart, exprimé en pourcentage du théorique, pour comparer l\'ampleur des écarts d\'une ligne à l\'autre.'],
             ],
         },
-        { type: 'p', text: 'Lecture : le réel dépasse le théorique pour les revenus (+6,1 %), alors que les charges directes réelles sont presque égales à celles du modèle (−0,1 %). Le bénéfice net du modèle est légèrement négatif (−775,95 $) alors que le réel est de 4 000,00 $ : en pourcentage, l\'écart du bénéfice net (+615,5 %) paraît énorme parce que le théorique est proche de zéro, donc le moindre écart en dollars y devient un grand pourcentage. Regardez d\'abord les écarts en dollars.' },
+        { type: 'p', text: 'Lecture : le réel dépasse le théorique pour les revenus (+6,1 %), alors que les charges directes réelles sont presque égales à celles du modèle (+0,0 %). Le bénéfice net du modèle est légèrement négatif (−697,06 $) alors que le réel est de 4 000,00 $ : en pourcentage, l\'écart du bénéfice net (+673,8 %) paraît énorme parce que le théorique est proche de zéro, donc le moindre écart en dollars y devient un grand pourcentage. Regardez d\'abord les écarts en dollars.' },
         { type: 'p', text: 'La comparaison se fait toujours à l\'échelle de l\'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Bénéfice brut = revenus moins charges directes ; bénéfice net = bénéfice brut moins le total des frais fixes (sous-total du tableau des dépenses). Ce total est soustrait identiquement du réel et du théorique : l\'écart entre les deux colonnes vient donc du bénéfice brut, auquel s\'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n\'existe pas dans les charges directes réelles).' },
 
         { type: 'h', id: 'guide-ff-import', text: 'Importer l\'état des résultats' },

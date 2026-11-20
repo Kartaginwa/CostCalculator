@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { getDefaultState } from '../state/initialState.js';
-import { parseLocaleNumber as P, sumLineAmounts } from '../utils.js';
+import { parseLocaleNumber as P } from '../utils.js';
 import {
-    computeAnalysisData, computeIndirectPools, computeActivitySummaries, computeChannelSummaries, computeSnapshotBreakEven,
+    computeActivitySummaries, computeChannelSummaries, computeSnapshotBreakEven,
 } from './analysisData.js';
 import { applyCostShocks } from './costScenario.js';
 import { computeProjectChecks } from './projectChecks.js';
+import { computeProjectAnalysis } from './analysisPipeline.js';
+import { computeLaborHoursNeeded } from './laborHours.js';
 
 // Corrections issues de l'audit de la méthode (19/11) — chaque test rejoue le projet démo avec le même enchaînement
 // que l'application : calcul brouillon (sans pools) → pools de frais fixes → calcul final.
@@ -13,32 +15,12 @@ const sum = (list, f) => list.reduce((s, x) => s + f(x), 0);
 
 const pipeline = (state, { deactivate = [], ingredients = null } = {}) => {
     const products = state.products.map((p) => ({ ...p, formats: p.formats.map((f) => ({ ...f, onMenu: deactivate.includes(f.id) ? false : f.onMenu })) }));
-    const { productionActivities, salesChannels, laborDatabase, basePackaging, expenseLines, revenueLines, directCostLines, repartitionKeys } = state;
-    const baseIngredients = ingredients || state.ingredientsList;
-    const generalInfo = { ...state.generalInfo, totalIndirects: sumLineAmounts(expenseLines) };
-
-    // Productivité cuisine, comme App.jsx (calculatedGeneralInfo).
-    const byPost = {};
-    products.flatMap((p) => p.formats.filter((f) => f.onMenu)).forEach((fmt) => {
-        const sold = (fmt.channelPrices || []).reduce((s, cp) => s + (P(cp.volume) || 0), 0);
-        const batches = sold / (P(fmt.nbPortions) || 1);
-        (fmt.productionSteps || []).forEach((step) => (step.personnel || []).forEach((person) => {
-            byPost[person.postId] = (byPost[person.postId] || 0) + (P(step.duration) / 3600) * batches;
-        }));
+    // La chaîne complète de l'application (absorption de toute la paie, sous-recettes comprises → brouillon → pools → final).
+    const { data, pools, generalInfo } = computeProjectAnalysis({
+        products, baseIngredients: ingredients || state.ingredientsList, basePackaging: state.basePackaging, laborDatabase: state.laborDatabase,
+        generalInfo: state.generalInfo, salesChannels: state.salesChannels, productionActivities: state.productionActivities,
+        expenseLines: state.expenseLines, revenueLines: state.revenueLines, directCostLines: state.directCostLines, repartitionKeys: state.repartitionKeys,
     });
-    const needed = Object.values(byPost).reduce((s, h) => s + h, 0);
-    // Absorption de TOUTE la paie (19/11), comme App.jsx : coût direct des heures nécessaires ÷ masse salariale de tous les postes
-    const payrollOf = (emps) => emps.reduce((sum, e) => sum + P(e.workedHours) * P(e.hourlyRate) * (1 + P(e.socialCharges) / 100) * (1 + P(e.vacationPercentage) / 100), 0);
-    const payroll = sum(laborDatabase, (post) => payrollOf(post.employees || []));
-    const directNeeded = sum(laborDatabase, (post) => {
-        const hours = sum(post.employees || [], (e) => P(e.workedHours));
-        return hours > 0 ? (byPost[post.postName] || 0) * (payrollOf(post.employees || []) / hours) : 0;
-    });
-    const calc = { ...generalInfo, kitchenProductivity: payroll > 0 ? (directNeeded / payroll) * 100 : 100, totalDirectLaborHoursNeeded: needed, productivityReport: { rows: [] } };
-
-    const draft = computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calc, basePackaging, salesChannels);
-    const pools = computeIndirectPools(draft.productsWithCosts, { expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities, salesChannels, generalInfo });
-    const data = computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calc, basePackaging, salesChannels, pools);
     return { data, pools, generalInfo, state };
 };
 
@@ -132,9 +114,12 @@ describe('Audit de la méthode : correctifs du 19/11', () => {
         const state = getDefaultState();
         const { data } = pipeline(state);
         const payroll = sum(state.laborDatabase, (post) => sum(post.employees || [], (e) => P(e.workedHours) * P(e.hourlyRate) * (1 + P(e.socialCharges) / 100) * (1 + P(e.vacationPercentage) / 100)));
-        const absorbed = sum(data.activeProducts, (p) => P(p.costs.costLaborPerPortion) * (P(p.costs.portionsSold) || 0));
-        // Avant : 88,7 % (temps non productif perdu) puis 96,5 % (taux par heures : le poste sans recette n'était pas absorbé).
-        // Maintenant : 100 % — tous les postes, y compris celui qui n'a aucune étape de recette (responsable de production).
+        // Main-d'œuvre propre de chaque format × portions à produire (ventes ET consommation par d'autres recettes) : la
+        // main-d'œuvre d'une sous-recette est portée par le produit qui la consomme, mais fabriquée une seule fois.
+        const { batchesByFormat } = computeLaborHoursNeeded(state.products.map((p) => ({ ...p, formats: p.formats })), state.ingredientsList);
+        const absorbed = sum(data.productsWithCosts, (p) => P(p.costs.costLaborPerPortion) * (batchesByFormat[p.id] || 0) * (P(p.nbPortions) || 1));
+        // Avant : 88,7 % (temps non productif perdu), puis 96,5 % (taux par heures), puis 100 % mais avec le temps des
+        // sous-recettes absent des heures nécessaires (coût compté en double). Maintenant : exactement la paie versée.
         expect(absorbed / payroll).toBeCloseTo(1, 3);
     });
 });

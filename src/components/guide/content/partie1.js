@@ -370,7 +370,7 @@ export const partie1 = {
                 { type: 'ol', items: [
                     { label: 'Les heures travaillées.', text: 'Ce pour quoi vous payez une personne pendant la période.' },
                     { label: 'Les heures productives attendues.', text: 'Les heures travaillées multipliées par le **pourcentage de temps productif** de la personne : le temps qu\'elle est censée passer à fabriquer.' },
-                    { label: 'Les heures productives réelles (nécessaires).', text: 'Les heures que vos recettes demandent vraiment, compte tenu de ce que vous vendez : durée des étapes × nombre de lots à produire.' },
+                    { label: 'Les heures productives réelles (nécessaires).', text: 'Les heures que vos recettes demandent vraiment, compte tenu de ce que vous vendez : durée des étapes × nombre de lots à produire, y compris les lots de sous-recettes que vos produits consomment.' },
                 ] },
                 { type: 'p', text: `Le rapport entre les deux dernières est le **taux d'utilisation** : heures nécessaires ÷ heures productives attendues. Un taux de 100 % signifie que toute la capacité de production payée est employée ; un taux de ${pct(CAPACITE.utilisation, 0)} signifie qu'un quart de cette capacité ne sert à rien.` },
                 { type: 'callout', kind: 'exemple', blocks: [

@@ -344,14 +344,18 @@ export const getDefaultState = () => {
     // inoccupée. Mireille (Responsable de production) n'est assignée à aucune étape d'aucune
     // recette — son rôle est la supervision, pas la production directe — ses heures sont donc
     // réduites au minimum pour qu'elle ne domine plus le calcul d'utilisation à elle seule.
+    // Recalibrage du 19/11 : les heures nécessaires comptent maintenant aussi le temps de fabrication des
+    // sous-recettes (bouillon, purée) consommées par les autres produits (engine/laborHours.js) : environ
+    // +42 h pour les cuisiniers. Les heures des cuisiniers passent de 60/60/55 à 80/80/72 pour retrouver
+    // ~86 % d'utilisation globale (sans quoi le démo montrerait ~101 %, une équipe en sous-capacité).
     const labor = [
         { id: 'post_resp', postName: 'Responsable de production', employees: [
             { id: 'emp_resp', employeeName: 'Mireille', hourlyRate: 32, socialCharges: 16, vacationPercentage: 6, productiveTimePercentage: 85, workedHours: 20 },
         ] },
         { id: 'post_cuisinier', postName: 'Cuisinier de production', employees: [
-            { id: 'emp_cuisinier_1', employeeName: 'Hugo', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 60 },
-            { id: 'emp_cuisinier_2', employeeName: 'Félix', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 60 },
-            { id: 'emp_cuisinier_3', employeeName: 'Sarah', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 55 },
+            { id: 'emp_cuisinier_1', employeeName: 'Hugo', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 80 },
+            { id: 'emp_cuisinier_2', employeeName: 'Félix', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 80 },
+            { id: 'emp_cuisinier_3', employeeName: 'Sarah', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 72 },
         ] },
         { id: 'post_emballage', postName: "Opérateur d'emballage", employees: [
             { id: 'emp_emballage_1', employeeName: 'Chantal', hourlyRate: 19, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 95, workedHours: 42 },

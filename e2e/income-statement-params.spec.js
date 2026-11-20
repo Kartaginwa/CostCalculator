@@ -230,20 +230,20 @@ test("réconciliation réel/théorique dans l'onglet État des résultats (Phase
     // le même volume réel par canal) — un écart non nul, comme pour les revenus.
     const directCostsRow = section.locator('tbody tr', { hasText: 'Charges directes' });
     await expect(directCostsRow.getByText('48 000,00 $', { exact: true })).toBeVisible();
-    await expect(directCostsRow.getByText('48 057,25 $', { exact: true })).toBeVisible();
+    await expect(directCostsRow.getByText('47 978,45 $', { exact: true })).toBeVisible();
 
     // Bénéfice brut = Revenus - Charges directes, des deux côtés (réel ET théorique).
     const grossProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice brut' });
     await expect(grossProfitRow.getByText('32 000,00 $', { exact: true })).toBeVisible();
-    await expect(grossProfitRow.getByText('27 308,85 $', { exact: true })).toBeVisible();
+    await expect(grossProfitRow.getByText('27 387,65 $', { exact: true })).toBeVisible();
 
     // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo, même total
     // soustrait des deux côtés) - coût de vieillissement théorique (révisé le 02/11, retour
     // utilisateur : manquait entièrement jusqu'ici, alors que le réel bottom-up — Par Activité/
-    // Canal/SKU — le déduit déjà ; 27 308.85 - 28 000 - 84.80 $ de vieillissement = -775.95 $ ; chiffres révisés le 19/11 : toute la paie est absorbée par les produits).
+    // Canal/SKU — le déduit déjà ; 27 387.65 - 28 000 - 84.71 $ de vieillissement = -697.06 $ ; chiffres révisés le 19/11 : toute la paie est absorbée par les produits).
     const netProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice net' });
     await expect(netProfitRow.getByText('4 000,00 $', { exact: true })).toBeVisible();
-    await expect(netProfitRow.getByText('-775,95 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('-697,06 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

@@ -4,25 +4,14 @@
 // du projet démo, qui était calculé sans absorption complète ni répartition des frais fixes (audit du 19/11).
 import { parseLocaleNumber as P, sumLineAmounts } from '../utils.js';
 import { computeAnalysisData, computeIndirectPools } from './analysisData.js';
+import { computeLaborHoursNeeded } from './laborHours.js';
 
 const sum = (list, fn) => list.reduce((total, item) => total + fn(item), 0);
 
-// Heures de main-d'œuvre nécessaires par poste pour produire les volumes vendus des formats actifs.
-export function computeHoursNeededByPost(products) {
-    const byPost = {};
-    products.flatMap(p => (p.formats || []).filter(f => f.onMenu !== false)).forEach(fmt => {
-        const sold = (fmt.channelPrices || []).reduce((total, cp) => total + (P(cp.volume) || 0), 0);
-        const batches = sold / (P(fmt.nbPortions) || 1);
-        (fmt.productionSteps || []).forEach(step => (step.personnel || []).forEach(person => {
-            byPost[person.postId] = (byPost[person.postId] || 0) + (P(step.duration) / 3600) * batches;
-        }));
-    });
-    return byPost;
-}
-
 // Taux d'absorption (en %) : coût des heures nécessaires ÷ paie de TOUS les postes (décision du 19/11).
-export function computeLaborAbsorption(products, laborDatabase) {
-    const byPost = computeHoursNeededByPost(products);
+export function computeLaborAbsorption(products, laborDatabase, baseIngredients = []) {
+    // Heures nécessaires : ventes de chaque format ET consommation de sous-recettes (voir laborHours.js).
+    const { byPost, total } = computeLaborHoursNeeded(products, baseIngredients);
     const payrollOf = (employees) => sum(employees, e => P(e.workedHours) * P(e.hourlyRate) * (1 + P(e.socialCharges) / 100) * (1 + P(e.vacationPercentage) / 100));
     const payroll = sum(laborDatabase, post => payrollOf(post.employees || []));
     const directNeeded = sum(laborDatabase, post => {
@@ -31,7 +20,7 @@ export function computeLaborAbsorption(products, laborDatabase) {
     });
     return {
         kitchenProductivity: payroll > 0 ? (directNeeded / payroll) * 100 : 100,
-        totalDirectLaborHoursNeeded: sum(Object.values(byPost), h => h),
+        totalDirectLaborHoursNeeded: total,
     };
 }
 
@@ -40,7 +29,7 @@ export function computeProjectAnalysis({
     expenseLines, revenueLines, directCostLines, repartitionKeys,
 }) {
     const info = { ...generalInfo, totalIndirects: sumLineAmounts(expenseLines || []) };
-    const absorption = computeLaborAbsorption(products, laborDatabase);
+    const absorption = computeLaborAbsorption(products, laborDatabase, baseIngredients);
     const calc = { ...info, ...absorption, productivityReport: { rows: [] } };
     const draft = computeAnalysisData(products, baseIngredients, laborDatabase, info, calc, basePackaging, salesChannels);
     const pools = computeIndirectPools(draft.productsWithCosts, { expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities, salesChannels, generalInfo: info });

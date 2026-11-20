@@ -11,6 +11,7 @@ import {
 } from './engine/analysisData.js';
 import { computeSalesMixFromChannelPrices } from './engine/salesMixFromChannels.js';
 import { findSubRecipeUsages, formatNameList } from './engine/usage.js';
+import { computeLaborHoursNeeded } from './engine/laborHours.js';
 import { clearFormatVolumes, mirrorFirstFormat } from './engine/productEdits.js';
 import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
 import { exportToExcel as exportToExcelReport } from './reports/exportToExcel.js';
@@ -311,39 +312,15 @@ const App = ({ tourMode = false } = {}) => {
         // nécessaire (jamais une estimation fabriquée) — conséquence acceptée : la productivité
         // cuisine et le rapport de productivité restent à 0 tant qu'aucune vente réelle n'est
         // saisie par canal pour ce format.
-        // Une entrée par FORMAT actif (Phase 1.6 — même aplatissement que analysisData.js), pas par
-        // produit : chaque format a son propre prix/mix/nbPortions/étapes de production.
-        const activeFormatRows = products.flatMap(product =>
-            (product.formats && product.formats.length > 0 ? product.formats : [product])
-                .filter(fmt => fmt.onMenu)
-                .map(fmt => ({ product, fmt }))
-        );
-
-        const totalDirectLaborHoursNeededByPost = {};
-        // Phase 6 (15/10) : même boucle, accumulateur supplémentaire par ACTIVITÉ de production
-        // (product.activityId) plutôt qu'une 2e passe séparée — share/batchesNeeded déjà calculés
-        // une seule fois ici. Un format sans activité assignée ne contribue à aucune activité
-        // (jamais rattaché à "Général" arbitrairement).
-        const totalDirectLaborHoursNeededByActivity = {};
-        activeFormatRows.forEach(({ product, fmt }) => {
-            const portionsSold = (fmt.channelPrices || []).reduce((sum, cp) => sum + (parseLocaleNumber(cp.volume) || 0), 0);
-            const batchesNeeded = portionsSold / (parseLocaleNumber(fmt.nbPortions) || 1);
-
-            (fmt.productionSteps || []).forEach(step => {
-                (step.personnel || []).forEach(person => {
-                    const hours = (parseLocaleNumber(step.duration) / 3600) * batchesNeeded;
-                    if (!totalDirectLaborHoursNeededByPost[person.postId]) {
-                        totalDirectLaborHoursNeededByPost[person.postId] = 0;
-                    }
-                    totalDirectLaborHoursNeededByPost[person.postId] += hours;
-                    if (product.activityId) {
-                        totalDirectLaborHoursNeededByActivity[product.activityId] = (totalDirectLaborHoursNeededByActivity[product.activityId] || 0) + hours;
-                    }
-                });
-            });
-        });
-
-        const totalDirectLaborHoursNeeded = Object.values(totalDirectLaborHoursNeededByPost).reduce((sum, hours) => sum + hours, 0);
+        // Les heures nécessaires viennent de `computeLaborHoursNeeded` (engine/laborHours.js) : les ventes de chaque format
+        // actif ET ce que les autres recettes consomment de leurs sous-recettes, même jamais vendues seules (19/11 : avant,
+        // le temps de fabrication d'une sous-recette non vendue n'était compté nulle part). Par poste, par activité de
+        // production (celle de la recette qui la fabrique) et au total.
+        const {
+            byPost: totalDirectLaborHoursNeededByPost,
+            byActivity: totalDirectLaborHoursNeededByActivity,
+            total: totalDirectLaborHoursNeeded,
+        } = computeLaborHoursNeeded(products, baseIngredients);
 
         // TOUS les postes de l'onglet Main-d'œuvre doivent se retrouver dans le coût des produits (décision du 19/11) :
         // les heures employées, la capacité inutilisée, le temps non productif (déjà reflété par le « % temps productif
@@ -400,7 +377,7 @@ const App = ({ tourMode = false } = {}) => {
             // « temps de production » (taux = frais indirects / ce total → réconcilie exactement).
             totalDirectLaborHoursNeeded: totalDirectLaborHoursNeeded,
         };
-    }, [generalInfo, products, laborDatabase, autoCalculatedLaborCost, productionActivities]);
+    }, [generalInfo, products, baseIngredients, laborDatabase, autoCalculatedLaborCost, productionActivities]);
     // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---
     // Source unique de vérité pour les coûts : computeAnalysisData calcule productsWithCosts une
     // seule fois (avec un memo partagé) puis en dérive tous les KPIs. Défini ici, avant

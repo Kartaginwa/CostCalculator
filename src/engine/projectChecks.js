@@ -5,7 +5,7 @@ import { parseLocaleNumber, isNotEmpty, formatNumber } from '../utils.js';
 
 const STALE_DAYS = 30;
 
-export function computeProjectChecks({ products = [], baseIngredients = [], basePackaging = [], now = new Date() }) {
+export function computeProjectChecks({ products = [], baseIngredients = [], basePackaging = [], fixedCosts = null, now = new Date() }) {
     const checks = [];
     const formatsOf = (p) => (p.formats && p.formats.length > 0 ? p.formats : [p]);
 
@@ -32,6 +32,17 @@ export function computeProjectChecks({ products = [], baseIngredients = [], base
                     ? `La répartition des ventes des SKUs actifs totalise ${formatNumber(totalMix, 1)} % au lieu de 100 % : les moyennes pondérées sont faussées.`
                     : 'La répartition des ventes des SKUs actifs n\'est pas renseignée : les moyennes pondérées ne sont pas fiables.' });
         }
+    }
+
+    // Frais fixes mal répartis (19/11) : ce qu'aucune ligne n'attribue à un contenant est compté dans Général
+    // (jamais perdu) ; un dépassement gonfle les coûts. Dans les deux cas l'utilisateur doit le savoir.
+    if (fixedCosts && fixedCosts.unallocated > 0) {
+        checks.push({ id: 'fixed-costs-unallocated', tab: 'income-statement', tabLabel: 'État des résultats → Frais fixes',
+            message: `${formatNumber(fixedCosts.unallocated, 2)} $ de frais fixes ne sont répartis dans aucune activité ni aucun canal : ils sont comptés dans « Général ».` });
+    }
+    if (fixedCosts && fixedCosts.overAllocated > 0) {
+        checks.push({ id: 'fixed-costs-over-allocated', tab: 'income-statement', tabLabel: 'État des résultats → Frais fixes',
+            message: `Les frais fixes répartis dépassent le total saisi de ${formatNumber(fixedCosts.overAllocated, 2)} $ : les coûts par produit sont surévalués.` });
     }
 
     const missingPrice = (list) => list.filter(i => !i.isRecipe && !(parseLocaleNumber(i.purchasePrice) > 0)).length;

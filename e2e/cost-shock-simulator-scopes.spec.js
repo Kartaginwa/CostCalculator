@@ -32,17 +32,17 @@ test("Simulateur de chocs : portées 'par format'/'par activité' et tableaux d'
     await expect(laborScopeSelect.locator('option', { hasText: 'Par format' })).toHaveCount(1);
     await expect(laborScopeSelect.locator('option', { hasText: 'Par activité de production' })).toHaveCount(1);
 
-    // Choc d'intrants +1000 % ciblé sur UNE SEULE activité ("Sauces et accompagnements") : assez
+    // Choc d'intrants +1000 % ciblé sur UNE SEULE activité ("Soupes et potages") : assez
     // massif pour qu'un simple test visuel (avant != après) ne dépende pas de la composition exacte
     // des recettes démo.
     await shockRow.locator('select').first().selectOption('ingredient');
     await shockRow.locator('select').nth(1).selectOption('activity');
     const activityTarget = shockRow.locator('select').nth(2);
-    await activityTarget.selectOption({ label: 'Sauces et accompagnements' });
+    await activityTarget.selectOption({ label: 'Soupes et potages' });
     await shockRow.locator('input[placeholder="ex. +15"]').fill('1000');
     await expect(page.getByText('Scénario actif :')).toBeVisible();
 
-    // Tableau "Impact par activité de production" : l'activité ciblée ("Sauces et accompagnements")
+    // Tableau "Impact par activité de production" : l’activité ciblée ("Soupes et potages")
     // voit son food cost bondir nettement plus que les autres activités du menu — certaines
     // partagent un ingrédient avec les sauces (prix global, pas scopé par activité) et bougent donc
     // un peu elles aussi, mais jamais autant que l'activité directement ciblée.
@@ -52,10 +52,10 @@ test("Simulateur de chocs : portées 'par format'/'par activité' et tableaux d'
         const [before, after] = text.split('→').map(s => parseFloat(s.trim().replace('%', '').replace(',', '.')));
         return after - before;
     };
+    const soupesDelta = await readDelta(activityTable.locator('tr', { hasText: 'Soupes et potages' }));
     const saucesDelta = await readDelta(activityTable.locator('tr', { hasText: 'Sauces et accompagnements' }));
-    const platsDelta = await readDelta(activityTable.locator('tr', { hasText: 'Mets principaux surgelés' }));
-    expect(saucesDelta).toBeGreaterThan(0);
-    expect(saucesDelta).toBeGreaterThan(platsDelta);
+    expect(soupesDelta).toBeGreaterThan(0);
+    expect(soupesDelta).toBeGreaterThan(saucesDelta);
 
     // Tableau "Impact par circuit de vente" : s'affiche aussi (3 canaux dans le projet démo).
     const channelTable = page.locator('p', { hasText: 'Impact par circuit de vente' }).locator('xpath=following-sibling::table');

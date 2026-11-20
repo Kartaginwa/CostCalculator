@@ -105,7 +105,7 @@ export const chapitreEtatResultats = {
 
         { type: 'h', id: 'guide-ff-fixe-variable', text: 'Fixe ou variable ? Deux regards, et le temps non productif', level: 5 },
         { type: 'p', text: 'Une cuisine salariée coûte la même chose que vous vendiez beaucoup ou peu : c\'est un coût fixe dans la réalité. L\'application la regarde pourtant de deux façons, selon la question posée. __Par unité :__ chaque recette porte le coût de ses propres heures, pour savoir ce que coûte un produit. __Point mort :__ la main-d\'œuvre de production est traitée comme un coût fixe pour la période, parce que la question est « combien dois-je vendre pour couvrir mes coûts ? ».' },
-        { type: 'p', text: 'L\'application répartit déjà sur vos recettes le coût de la **capacité de production payée mais non utilisée** : c\'est la part « coût indirect » de la main-d\'œuvre dans l\'onglet Production. Ce qui n\'y figure pas, c\'est le temps **non productif** (nettoyage, réunions) : cette part de la paie réelle dépasse le coût de main-d\'œuvre calculé dans les recettes, et elle contribue à l\'écart entre le réel et le théorique dans la réconciliation.' },
+        { type: 'p', text: 'L\'application répartit sur vos recettes le coût de **toutes les heures payées** de **tous les postes** de l\'onglet Main-d\'œuvre : les heures employées, la **capacité de production payée mais non utilisée** et le temps **non productif** (nettoyage, réunions, administration, déjà reflété par le « % temps productif attendu » de chaque employé). C\'est la part « coût indirect » de la main-d\'œuvre dans l\'onglet Production. La paie de la cuisine se retrouve donc entièrement dans le coût des produits, sans que vous ayez à saisir ce temps ailleurs.' },
 
         { type: 'h', id: 'guide-ff-repartir', text: 'Répartir une dépense', level: 5 },
         { type: 'p', text: 'Les colonnes de droite permettent de répartir chaque dépense entre « Général », vos activités et vos canaux. La somme des colonnes ne doit pas dépasser le montant de la ligne : un indicateur (coche verte ou avertissement) le confirme, sans jamais bloquer ; une dépense qui ne s\'applique naturellement qu\'à une partie des colonnes (un loyer n\'a pas de canal) laisse simplement les autres vides.' },
@@ -130,7 +130,7 @@ export const chapitreEtatResultats = {
                 ['Colonnes des canaux', 'La part attribuée à chaque canal de vente : un axe **indépendant** des activités. Une même dépense peut être répartie sur les deux à la fois, ou sur un seul si l\'autre ne s\'applique pas. Les valeurs dérivées d\'une clé sont verrouillées ; passez la ligne en Manuel pour les modifier.'],
             ],
         },
-        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'électricité (3 000 $) utilise la clé « Selon les charges directes » : les activités qui coûtent le plus cher à fabriquer en reçoivent la plus grande part (2 314,18 $, 465,04 $ et 220,78 $). Le loyer de l'espace de production (9 000 $) est réparti manuellement : 5 000 $, 2 500 $ et 1 500 $. Le total des frais fixes est de ${d(DEMO.etat.fraisFixes)}.` },
+        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'électricité (3 000 $) utilise la clé « Selon les charges directes » : les activités qui coûtent le plus cher à fabriquer en reçoivent la plus grande part (2 308,33 $, 472,12 $ et 219,54 $). Le loyer de l'espace de production (9 000 $) est réparti manuellement : 5 000 $, 2 500 $ et 1 500 $. Le total des frais fixes est de ${d(DEMO.etat.fraisFixes)}.` },
 
         { type: 'h', id: 'guide-ff-benefice-net', text: 'Bénéfice net' },
         { type: 'p', text: `Une seconde barre de synthèse : **bénéfice brut moins frais fixes**, affichée **au total de l'entreprise**, sans détail par activité ni par canal. Projet démo : ${d(DEMO.etat.beneficeBrut)} − ${d(DEMO.etat.fraisFixes)} = **${d(DEMO.etat.beneficeNet)}**.` },
@@ -153,9 +153,9 @@ export const chapitreEtatResultats = {
         {
             type: 'table', caption: 'Réconciliation du projet démo', head: ['Poste', 'Réel', 'Théorique', 'Écart'], rows: [
                 ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+4 633,90 $ (+6,1 %)'],
-                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+1 077,28 $ (+2,3 %)'],
-                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '+3 556,62 $ (+12,5 %)'],
-                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '+3 640,16 $ (+1 011,6 %)'],
+                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '-57,25 $ (-0,1 %)'],
+                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '+4 691,15 $ (+17,2 %)'],
+                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '+4 775,95 $ (+615,5 %)'],
             ],
         },
         {
@@ -169,7 +169,7 @@ export const chapitreEtatResultats = {
                 ['{{Écart (%)}}', 'Le même écart, exprimé en pourcentage du théorique, pour comparer l\'ampleur des écarts d\'une ligne à l\'autre.'],
             ],
         },
-        { type: 'p', text: 'Lecture : le réel dépasse le théorique pour les revenus (+6,1 %) comme pour les charges directes (+2,3 %). Le bénéfice net réel est plus de dix fois supérieur à celui du modèle : en pourcentage, l\'écart du bénéfice net paraît énorme parce que le théorique est très petit (359,84 $), donc le moindre écart en dollars y devient un grand pourcentage. Regardez d\'abord les écarts en dollars.' },
+        { type: 'p', text: 'Lecture : le réel dépasse le théorique pour les revenus (+6,1 %), alors que les charges directes réelles sont presque égales à celles du modèle (−0,1 %). Le bénéfice net du modèle est légèrement négatif (−775,95 $) alors que le réel est de 4 000,00 $ : en pourcentage, l\'écart du bénéfice net (+615,5 %) paraît énorme parce que le théorique est proche de zéro, donc le moindre écart en dollars y devient un grand pourcentage. Regardez d\'abord les écarts en dollars.' },
         { type: 'p', text: 'La comparaison se fait toujours à l\'échelle de l\'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Bénéfice brut = revenus moins charges directes ; bénéfice net = bénéfice brut moins le total des frais fixes (sous-total du tableau des dépenses). Ce total est soustrait identiquement du réel et du théorique : l\'écart entre les deux colonnes vient donc du bénéfice brut, auquel s\'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n\'existe pas dans les charges directes réelles).' },
 
         { type: 'h', id: 'guide-ff-import', text: 'Importer l\'état des résultats' },

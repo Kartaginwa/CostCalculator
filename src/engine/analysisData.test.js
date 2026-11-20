@@ -499,6 +499,9 @@ describe('computeAnalysisData - vue « tous canaux » des KPIs pondérés et de 
         // 10$ -> coût matière 100%. Volumes égaux (50/50) -> pondéré = 75%. Avant ce correctif, un
         // changement de prix sur le canal secondaire ne bougeait jamais ce chiffre (resté à 50%,
         // canal principal seul) — c'est exactement le bug rapporté par l'utilisateur.
+        // Révision du 19/11 (audit de la méthode) : le pourcentage se pondère par le REVENU de chaque canal, pas par
+        // les unités. Coût total 10 × 50 + 10 × 50 = 1 000 $ pour un revenu de 20 × 50 + 10 × 50 = 1 500 $ → 66,7 %
+        // (et non 75 %, la moyenne par unités, qui sous-estimait le poids du canal à prix élevé).
         const product = baseProduct({
             formats: [{
                 id: 'fmt-1', nbPortions: 1, portionSize: 1, indirectCosts: {}, salesMix: 100, onMenu: true,
@@ -515,7 +518,7 @@ describe('computeAnalysisData - vue « tous canaux » des KPIs pondérés et de 
 
         const result = computeAnalysisData([product], baseIngredients, [], generalInfo, calculatedGeneralInfo, [], salesChannels);
 
-        expect(result.weightedMaterialCost).toBeCloseTo(0.75);
+        expect(result.weightedMaterialCost).toBeCloseTo(1000 / 1500);
     });
 
     it("somme la contribution RÉELLE de chaque canal (volume × marge brute), pas seulement le canal principal", () => {
@@ -897,6 +900,20 @@ describe('computeRealVsTheoreticalReconciliation — réconciliation réel/théo
         ]);
     });
 
+    it("l'écart en % garde le bon signe quand le théorique est négatif (perte)", () => {
+        const result = computeRealVsTheoreticalReconciliation({
+            totalRevenue: 1000, totalDirectCosts: 600, activeProducts: [], unitsSoldById: {}, menuRevenue: 1000, totalIndirects: 500,
+        });
+        const net = result.rows[3];
+        // réel : 1000 − 600 − 500 = −100 ; théorique : 1000 − 0 − 500 = 500 → écart −600 (−120 % du théorique)
+        expect(net.diffPercent).toBeCloseTo(-600 / 500);
+        const lossTheo = computeRealVsTheoreticalReconciliation({
+            totalRevenue: 1000, totalDirectCosts: 300, activeProducts: [{ id: 'p', costs: { totalDirectCostPerPortion: 1 } }], unitsSoldById: { p: 1400 }, menuRevenue: 1000, totalIndirects: 100,
+        }).rows[3];
+        // théorique : 1000 − 1400 − 100 = −500 ; réel : 1000 − 300 − 100 = 600 → écart +1100, soit +220 % (et non −220 %)
+        expect(lossTheo.theoretical).toBeCloseTo(-500);
+        expect(lossTheo.diffPercent).toBeCloseTo(1100 / 500);
+    });
     it("diffPercent absent (pas 0 %) quand le théorique d'une ligne est nul — jamais une précision inventée", () => {
         const result = computeRealVsTheoreticalReconciliation({
             totalRevenue: 1200, totalDirectCosts: 450,

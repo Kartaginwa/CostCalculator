@@ -40,7 +40,9 @@ describe('exemples génériques du guide', () => {
         expect(FARINE.amplitude).toBeGreaterThanOrEqual(0.2);
         expect(ABC.lignes.map((l) => l.classe).join('')).toBe('AAAABBBBCC');
         expect(ABC.A.n).toBe(4); close(ABC.A.pct, 71);
-        close(CAPACITE.utilisation, 0.75); close(CAPACITE.coutAbsorbe, CAPACITE.masseSalarialeProductive); close(CAPACITE.coutNonProductif, 1792);
+        close(CAPACITE.utilisation, 0.75); close(CAPACITE.tauxAbsorption, 0.675); close(CAPACITE.coutAbsorbe, CAPACITE.masseSalariale); close(CAPACITE.coutNonProductif, 1792);
+        // toute la paie est absorbée : heures employées + capacité inutilisée + temps non productif
+        close(CAPACITE.coutDirect + CAPACITE.coutInutilise + CAPACITE.coutNonProductif, CAPACITE.coutAbsorbe);
     });
     it('double comptage, bœuf, salaire chargé', () => {
         expect(DOUBLE_COMPTAGE.correct).toBe(74000); expect(DOUBLE_COMPTAGE.erreur).toBe(134000);

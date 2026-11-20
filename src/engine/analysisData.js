@@ -1,4 +1,4 @@
-import { parseLocaleNumber, CONVERSION_FACTORS, buildRowDisplayName, round2 } from '../utils.js';
+import { parseLocaleNumber, CONVERSION_FACTORS, buildRowDisplayName, round2, sumLineAmounts, sumAmountsMap } from '../utils.js';
 import { calculateCosts, computeChannelBreakdown, computeMarginsForPrice } from './calculateCosts.js';
 
 // Phase 4.5bis/4.6 — contenants « Activité » partagés entre Revenus, Charges directes réelles et
@@ -6,6 +6,12 @@ import { calculateCosts, computeChannelBreakdown, computeMarginsForPrice } from 
 // 04-Conception-Modele.md, section 1 : Général est une allocation directe à une seule étape, pas
 // un 3e axe symétrique). Extrait ici (au lieu de rester dupliqué dans IncomeStatementTab.jsx) pour
 // qu'App.jsx puisse construire les mêmes contenants lors de l'agrégation des pools (Phase 4.6).
+// Un format « Actif » est le seul à compter dans les analyses (règle de l'étape 6 : « c'est seulement en
+// fonction des produits actifs que les données doivent être calculées »). Un format inactif n'absorbe
+// donc aucun frais fixe et n'apparaît dans aucun rapport agrégé, même s'il garde des volumes saisis.
+// `!== false` : une ligne sans champ `onMenu` (anciennes données, tests) reste comptée.
+const isActiveRow = (row) => row?.onMenu !== false;
+
 export function buildActivityBuckets(productionActivities = []) {
     return [{ key: 'general', label: 'Général' }, ...productionActivities.map(a => ({ key: a.id, label: a.name }))];
 }
@@ -169,7 +175,7 @@ export function computeIndirectCostDriverTotals(productsWithCosts, productionAct
 
     for (const row of (productsWithCosts || [])) {
         const costs = row.costs;
-        if (!costs) continue;
+        if (!costs || !isActiveRow(row)) continue;
         const driverCtx = {
             portionUnit: row.portionUnit, portionSize: costs.portionSize, portionsSold: parseLocaleNumber(costs.portionsSold),
             productionTimeSeconds: costs.productionTimeSeconds, nbPortions: costs.nbPortions, totalDirectCostPerPortion: costs.totalDirectCostPerPortion,
@@ -284,14 +290,22 @@ function blendAcrossChannels(costs, channelBreakdown) {
         };
     }
     const weighted = (field) => cbWithVolume.reduce((s, cb) => s + (parseLocaleNumber(cb[field]) || 0) * parseLocaleNumber(cb.volume), 0) / totalVolume;
+    // Pourcentages : pondérés par le REVENU de chaque canal (prix net × volume), pas par les unités.
+    // Un pourcentage est « des dollars sur des dollars » : Σ(marge $) ÷ Σ(revenu $) = Σ(% × revenu) ÷ Σ(revenu).
+    // Pondérer par les unités sous-estime le poids d'un canal à prix élevé (vente directe) et déforme la
+    // marge de plusieurs points dès que les prix nets diffèrent d'un canal à l'autre (paradoxe de Simpson,
+    // corrigé le 19/11 après l'audit de la méthode). Le $ par unité, lui, reste une moyenne par unités.
+    const revenueOf = (cb) => parseLocaleNumber(cb.netPrice) * parseLocaleNumber(cb.volume);
+    const totalRevenue = cbWithVolume.reduce((s, cb) => s + revenueOf(cb), 0);
+    const weightedByRevenue = (field) => totalRevenue > 0
+        ? cbWithVolume.reduce((s, cb) => s + (parseLocaleNumber(cb[field]) || 0) * revenueOf(cb), 0) / totalRevenue
+        : weighted(field);
     return {
         margeBruteDollar: weighted('margeBruteDollar'),
-        // Pourcentage pondéré directement (pas redérivé d'un $ pondéré / prix du canal principal,
-        // ce qui mélangerait un numérateur multi-canal à un dénominateur mono-canal).
-        margeBrutePercent: weighted('margeBrutePercent'),
-        costMatierePercent: weighted('costMatierePercent'),
-        costPackagingPercent: weighted('costPackagingPercent'),
-        costLaborPercent: weighted('costLaborPercent'),
+        margeBrutePercent: weightedByRevenue('margeBrutePercent'),
+        costMatierePercent: weightedByRevenue('costMatierePercent'),
+        costPackagingPercent: weightedByRevenue('costPackagingPercent'),
+        costLaborPercent: weightedByRevenue('costLaborPercent'),
         totalVolume,
     };
 }
@@ -306,7 +320,7 @@ function blendAcrossChannels(costs, channelBreakdown) {
 export function computeChannelRevenueShareByActivity(productsWithCosts, salesChannels = []) {
     const revenueByActivity = {};
     for (const row of (productsWithCosts || [])) {
-        if (!row.activityId) continue;
+        if (!row.activityId || !isActiveRow(row)) continue;
         const byChannel = revenueByActivity[row.activityId] || (revenueByActivity[row.activityId] = {});
         for (const cb of (row.channelBreakdown || [])) {
             const revenue = parseLocaleNumber(cb.netPrice) * parseLocaleNumber(cb.volume);
@@ -339,12 +353,17 @@ export function computeActivityImpact(activeProducts, productionActivities = [])
         (byActivity[p.activityId] || (byActivity[p.activityId] = [])).push(p);
     }
     const result = [];
+    // Poids d'un format : son REVENU réel (prix net × volume de chaque canal) — des pourcentages se
+    // moyennent en dollars, pas en unités. Repli sur la part du mix des ventes quand aucun revenu réel
+    // n'existe pour toute l'activité (projet neuf).
+    const revenueOfRow = (p) => (p.channelBreakdown || []).reduce((s, cb) => s + parseLocaleNumber(cb.netPrice) * parseLocaleNumber(cb.volume), 0);
     for (const [activityId, rows] of Object.entries(byActivity)) {
         const totalMix = rows.reduce((s, p) => s + parseLocaleNumber(p.salesMix), 0);
-        if (!(totalMix > 0)) continue;
+        const totalRev = rows.reduce((s, p) => s + revenueOfRow(p), 0);
+        if (!(totalMix > 0) && !(totalRev > 0)) continue;
         let margeBrutePercent = 0, costMatierePercent = 0, costLaborPercent = 0;
         for (const p of rows) {
-            const weight = parseLocaleNumber(p.salesMix) / totalMix;
+            const weight = totalRev > 0 ? revenueOfRow(p) / totalRev : parseLocaleNumber(p.salesMix) / totalMix;
             margeBrutePercent += p.blended.margeBrutePercent * weight;
             costMatierePercent += p.blended.costMatierePercent * weight;
             costLaborPercent += p.blended.costLaborPercent * weight;
@@ -370,9 +389,12 @@ export function computeChannelImpact(activeProducts, salesChannels = []) {
     for (const [channelId, rows] of Object.entries(byChannel)) {
         const totalVolume = rows.reduce((s, cb) => s + parseLocaleNumber(cb.volume), 0);
         if (!(totalVolume > 0)) continue;
+        // Pondéré par le revenu du canal (prix net × volume) : voir blendAcrossChannels.
+        const revOf = (cb) => parseLocaleNumber(cb.netPrice) * parseLocaleNumber(cb.volume);
+        const totalRev = rows.reduce((s, cb) => s + revOf(cb), 0);
         let margeBrutePercent = 0, costMatierePercent = 0, costLaborPercent = 0;
         for (const cb of rows) {
-            const weight = parseLocaleNumber(cb.volume) / totalVolume;
+            const weight = totalRev > 0 ? revOf(cb) / totalRev : parseLocaleNumber(cb.volume) / totalVolume;
             margeBrutePercent += cb.margeBrutePercent * weight;
             costMatierePercent += cb.costMatierePercent * weight;
             costLaborPercent += cb.costLaborPercent * weight;
@@ -459,7 +481,7 @@ function aggregateSegmentRows(rows) {
 export function computeActivitySummaries(productsWithCosts, productionActivities = []) {
     const byActivity = {};
     for (const row of (productsWithCosts || [])) {
-        if (!row.activityId) continue;
+        if (!row.activityId || !isActiveRow(row)) continue;
         for (const cb of (row.channelBreakdown || [])) {
             (byActivity[row.activityId] || (byActivity[row.activityId] = [])).push({ costs: row.costs, cb });
         }
@@ -482,6 +504,7 @@ export function computeActivitySummaries(productsWithCosts, productionActivities
 export function computeChannelSummaries(productsWithCosts, salesChannels = []) {
     const byChannel = {};
     for (const row of (productsWithCosts || [])) {
+        if (!isActiveRow(row)) continue;
         for (const cb of (row.channelBreakdown || [])) {
             (byChannel[cb.channelId] || (byChannel[cb.channelId] = [])).push({ costs: row.costs, cb });
         }
@@ -515,7 +538,7 @@ export function computeChannelSummaries(productsWithCosts, salesChannels = []) {
 export function computeActivityChannelMarginMatrix(productsWithCosts, productionActivities = [], salesChannels = []) {
     const cellRows = {};
     for (const row of (productsWithCosts || [])) {
-        if (!row.activityId) continue;
+        if (!row.activityId || !isActiveRow(row)) continue;
         for (const cb of (row.channelBreakdown || [])) {
             const key = `${row.activityId}::${cb.channelId}`;
             (cellRows[key] || (cellRows[key] = [])).push({ costs: row.costs, cb });
@@ -555,7 +578,7 @@ export const DIRECT_COST_TYPE_FIELDS = {
 function computeTheoreticalCostTotalsByActivity(productsWithCosts, costField) {
     const totals = {};
     for (const row of (productsWithCosts || [])) {
-        if (!row.activityId) continue;
+        if (!row.activityId || !isActiveRow(row)) continue;
         const unitCost = parseLocaleNumber(row.costs?.[costField]);
         if (!(unitCost > 0)) continue;
         for (const cb of (row.channelBreakdown || [])) {
@@ -768,7 +791,9 @@ export function computeRealVsTheoreticalReconciliation({
         diff: real - theoretical,
         // Écart en % relatif au théorique (base de comparaison, comme un budget) — absent (pas 0 %)
         // quand aucun théorique n'existe, pour ne jamais laisser croire à une précision inexistante.
-        diffPercent: theoretical !== 0 ? (real - theoretical) / theoretical : null,
+        // Dénominateur en valeur absolue : un théorique négatif (perte) ne doit pas inverser le signe de l'écart
+        // (réel 4 000 $ contre théorique −423 $ = +4 423 $, soit +1 045 %, pas −1 045 %).
+        diffPercent: theoretical !== 0 ? (real - theoretical) / Math.abs(theoretical) : null,
     });
 
     const grossProfitReal = totalRevenue - totalDirectCosts;
@@ -837,13 +862,85 @@ export function computeSnapshotMenuKpis(rows) {
     const acc = { weightedGrossMargin: 0, weightedMaterialCost: 0, weightedPackagingCost: 0, weightedLaborCost: 0 };
     for (const p of active) {
         const w = revenueOf(p) / total;
-        const m = p.blended || p.costs || {};
+        // Moyennes « tous canaux » recalculées ici (en dollars) à partir des canaux sauvegardés : les anciens points
+        // de référence, enregistrés avec l'ancienne moyenne par unités, rejoignent ainsi la même méthode que les tuiles.
+        const m = (p.costs && p.channelBreakdown && p.channelBreakdown.length && p.channelBreakdown.every((cb) => cb.margeBrutePercent != null)) ? blendAcrossChannels(p.costs, p.channelBreakdown) : (p.blended || p.costs || {});
         acc.weightedGrossMargin += (parseLocaleNumber(m.margeBrutePercent) || 0) * w;
         acc.weightedMaterialCost += (parseLocaleNumber(m.costMatierePercent) || 0) * w;
         acc.weightedPackagingCost += (parseLocaleNumber(m.costPackagingPercent) || 0) * w;
         acc.weightedLaborCost += (parseLocaleNumber(m.costLaborPercent) || 0) * w;
     }
     return acc;
+}
+
+// Point mort GLOBAL en chiffre d'affaires : frais fixes ÷ taux de marge de contribution pondéré par le
+// REVENU, avec la main-d'œuvre directe traitée comme un coût FIXE (ajoutée aux frais fixes, retirée de la
+// marge de contribution). Fonction unique, utilisée par les tuiles ET par les points de référence, pour
+// que la courbe d'évolution rejoigne toujours la valeur actuelle (avant le 19/11, les points de référence
+// utilisaient une autre formule : frais fixes ÷ marge brute %, main-d'œuvre traitée comme variable).
+// `rows` : lignes de formats ACTIFS portant `blended`, `costs` et `channelBreakdown`.
+export function computeGlobalBreakEven(rows, totalIndirects) {
+    const active = (rows || []).filter(isActiveRow);
+    const unitsOf = (p) => p.blended?.totalVolume || 0;
+    const revenueOf = (p) => (p.channelBreakdown || []).reduce((s, cb) => s + parseLocaleNumber(cb.netPrice) * parseLocaleNumber(cb.volume), 0);
+    const menuRevenue = active.reduce((s, p) => s + revenueOf(p), 0);
+    const totalMarginDollar = active.reduce((s, p) => s + parseLocaleNumber(p.blended?.margeBruteDollar) * unitsOf(p), 0);
+    const totalLaborDollar = active.reduce((s, p) => s + parseLocaleNumber(p.costs?.costLaborPerPortion) * unitsOf(p), 0);
+    const ratio = menuRevenue > 0 ? (totalMarginDollar + totalLaborDollar) / menuRevenue : 0;
+    return ratio > 0 ? (parseLocaleNumber(totalIndirects) + totalLaborDollar) / ratio : 0;
+}
+
+// Point mort global d'un POINT DE RÉFÉRENCE : même formule que la tuile actuelle (computeGlobalBreakEven), appliquée
+// aux lignes sauvegardées dans le relevé. `null` quand le relevé n'a pas de données exploitables (le graphique
+// laisse alors un trou plutôt que d'afficher un chiffre calculé autrement).
+export function computeSnapshotBreakEven(rows, totalIndirects) {
+    const active = (rows || []).filter((p) => p && p.onMenu && p.costs);
+    if (active.length === 0) return null;
+    const blendedRows = active.map((p) => ({ ...p, blended: blendAcrossChannels(p.costs, p.channelBreakdown) }));
+    const value = computeGlobalBreakEven(blendedRows, totalIndirects);
+    return value > 0 ? value : null;
+}
+
+// Pools de frais fixes (Général / chaque activité / chaque canal) et leurs drivers, à partir d'un calcul
+// « brouillon » (sans pools) des formats. Extrait d'App.jsx le 19/11 pour que le simulateur de chocs
+// reconstruise EXACTEMENT les mêmes pools sur ses coûts simulés (avant, il calculait sans pools : ses marges
+// nettes n'étaient pas comparables à celles du reste de l'app).
+// Frais fixes non répartis : ce qu'une ligne de frais fixes n'a pas attribué à un contenant ne doit jamais
+// disparaître des marges — la part manquante est comptée dans Général (coût de soutien de l'entreprise) et
+// signalée dans `meta`. Un dépassement (réparti > montant) est gardé tel quel et signalé.
+export function computeIndirectPools(draftProductsWithCosts, { expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities = [], salesChannels = [], generalInfo = {} }) {
+    const activityBuckets = buildActivityBuckets(productionActivities);
+    const totalRevenue = (revenueLines || []).reduce((sum, line) => sum + sumAmountsMap(line.amounts), 0);
+    const totalDirectCosts = sumLineAmounts(directCostLines || []);
+    const bucketTotals = computeBucketTotalsFromAmounts(revenueLines, activityBuckets);
+    const { directCostBucketTotals } = computeDirectCostLineAllocations(directCostLines, draftProductsWithCosts, activityBuckets, salesChannels);
+    const effectiveAllocations = computeExpenseLineEffectiveAllocations({
+        expenseLines, repartitionKeys, activityBuckets, salesChannels, totalRevenue, totalDirectCosts, bucketTotals, directCostBucketTotals,
+    });
+    const { activityPoolTotals, channelPoolTotals } = computeExpensePoolTotals(expenseLines, effectiveAllocations, activityBuckets, salesChannels);
+    const { activityDriverTotals, generalDriverTotals, channelDriverTotals } = computeIndirectCostDriverTotals(draftProductsWithCosts, productionActivities, salesChannels, generalInfo);
+
+    const total = sumLineAmounts(expenseLines || []);
+    const allocated = Object.values(activityPoolTotals).reduce((s, v) => s + v, 0) + Object.values(channelPoolTotals).reduce((s, v) => s + v, 0);
+    const gap = round2(total - allocated);
+    // Seuil de 5 ¢ : les montants répartis sont arrondis au cent ligne par ligne (round2) ; un résidu d'arrondi
+    // de 1 ou 2 ¢ ne doit pas déclencher un faux avertissement.
+    const unallocated = gap > 0.05 ? gap : 0;
+    const overAllocated = gap < -0.05 ? -gap : 0;
+
+    const generalDriver = generalInfo.indirectCostMethod || 'directCost';
+    return {
+        generalPool: { amount: (activityPoolTotals.general || 0) + unallocated, driver: generalDriver, driverTotal: generalDriverTotals[generalDriver] || 0, volumeUnit: generalInfo.indirectCostVolumeUnit },
+        activityPools: Object.fromEntries(productionActivities.map((a) => {
+            const driver = a.indirectCostDriver || 'directCost';
+            return [a.id, { amount: activityPoolTotals[a.id] || 0, driver, driverTotal: activityDriverTotals[a.id]?.[driver] || 0, volumeUnit: a.indirectCostVolumeUnit }];
+        })),
+        // Canal : aucun driver au choix — majoration sur le coût de production (voir computeIndirectCostDriverTotals).
+        channelPools: Object.fromEntries(salesChannels.map((c) => (
+            [c.id, { amount: channelPoolTotals[c.id] || 0, driverTotal: channelDriverTotals[c.id] || 0 }]
+        ))),
+        meta: { total, allocated, unallocated, overAllocated },
+    };
 }
 
 // Calcule l'ensemble des données d'analyse dérivées du projet : coûts de tous les FORMATS de
@@ -906,7 +1003,9 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             // un seul pool PARTAGÉ par tous les produits (`indirectPools.generalPool`), pas un pool
             // par activité. Un produit sans volume réel reste simplement sans cette part — jamais
             // un 0 inventé, même principe que partout ailleurs dans ce fichier.
-            const generalPool = indirectPools?.generalPool;
+            // Un format inactif ne reçoit aucune part de frais fixes (il n'est pas dans les totaux des drivers).
+            const poolsApply = fmt.onMenu !== false;
+            const generalPool = poolsApply ? indirectPools?.generalPool : null;
             if (generalPool && generalPool.amount > 0 && generalPool.driverTotal > 0 && costs.portionsSold > 0) {
                 const generalDriverValueTotal = computeIndirectDriverValue(generalPool.driver, {
                     portionUnit: fmt.portionUnit, portionSize: costs.portionSize, portionsSold: costs.portionsSold,
@@ -933,7 +1032,7 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             // Projet_Claude/04-Conception-Modele.md, section Phase 4.6). Un produit dont l'activité
             // n'a pas de pool (ou plus de pool, ou un driver sans volume réel nulle part) reste
             // simplement sans cette part — jamais un 0 inventé.
-            const activityPool = indirectPools?.activityPools?.[p.activityId];
+            const activityPool = poolsApply ? indirectPools?.activityPools?.[p.activityId] : null;
             if (activityPool && activityPool.amount > 0 && activityPool.driverTotal > 0 && costs.portionsSold > 0) {
                 const driverValueTotal = computeIndirectDriverValue(activityPool.driver, {
                     portionUnit: fmt.portionUnit, portionSize: costs.portionSize, portionsSold: costs.portionsSold,
@@ -971,7 +1070,7 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             // Phase 4.6 : `channelPools` ajoute, PAR CANAL, la part du pool de CE canal précis — en
             // plus de Général+Activité déjà dans `costs` (identiques pour tous les canaux de ce
             // format). Une marge nette différente par canal, pas seulement à cause du prix.
-            const channelBreakdown = computeChannelBreakdown(costs, fmt.channelPrices, salesChannels, fixedCostForBreakEven, indirectPools?.channelPools);
+            const channelBreakdown = computeChannelBreakdown(costs, fmt.channelPrices, salesChannels, fixedCostForBreakEven, poolsApply ? indirectPools?.channelPools : null);
 
             // Phase 4.6 — Canal (vue agrégée pour CE format, « toutes ventes confondues ») : moyenne
             // pondérée par le volume réel des parts de canal déjà calculées par canal ci-dessus
@@ -1085,21 +1184,10 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             weightedLaborCost += (p.blended.costLaborPercent * weight);
         }
 
-        // Point mort global en CHIFFRE D'AFFAIRES : coûts fixes / taux de marge pondéré par le
-        // REVENU (dollars de vente), et non par les unités. Révisé le 20/10 (retour utilisateur,
-        // même principe que computeChannelBreakdown ci-dessus) : la main-d'œuvre directe est
-        // traitée comme un coût FIXE pour la période (personnel à heures prévues), pas variable —
-        // retirée du taux de marge (dénominateur) et sa valeur $ totale ajoutée aux frais fixes
-        // (numérateur), au lieu de l'hypothèse « MO semi-variable » tenue jusqu'ici. (Le point mort
-        // en UNITÉS est calculé par plat dans RecipeCalculator/Par SKU, voir calculateCosts.js.)
-        // Marge « tous canaux » ici aussi (06/10).
-        const totalMarginDollar = activeProducts.reduce((s, p) => s + p.blended.margeBruteDollar * (unitsSoldById[p.id] || 0), 0);
-        const totalLaborDollar = activeProducts.reduce((s, p) => s + parseLocaleNumber(p.costs.costLaborPerPortion) * (unitsSoldById[p.id] || 0), 0);
-        const revenueWeightedContributionRatio = menuRevenue > 0 ? (totalMarginDollar + totalLaborDollar) / menuRevenue : 0;
-        // Plus de multiplicateur "part menu" (menuRevenuePercentage, retiré le 18/10) :
-        // `totalIndirects` est déjà le pool correctement scopé par les Frais fixes (Phase 4.6).
-        const indirectsMenu = parseLocaleNumber(generalInfo.totalIndirects);
-        globalBreakEven = revenueWeightedContributionRatio > 0 ? (indirectsMenu + totalLaborDollar) / revenueWeightedContributionRatio : 0;
+        // Point mort global en chiffre d'affaires : voir computeGlobalBreakEven (fonction unique, aussi
+        // utilisée par les points de référence). Main-d'œuvre directe traitée comme un coût FIXE (révision
+        // du 20/10), marge « tous canaux ». Le point mort en UNITÉS est calculé par format (calculateCosts.js).
+        globalBreakEven = computeGlobalBreakEven(activeProducts, generalInfo.totalIndirects);
     }
 
     // 5 & 6. Rapport d'Achats + Analyse ABC — ingrédients, puis packaging (Phase 2.3) selon la

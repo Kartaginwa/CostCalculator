@@ -5,11 +5,9 @@ import {
     PlusCircle, Settings, Package, TrendingUp,
 } from 'lucide-react';
 
-import { todayLocalISO, parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, sumAmountsMap } from './utils.js';
+import { todayLocalISO, parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts } from './utils.js';
 import {
-    computeAnalysisData, buildActivityBuckets, computeBucketTotalsFromAmounts,
-    computeDirectCostLineAllocations, computeExpenseLineEffectiveAllocations,
-    computeExpensePoolTotals, computeIndirectCostDriverTotals,
+    computeAnalysisData, computeIndirectPools,
 } from './engine/analysisData.js';
 import { computeSalesMixFromChannelPrices } from './engine/salesMixFromChannels.js';
 import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
@@ -342,13 +340,23 @@ const App = ({ tourMode = false } = {}) => {
 
         const totalDirectLaborHoursNeeded = Object.values(totalDirectLaborHoursNeededByPost).reduce((sum, hours) => sum + hours, 0);
 
-        const totalLaborHoursAvailable = laborDatabase.reduce((total, post) => {
-            return total + (post.employees || []).reduce((sum, emp) => {
-                return sum + (parseLocaleNumber(emp.workedHours) * (parseLocaleNumber(emp.productiveTimePercentage) / 100));
-            }, 0);
+        // TOUS les postes de l'onglet Main-d'œuvre doivent se retrouver dans le coût des produits (décision du 19/11) :
+        // les heures employées, la capacité inutilisée, le temps non productif (déjà reflété par le « % temps productif
+        // attendu » de chaque employé) et même un poste sans aucune étape de recette.
+        // Le facteur d'absorption est donc : coût direct des heures nécessaires ÷ masse salariale de TOUS les postes.
+        // Chaque recette porte alors sa part de la paie, au prorata de son coût de main-d'œuvre directe : la paie de la
+        // cuisine est entièrement répartie sur les produits quand le volume la remplit (jamais plus que la paie : le
+        // facteur est plafonné à 100 % — un manque de capacité n'enlève pas de coût).
+        // Le coût d'un poste est son taux moyen pondéré par les heures payées, comme dans calculateCosts.js.
+        const directLaborCostNeeded = laborDatabase.reduce((total, post) => {
+            const emps = post.employees || [];
+            const hours = emps.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
+            if (!(hours > 0)) return total;
+            const cost = emps.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours) * parseLocaleNumber(emp.hourlyRate)
+                * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100), 0);
+            return total + (totalDirectLaborHoursNeededByPost[post.postName] || 0) * (cost / hours);
         }, 0);
-
-        const kitchenProductivity = totalLaborHoursAvailable > 0 ? (totalDirectLaborHoursNeeded / totalLaborHoursAvailable) * 100 : 100;
+        const kitchenProductivity = autoCalculatedLaborCost > 0 ? (directLaborCostNeeded / autoCalculatedLaborCost) * 100 : 100;
 
         const productivityReport = {
             rows: laborDatabase.map(post => {
@@ -404,46 +412,18 @@ const App = ({ tourMode = false } = {}) => {
     //     résultats, voir engine/analysisData.js — aucune règle dupliquée).
     //  3. `analysisData` (celui exposé au reste de l'app) : computeAnalysisData À NOUVEAU, cette
     //     fois avec les pools — Général réduit à sa seule part, Activité et Canal ajoutés.
-    const activityBuckets = useMemo(() => buildActivityBuckets(productionActivities), [productionActivities]);
-
     const analysisDataDraft = useMemo(
         () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels),
         [products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels]
     );
 
-    const indirectPools = useMemo(() => {
-        const totalRevenueForPools = revenueLines.reduce((sum, line) => sum + sumAmountsMap(line.amounts), 0);
-        const totalDirectCostsForPools = sumLineAmounts(directCostLines);
-        const bucketTotals = computeBucketTotalsFromAmounts(revenueLines, activityBuckets);
-        const { directCostBucketTotals } = computeDirectCostLineAllocations(directCostLines, analysisDataDraft.productsWithCosts, activityBuckets, salesChannels);
-        const effectiveAllocations = computeExpenseLineEffectiveAllocations({
-            expenseLines, repartitionKeys, activityBuckets, salesChannels,
-            totalRevenue: totalRevenueForPools, totalDirectCosts: totalDirectCostsForPools,
-            bucketTotals, directCostBucketTotals,
-        });
-        const { activityPoolTotals, channelPoolTotals } = computeExpensePoolTotals(expenseLines, effectiveAllocations, activityBuckets, salesChannels);
-        const { activityDriverTotals, generalDriverTotals, channelDriverTotals } = computeIndirectCostDriverTotals(analysisDataDraft.productsWithCosts, productionActivities, salesChannels, generalInfo);
-
-        // Général (révisé le 21/10, retour utilisateur) : même mécanisme qu'Activité ci-dessous —
-        // un driver au choix (« Méthode d'attribution de Général », État des résultats), mais à
-        // l'échelle du menu ENTIER (`generalDriverTotals`, pas par activité). Remplace l'ancien
-        // calcul interne à calculateCosts.js — voir ce fichier et analysisData.js pour le détail.
-        // `volumeUnit` (22/10) : famille physique ('g'/'ml') du driver « volume », ignorée pour les
-        // deux autres drivers — voir computeIndirectDriverValue (analysisData.js).
-        const generalDriver = generalInfo.indirectCostMethod || 'directCost';
-        return {
-            generalPool: { amount: activityPoolTotals.general || 0, driver: generalDriver, driverTotal: generalDriverTotals[generalDriver] || 0, volumeUnit: generalInfo.indirectCostVolumeUnit },
-            activityPools: Object.fromEntries(productionActivities.map((a) => {
-                const driver = a.indirectCostDriver || 'directCost';
-                return [a.id, { amount: activityPoolTotals[a.id] || 0, driver, driverTotal: activityDriverTotals[a.id]?.[driver] || 0, volumeUnit: a.indirectCostVolumeUnit }];
-            })),
-            // Canal (corrigé le 14/10) : aucun driver au choix — toujours une majoration sur le
-            // coût de production déjà établi à l'activité (voir computeIndirectCostDriverTotals).
-            channelPools: Object.fromEntries(salesChannels.map((c) => (
-                [c.id, { amount: channelPoolTotals[c.id] || 0, driverTotal: channelDriverTotals[c.id] || 0 }]
-            ))),
-        };
-    }, [expenseLines, repartitionKeys, revenueLines, directCostLines, activityBuckets, productionActivities, salesChannels, analysisDataDraft.productsWithCosts, generalInfo]);
+    // Pools de frais fixes : construits par le moteur (computeIndirectPools), le même appel que le simulateur de
+    // chocs. La part de frais fixes qu'aucune ligne n'a répartie est comptée dans Général (jamais perdue) ;
+    // `indirectPools.meta` la signale (vérifications du projet).
+    const indirectPools = useMemo(
+        () => computeIndirectPools(analysisDataDraft.productsWithCosts, { expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities, salesChannels, generalInfo }),
+        [expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities, salesChannels, analysisDataDraft.productsWithCosts, generalInfo]
+    );
 
     const analysisData = useMemo(
         () => computeAnalysisData(products, baseIngredients, laborDatabase, generalInfo, calculatedGeneralInfo, basePackaging, salesChannels, indirectPools),
@@ -1067,7 +1047,7 @@ const App = ({ tourMode = false } = {}) => {
             revenueLines, onUpdateRevenueLines: setRevenueLines,
             directCostLines, onUpdateDirectCostLines: setDirectCostLines,
             repartitionKeys, onUpdateRepartitionKeys: setRepartitionKeys,
-            analysisData,
+            analysisData, indirectPools,
             uiSettings, setUiSettings,
             showNotification, setNotification,
         }), [
@@ -1081,7 +1061,7 @@ const App = ({ tourMode = false } = {}) => {
             activeUnits, setActiveUnits,
             expenseLines, handleUpdateExpenseLines, revenueLines, setRevenueLines,
             directCostLines, setDirectCostLines, repartitionKeys, setRepartitionKeys,
-            analysisData, uiSettings, setUiSettings, showNotification, setNotification,
+            analysisData, indirectPools, uiSettings, setUiSettings, showNotification, setNotification,
         ]);
 
         const renderActiveTab = () => {

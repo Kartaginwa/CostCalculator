@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, ChevronDown, AlertTriangle } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency, formatNumber } from '../utils.js';
-import { computeAnalysisData, computeActivityImpact, computeChannelImpact } from '../engine/analysisData.js';
+import { computeAnalysisData, computeIndirectPools, computeActivityImpact, computeChannelImpact } from '../engine/analysisData.js';
 import { applyCostShocks, applyLaborShocks, shockIsActive, expandShockScopes } from '../engine/costScenario.js';
 import { useProject } from '../state/ProjectContext.jsx';
 import { Tooltip } from '../components/common.jsx';
@@ -110,7 +110,7 @@ const ImpactGroupTable = ({ title, tooltip, rows }) => (
 // être dans cet onglet EST déjà le geste d'ouverture, inutile de redemander un clic derrière.
 // Reste replié par défaut (`true`) pour tout autre usage futur hors d'un onglet dédié.
 export const CostShockSimulator = ({ collapsible = true }) => {
-    const { products, baseIngredients, basePackaging, salesChannels, laborDatabase, productionActivities, generalInfo, analysisData, uiSettings, setUiSettings } = useProject();
+    const { products, baseIngredients, basePackaging, salesChannels, laborDatabase, productionActivities, generalInfo, analysisData, uiSettings, setUiSettings, expenseLines, revenueLines, directCostLines, repartitionKeys } = useProject();
     const [expanded, setExpanded] = useState(false);
     const isOpen = collapsible ? expanded : true;
     // Le scénario vit dans uiSettings.costShocks : il survit au changement d'onglet et est
@@ -150,12 +150,16 @@ export const CostShockSimulator = ({ collapsible = true }) => {
     // prix d'intrants et les salaires n'affectent ni la productivité ni les heures, donc ce
     // calculatedGeneralInfo reste valide — on le passe comme les deux arguments.
     // Pas (encore) de choc simulé sur le packaging : basePackaging passé tel quel (non choqué).
-    const shockedAnalysis = useMemo(
-        () => activeShocks.length > 0
-            ? computeAnalysisData(products, shockedIngredients, shockedLabor, generalInfo, generalInfo, basePackaging, salesChannels)
-            : null,
-        [activeShocks.length, products, shockedIngredients, shockedLabor, generalInfo, basePackaging, salesChannels]
-    );
+    // Les frais fixes sont répartis sur les coûts SIMULÉS exactement comme dans le reste de l'app : un premier calcul
+    // (sans pools) donne les coûts directs et les volumes simulés, d'où les pools (computeIndirectPools), puis le calcul
+    // final. Sans cela, la marge nette « simulée » ignorait la répartition des frais fixes alors que la marge
+    // « actuelle » la contenait : les écarts par produit étaient faux (corrigé le 19/11).
+    const shockedAnalysis = useMemo(() => {
+        if (activeShocks.length === 0) return null;
+        const draft = computeAnalysisData(products, shockedIngredients, shockedLabor, generalInfo, generalInfo, basePackaging, salesChannels);
+        const pools = computeIndirectPools(draft.productsWithCosts, { expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities, salesChannels, generalInfo });
+        return computeAnalysisData(products, shockedIngredients, shockedLabor, generalInfo, generalInfo, basePackaging, salesChannels, pools);
+    }, [activeShocks.length, products, shockedIngredients, shockedLabor, generalInfo, basePackaging, salesChannels, expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities]);
 
     // Impact par activité / par circuit de vente (Phase 6, 15/10) : les mêmes % pondérés que les
     // DeltaRow globales ci-dessous, mais recentrés sur un sous-ensemble du menu — zippe les deux

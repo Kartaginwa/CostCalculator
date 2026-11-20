@@ -6,7 +6,7 @@ import { getCostTargetIndicator, useEscapeKey, useSessionState } from '../ui-uti
 import { Tooltip, Pagination, CostNatureBadge, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
-import { computeSnapshotMenuKpis, computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
+import { computeSnapshotBreakEven, computeSnapshotMenuKpis, computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 import { computeProjectChecks } from '../engine/projectChecks.js';
 import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
@@ -976,12 +976,12 @@ export const SummaryTable = ({
 }) => {
     const {
         products, generalInfo, laborDatabase, analysisData, salesChannels, productionActivities,
-        trackingPoints, setTrackingPoints, baseIngredients, basePackaging, showNotification, setNotification, goToTab,
+        trackingPoints, setTrackingPoints, baseIngredients, basePackaging, showNotification, setNotification, goToTab, indirectPools,
     } = useProject();
     const [sortConfig, setSortConfig] = useSessionState('summary.contributionSort', { key: 'costs.margeNettePercent', direction: 'descending' });
     const [showAllContributions, setShowAllContributions] = useState(false);
     const [showChecks, setShowChecks] = useState(false);
-    const projectChecks = useMemo(() => computeProjectChecks({ products, baseIngredients, basePackaging }), [products, baseIngredients, basePackaging]);
+    const projectChecks = useMemo(() => computeProjectChecks({ products, baseIngredients, basePackaging, fixedCosts: indirectPools?.meta }), [products, baseIngredients, basePackaging, indirectPools]);
     const [currentPage, setCurrentPage] = useState(1);
     useEffect(() => {
         setCurrentPage(1);
@@ -1057,7 +1057,9 @@ export const SummaryTable = ({
             }
 
             const { weightedGrossMargin, weightedMaterialCost, weightedPackagingCost, weightedLaborCost } = kpis;
-            const globalBreakEvenAtPoint = weightedGrossMargin > 0 ? parseLocaleNumber(point.generalInfo.totalIndirects) / weightedGrossMargin : 0;
+            // Même formule que la tuile « Point mort » (main-d'œuvre traitée comme un coût fixe) : la courbe rejoint la valeur actuelle.
+            const globalBreakEvenAtPoint = computeSnapshotBreakEven(point.productsWithCosts, point.generalInfo.totalIndirects)
+                ?? (weightedGrossMargin > 0 ? parseLocaleNumber(point.generalInfo.totalIndirects) / weightedGrossMargin : 0);
 
             return {
                 name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),

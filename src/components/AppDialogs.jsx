@@ -49,33 +49,33 @@ export const Notification = ({ message, type, onClose, onUndo }) => {
 export const WelcomeModal = ({ onNew, onOpen, onExample, onTour }) => {
     return (
         <div className="fixed inset-0 bg-gray-100 z-50 flex flex-col justify-center items-center p-4">
-            <img src="./Logo_RestoCalculateur3.png" alt="Logo TransfoCalculateur" className="h-32 sm:h-48 w-auto mb-8" />
-            <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-gray-800">Bienvenue sur TransfoCalculateur</h1>
-                <p className="text-lg text-gray-600 mt-2">Votre outil pour maîtriser le coût de revient de vos produits.</p>
+            <img src="./Logo_RestoCalculateur3.png" alt="Logo TransfoCalculateur" className="h-24 sm:h-36 w-auto mb-6" />
+            <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-800">Bienvenue sur TransfoCalculateur</h1>
+                <p className="text-base text-gray-600 mt-2">Votre outil pour maîtriser le coût de revient de vos produits.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
-                <button onClick={onNew} className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-green-50 transition-all duration-300">
-                    <FilePlus className="h-12 w-12 text-green-500 group-hover:text-green-600 mb-3" />
-                    <h2 className="text-xl font-semibold text-gray-700">Créer un nouveau projet</h2>
-                    <p className="text-sm text-gray-500 mt-1">Commencer avec une feuille blanche.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-3xl">
+                <button onClick={onNew} className="group flex flex-col items-center justify-center p-5 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-green-50 transition-all duration-300">
+                    <FilePlus className="h-9 w-9 text-green-500 group-hover:text-green-600 mb-3" />
+                    <h2 className="text-base font-semibold text-gray-700">Créer un nouveau projet</h2>
+                    <p className="text-xs text-gray-500 mt-1">Commencer avec une feuille blanche.</p>
                 </button>
-                <button onClick={onOpen} className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-blue-50 transition-all duration-300">
-                    <FolderOpen className="h-12 w-12 text-blue-500 group-hover:text-blue-600 mb-3" />
-                    <h2 className="text-xl font-semibold text-gray-700">Ouvrir un projet existant</h2>
-                    <p className="text-sm text-gray-500 mt-1">Charger un fichier .json sauvegardé.</p>
+                <button onClick={onOpen} className="group flex flex-col items-center justify-center p-5 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-blue-50 transition-all duration-300">
+                    <FolderOpen className="h-9 w-9 text-blue-500 group-hover:text-blue-600 mb-3" />
+                    <h2 className="text-base font-semibold text-gray-700">Ouvrir un projet existant</h2>
+                    <p className="text-xs text-gray-500 mt-1">Charger un fichier .json sauvegardé.</p>
                 </button>
-                <button onClick={onExample} className="group flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-indigo-50 transition-all duration-300">
-                    <FileText className="h-12 w-12 text-indigo-500 group-hover:text-indigo-600 mb-3" />
-                    <h2 className="text-xl font-semibold text-gray-700">Explorer un projet démo</h2>
-                    <p className="text-sm text-gray-500 mt-1">Découvrir les fonctionnalités avec des données d'exemple.</p>
+                <button onClick={onExample} className="group flex flex-col items-center justify-center p-5 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-indigo-50 transition-all duration-300">
+                    <FileText className="h-9 w-9 text-indigo-500 group-hover:text-indigo-600 mb-3" />
+                    <h2 className="text-base font-semibold text-gray-700">Explorer un projet démo</h2>
+                    <p className="text-xs text-gray-500 mt-1">Découvrir les fonctionnalités avec des données d'exemple.</p>
                 </button>
                 {onTour && (
-                    <button data-testid="start-tour" onClick={onTour} className="group md:col-span-3 flex items-center justify-center gap-5 p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-amber-50 transition-all duration-300">
-                        <PlayCircle className="h-12 w-12 text-amber-500 group-hover:text-amber-600 shrink-0" />
+                    <button data-testid="start-tour" onClick={onTour} className="group md:col-span-3 flex items-center justify-center gap-4 p-5 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-amber-50 transition-all duration-300">
+                        <PlayCircle className="h-9 w-9 text-amber-500 group-hover:text-amber-600 shrink-0" />
                         <div className="text-left">
-                            <h2 className="text-xl font-semibold text-gray-700">Voir la visite guidée</h2>
-                            <p className="text-sm text-gray-500 mt-1">Une démonstration d'environ 5 minutes qui se joue toute seule : de la saisie jusqu'aux résultats.</p>
+                            <h2 className="text-base font-semibold text-gray-700">Voir la visite guidée</h2>
+                            <p className="text-xs text-gray-500 mt-1">Une démonstration d'environ 5 minutes qui se joue toute seule : de la saisie jusqu'aux résultats.</p>
                         </div>
                     </button>
                 )}

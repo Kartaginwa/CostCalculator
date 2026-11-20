@@ -271,8 +271,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'frais-fixes', chapter: 4, tab: 'income-statement', duration: 14500,
-        caption: 'Les **frais fixes** — loyer, assurances, entretien — ne dépendent d\'aucun produit. **Ajoutez-en un** : le total, puis le **bénéfice net**, réagissent aussitôt.',
+        id: 'frais-fixes', chapter: 4, tab: 'income-statement', duration: 16500,
+        caption: 'Les **frais fixes** — loyer, assurances, entretien — ne dépendent d\'aucun produit. **Ajoutez-en un**, dites **où il va** : le total, puis le **bénéfice net**, réagissent aussitôt.',
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-expenses', block: 'start' },
             { at: 900, do: 'highlight', target: '#tutorial-section-expenses' },
@@ -281,9 +281,14 @@ export const SCENES = [
             { at: 3600, do: 'type', target: { sel: `${NEW_EXPENSE} input`, nth: 0 }, text: 'Entretien des équipements', rate: 75 },
             { at: 6300, do: 'type', target: { sel: `${NEW_EXPENSE} input`, nth: 1 }, text: '2400', rate: 230 },
             { at: 7800, do: 'note', id: 'tot', target: { text: 'Sous-total', within: '#tutorial-section-expenses' }, text: 'Total des frais fixes : {v}', side: 'top', read: { label: 'Sous-total', within: '#tutorial-section-expenses' } },
-            { at: 9800, do: 'scroll', target: { sel: '[data-tour="profit-bar"]', nth: 1 } },
-            { at: 10600, do: 'highlight', target: { sel: '[data-tour="profit-bar"]', nth: 1 } },
-            { at: 10800, do: 'note', id: 'net', target: { sel: '[data-tour="profit-bar"]', nth: 1 }, text: 'Bénéfice net : {v}', side: 'top', read: { label: 'Bénéfice net', within: '[data-tour="profit-bar"]', nth: 1 } },
+            // La nouvelle dépense doit être rattachée à un contenant : sans cela l'application signale des frais « non répartis »
+            // (bandeau « points à vérifier ») pour tout le reste de la visite. On la range dans « Général ».
+            { at: 8800, do: 'note', id: 'rep', target: { sel: `${NEW_EXPENSE} select`, nth: 1 }, text: 'Où va ce frais ? On le range dans « Général »', side: 'top' },
+            { at: 9000, do: 'pick', target: { sel: `${NEW_EXPENSE} select`, nth: 1 }, option: 'Général' },
+            { at: 11000, do: 'unnote' },
+            { at: 11800, do: 'scroll', target: { sel: '[data-tour="profit-bar"]', nth: 1 } },
+            { at: 12600, do: 'highlight', target: { sel: '[data-tour="profit-bar"]', nth: 1 } },
+            { at: 12800, do: 'note', id: 'net', target: { sel: '[data-tour="profit-bar"]', nth: 1 }, text: 'Bénéfice net : {v}', side: 'top', read: { label: 'Bénéfice net', within: '[data-tour="profit-bar"]', nth: 1 } },
         ],
     },
     {
@@ -316,7 +321,11 @@ export const SCENES = [
         steps: [
             { at: 300, do: 'scroll', target: KPI }, { at: 1000, do: 'highlight', target: KPI },
             { at: 1300, do: 'note', id: 'k1', target: `${KPI} > div:first-child`, text: 'Coût matière moyen : {v}', side: 'top', read: { label: 'Coût Matière Moyen Pondéré' } },
-            { at: 4200, do: 'note', id: 'k2', target: `${KPI} > div:nth-child(2)`, text: 'Au-dessus de la cible : alerte', side: 'top' },
+            // Le triangle rouge est sur le coût matière (au-dessus de la cible) ; les deux autres coûts sont sous leur cible (crochet vert).
+            { at: 4000, do: 'unnote' },
+            { at: 4200, do: 'note', id: 'k2', target: `${KPI} > div:first-child`, text: 'Triangle rouge : au-dessus de votre cible', side: 'top' },
+            { at: 6600, do: 'unnote' },
+            { at: 6800, do: 'note', id: 'k3', target: `${KPI} > div:nth-child(2)`, text: 'Crochet vert : sous la cible', side: 'top' },
         ],
     },
     {

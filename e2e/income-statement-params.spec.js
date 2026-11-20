@@ -223,27 +223,27 @@ test("réconciliation réel/théorique dans l'onglet État des résultats (Phase
     // l'entreprise.
     const revenueRow = section.locator('tbody tr', { hasText: 'Revenus' });
     await expect(revenueRow.getByText('80 000,00 $', { exact: true }).first()).toBeVisible();
-    await expect(revenueRow.getByText('79 202,64 $', { exact: true })).toBeVisible();
-    await expect(revenueRow.getByText('+1,0 %', { exact: true })).toBeVisible();
+    await expect(revenueRow.getByText('79 713,59 $', { exact: true })).toBeVisible();
+    await expect(revenueRow.getByText('+0,4 %', { exact: true })).toBeVisible();
 
     // Charges directes : réel (48 000 $, saisi) vs théorique (dérivé du modèle de recette, sur
     // le même volume réel par canal) — un écart non nul, comme pour les revenus.
     const directCostsRow = section.locator('tbody tr', { hasText: 'Charges directes' });
     await expect(directCostsRow.getByText('48 000,00 $', { exact: true })).toBeVisible();
-    await expect(directCostsRow.getByText('45 642,33 $', { exact: true })).toBeVisible();
+    await expect(directCostsRow.getByText('45 356,35 $', { exact: true })).toBeVisible();
 
     // Bénéfice brut = Revenus - Charges directes, des deux côtés (réel ET théorique).
     const grossProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice brut' });
     await expect(grossProfitRow.getByText('32 000,00 $', { exact: true })).toBeVisible();
-    await expect(grossProfitRow.getByText('33 560,31 $', { exact: true })).toBeVisible();
+    await expect(grossProfitRow.getByText('34 357,24 $', { exact: true })).toBeVisible();
 
     // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo, même total
     // soustrait des deux côtés) - coût de vieillissement théorique (révisé le 02/11, retour
     // utilisateur : manquait entièrement jusqu'ici, alors que le réel bottom-up — Par Activité/
-    // Canal/SKU — le déduit déjà ; 33 560.31 - 28 000 - 60.47 $ de vieillissement = 5 499.84 $ ; chiffres révisés le 19/11 : toute la paie est absorbée par les produits).
+    // Canal/SKU — le déduit déjà ; 34 357.24 - 28 000 - ~58 $ de vieillissement = 6 299.48 $ ; chiffres révisés le 19/11 : toute la paie est absorbée par les produits).
     const netProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice net' });
     await expect(netProfitRow.getByText('4 000,00 $', { exact: true })).toBeVisible();
-    await expect(netProfitRow.getByText('5 499,84 $', { exact: true })).toBeVisible();
+    await expect(netProfitRow.getByText('6 299,48 $', { exact: true })).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

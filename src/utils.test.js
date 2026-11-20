@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { looksLikeProductionLabor, parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
+import { loadedHourlyRate, landedUnitPrice, looksLikeProductionLabor, parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
 
 describe('formatCurrency', () => {
     it('ajoute un espace comme séparateur de milliers, virgule comme séparateur décimal', () => {
@@ -176,4 +176,28 @@ describe('looksLikeProductionLabor', () => {
         ['Électricité production', false],
         ['', false],
     ])('%s → %s', (label, expected) => { expect(looksLikeProductionLabor(label)).toBe(expected); });
+});
+
+describe('landedUnitPrice (coût d\'achat rendu)', () => {
+    it("sans escompte ni transport : prix ÷ format, comme avant", () => {
+        expect(landedUnitPrice({ purchasePrice: 48.75, purchaseFormat: 5 })).toBeCloseTo(9.75, 10);
+        expect(landedUnitPrice({ purchasePrice: '62,00', purchaseFormat: '10' })).toBeCloseTo(6.2, 10);
+    });
+    it("déduit l'escompte du prix puis ajoute le transport du format entier", () => {
+        // 100 $ − 5 % = 95 $ ; + 8 $ de transport = 103 $ ; ÷ 10 = 10,30 $
+        expect(landedUnitPrice({ purchasePrice: 100, purchaseFormat: 10, discountPercentage: 5, inboundCost: 8 })).toBeCloseTo(10.3, 10);
+    });
+    it("borne l'escompte entre 0 et 100 % et traite un format vide comme 1", () => {
+        expect(landedUnitPrice({ purchasePrice: 10, purchaseFormat: 1, discountPercentage: 250 })).toBe(0);
+        expect(landedUnitPrice({ purchasePrice: 10, purchaseFormat: 1, discountPercentage: -20 })).toBe(10);
+        expect(landedUnitPrice({ purchasePrice: 10, purchaseFormat: '' })).toBe(10);
+    });
+});
+
+describe('loadedHourlyRate (taux horaire chargé, formule unique)', () => {
+    it("compose charges sociales et vacances", () => {
+        expect(loadedHourlyRate({ hourlyRate: 22, socialCharges: 16, vacationPercentage: 4 })).toBeCloseTo(22 * 1.16 * 1.04, 10);
+        expect(loadedHourlyRate({ hourlyRate: 20 })).toBe(20);
+        expect(loadedHourlyRate(undefined)).toBe(0);
+    });
 });

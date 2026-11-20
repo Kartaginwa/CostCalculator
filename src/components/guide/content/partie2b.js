@@ -15,14 +15,16 @@ export const chapitreIngredients = {
         { type: 'h', id: 'guide-ing-db', text: 'La base de données des ingrédients' },
         { type: 'p', text: 'Chaque ligne du tableau est un ingrédient **tel que vous l\'achetez** : un fournisseur, un format, un prix. Pour en ajouter, cliquez sur {{Ajouter un ingrédient}} : la ligne apparaît en haut du tableau et le curseur se place sur son nom. Vous pouvez aussi {{Importer une liste}} (voir plus bas).' },
         {
-            type: 'table', head: ['Colonne', 'Ce que vous y mettez'], wrapCells: true, rowIds: [null, null, 'guide-ing-col-format', 'guide-ing-col-unite', 'guide-ing-col-prix-achat', 'guide-ing-col-perte', 'guide-ing-col-prix-unitaire', 'guide-ing-col-maj', null], rows: [
+            type: 'table', head: ['Colonne', 'Ce que vous y mettez'], wrapCells: true, rowIds: [null, null, 'guide-ing-col-format', 'guide-ing-col-unite', 'guide-ing-col-prix-achat', 'guide-ing-col-escompte', 'guide-ing-col-transport', 'guide-ing-col-perte', 'guide-ing-col-prix-unitaire', 'guide-ing-col-maj', null], rows: [
                 ['{{Ingrédient}}', 'Le nom de l\'ingrédient.'],
                 ['{{Fournisseur}}', 'D\'où il vient. Un même ingrédient acheté chez deux fournisseurs forme deux lignes, ce qui permet de les comparer.'],
                 ['{{Format d\'achat}}', 'La quantité contenue dans l\'unité que vous achetez (ex. 5 pour un sac de 5 kg).'],
                 ['{{Unité de base}}', 'L\'unité de ce format (g, kg, ml, L, unité…).'],
                 ['{{Prix achat ($)}}', 'Ce que vous payez pour un format entier.'],
+                ['{{Escompte (%)}}', 'Facultatif. Le rabais ou l\'escompte que votre fournisseur vous accorde, en pourcentage du prix d\'achat. Laissez vide s\'il n\'y en a pas.'],
+                ['{{Transport ($)}}', 'Facultatif. Le transport et les frais d\'entrée que vous payez pour **un format d\'achat entier** (ex. 12 $ de livraison par caisse de 10 kg). Ils entrent ainsi dans le coût de l\'ingrédient, comme le prix lui-même. Mettez-les à jour quand ils changent, comme le prix. Saisissez toujours les prix **hors taxes récupérables** (TPS/TVQ) : ces taxes ne sont pas un coût.'],
                 ['{{Taux de perte (%)}}', 'La part de l\'ingrédient qui se perd **avant** d\'être utilisée : péremption, casse, déclassement. Ce n\'est pas l\'épluchage ni la cuisson, qui relèvent du rendement de la recette.'],
-                ['{{Prix unitaire ($)}}', 'Calculé automatiquement : prix d\'achat ÷ format d\'achat. C\'est lui qui sert aux recettes.'],
+                ['{{Prix unitaire ($)}}', 'Calculé automatiquement : (prix d\'achat − escompte + transport) ÷ format d\'achat. C\'est lui qui sert aux recettes.'],
                 ['{{Dernière màj}}', 'La date de la dernière modification du prix d\'achat, mise à jour automatiquement. Un point jaune apparaît si elle date de plus de 30 jours : c\'est un rappel de vérifier ce prix.'],
                 ['Actions', 'Gérer les allergènes (l\'icône d\'alerte devient rouge quand des allergènes sont assignés), dupliquer l\'ingrédient, le supprimer (annulable quelques secondes).'],
             ],
@@ -101,14 +103,14 @@ export const chapitreEmballage = {
     blocks: [
         { type: 'callout', kind: 'pourquoi', text: 'L\'emballage est un poste de coût à part, jamais fusionné avec les ingrédients : il a ses propres fournisseurs, ses propres variations de prix, et son propre pourcentage dans vos rapports. Dans l\'exemple de la boisson du chapitre 2, il pesait presque autant que les matières.' },
         { type: 'h', id: 'guide-emb-db', text: 'La base de données des emballages' },
-        { type: 'p', text: 'L\'onglet fonctionne exactement comme celui des ingrédients : mêmes colonnes ({{Emballage}}, {{Fournisseur}}, {{Format d\'achat}}, {{Unité de base}}, {{Prix achat ($)}}, {{Taux de perte (%)}}, {{Prix unitaire ($)}}, {{Dernière màj}}), mêmes filtres, mêmes tris, même outil {{Comparer un emballage}}, mêmes règles de calcul du prix unitaire et du prix efficace. L\'unité de base par défaut est « unité » (un pot, un couvercle, une étiquette). Le taux de perte représente ici les bris, les rebuts et les déclassements.' },
+        { type: 'p', text: 'L\'onglet fonctionne exactement comme celui des ingrédients : mêmes colonnes ({{Emballage}}, {{Fournisseur}}, {{Format d\'achat}}, {{Unité de base}}, {{Prix achat ($)}}, {{Escompte (%)}}, {{Transport ($)}}, {{Taux de perte (%)}}, {{Prix unitaire ($)}}, {{Dernière màj}}), mêmes filtres, mêmes tris, même outil {{Comparer un emballage}}, mêmes règles de calcul du prix unitaire et du prix efficace. L\'unité de base par défaut est « unité » (un pot, un couvercle, une étiquette). Le taux de perte représente ici les bris, les rebuts et les déclassements.' },
         { type: 'p', text: 'Ce qui change par rapport aux ingrédients : il n\'y a ni allergènes, ni sous-recettes, ni **rendement** dans les recettes. Un emballage ne « rétrécit » pas à la production, comme une carotte à l\'épluchage : seule la perte en stock s\'applique.' },
         {
             type: 'table', caption: 'Trois colonnes à bien comprendre', head: ['Colonne', 'Ce qu\'elle signifie pour un emballage'], wrapCells: true,
             rowIds: ['guide-emb-col-perte', 'guide-emb-col-prix-unitaire', 'guide-emb-col-maj'],
             rows: [
                 ['{{Taux de perte (%)}}', 'La part de l\'emballage perdue **avant** d\'être utilisée : bris, rebuts, format non conforme. Même logique que le taux de perte d\'un ingrédient ([[guide-ing-col-perte|voir Ingrédients]]).'],
-                ['{{Prix unitaire ($)}}', 'Calculé automatiquement : prix d\'achat ÷ format d\'achat. C\'est ce prix qui sert au coût d\'emballage d\'une recette.'],
+                ['{{Prix unitaire ($)}}', 'Calculé automatiquement : (prix d\'achat − escompte + transport) ÷ format d\'achat. C\'est ce prix qui sert au coût d\'emballage d\'une recette.'],
                 ['{{Dernière màj}}', 'La date de la dernière modification du prix d\'achat, mise à jour automatiquement. Un point jaune apparaît au-delà de 30 jours, pour vous rappeler de vérifier ce prix.'],
             ],
         },
@@ -164,7 +166,7 @@ export const chapitreMainOeuvre = {
 
         { type: 'h', id: 'guide-mo-capacite', text: 'Capacité de production par activité' },
         { type: 'p', text: 'Ce deuxième tableau répartit les heures de main-d\'œuvre réellement requises entre vos **activités de production**, et indique la part de chaque activité dans le total. Il révèle quelle ligne de production est la plus exigeante en temps. Il n\'y a pas de « heures attendues » par activité : un poste ou un employé n\'est pas rattaché à une seule activité, donc rien n\'est comparable.' },
-        { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 130,24 heures (38,26 % du total), les soupes et potages 210,14 heures (61,74 %), et les sauces et accompagnements 0 heure : leurs recettes n\'ont pas d\'étapes de production avec du personnel affecté, ou n\'ont pas de ventes saisies.' },
+        { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 126,81 heures (36,82 % du total), les soupes et potages 210,14 heures (61,01 %), et les sauces et accompagnements 7,47 heures (2,17 %). La sauce du Terroir est un produit de revente, sans étapes de production : seule la sauce à spaghetti maison demande du temps de cuisson et de mise en pot.' },
         {
             type: 'ul', itemIds: ['guide-mo-cap-heures', 'guide-mo-cap-part'], items: [
                 { label: 'Heures productives réelles.', text: 'Les heures de production de l\'activité, calculées à partir des étapes de vos recettes et de vos ventes de la période.' },

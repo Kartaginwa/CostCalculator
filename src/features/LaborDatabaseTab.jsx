@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, XCircle, ChevronDown, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, formatCurrency, formatNumber } from '../utils.js';
+import { parseLocaleNumber, formatCurrency, formatNumber, loadedHourlyRate } from '../utils.js';
 import { Tooltip, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
@@ -180,8 +180,7 @@ useEffect(() => {
                 {laborDatabase.map(post => {
                 const totalHours = (post.employees || []).reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
                 const totalCost = (post.employees || []).reduce((sum, emp) => {
-                    const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
-                    return sum + (baseHourlyCost * parseLocaleNumber(emp.workedHours));
+                    return sum + (loadedHourlyRate(emp) * parseLocaleNumber(emp.workedHours));
                 }, 0);
                 const weightedAverageCost = totalHours > 0 ? totalCost / totalHours : 0;
 

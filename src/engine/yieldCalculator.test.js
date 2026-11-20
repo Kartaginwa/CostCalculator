@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeYieldUnits } from './yieldCalculator.js';
+import { computeYieldUnits, effectiveNbPortions } from './yieldCalculator.js';
+import { computeLaborHoursNeeded } from './laborHours.js';
 
 describe('computeYieldUnits', () => {
     it("retourne le nombre d'unités sans étape ni rejet (division simple)", () => {
@@ -57,5 +58,28 @@ describe('computeYieldUnits', () => {
     it('accepte les nombres au format local (virgule)', () => {
         const result = computeYieldUnits({ baseQuantity: '1000', stages: [{ percentEffect: '-10' }], unitSize: '90' });
         expect(result).toBeCloseTo(10); // 1000 × 0.9 = 900, / 90 = 10
+    });
+});
+
+describe('effectiveNbPortions (source unique de la quantité produite)', () => {
+    it('quantité saisie sans grille ; vide ou 0 → 1', () => {
+        expect(effectiveNbPortions({ nbPortions: '12' })).toBe(12);
+        expect(effectiveNbPortions({ nbPortions: '' })).toBe(1);
+        expect(effectiveNbPortions({ nbPortions: 0 })).toBe(1);
+    });
+    it('avec grille : la quantité CALCULÉE prime sur le champ saisi resté à son ancienne valeur', () => {
+        const fmt = { nbPortions: 20, portionSize: 500, yieldGrid: { enabled: true, baseQuantity: 8000, stages: [{ percentEffect: -20 }], rejectRate: 5 } };
+        expect(effectiveNbPortions(fmt)).toBeCloseTo(12.16, 8); // 8000 × 0,8 × 0,95 ÷ 500
+    });
+    it("les heures de main-d'œuvre utilisent la quantité calculée, pas la quantité saisie (audit 20/11)", () => {
+        const mk = (stored) => ({ id: 'p', activityId: 'a', formats: [{
+            id: 'f', onMenu: true, nbPortions: stored, portionSize: 500, portionUnit: 'g',
+            yieldGrid: { enabled: true, baseQuantity: 8000, stages: [{ percentEffect: -20 }], rejectRate: 5 },
+            channelPrices: [{ channelId: 'c', netPrice: 5, volume: 121.6 }],
+            productionSteps: [{ duration: 3600, personnel: [{ postId: 'Cuisinier' }] }], ingredients: [],
+        }] });
+        // 121,6 portions ÷ 12,16 par lot = 10 lots × 1 h, quelle que soit la valeur stockée.
+        expect(computeLaborHoursNeeded([mk(20)]).total).toBeCloseTo(10, 8);
+        expect(computeLaborHoursNeeded([mk(12.16)]).total).toBeCloseTo(10, 8);
     });
 });

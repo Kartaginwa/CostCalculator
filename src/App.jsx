@@ -5,7 +5,7 @@ import {
     PlusCircle, Settings, Package, TrendingUp,
 } from 'lucide-react';
 
-import { todayLocalISO, parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts } from './utils.js';
+import { todayLocalISO, parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, loadedHourlyRate } from './utils.js';
 import {
     computeAnalysisData, computeIndirectPools,
 } from './engine/analysisData.js';
@@ -296,8 +296,7 @@ const App = ({ tourMode = false } = {}) => {
         return laborDatabase.reduce((total, post) => {
             const postTotal = (post.employees || []).reduce((sum, emp) => {
                 const paidHours = parseLocaleNumber(emp.workedHours);
-                const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
-                return sum + (paidHours * baseHourlyCost);
+                return sum + (paidHours * loadedHourlyRate(emp));
             }, 0);
             return total + postTotal;
         }, 0);
@@ -320,22 +319,23 @@ const App = ({ tourMode = false } = {}) => {
             byPost: totalDirectLaborHoursNeededByPost,
             byActivity: totalDirectLaborHoursNeededByActivity,
             total: totalDirectLaborHoursNeeded,
-        } = computeLaborHoursNeeded(products, baseIngredients);
+        } = computeLaborHoursNeeded(products, baseIngredients, salesChannels);
 
         // TOUS les postes de l'onglet Main-d'œuvre doivent se retrouver dans le coût des produits (décision du 19/11) :
         // les heures employées, la capacité inutilisée, le temps non productif (déjà reflété par le « % temps productif
         // attendu » de chaque employé) et même un poste sans aucune étape de recette.
         // Le facteur d'absorption est donc : coût direct des heures nécessaires ÷ masse salariale de TOUS les postes.
         // Chaque recette porte alors sa part de la paie, au prorata de son coût de main-d'œuvre directe : la paie de la
-        // cuisine est entièrement répartie sur les produits quand le volume la remplit (jamais plus que la paie : le
-        // facteur est plafonné à 100 % — un manque de capacité n'enlève pas de coût).
+        // cuisine est entièrement répartie sur les produits quand le volume la remplit. La valeur exposée
+        // (`kitchenProductivity`) peut dépasser 100 % quand le volume dépasse la paie ; c'est son USAGE qui est plafonné à
+        // 100 % (calculateCosts.js) : au-delà, la main-d'œuvre est comptée au taux horaire plein, jamais moins — un surplus de
+        // capacité n'enlève pas de coût.
         // Le coût d'un poste est son taux moyen pondéré par les heures payées, comme dans calculateCosts.js.
         const directLaborCostNeeded = laborDatabase.reduce((total, post) => {
             const emps = post.employees || [];
             const hours = emps.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
             if (!(hours > 0)) return total;
-            const cost = emps.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours) * parseLocaleNumber(emp.hourlyRate)
-                * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100), 0);
+            const cost = emps.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours) * loadedHourlyRate(emp), 0);
             return total + (totalDirectLaborHoursNeededByPost[post.postName] || 0) * (cost / hours);
         }, 0);
         const kitchenProductivity = autoCalculatedLaborCost > 0 ? (directLaborCostNeeded / autoCalculatedLaborCost) * 100 : 100;
@@ -377,7 +377,7 @@ const App = ({ tourMode = false } = {}) => {
             // « temps de production » (taux = frais indirects / ce total → réconcilie exactement).
             totalDirectLaborHoursNeeded: totalDirectLaborHoursNeeded,
         };
-    }, [generalInfo, products, baseIngredients, laborDatabase, autoCalculatedLaborCost, productionActivities]);
+    }, [generalInfo, products, baseIngredients, laborDatabase, autoCalculatedLaborCost, productionActivities, salesChannels]);
     // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---
     // Source unique de vérité pour les coûts : computeAnalysisData calcule productsWithCosts une
     // seule fois (avec un memo partagé) puis en dérive tous les KPIs. Défini ici, avant

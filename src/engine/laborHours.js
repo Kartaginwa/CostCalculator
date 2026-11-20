@@ -12,11 +12,12 @@
 // La quantité consommée suit exactement calculateCosts.js : quantité de la ligne, convertie dans l'unité de la portion
 // de la sous-recette, divisée par le rendement de la ligne, puis par la quantité d'une portion et par le nombre de
 // portions d'un lot. Fonction pure : aucune donnée n'est modifiée.
-import { parseLocaleNumber as P, unitConversionFactor } from '../utils.js';
+import { parseLocaleNumber as P, unitConversionFactor, activeChannelPrices } from '../utils.js';
+import { effectiveNbPortions } from './yieldCalculator.js';
 
 const formatsOf = (product) => (product.formats && product.formats.length > 0 ? product.formats : [product]);
 
-export function computeLaborHoursNeeded(products, baseIngredients = []) {
+export function computeLaborHoursNeeded(products, baseIngredients = [], salesChannels = []) {
     const baseIds = new Set((baseIngredients || []).map(i => i.id));
     const subRecipes = (products || []).filter(p => p.isIngredient);
     const byPost = {};
@@ -55,14 +56,14 @@ export function computeLaborHoursNeeded(products, baseIngredients = []) {
             const yieldPercent = P(row.yieldPercentage);
             if (yieldPercent > 0) quantity /= yieldPercent / 100;
             const portions = quantity / (P(sub.fmt.portionSize) || 1);
-            addBatches(sub.product, sub.fmt, batches * (portions / (P(sub.fmt.nbPortions) || 1)), nextPath);
+            addBatches(sub.product, sub.fmt, batches * (portions / effectiveNbPortions(sub.fmt)), nextPath);
         });
     };
 
     (products || []).forEach(product => {
         formatsOf(product).filter(fmt => fmt.onMenu !== false).forEach(fmt => {
-            const sold = (fmt.channelPrices || []).reduce((sum, cp) => sum + (P(cp.volume) || 0), 0);
-            addBatches(product, fmt, sold / (P(fmt.nbPortions) || 1), new Set());
+            const sold = activeChannelPrices(fmt, salesChannels).reduce((sum, cp) => sum + (P(cp.volume) || 0), 0);
+            addBatches(product, fmt, sold / effectiveNbPortions(fmt), new Set());
         });
     });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeSnapshotMenuKpis, computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from './analysisData.js';
+import { computeGlobalBreakEven, computeSnapshotMenuKpis, computeAnalysisData, computeMenuEngineeringQuadrants, computeChannelRevenueShareByActivity, computeDirectCostAllocation, computeRealVsTheoreticalReconciliation, computeActivityImpact, computeChannelImpact, computeGrossProfitTotals, computeNetProfitTotals, computeIndirectCostDriverTotals, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from './analysisData.js';
 
 const baseGeneralInfo = (overrides = {}) => ({
     totalRevenue: 0,
@@ -1268,5 +1268,35 @@ describe('computeSnapshotMenuKpis : pondération par le revenu d\'un point de r�
         expect(computeSnapshotMenuKpis([row({ onMenu: false, salesMix: 100, prixVente: 5 })])).toBeNull();
         expect(computeSnapshotMenuKpis([row({ salesMix: 0, prixVente: 5 })])).toBeNull();
         expect(computeSnapshotMenuKpis([])).toBeNull();
+    });
+});
+
+describe("computeGlobalBreakEven - vieillissement (21/11)", () => {
+    const row = (aging) => ({
+        onMenu: true, blended: { margeBruteDollar: 6, totalVolume: 100 }, costs: { costLaborPerPortion: 0, costAgingPerPortion: aging },
+        channelBreakdown: [{ netPrice: 10, volume: 100 }],
+    });
+    it("retire le vieillissement par unité de la marge de contribution", () => {
+        expect(computeGlobalBreakEven([row(0)], 300)).toBeCloseTo(300 / 0.6, 6); // 500 $ de revenu
+        expect(computeGlobalBreakEven([row(1)], 300)).toBeCloseTo(300 / 0.5, 6); // 600 $ de revenu
+    });
+});
+
+describe("canal supprimé (21/11) : ses ventes ne comptent ni dans le volume des frais fixes ni dans les marges", () => {
+    const channels = [{ id: 'c1', name: 'Direct' }];
+    const product = (prices) => baseProduct({ id: 'A', isResaleProduct: true, purchaseCost: 4, prixVente: 10, channelPrices: prices });
+    const run = (prices, salesChannels) => {
+        const generalInfo = baseGeneralInfo();
+        return computeAnalysisData([product(prices)], [], [], generalInfo, { ...generalInfo, productivityReport: {} }, [], salesChannels);
+    };
+    it("le volume d'un canal qui n'existe plus est écarté de portionsSold", () => {
+        const prices = [{ channelId: 'c1', netPrice: 10, volume: 100 }, { channelId: 'supprime', netPrice: 10, volume: 400 }];
+        const row = run(prices, channels).productsWithCosts[0];
+        expect(row.costs.portionsSold).toBe(100);
+        expect(row.channelBreakdown).toHaveLength(1);
+    });
+    it("sans liste de canaux (ancien projet), rien n'est filtré", () => {
+        const prices = [{ channelId: 'supprime', netPrice: 10, volume: 400 }];
+        expect(run(prices, []).productsWithCosts[0].costs.portionsSold).toBe(400);
     });
 });

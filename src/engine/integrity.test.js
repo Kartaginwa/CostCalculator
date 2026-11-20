@@ -6,7 +6,7 @@ import { computeIngredientVolatility } from './priceVolatility.js';
 import { computeSnapshotBreakEven, computeSnapshotMenuKpis } from './analysisData.js';
 import { computeProjectAnalysis } from './analysisPipeline.js';
 import { computeProjectChecks } from './projectChecks.js';
-import { findIngredientUsages, findPackagingUsages, findSubRecipeUsages, formatNameList } from './usage.js';
+import { findRecipeLoops, wouldCreateRecipeLoop, findIngredientUsages, findPackagingUsages, findSubRecipeUsages, formatNameList } from './usage.js';
 import { clearFormatVolumes, mirrorFirstFormat, removeChannelFromProducts } from './productEdits.js';
 import { computeLaborHoursNeeded } from './laborHours.js';
 
@@ -152,7 +152,7 @@ describe('Usages avant suppression', () => {
         expect(findIngredientUsages(state.products, 'ing_epices').length).toBeGreaterThan(2);
         expect(findIngredientUsages(state.products, 'ing_inconnu')).toEqual([]);
         expect(findPackagingUsages(state.products, 'pkg_etiquette').length).toBeGreaterThan(0);
-        const puree = state.products.find(p => p.id === 'sub_puree' || (p.formats || []).some(f => f.id === 'sub_puree'));
+        const puree = state.products.find(p => p.id === 'sub_puree_vrac');
         expect(findSubRecipeUsages(state.products, puree).length).toBeGreaterThan(0);
         // Un produit qui n'est pas une sous-recette n'a pas d'usages.
         const plat = state.products.find(p => !p.isIngredient);
@@ -167,7 +167,7 @@ describe('Usages avant suppression', () => {
 describe('Gestes de la fiche produit', () => {
     it('une copie repart sans volumes ni part des ventes, mais garde les prix', () => {
         const state = getDefaultState();
-        const original = state.products[1].formats[0];
+        const original = state.products.find(p => p.id === 'sub_puree').formats[0];
         const copy = clearFormatVolumes(original);
         expect(copy.salesMix).toBe(0);
         copy.channelPrices.forEach((cp, i) => {
@@ -210,5 +210,27 @@ describe('Gestes de la fiche produit', () => {
         const ids = computeProjectChecks({ products, productionActivities: state.productionActivities.slice(1), salesChannels: state.salesChannels }).map(c => c.id);
         expect(ids).toContain('duplicate-channel');
         expect(ids).toContain('missing-activity');
+    });
+});
+
+describe('Boucles de sous-recettes (audit 20/11, constat 9)', () => {
+    const rec = (id, name, uses = []) => ({ id, platName: name, isIngredient: true, formats: [{ id: `f_${id}`, ingredients: uses.map(u => ({ id: `f_${u}`, quantity: 1 })) }] });
+    it('trouve une boucle directe et une boucle à trois étapes, une seule fois chacune', () => {
+        expect(findRecipeLoops([rec('a', 'A', ['b']), rec('b', 'B', ['a'])])).toEqual([['A', 'B']]);
+        const three = findRecipeLoops([rec('a', 'A', ['b']), rec('b', 'B', ['c']), rec('c', 'C', ['a'])]);
+        expect(three).toHaveLength(1);
+        expect([...three[0]].sort()).toEqual(['A', 'B', 'C']);
+    });
+    it("ne signale rien pour une chaîne sans retour ni pour deux recettes qui partagent une sous-recette", () => {
+        expect(findRecipeLoops([rec('a', 'A', ['b']), rec('b', 'B', ['c']), rec('c', 'C')])).toEqual([]);
+        expect(findRecipeLoops([rec('a', 'A', ['c']), rec('b', 'B', ['c']), rec('c', 'C')])).toEqual([]);
+    });
+    it("refuse d'ajouter ce qui créerait une boucle, directe ou non", () => {
+        const products = [rec('a', 'A', ['b']), rec('b', 'B', ['c']), rec('c', 'C'), rec('d', 'D')];
+        expect(wouldCreateRecipeLoop(products, products[2], 'f_a')).toBe(true); // C utiliserait A, qui utilise B, qui utilise C
+        expect(wouldCreateRecipeLoop(products, products[2], 'f_c')).toBe(true); // elle-même
+        expect(wouldCreateRecipeLoop(products, products[2], 'f_d')).toBe(false);
+        expect(wouldCreateRecipeLoop(products, products[0], 'f_c')).toBe(false);
+        expect(wouldCreateRecipeLoop(products, products[0], 'ing_farine')).toBe(false);
     });
 });

@@ -2,7 +2,7 @@
 // Fonction pure "données -> classeur" : reçoit tout son contexte via l'objet `deps`. XLSX est
 // fourni en global via scripts/copy-libs. Le contenu des feuilles est intentionnellement un
 // export de données brutes (handoff spécialiste), volontairement distinct de l'analyse du PDF.
-import { parseLocaleNumber, formatSecondsToTime, unitConversionFactor } from '../utils.js';
+import { parseLocaleNumber, formatSecondsToTime, unitConversionFactor, loadedHourlyRate } from '../utils.js';
 import { indirectCostMethodLabels } from '../state/initialState.js';
 
 export const exportToExcel = (deps) => {
@@ -146,7 +146,7 @@ export const exportToExcel = (deps) => {
                     ]);
                     
                     (post.employees || []).forEach(emp => {
-                        const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
+                        const baseHourlyCost = loadedHourlyRate(emp);
                         laborSheetData.push([
                             emp.employeeName,
                             { t: 'n', v: Number(parseLocaleNumber(emp.hourlyRate)), z: currencyFormat },
@@ -182,7 +182,7 @@ export const exportToExcel = (deps) => {
                     let sheetData = [
                         [{ v: `Fiche de coût pour: ${product.displayName}`, s: titleStyle }], [],
                         [{ v: 'Informations sur la recette', s: { font: { bold: true, sz: 12 } } }],
-                        ['Nombre d\'unités produites', product.nbPortions],
+                        ['Nombre d\'unités produites', costs.nbPortions],
                         ['Format', `${product.portionSize || 1} ${product.portionUnit || 'unité'}`],
                         [],
                         [{ v: 'Méthode des Frais Indirects', s: { font: { bold: true, sz: 12 } } }],
@@ -274,7 +274,7 @@ export const exportToExcel = (deps) => {
 
                             const totalHours = postData.employees.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
                             const totalPostCost = postData.employees.reduce((sum, emp) => {
-                                const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
+                                const baseHourlyCost = loadedHourlyRate(emp);
                                 return sum + (baseHourlyCost * parseLocaleNumber(emp.workedHours));
                             }, 0);
                             const weightedAverageCost = totalHours > 0 ? totalPostCost / totalHours : 0;
@@ -295,8 +295,8 @@ export const exportToExcel = (deps) => {
 
                     sheetData.push([], [{ v: 'Récapitulatif par portion', s: { font: { bold: true, sz: 12 } } }]);
                     sheetData.push(['Prix de Vente', { t: 'n', v: Number(parseLocaleNumber(product.prixVente)), z: currencyFormat }]);
-                    sheetData.push(['Coût Matières (base)', { t: 'n', v: Number(costs.totalBaseIngredientsCost / product.nbPortions), z: currencyFormat }]);
-                    sheetData.push(['Coût des Pertes (stock)', { t: 'n', v: Number(costs.totalLossCost / product.nbPortions), z: currencyFormat }]);
+                    sheetData.push(['Coût Matières (base)', { t: 'n', v: Number(costs.totalBaseIngredientsCost / costs.nbPortions), z: currencyFormat }]);
+                    sheetData.push(['Coût des Pertes (stock)', { t: 'n', v: Number(costs.totalLossCost / costs.nbPortions), z: currencyFormat }]);
                     sheetData.push(['Coût Matières Total', { t: 'n', v: Number(costs.costMatierePerPortion), z: currencyFormat }]);
                     sheetData.push(['Coût Emballage', { t: 'n', v: Number(costs.costPackagingPerPortion), z: currencyFormat }]);
                     sheetData.push(['Coût Main-d\'œuvre', { t: 'n', v: Number(costs.costLaborPerPortion), z: currencyFormat }]);

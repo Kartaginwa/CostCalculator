@@ -79,3 +79,12 @@ describe('Taux d\'absorption avec sous-recettes', () => {
         expect(withSub.totalDirectLaborHoursNeeded).toBeCloseTo(17, 8);
     });
 });
+
+describe("computeLaborHoursNeeded : canal supprimé (21/11)", () => {
+    it("les ventes d'un canal qui n'existe plus ne demandent aucune heure de production", () => {
+        const product = plat({ ingredients: [], channelPrices: [{ channelId: 'c1', netPrice: 5, volume: 100 }, { channelId: 'supprime', netPrice: 5, volume: 400 }] });
+        const channels = [{ id: 'c1', name: 'Direct' }];
+        expect(computeLaborHoursNeeded([product], [], channels).total).toBeCloseTo(15, 8); // 100 ÷ 20 = 5 lots × 3 h
+        expect(computeLaborHoursNeeded([product], []).total).toBeCloseTo(75, 8); // sans liste de canaux : tout compte
+    });
+});

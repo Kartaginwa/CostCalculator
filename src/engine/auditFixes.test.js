@@ -7,7 +7,6 @@ import {
 import { applyCostShocks } from './costScenario.js';
 import { computeProjectChecks } from './projectChecks.js';
 import { computeProjectAnalysis } from './analysisPipeline.js';
-import { computeLaborHoursNeeded } from './laborHours.js';
 
 // Corrections issues de l'audit de la méthode (19/11) — chaque test rejoue le projet démo avec le même enchaînement
 // que l'application : calcul brouillon (sans pools) → pools de frais fixes → calcul final.
@@ -114,10 +113,10 @@ describe('Audit de la méthode : correctifs du 19/11', () => {
         const state = getDefaultState();
         const { data } = pipeline(state);
         const payroll = sum(state.laborDatabase, (post) => sum(post.employees || [], (e) => P(e.workedHours) * P(e.hourlyRate) * (1 + P(e.socialCharges) / 100) * (1 + P(e.vacationPercentage) / 100)));
-        // Main-d'œuvre propre de chaque format × portions à produire (ventes ET consommation par d'autres recettes) : la
-        // main-d'œuvre d'une sous-recette est portée par le produit qui la consomme, mais fabriquée une seule fois.
-        const { batchesByFormat } = computeLaborHoursNeeded(state.products.map((p) => ({ ...p, formats: p.formats })), state.ingredientsList);
-        const absorbed = sum(data.productsWithCosts, (p) => P(p.costs.costLaborPerPortion) * (batchesByFormat[p.id] || 0) * (P(p.nbPortions) || 1));
+        // Depuis le 20/11 (audit, constat 3), la main-d'œuvre d'une sous-recette reste classée « main-d'œuvre » chez le plat
+        // qui la consomme : la main-d'œuvre par portion de chaque produit VENDU porte donc aussi celle de ses sous-recettes.
+        // Σ (main-d'œuvre par portion × portions vendues) = la paie versée.
+        const absorbed = sum(data.productsWithCosts.filter((p) => p.onMenu), (p) => P(p.costs.costLaborPerPortion) * (P(p.costs.portionsSold) || 0));
         // Avant : 88,7 % (temps non productif perdu), puis 96,5 % (taux par heures), puis 100 % mais avec le temps des
         // sous-recettes absent des heures nécessaires (coût compté en double). Maintenant : exactement la paie versée.
         expect(absorbed / payroll).toBeCloseTo(1, 3);

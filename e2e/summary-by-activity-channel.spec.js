@@ -51,7 +51,7 @@ test("Rapport et suivi : Par Activité et Par Canal, même mise en page que Par 
     // « Frais fixes et marge nette » contient aussi la sous-chaîne « marge nette ».
     const activityMargeNetteRow = activityRows.nth(8);
     await expect(activityMargeNetteRow).toContainText('Marge nette');
-    await expect(activityMargeNetteRow).toContainText('9,36 %');
+    await expect(activityMargeNetteRow).toContainText('11,01 %');
 
     // Par Canal : même structure, une colonne par canal.
     await page.getByText('Par Canal', { exact: true }).click();
@@ -62,10 +62,10 @@ test("Rapport et suivi : Par Activité et Par Canal, même mise en page que Par 
     const channelHeaders = byChannel.locator('thead th');
     await expect(channelHeaders).toHaveCount(4); // libellé + 3 canaux.
     await expect(channelHeaders.nth(1)).toContainText('Vente directe (boutique en ligne)');
-    await expect(byChannel.locator('tbody tr', { hasText: 'Revenu total' })).toContainText('12 715,44 $'); // toutes activités.
+    await expect(byChannel.locator('tbody tr', { hasText: 'Revenu total' })).toContainText('12 886,24 $'); // toutes activités.
     const channelMargeNetteRow = channelRows.nth(8);
     await expect(channelMargeNetteRow).toContainText('Marge nette');
-    await expect(channelMargeNetteRow).toContainText('26,07 %');
+    await expect(channelMargeNetteRow).toContainText('26,76 %');
 
     // Point mort en $ (jamais « unités », contrairement à Par SKU).
     await expect(byChannel.getByText('unités')).toHaveCount(0);

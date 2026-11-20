@@ -401,6 +401,28 @@ export const getDefaultState = () => {
                 ],
             }],
         },
+        // Purée en VRAC (20/11, audit) : la purée vendue en barquette porte son emballage et le temps de mise en pot ; un pâté
+        // qui l'utilise comme ingrédient n'a besoin que de la purée en vrac (même recette, lot de 5 kg, sans emballage ni
+        // conditionnement). Avant, les pâtés utilisaient la purée emballée et se voyaient imputer ~0,25 $ d'emballage par portion.
+        {
+            id: 'sub_puree_vrac', platName: 'Purée de base en vrac (usage interne)', category: 'Sous-recette', activityId: 'act_plats',
+            isIngredient: true, onMenu: false, salesMix: 0, prixVente: 0, nbPortions: 5, portionSize: 1000, portionUnit: 'g',
+            formats: [{
+                id: 'fmt_sub_puree_vrac', sku: 'SR-PUREE-VRAC-5KG', prixVente: 0, nbPortions: 5, portionSize: 1000, portionUnit: 'g',
+                salesMix: 0, onMenu: false, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: ['milk'],
+                channelPrices: [{ id: 'cp_puree_vrac', channelId: 'channel_direct', netPrice: 0, volume: 0 }],
+                ingredients: [
+                    { rowId: 'r_puv_1', id: 'ing_pdt_flocons', quantity: 4000, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_puv_2', id: 'ing_beurre', quantity: 300, recipeUnit: 'g', yieldPercentage: 100 },
+                    { rowId: 'r_puv_3', id: 'ing_creme', quantity: 400, recipeUnit: 'ml', yieldPercentage: 100 },
+                    { rowId: 'r_puv_4', id: 'ing_epices', quantity: 60, recipeUnit: 'g', yieldPercentage: 100 },
+                ],
+                packagingItems: [],
+                productionSteps: [
+                    { stepId: 's_puv_1', stepName: 'Cuisson et pilage (lot de 5 kg)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 400 },
+                ],
+            }],
+        },
         // Sous-recette hybride : vendue seule (accompagnement) ET utilisée comme ingrédient (Pâté
         // chinois). Production par lot de 20 portions (20/10) — le bénéfice se répercute aussi
         // dans le coût matière du Pâté chinois (qui l'utilise comme ingrédient), sans rien changer
@@ -446,7 +468,7 @@ export const getDefaultState = () => {
                     ingredients: [
                         { rowId: 'r_pa_1', id: 'ing_boeuf', quantity: 3000, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_pa_2', id: 'ing_mais', quantity: 1800, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_pa_3', id: 'sub_puree', quantity: 1800, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_pa_3', id: 'sub_puree_vrac', quantity: 1800, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_pa_4', id: 'ing_oignon', quantity: 200, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_pa_5', id: 'ing_epices', quantity: 40, recipeUnit: 'g', yieldPercentage: 100 },
                     ],
@@ -468,7 +490,7 @@ export const getDefaultState = () => {
                     ingredients: [
                         { rowId: 'r_paf_1', id: 'ing_boeuf', quantity: 4000, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_paf_2', id: 'ing_mais', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
-                        { rowId: 'r_paf_3', id: 'sub_puree', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
+                        { rowId: 'r_paf_3', id: 'sub_puree_vrac', quantity: 2400, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_paf_4', id: 'ing_oignon', quantity: 250, recipeUnit: 'g', yieldPercentage: 100 },
                         { rowId: 'r_paf_5', id: 'ing_epices', quantity: 50, recipeUnit: 'g', yieldPercentage: 100 },
                     ],
@@ -708,17 +730,20 @@ export const getDefaultState = () => {
 
         // Sauce à spaghetti maison — gros volume, marge correcte en direct, mince en épiceries/GS.
         // Production par lot de 15 portions (20/10) — même principe que les autres recettes
-        // maison ; les volumes à 0 restent inchangés (voir note ci-dessous).
+        // maison (volumes : voir note ci-dessous).
         {
             id: 'prod_sauce_spag', platName: 'Sauce à spaghetti maison', category: 'Sauce', activityId: 'act_sauces',
             isIngredient: false, onMenu: true, salesMix: 12, prixVente: 7.19, nbPortions: 15, portionSize: 500, portionUnit: 'ml',
             formats: [{
                 id: 'fmt_sauce_spag', sku: 'SA-SPAGHETTI-500ML', prixVente: 7.19, nbPortions: 15, portionSize: 500, portionUnit: 'ml',
-                // Volumes à 0 (délibérément) : seul format du menu démo resté en mode « % manuel »
-                // du répartition des ventes, pour illustrer la coexistence avec les formats « unités »
-                // (tous les autres) — voir salesMixFromChannels.js.
+                // Volumes saisis (20/11, audit) : ce format était resté à 0 unité (mode « % manuel » du mix des ventes) ;
+                // sans volume, aucun frais fixe ne lui était réparti et sa marge était surévaluée. Tous les formats du démo
+                // ont maintenant des unités vendues ; le prix de détail suggéré de cette sauce passe à 9,99 $ (à 7,99 $ elle
+                // perdait de l'argent une fois ses frais fixes répartis) et les volumes de la sauce Terroir sont réduits d'autant
+                // pour que les revenus de l'activité restent à ~12 500 $ (voir plus bas). Le mode « % manuel » reste possible dans
+                // l'application (voir salesMixFromChannels.js), mais n'est plus illustré par le démo.
                 salesMix: 12, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: false, purchaseCost: 0, manualAllergens: [],
-                ...demoFormatPricing(7.99, { volumeDirect: 0, volumeEpi: 0, volumeGs: 0 }),
+                ...demoFormatPricing(9.99, { volumeDirect: 40, volumeEpi: 80, volumeGs: 160 }),
                 ingredients: [
                     { rowId: 'r_ss_1', id: 'ing_tomates', quantity: 5250, recipeUnit: 'g', yieldPercentage: 100 },
                     { rowId: 'r_ss_2', id: 'ing_boeuf', quantity: 1500, recipeUnit: 'g', yieldPercentage: 100 },
@@ -744,7 +769,7 @@ export const getDefaultState = () => {
             formats: [{
                 id: 'fmt_sauce_terroir', sku: 'SA-TERROIR-REVENTE-500ML', prixVente: 7.19, nbPortions: 1, portionSize: 500, portionUnit: 'ml',
                 salesMix: 5.53, onMenu: true, indirectCosts: { portionsSold: 0 }, isResaleProduct: true, purchaseCost: 4.20, manualAllergens: [],
-                ...demoFormatPricing(10.49, { volumeDirect: 220, volumeEpi: 445, volumeGs: 1035 }),
+                ...demoFormatPricing(10.49, { volumeDirect: 200, volumeEpi: 400, volumeGs: 900 }),
                 ingredients: [], packagingItems: [], productionSteps: [],
             }],
         },

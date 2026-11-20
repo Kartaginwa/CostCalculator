@@ -1,7 +1,7 @@
 // Génération du rapport PDF — extrait de App.jsx (aucune logique modifiée).
 // Fonction pure "données -> document" : reçoit tout son contexte via l'objet `deps`, ne lit
 // aucun état React. jsPDF/autoTable sont fournis en global (window.jspdf) via scripts/copy-libs.
-import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, MAJOR_ALLERGENS, formatNumber, unitConversionFactor } from '../utils.js';
+import { formatCurrency, formatPercent, parseLocaleNumber, formatSecondsToTime, MAJOR_ALLERGENS, formatNumber, unitConversionFactor, loadedHourlyRate } from '../utils.js';
 import { indirectCostMethodLabels } from '../state/initialState.js';
 import { computeSnapshotMenuKpis } from '../engine/analysisData.js';
     const getGlobalKpiDataForPdf = (trackingPoints) => {
@@ -615,7 +615,7 @@ export const generatePdf = (options, deps) => {
                     body: [
                         [
                             `Prix de Vente: ${formatCurrency(parseLocaleNumber(product.prixVente))} $`,
-                            `Nombre d'Unités Produites: ${product.nbPortions}`,
+                            `Nombre d'Unités Produites: ${costs.nbPortions}`,
                             `Format par Portion: ${product.portionSize || 1} ${product.portionUnit || 'unité'}`
                         ],
                         [
@@ -721,7 +721,7 @@ export const generatePdf = (options, deps) => {
                             if (postData && postData.employees.length > 0) {
                                 const totalHours = postData.employees.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
                                 const totalPostCost = postData.employees.reduce((sum, emp) => {
-                                    const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
+                                    const baseHourlyCost = loadedHourlyRate(emp);
                                     return sum + (baseHourlyCost * parseLocaleNumber(emp.workedHours));
                                 }, 0);
                                 const weightedAverageCost = totalHours > 0 ? totalPostCost / totalHours : 0;
@@ -1107,7 +1107,7 @@ export const generatePdf = (options, deps) => {
 
                 if (post.employees && post.employees.length > 0) {
                     post.employees.forEach(emp => {
-                        const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
+                        const baseHourlyCost = loadedHourlyRate(emp);
                         const totalEmployeeCost = baseHourlyCost * parseLocaleNumber(emp.workedHours);
                         laborAnnexBody.push([
                             emp.employeeName,

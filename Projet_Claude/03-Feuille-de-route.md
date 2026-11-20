@@ -4016,3 +4016,31 @@ CHAQUE `<td>` de la ligne Total (nom, chaque canal, grand total).
   désormais visible au-dessus de la ligne Total, assertions que chaque `<td>` de cette ligne porte
   `border-t-4 border-white`. `npx eslint .` (mêmes avertissements préexistants), `npx vite build`
   propres.
+
+## Corrections issues de l'audit externe du 20/11
+
+Audit indépendant des calculs (dossier `audit/`, rapport `audit/RAPPORT_AUDIT.md`). Décisions de l'utilisateur après discussion : l'absorption complète de la main-d'œuvre inutilisée est un **choix assumé** (constat 1 retiré), coût de production et coût complet existent déjà (constat 2 retiré), le choix du moteur de répartition appartient à l'utilisateur (constat 10 retiré), coproduits reportés en v2 (constat 13), conversions masse/volume déjà bloquées dans l'interface.
+
+**Appliqué** :
+- Constat 3 : une sous-recette garde sa matière / son emballage / sa main-d'œuvre / sa sous-traitance sous leur propre nature chez le plat parent (total inchangé). Le point mort traite ainsi toute la main-d'œuvre comme fixe. La fiche recette garde « direct / indirect » (indirect = capacité inutilisée seulement).
+- Défaut trouvé pendant ce travail : l'appel récursif d'une sous-recette ne transmettait pas le catalogue d'emballages → le coût d'un plat dépendait de l'ordre des produits dans la liste. Corrigé.
+- Constat 5 : `effectiveNbPortions` (yieldCalculator.js) = source unique de la quantité produite (coûts, heures de MO, achats, exports).
+- Constat 6 : un volume vendu à 0 $ reste dans les chiffres (produit offert, marge négative) ; avertissement `sold-at-zero`.
+- Constat 7 : avertissement `no-volume` (SKU actif sans unités vendues). Démo corrigé : la sauce à spaghetti a des volumes (PDS 9,99 $), volumes du Terroir réduits ; nouvelle sous-recette « Purée de base en vrac » utilisée par les pâtés (12 produits, 14 formats). Chiffres du guide et tests e2e recalés.
+- Constat 11 (essai) : colonnes facultatives Escompte (%) et Transport ($) sur les ingrédients ; `landedUnitPrice` (utils.js) sert aussi aux emballages et à l'import.
+- Constat 14 : `loadedHourlyRate` (utils.js) remplace la formule du taux horaire chargé écrite à 8 endroits ; infobulles de période (ff.periode, mo.heures, param.canauxFormat).
+
+**Appliqué (suite, même jour)** :
+- Constat 4 : le vieillissement d'une sous-recette est ajouté à la ligne « vieillissement » du plat parent (jamais à ses coûts directs). Le vieillissement est un coût d'opportunité pour le prix, pas une dépense réelle : l'écart avec le réel dans la réconciliation est voulu.
+- Constat 9 : boucle de sous-recettes détectée par FORMAT (plus de faux positif pour un produit à deux formats), résultat marqué `hasLoop` et jamais mis en cache, avertissement `recipe-loop`, et le sélecteur d'ingrédients n'offre plus une sous-recette qui créerait une boucle (`wouldCreateRecipeLoop`, engine/usage.js).
+- Constat 8 : avertissements `batch-size` (quantité produite absente) et `negative-quantity`. Le moteur continue de compter 1 pour une quantité produite absente, mais l'écran « Points à vérifier » le signale.
+- Constat 11 : colonnes Escompte / Transport avec polices et largeurs alignées sur les deux premières colonnes, aussi dans le tableau Emballage.
+
+**Reste** : 12 (écarts par nature : recommandation = ne pas le faire pour l'instant), 15 (journal des modifications : décision en attente).
+
+- Tests : 367 unitaires (+ 3 de l'audit, à la demande), 84/84 e2e. `npx eslint .` (36 avertissements préexistants), `npx vite build` propres.
+
+**Point mort et vieillissement (21/11)** : le coût de vieillissement par unité est retiré de la marge de contribution du point mort (par format et par canal, par activité et par canal, et point mort global, points de référence compris). C'est un coût proportionnel au volume que la marge nette déduit déjà : sans cela, la marge nette restait négative au volume du point mort. Décrit dans le guide (chapitre 2, section « Le vieillissement : le coût du temps », chapitre « Le point mort » et Production). Seuls les formats qui vieillissent bougent dans le démo (point mort global 68 555,32 $ → 68 642,61 $). Tests : 380 unitaires, 84/84 e2e.
+
+**Canaux supprimés et commentaires (21/11)** : les ventes d'un canal qui n'existe plus ne comptent plus ni dans le volume qui répartit les frais fixes ni dans les heures de main-d'œuvre (`activeChannelPrices`, utils.js ; sans liste de canaux, rien n'est filtré). Commentaires de code corrigés (soupape de sécurité du repli « Général » ; plafond de la productivité, qui s'applique à l'usage et non à la valeur exposée). Annexes A2 et A3 de l'audit mises à jour. Reste ouvert : valeur de remplacement d'une quantité produite absente (1 aujourd'hui).
+

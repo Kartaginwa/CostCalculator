@@ -45,6 +45,9 @@ export const partie3 = {
                         'Un **pourcentage de perte de 100 % ou plus**, ignoré dans le calcul.',
                         'Un format **rattaché deux fois au même canal**, ou à un canal supprimé, et un produit lié à une **activité qui n\'existe plus**.',
                         'Une **quantité de format nulle**, remplacée par 1 dans certains calculs.',
+                        'Un format **sans quantité produite par lot** (le coût du lot entier serait attribué à une seule portion), ou une **quantité négative** dans une recette.',
+                        'Une **boucle de sous-recettes** (A utilise B qui utilise A) : le coût de ces recettes n\'est pas défini.',
+                        'Un format **vendu à un prix net de 0 $** (compté comme offert, à confirmer) ou **sans aucun volume vendu** (aucun frais fixe ne lui est réparti : son coût complet est incomplet).',
                         'Des **points de référence anciens**, enregistrés sans le détail par canal : leur point mort est approximatif.',
                         'Des **frais fixes non répartis**, ou répartis en trop.',
                     ],
@@ -82,19 +85,19 @@ export const partie3 = {
                 { type: 'p', text: 'La matrice classe chaque produit en croisant sa popularité et sa rentabilité (voir [[guide-concept-menu|chapitre 12]]). Le sélecteur {{Analyse BCG pour :}} permet de la calculer pour tous les canaux (pondéré par volume), ou pour un canal à la fois : un produit peut être une étoile dans un canal et un poids mort dans un autre. Chaque ligne indique la popularité du produit et sa marge brute par unité.' },
                 {
                     type: 'table', caption: 'Matrice du projet démo (tous canaux)', head: ['Catégorie', 'Produits'], wrapCells: true, rows: [
-                        ['**Étoiles**', 'Poulet général Tao (9,1 % des ventes, marge 3,27 $) ; Saumon teriyaki (6,5 %, 4,23 $) ; Sauté de poulet thaï 350 g (7,2 %, 3,58 $)'],
-                        ['**Dilemmes**', 'Pâté chinois 900 g (4,1 %, 5,82 $) ; Sauté de poulet thaï 900 g (3,6 %, 6,37 $)'],
-                        ['**Vaches à lait**', 'Soupe-repas aux légumes et poulet (21,8 %, 2,52 $) ; Chili con carne mijoté (10,7 %, 2,10 $) ; Pâté chinois 340 g (9,1 %, 2,84 $) ; Potage à la courge musquée (7,9 %, 2,95 $) ; Sauce artisanale du Terroir (15,6 %, 2,82 $)'],
-                        ['**Poids morts**', 'Purée de pommes de terre (4,4 %, 1,80 $)'],
+                        ['**Étoiles**', 'Poulet général Tao (9,1 % des ventes, marge 3,28 $) ; Saumon teriyaki (6,5 %, 4,24 $) ; Sauté de poulet thaï 350 g (7,1 %, 3,58 $)'],
+                        ['**Dilemmes**', 'Pâté chinois 900 g (4,0 %, 6,51 $) ; Sauté de poulet thaï 900 g (3,6 %, 6,38 $)'],
+                        ['**Vaches à lait**', 'Soupe-repas aux légumes et poulet (21,6 %, 2,55 $) ; Chili con carne mijoté (10,7 %, 2,10 $) ; Pâté chinois 340 g (9,1 %, 3,10 $) ; Potage à la courge musquée (7,8 %, 2,97 $) ; Sauce artisanale du Terroir (13,7 %, 2,84 $)'],
+                        ['**Poids morts**', 'Purée de pommes de terre (4,3 %, 1,81 $) ; Sauce à spaghetti maison (2,6 %, 2,31 $)'],
                     ],
                 },
                 { type: 'p', text: 'Comment en tirer des actions :' },
                 {
                     type: 'ul', itemIds: ['guide-bcg-etoiles', 'guide-bcg-vaches', 'guide-bcg-dilemmes', 'guide-bcg-poids-morts'], items: [
                         { label: 'Étoiles.', text: 'Protégez-les : qualité constante, bonne visibilité, approvisionnement sécurisé. Surveillez le prix de leurs ingrédients de catégorie A.' },
-                        { label: 'Vaches à lait.', text: 'La soupe-repas est le produit actif le plus vendu (21,8 %), mais ne rapporte que 2,52 $ par unité en moyenne. Deux leviers : réduire son coût (recette, fournisseur, rendement) ou relever légèrement son prix, en vérifiant l\'effet avec la simulation de prix de l\'onglet Production.' },
+                        { label: 'Vaches à lait.', text: 'La soupe-repas est le produit actif le plus vendu (21,6 %), mais ne rapporte que 2,55 $ par unité en moyenne. Deux leviers : réduire son coût (recette, fournisseur, rendement) ou relever légèrement son prix, en vérifiant l\'effet avec la simulation de prix de l\'onglet Production.' },
                         { label: 'Dilemmes.', text: 'Ils rapportent beaucoup par unité mais se vendent peu : travaillez leur présentation, leur promotion, leur place dans les canaux. Un produit rentable qu\'on ne vend pas ne fait gagner personne.' },
-                        { label: 'Poids morts.', text: 'La purée de pommes de terre ne rapporte que 1,80 $ par unité et se vend peu : réinventez-la (prix, recette) ou retirez-la. Avant de la retirer, vérifiez qu\'elle n\'est pas l\'ingrédient d\'une autre recette : c\'est le cas ici, le pâté chinois l\'utilise, et l\'application vous préviendrait avant la suppression.' },
+                        { label: 'Poids morts.', text: 'La purée de pommes de terre ne rapporte que 1,81 $ par unité et se vend peu : réinventez-la (prix, recette) ou retirez-la. La sauce à spaghetti maison (2,6 %, 2,31 $) est dans le même cas. Avant de retirer un produit, vérifiez qu\'il n\'est pas l\'ingrédient d\'une autre recette : l\'application vous préviendrait avant la suppression.' },
                     ],
                 },
                 { type: 'callout', kind: 'attention', text: 'La marge utilisée ici est la marge **brute** en dollars par unité, avant les frais fixes. Un produit « rentable » dans la matrice peut quand même avoir une marge nette négative dans un canal coûteux : confirmez toujours dans le rapport Par SKU.' },
@@ -179,10 +182,10 @@ export const partie3 = {
                 { type: 'p', text: 'Ce qu\'il faut en conclure :' },
                 {
                     type: 'ul', items: [
-                        'Le même produit, avec le même coût de fabrication, est **rentable en vente directe** (marge nette de 18,40 %), à peine **à l\'équilibre en épicerie** (−0,51 %) et **déficitaire en grande surface** (−9,22 %). La seule différence est le prix net, que les maillons font baisser de 8,09 $ à 5,46 $.',
+                        'Le même produit, avec le même coût de fabrication, est **rentable en vente directe** (marge nette de 18,25 %), à peine **à l\'équilibre en épicerie** (−0,76 %) et **déficitaire en grande surface** (−9,61 %). La seule différence est le prix net, que les maillons font baisser de 8,09 $ à 5,46 $.',
                         'Le produit est un des produits actifs les plus vendus : le canal où il perd le plus est aussi celui où il se vend le plus (4 286,10 $ de revenus contre 922,26 $ en vente directe).',
-                        'La part de frais fixes propre à chaque canal (« Canal ») change aussi : 1,10 $ en vente directe, 0,82 $ en épicerie, 0,46 $ en grande surface, parce que ces coûts se répartissent sur des volumes différents.',
-                        'Le point mort grimpe de 571 unités en vente directe à 1 354 en grande surface : il faut vendre bien plus pour couvrir les mêmes frais quand la marge unitaire est plus faible.',
+                        'La part de frais fixes propre à chaque canal (« Canal ») change aussi : 1,10 $ en vente directe, 0,82 $ en épicerie, 0,47 $ en grande surface, parce que ces coûts se répartissent sur des volumes différents.',
+                        'Le point mort grimpe de 575 unités en vente directe à 1 365 en grande surface : il faut vendre bien plus pour couvrir les mêmes frais quand la marge unitaire est plus faible.',
                     ],
                 },
                 { type: 'callout', kind: 'pourquoi', text: 'Voilà pourquoi la marge brute d\'un produit ne suffit pas à décider. Les décisions possibles : relever le prix net en grande surface (renégocier le PDS ou la marge du distributeur), réduire le coût de production, ne plus offrir ce produit dans ce canal, ou accepter la perte comme coût d\'accès à ce client si d\'autres produits y sont rentables.' },
@@ -229,7 +232,7 @@ export const partie3 = {
                         ['Point mort', d(A.plats.pointMort), d(A.sauces.pointMort), d(A.soupes.pointMort)],
                     ],
                 },
-                { type: 'p', text: 'Les trois activités sont rentables, mais pas autant : les mets principaux surgelés ont une marge nette de 9,36 % et portent l\'entreprise, les soupes et potages de 4,08 % et les sauces et accompagnements de 2,54 % seulement. Ces deux dernières ont une marge brute semblable (autour de 40 %), mais leurs frais fixes (7 663,19 $ et 4 493,07 $) en absorbent presque tout. Leur point mort (19 502,19 $ et 11 182,02 $) est proche de leur chiffre d\'affaires réel (20 829,93 $ et 11 936,05 $) : la moindre baisse de volume ou de prix les ferait passer sous le seuil de rentabilité.' },
+                { type: 'p', text: 'Les trois activités sont rentables, mais pas autant : les mets principaux surgelés ont une marge nette de 11,01 % et portent l\'entreprise, les soupes et potages de 4,89 % et les sauces et accompagnements de 1,35 % seulement. Ces deux dernières ont une marge brute semblable (autour de 40 %), mais leurs frais fixes (7 580,81 $ et 4 734,65 $) en absorbent presque tout. Leur point mort (19 453,51 $ et 12 040,16 $) est proche de leur chiffre d\'affaires réel (20 829,93 $ et 12 447,00 $) : la moindre baisse de volume ou de prix les ferait passer sous le seuil de rentabilité.' },
                 { type: 'h', id: 'guide-canal-exemple', text: 'Lire Par Canal : le projet démo' },
                 {
                     type: 'table', head: ['', 'Vente directe', 'Épiceries', 'Grandes surfaces'], rows: [
@@ -239,7 +242,7 @@ export const partie3 = {
                         ['Point mort', d(C.directe.pointMort), d(C.epiceries.pointMort), d(C.grandes.pointMort)],
                     ],
                 },
-                { type: 'p', text: 'Les grandes surfaces représentent près de 60 % du chiffre d\'affaires des produits actifs, mais ne dégagent qu\'une marge nette de 0,96 % (441,95 $). La vente directe, la plus petite, est la plus rentable (marge nette de 26,07 %). Remarquez que la somme des bénéfices nets des canaux (3 314,41 $ + 1 743,48 $ + 441,95 $) est de 5 499,84 $ : c\'est le bénéfice net théorique de la réconciliation. Les trois rapports (par SKU, par activité, par canal) se recoupent exactement.' },
+                { type: 'p', text: 'Les grandes surfaces représentent près de 60 % du chiffre d\'affaires des produits actifs, mais ne dégagent qu\'une marge nette de 1,98 % (915,81 $). La vente directe, la plus petite, est la plus rentable (marge nette de 26,76 %). Remarquez que la somme des bénéfices nets des canaux (3 448,69 $ + 1 934,99 $ + 915,81 $) est de 6 299,49 $, soit, à un cent d\'arrondi près, le bénéfice net théorique de la réconciliation (6 299,48 $) : c\'est le bénéfice net théorique de la réconciliation. Les trois rapports (par SKU, par activité, par canal) se recoupent exactement.' },
                 { type: 'callout', kind: 'pourquoi', text: 'Ces deux rapports transforment des dizaines de produits en quelques lignes lisibles, celles sur lesquelles on peut agir : revoir le prix d\'une ligne de production, renégocier un canal, ou décider d\'en abandonner un.' },
                 { type: 'callout', kind: 'retenir', text: 'Par Activité et Par Canal additionnent vos produits en segments. Comparez la marge nette des segments : ceux qui perdent de l\'argent sont vos priorités.' },
             ],

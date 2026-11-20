@@ -22,10 +22,19 @@ test('mix des ventes : un format passé aux unités ne touche pas au % manuel de
     // droite — on sélectionne l'un, on note sa valeur, on sélectionne l'autre, on le modifie, puis
     // on revient sur le premier pour vérifier qu'il n'a pas bougé.
 
-    // Note le % manuel actuel d'un autre plat du menu démo (seul format du projet démo resté sans
-    // aucune unité saisie — voir initialState.js), avant toute manipulation.
+    // Note le % manuel actuel d'un autre plat du menu démo (sauce à spaghetti, remise en % manuel ci-dessus), avant toute manipulation.
     await menuSection.getByText('Sauce à spaghetti maison', { exact: true }).click();
     const detailPane = menuSection.locator('#product-detail-pane');
+    // Depuis le 20/11, tous les formats du démo ont des unités vendues (audit : un format sans volume n'a aucun frais fixe) :
+    // on retire d'abord les unités de la sauce à spaghetti pour la remettre en mode « % manuel », l'état que ce test vérifie.
+    const spaghettiRow = detailPane.locator('tbody tr').first();
+    await spaghettiRow.locator('button').first().click();
+    const spaghettiVolumes = spaghettiRow.locator('xpath=following-sibling::tr[1]').locator('input[placeholder="Volume (u.)"]');
+    const spaghettiVolumeCount = await spaghettiVolumes.count();
+    for (let i = 0; i < spaghettiVolumeCount; i++) {
+        await spaghettiVolumes.nth(i).fill('0');
+    }
+    await page.waitForTimeout(300);
     // .nth(2) : portionSize (0), PDS (1, ajouté le 15/10), Mix des ventes (2).
     const otherSalesMixInput = detailPane.locator('tbody tr').first().locator('input[inputmode="decimal"]').nth(2);
     const otherSalesMixBefore = await otherSalesMixInput.inputValue();

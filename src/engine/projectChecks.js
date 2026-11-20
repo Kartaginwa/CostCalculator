@@ -2,6 +2,7 @@
 // de données qui, autrement, n'apparaissent que dans l'onglet concerné. Fonction pure — aucune
 // donnée n'est modifiée ; chaque constat dit où aller pour le corriger (`tab`).
 import { parseLocaleNumber, isNotEmpty, formatNumber, areUnitsCompatible } from '../utils.js';
+import { findRecipeLoops } from './usage.js';
 
 const STALE_DAYS = 30;
 
@@ -39,6 +40,21 @@ export function computeProjectChecks({
             message: `${noPrice.length} SKU${noPrice.length > 1 ? 's' : ''} actif${noPrice.length > 1 ? 's' : ''} sans prix de vente : leurs marges ne peuvent pas être calculées.` });
     }
 
+    // Volume vendu à 0 $ (20/11, audit) : gardé dans les chiffres comme un produit offert (marge négative) ; à confirmer.
+    const soldAtZero = menuFormats.filter(({ f }) => (f.channelPrices || []).some(cp => parseLocaleNumber(cp.volume) > 0 && !(parseLocaleNumber(cp.netPrice) > 0)));
+    if (soldAtZero.length > 0) {
+        checks.push({ id: 'sold-at-zero', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
+            message: `${plural(soldAtZero.length, 'SKU a', 'SKUs ont')} un volume vendu à un prix net de 0 $ (${listNames(soldAtZero.map(({ p }) => nameOf(p)))}) : ces unités comptent comme offertes (marge négative). Si c'est un oubli, saisissez le prix net.` });
+    }
+
+    // Aucun volume vendu (20/11, audit) : sans volume, aucun frais fixe ne peut être réparti sur ce SKU — son coût complet est incomplet
+    // et sa marge, trop belle. Un « % des ventes » seul ne suffit pas : il faut un nombre d'unités vendues.
+    const noVolume = menuFormats.filter(({ f }) => !((f.channelPrices || []).some(cp => parseLocaleNumber(cp.volume) > 0)) && !(parseLocaleNumber(f.indirectCosts?.portionsSold) > 0));
+    if (noVolume.length > 0) {
+        checks.push({ id: 'no-volume', tab: 'info', tabLabel: 'Paramètres → Produits et SKUs',
+            message: `${plural(noVolume.length, "SKU actif n'a", "SKUs actifs n'ont")} aucun volume vendu (${listNames(noVolume.map(({ p }) => nameOf(p)))}) : aucun frais fixe ne leur est réparti, leur coût complet est incomplet et leur marge surévaluée. Saisissez les unités vendues par canal.` });
+    }
+
     if (menuFormats.length > 0) {
         const totalMix = menuFormats.reduce((sum, { f }) => sum + parseLocaleNumber(f.salesMix), 0);
         if (Math.round(totalMix) !== 100) {
@@ -63,6 +79,27 @@ export function computeProjectChecks({
     // --- Intégrité des données (19/11, audit complémentaire) : des erreurs que le calcul absorbe sans les signaler. ---
     const everyFormat = products.flatMap(p => formatsOf(p).map(f => ({ p, f })));
     const recipeFormats = everyFormat.filter(({ f }) => !f.isResaleProduct);
+
+    // Boucle de sous-recettes (20/11, audit) : A utilise B qui utilise A. Le coût de ces recettes n'est pas défini.
+    const loops = findRecipeLoops(products);
+    if (loops.length > 0) {
+        checks.push({ id: 'recipe-loop', tab: 'recipe', tabLabel: 'Production',
+            message: `${plural(loops.length, 'boucle de sous-recettes', 'boucles de sous-recettes')} : ${loops.map(l => l.join(' ↔ ')).join(' ; ')}. Une recette ne peut pas se contenir elle-même, même par plusieurs étapes : le coût de ces recettes est faux. Retirez l'une des lignes concernées.` });
+    }
+
+    // Quantité produite par lot absente (20/11, audit) : remplacée par 1, donc le coût du lot ENTIER est attribué à une seule portion.
+    const noBatchSize = recipeFormats.filter(({ f }) => !f.yieldGrid?.enabled && !(parseLocaleNumber(f.nbPortions) > 0));
+    if (noBatchSize.length > 0) {
+        checks.push({ id: 'batch-size', tab: 'recipe', tabLabel: 'Production',
+            message: `${plural(noBatchSize.length, 'format n\'a', 'formats n\'ont')} pas de quantité produite par lot (${listNames(noBatchSize.map(({ p }) => nameOf(p)))}) : elle est comptée comme 1, donc le coût du lot entier est attribué à une seule portion.` });
+    }
+
+    // Quantité négative dans une recette (20/11, audit) : elle retrancherait un coût au lieu de l'ajouter.
+    const negativeQty = recipeFormats.filter(({ f }) => [...(f.ingredients || []), ...(f.packagingItems || [])].some(row => parseLocaleNumber(row.quantity) < 0));
+    if (negativeQty.length > 0) {
+        checks.push({ id: 'negative-quantity', tab: 'recipe', tabLabel: 'Production',
+            message: `${plural(negativeQty.length, 'recette contient', 'recettes contiennent')} une quantité négative (${listNames(negativeQty.map(({ p }) => nameOf(p)))}) : elle retranche un coût au lieu de l'ajouter.` });
+    }
 
     if (Array.isArray(baseIngredients)) {
         const subRecipes = products.filter(p => p.isIngredient);

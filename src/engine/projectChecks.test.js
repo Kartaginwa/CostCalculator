@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeProjectChecks } from './projectChecks.js';
 
-const fmt = (over = {}) => ({ onMenu: true, salesMix: 50, prixVente: 10, portionSize: 1, portionUnit: 'unité', channelPrices: [], ...over });
+const fmt = (over = {}) => ({ onMenu: true, nbPortions: 10, salesMix: 50, prixVente: 10, portionSize: 1, portionUnit: 'unité', channelPrices: [], indirectCosts: { portionsSold: 100 }, ...over });
 
 describe('computeProjectChecks', () => {
     it('ne signale rien pour un projet vide ou cohérent', () => {
@@ -90,5 +90,55 @@ describe('computeProjectChecks : intégrité des données', () => {
     it('sans les listes de référence, ne conclut rien (liste absente ≠ liste vide)', () => {
         const product = recipeProduct({ ingredients: [{ id: 'ing_riz', quantity: 1, recipeUnit: 'kg' }] });
         expect(computeProjectChecks({ products: [product] }).map(c => c.id)).toEqual([]);
+    });
+});
+
+// Contrôles ajoutés le 20/11 (audit, constats 6 et 7).
+describe('computeProjectChecks : volumes et prix à 0 $', () => {
+    it('signale un SKU actif sans aucun volume vendu (un % des ventes seul ne suffit pas)', () => {
+        const noVolume = [{ platName: 'Sauce', formats: [fmt({ salesMix: 100, indirectCosts: { portionsSold: 0 }, channelPrices: [{ channelId: 'c', netPrice: 5, volume: 0 }] })] }];
+        const checks = computeProjectChecks({ products: noVolume });
+        expect(checks.map(c => c.id)).toContain('no-volume');
+        expect(checks.find(c => c.id === 'no-volume').message).toMatch(/^1 SKU actif n'a aucun volume vendu \(Sauce\)/);
+        const withVolume = [{ platName: 'Sauce', formats: [fmt({ salesMix: 100, indirectCosts: { portionsSold: 0 }, channelPrices: [{ channelId: 'c', netPrice: 5, volume: 40 }] })] }];
+        expect(computeProjectChecks({ products: withVolume }).map(c => c.id)).not.toContain('no-volume');
+    });
+    it("un SKU inactif sans volume n'est pas signalé", () => {
+        const inactive = [{ platName: 'Bouillon', formats: [fmt({ onMenu: false, salesMix: 0, indirectCosts: { portionsSold: 0 } })] }];
+        expect(computeProjectChecks({ products: inactive }).map(c => c.id)).not.toContain('no-volume');
+    });
+    it('signale un volume vendu à un prix net de 0 $ (produit offert, à confirmer)', () => {
+        const free = [{ platName: 'Échantillon', formats: [fmt({ salesMix: 100, channelPrices: [{ channelId: 'c', netPrice: 0, volume: 25 }] })] }];
+        const checks = computeProjectChecks({ products: free });
+        expect(checks.map(c => c.id)).toContain('sold-at-zero');
+        const paid = [{ platName: 'Échantillon', formats: [fmt({ salesMix: 100, channelPrices: [{ channelId: 'c', netPrice: 3, volume: 25 }] })] }];
+        expect(computeProjectChecks({ products: paid }).map(c => c.id)).not.toContain('sold-at-zero');
+    });
+});
+
+// Contrôles ajoutés le 20/11 (audit, constats 8 et 9).
+describe('computeProjectChecks : boucles, quantité produite, quantités négatives', () => {
+    const run = (args) => computeProjectChecks(args).map(c => c.id);
+    it('signale une boucle de sous-recettes avec les noms des produits concernés', () => {
+        const a = { id: 'a', platName: 'Sauce A', isIngredient: true, formats: [fmt({ id: 'fa', ingredients: [{ id: 'fb', quantity: 1 }] })] };
+        const b = { id: 'b', platName: 'Base B', isIngredient: true, formats: [fmt({ id: 'fb', ingredients: [{ id: 'fa', quantity: 1 }] })] };
+        const checks = computeProjectChecks({ products: [a, b] });
+        const loop = checks.find(c => c.id === 'recipe-loop');
+        expect(loop.message).toMatch(/Sauce A/);
+        expect(loop.message).toMatch(/Base B/);
+    });
+    it('signale un format sans quantité produite, sauf avec une grille de rendement ou pour un produit de revente', () => {
+        const none = [{ platName: 'Plat', formats: [fmt({ nbPortions: '' })] }];
+        expect(run({ products: none })).toContain('batch-size');
+        const grid = [{ platName: 'Plat', formats: [fmt({ nbPortions: '', yieldGrid: { enabled: true, baseQuantity: 10 } })] }];
+        expect(run({ products: grid })).not.toContain('batch-size');
+        const resale = [{ platName: 'Revente', formats: [fmt({ nbPortions: '', isResaleProduct: true })] }];
+        expect(run({ products: resale })).not.toContain('batch-size');
+    });
+    it('signale une quantité négative dans une recette', () => {
+        const neg = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: '-3' }] })] }];
+        expect(run({ products: neg })).toContain('negative-quantity');
+        const ok = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: '3' }] })] }];
+        expect(run({ products: ok })).not.toContain('negative-quantity');
     });
 });

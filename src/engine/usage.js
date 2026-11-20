@@ -36,3 +36,65 @@ export const formatNameList = (names) => {
     const rest = names.length - 3;
     return `${names.slice(0, 3).join(', ')} et ${rest} autre${rest > 1 ? 's' : ''}`;
 };
+
+// --- Boucles de sous-recettes (20/11, audit constat 9) ---
+// Une recette A qui utilise B, qui utilise A (directement ou par plusieurs étapes) n'a pas de coût définissable : le moteur
+// coupe la boucle et compte cette branche à 0 $. On empêche de créer une boucle à la saisie et on signale celles qui existent.
+// Même résolution qu'au calcul : la ligne désigne un FORMAT de sous-recette ou (anciens projets) un produit, repli sur son
+// premier format.
+const subFormatOf = (products, id) => {
+    for (const p of products || []) {
+        if (!p.isIngredient) continue;
+        const fmt = (p.formats || []).find(f => f.id === id);
+        if (fmt) return { product: p, fmt };
+    }
+    const byProduct = (products || []).find(p => p.isIngredient && p.id === id);
+    return byProduct ? { product: byProduct, fmt: byProduct.formats?.[0] || byProduct } : null;
+};
+
+const subFormatsUsedBy = (products, fmt) => (fmt.isResaleProduct ? [] : (fmt.ingredients || []))
+    .map(row => subFormatOf(products, row.id))
+    .filter(Boolean);
+
+// Boucles existantes : une liste de noms de produits par boucle (sans doublon).
+export const findRecipeLoops = (products) => {
+    const loops = new Map();
+    const state = {}; // 1 = en cours, 2 = terminé
+    const walk = (product, fmt, stack) => {
+        state[fmt.id] = 1;
+        stack.push({ product, fmt });
+        for (const next of subFormatsUsedBy(products, fmt)) {
+            if (state[next.fmt.id] === 1) {
+                const start = stack.findIndex(e => e.fmt.id === next.fmt.id);
+                const names = [...new Set(stack.slice(start).map(e => (e.product.platName || '').trim() || 'Sans nom'))];
+                loops.set([...names].sort().join('|'), names);
+            } else if (!state[next.fmt.id]) {
+                walk(next.product, next.fmt, stack);
+            }
+        }
+        stack.pop();
+        state[fmt.id] = 2;
+    };
+    for (const p of products || []) {
+        for (const fmt of formatsOf(p)) if (!state[fmt.id]) walk(p, fmt, []);
+    }
+    return [...loops.values()];
+};
+
+// Ajouter `candidateId` (un format de sous-recette) comme ingrédient de ce produit créerait-il une boucle ? Vrai si la
+// sous-recette candidate utilise déjà, directement ou non, un format de ce produit.
+export const wouldCreateRecipeLoop = (products, product, candidateId) => {
+    const own = new Set(formatsOf(product).map(f => f.id));
+    const start = subFormatOf(products, candidateId);
+    if (!start) return false;
+    const seen = new Set();
+    const stack = [start];
+    while (stack.length > 0) {
+        const { fmt } = stack.pop();
+        if (own.has(fmt.id)) return true;
+        if (seen.has(fmt.id)) continue;
+        seen.add(fmt.id);
+        stack.push(...subFormatsUsedBy(products, fmt));
+    }
+    return false;
+};

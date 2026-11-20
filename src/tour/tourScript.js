@@ -125,9 +125,9 @@ export const SCENES = [
             { at: 4700, do: 'type', target: { sel: `${NEW_ING} input`, nth: 1 }, text: 'Moulin Dubé', rate: 85 },
             { at: 6700, do: 'type', target: { sel: `${NEW_ING} input`, nth: 2 }, text: '10', rate: 220 },
             { at: 8000, do: 'type', target: { sel: `${NEW_ING} input`, nth: 3 }, text: '18,50', rate: 200 },
-            { at: 9700, do: 'type', target: { sel: `${NEW_ING} input`, nth: 4 }, text: '3', rate: 220 },
-            { at: 10900, do: 'note', id: 'pu', target: { sel: `${NEW_ING} input`, nth: 5 }, text: 'Coût unitaire : {v} $ par kg', side: 'top', read: { sel: `${NEW_ING} input`, nth: 5 } },
-            { at: 11200, do: 'point', target: { sel: `${NEW_ING} input`, nth: 5 } },
+            { at: 9700, do: 'type', target: { sel: `${NEW_ING} input`, nth: 6 }, text: '3', rate: 220 },
+            { at: 10900, do: 'note', id: 'pu', target: { sel: `${NEW_ING} input`, nth: 7 }, text: 'Coût unitaire : {v} $ par kg', side: 'top', read: { sel: `${NEW_ING} input`, nth: 7 } },
+            { at: 11200, do: 'point', target: { sel: `${NEW_ING} input`, nth: 7 } },
         ],
     },
     {

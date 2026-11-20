@@ -152,10 +152,10 @@ export const chapitreEtatResultats = {
         { type: 'p', text: 'Pourquoi : un grand écart signale que le modèle ne reflète plus la réalité comptable. Les causes habituelles : des prix, des volumes ou des coûts de recette à mettre à jour, ou des ventes réelles dont le volume n\'a pas encore été saisi par canal. C\'est la même logique que le rapport de productivité de l\'onglet Main-d\'œuvre (heures attendues contre heures réelles).' },
         {
             type: 'table', caption: 'Réconciliation du projet démo', head: ['Poste', 'Réel', 'Théorique', 'Écart'], rows: [
-                ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+797,36 $ (+1,0 %)'],
-                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+2 357,67 $ (+5,2 %)'],
-                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '-1 560,31 $ (-4,6 %)'],
-                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '-1 499,84 $ (-27,3 %)'],
+                ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+286,41 $ (+0,4 %)'],
+                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+2 643,65 $ (+5,8 %)'],
+                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '-2 357,24 $ (-6,9 %)'],
+                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '-2 299,48 $ (-36,5 %)'],
             ],
         },
         {
@@ -169,7 +169,7 @@ export const chapitreEtatResultats = {
                 ['{{Écart (%)}}', 'Le même écart, exprimé en pourcentage du théorique, pour comparer l\'ampleur des écarts d\'une ligne à l\'autre.'],
             ],
         },
-        { type: 'p', text: 'Lecture : le réel dépasse légèrement le théorique pour les revenus (+1,0 %), mais les charges directes réelles dépassent aussi celles du modèle (+5,2 %) : le bénéfice net réel (4 000,00 $) est inférieur de 27,3 % à celui du modèle (5 499,84 $). Un écart de charges directes de cet ordre signale en général des coûts que les recettes ne voient pas (rebuts, gaspillage, prix d\'achat plus élevés que ceux saisis). Regardez d\'abord les écarts en dollars : le pourcentage du bénéfice net est amplifié parce que ce bénéfice est une petite différence entre de grands montants.' },
+        { type: 'p', text: 'Lecture : le réel dépasse légèrement le théorique pour les revenus (+0,4 %), mais les charges directes réelles dépassent aussi celles du modèle (+5,8 %) : le bénéfice net réel (4 000,00 $) est inférieur de 36,5 % à celui du modèle (6 299,48 $). Un écart de charges directes de cet ordre signale en général des coûts que les recettes ne voient pas (rebuts, gaspillage, prix d\'achat plus élevés que ceux saisis). Regardez d\'abord les écarts en dollars : le pourcentage du bénéfice net est amplifié parce que ce bénéfice est une petite différence entre de grands montants.' },
         { type: 'p', text: 'La comparaison se fait toujours à l\'échelle de l\'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Bénéfice brut = revenus moins charges directes ; bénéfice net = bénéfice brut moins le total des frais fixes (sous-total du tableau des dépenses). Ce total est soustrait identiquement du réel et du théorique : l\'écart entre les deux colonnes vient donc du bénéfice brut, auquel s\'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n\'existe pas dans les charges directes réelles).' },
 
         { type: 'h', id: 'guide-ff-import', text: 'Importer l\'état des résultats' },
@@ -292,7 +292,7 @@ export const chapitreProduction = {
         {
             type: 'ul', itemIds: ['guide-prod-soustraitance', 'guide-prod-vieillissement'], items: [
                 { label: 'Sous-traitance (charge directe).', text: 'Cochez la case, puis {{+ Ajouter une opération}} pour chaque opération confiée à un tiers : le sous-traitant, l\'opération et son coût ($). Le total s\'ajoute à vos coûts directs et réduit donc la marge brute.' },
-                { label: 'Vieillissement / affinage (charge financière).', text: 'Cochez la case pour un produit qui doit mûrir en inventaire avant la vente, puis renseignez le **taux d\'intérêt annuel (%)** et la **durée (mois)**. Le coût de vieillissement est : charges directes du lot × taux annuel ÷ 12 × durée, divisé par le nombre d\'unités. Il réduit la marge nette, pas la marge brute.' },
+                { label: 'Vieillissement / affinage (charge financière).', text: 'Cochez la case pour un produit qui doit mûrir en inventaire avant la vente, puis renseignez le **taux d\'intérêt annuel (%)** et la **durée (mois)**. Le coût de vieillissement est : charges directes du lot × taux annuel ÷ 12 × durée, divisé par le nombre d\'unités. Il réduit la marge nette et allonge le point mort, mais ne touche pas la marge brute. Si la recette utilise une sous-recette qui vieillit, le coût de portage de cette sous-recette s\'ajoute à celui du format (jamais à ses coûts directs).' },
             ],
         },
         { type: 'p', text: 'Voir le [[guide-concept-familles-vieillissement|chapitre 2]] pour un exemple chiffré et les limites de ce calcul (intérêt simple, lot immobilisé en entier). Les normes comptables IAS 2 et IAS 23 encadrent le traitement des intérêts dans le coût des stocks : validez-le avec votre comptable.' },

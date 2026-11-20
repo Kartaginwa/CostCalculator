@@ -1,5 +1,5 @@
-import { parseLocaleNumber, unitConversionFactor } from '../utils.js';
-import { computeYieldUnits } from './yieldCalculator.js';
+import { parseLocaleNumber, unitConversionFactor, loadedHourlyRate } from '../utils.js';
+import { effectiveNbPortions } from './yieldCalculator.js';
 
 // `format` est un paramètre optionnel de fin de liste (Phase 1.4) : quand un appelant en passe un
 // explicitement (ex. l'un des `formats[]` d'une recette mère), les champs de vente (prix,
@@ -27,7 +27,8 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         return memo[fmt.id];
     }
 
-    if (visitedIds.has(product.id)) {
+    // Boucle détectée par FORMAT (et non par produit) : un produit à plusieurs formats dont l'un utilise l'autre n'est pas une boucle.
+    if (visitedIds.has(fmt.id)) {
         console.error(`Boucle circulaire détectée pour le produit: ${product.platName}`);
         // On retourne un objet de coûts vides pour éviter le crash
         return {
@@ -37,13 +38,15 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             costIndirectPerPortion: 0, totalDirectCostPerPortion: 0,
             totalCostPerPortion: 0, margeBruteDollar: 0, margeBrutePercent: 0, margeNetteDollar: 0, margeNettePercent: 0,
             costMatierePercent: 0, costPackagingPercent: 0, costLaborPercent: 0, costIndirectPercent: 0, totalBaseIngredientsCost: 0, totalLossCost: 0,
-            totalBasePackagingCost: 0, totalPackagingLossCost: 0
+            totalBasePackagingCost: 0, totalPackagingLossCost: 0,
+            // Résultat tronqué : l'appelant le propage (`hasLoop`) et ne le met jamais en cache.
+            hasLoop: true
         };
     }
 
     // On crée une copie de la pile actuelle et on y ajoute le produit courant
     const currentPath = new Set(visitedIds);
-    currentPath.add(product.id);
+    currentPath.add(fmt.id);
 
     // Note: This function now expects generalInfo to have pre-parsed numbers
     const { kitchenProductivity } = generalInfo;
@@ -54,16 +57,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     // Pas de parseInt ici : une unité continue (kg, L...) peut légitimement être fractionnaire
     // (ex. 47,3 kg) — seule une unité discrète (« unité ») est contrainte à un entier, et
     // seulement côté validation UI (RecipeCalculator.jsx), pas ici (voir isDiscreteUnit, utils.js).
-    let nbPortions = parseLocaleNumber(fmt.nbPortions) || 1;
-    if (fmt.yieldGrid?.enabled) {
-        const computedUnits = computeYieldUnits({
-            baseQuantity: fmt.yieldGrid.baseQuantity,
-            stages: fmt.yieldGrid.stages,
-            rejectRate: fmt.yieldGrid.rejectRate,
-            unitSize: fmt.portionSize,
-        });
-        if (computedUnits > 0) nbPortions = computedUnits;
-    }
+    const nbPortions = effectiveNbPortions(fmt);
 
     const productivityFactor = (kitchenProductivity > 0 && kitchenProductivity <= 100) ? kitchenProductivity / 100 : 1;
         let totalIngredientsCost = 0;
@@ -71,6 +65,12 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         let totalLossCost = 0;
         let totalDirectLaborCost = 0;
         let totalProductionMinutes = 0;
+        let laborFromSubRecipes = 0;
+        let rawLaborFromSubRecipes = 0;
+        let packagingFromSubRecipes = 0;
+        let subcontractingFromSubRecipes = 0;
+        let agingFromSubRecipes = 0;
+        let hasLoop = false;
 
         if (fmt.isResaleProduct) {
             const purchaseCost = parseLocaleNumber(fmt.purchaseCost);
@@ -84,6 +84,9 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                 let unitPrice = 0;
                 let lossPercentage = 0;
                 let ingredientUnit = 'unité';
+                // Sous-recette : ses coûts par nature (matière / emballage / main-d'œuvre / sous-traitance), pour qu'ils
+                // restent classés sous leur nature chez le plat parent (20/11, audit constat 3).
+                let subRecipeCosts = null;
 
                 // Tente de trouver l'ingrédient dans la liste de base
                 const baseIngredient = baseIngredients.find(ing => ing.id === item.id);
@@ -114,7 +117,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                     }
                     if (subRecipeProduct && subFmt) {
                         // Appel récursif pour obtenir les coûts du format précis de la sous-recette.
-                        const subRecipeCosts = calculateCosts(subRecipeProduct, generalInfo, baseIngredients, allProducts, laborDatabase, null, memo, currentPath, subFmt);
+                        subRecipeCosts = calculateCosts(subRecipeProduct, generalInfo, baseIngredients, allProducts, laborDatabase, null, memo, currentPath, subFmt, basePackaging);
                         const sanitizedPortionSize = parseLocaleNumber(subFmt.portionSize) || 1;
                         // Une sous-recette utilisée COMME INGRÉDIENT n'apporte que son coût DIRECT
                         // (matière + main-d'œuvre) au plat parent ; ses frais indirects sont exclus
@@ -143,16 +146,46 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                     ? costAfterLoss / (yieldPercent / 100)
                     : costAfterLoss;
 
-                acc.totalBaseCost += baseCost;
-                acc.totalLossCost += lossCost;
-                acc.totalFinalCost += finalCost;
+                // Répartition du coût d'une ligne de sous-recette selon la nature de ses propres coûts directs. Une ligne
+                // d'ingrédient de base est 100 % matière. La somme des parts vaut toujours 1 : le total ne change pas, seule
+                // la classification (matière / emballage / main-d'œuvre / sous-traitance) est préservée.
+                if (subRecipeCosts?.hasLoop) acc.hasLoop = true;
+                let matiereShare = 1, packagingShare = 0, laborShare = 0, subcontractingShare = 0, rawLaborRatio = 0, agingShare = 0;
+                if (subRecipeCosts && subRecipeCosts.totalDirectCostPerPortion > 0) {
+                    const t = subRecipeCosts.totalDirectCostPerPortion;
+                    matiereShare = subRecipeCosts.costMatierePerPortion / t;
+                    packagingShare = subRecipeCosts.costPackagingPerPortion / t;
+                    laborShare = subRecipeCosts.costLaborPerPortion / t;
+                    subcontractingShare = subRecipeCosts.costSubcontractingPerPortion / t;
+                    // Vieillissement (coût de portage) de la sous-recette : il suit la ligne dans le « vieillissement » du plat
+                    // parent, jamais dans ses coûts directs (voir plus bas).
+                    agingShare = subRecipeCosts.costAgingPerPortion / t;
+                    // Part de la main-d'œuvre de la sous-recette qui est du temps réellement nécessaire (le reste est de la
+                    // capacité inutilisée absorbée) : permet de garder l'affichage « direct / indirect » de la fiche.
+                    rawLaborRatio = subRecipeCosts.totalLaborCost > 0 ? subRecipeCosts.totalDirectLaborCost / subRecipeCosts.totalLaborCost : 0;
+                }
+
+                acc.totalBaseCost += baseCost * matiereShare;
+                acc.totalLossCost += lossCost * matiereShare;
+                acc.totalFinalCost += finalCost * matiereShare;
+                acc.packagingFromSub += finalCost * packagingShare;
+                acc.laborFromSub += finalCost * laborShare;
+                acc.rawLaborFromSub += finalCost * laborShare * rawLaborRatio;
+                acc.subcontractingFromSub += finalCost * subcontractingShare;
+                acc.agingFromSub += finalCost * agingShare;
 
                 return acc;
-            }, { totalBaseCost: 0, totalLossCost: 0, totalFinalCost: 0 });
+            }, { totalBaseCost: 0, totalLossCost: 0, totalFinalCost: 0, packagingFromSub: 0, laborFromSub: 0, rawLaborFromSub: 0, subcontractingFromSub: 0, agingFromSub: 0, hasLoop: false });
 
                 totalIngredientsCost = ingredientsCosts.totalFinalCost;
                 totalBaseIngredientsCost = ingredientsCosts.totalBaseCost;
                 totalLossCost = ingredientsCosts.totalLossCost;
+                laborFromSubRecipes = ingredientsCosts.laborFromSub;
+                rawLaborFromSubRecipes = ingredientsCosts.rawLaborFromSub;
+                packagingFromSubRecipes = ingredientsCosts.packagingFromSub;
+                subcontractingFromSubRecipes = ingredientsCosts.subcontractingFromSub;
+                agingFromSubRecipes = ingredientsCosts.agingFromSub;
+                hasLoop = ingredientsCosts.hasLoop;
 
             // Coûts de main-d'œuvre basés sur les étapes de production
             totalDirectLaborCost = 0;
@@ -166,8 +199,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                     if (postData && postData.employees.length > 0) {
                         const totalHours = postData.employees.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
                         const totalCost = postData.employees.reduce((sum, emp) => {
-                            const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
-                            return sum + (baseHourlyCost * parseLocaleNumber(emp.workedHours));
+                            return sum + (loadedHourlyRate(emp) * parseLocaleNumber(emp.workedHours));
                         }, 0);
                         const weightedAverageCost = totalHours > 0 ? totalCost / totalHours : 0;
 
@@ -215,7 +247,11 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     }
 
 
-    const totalLaborCost = totalDirectLaborCost / productivityFactor;
+    const totalLaborCost = totalDirectLaborCost / productivityFactor + laborFromSubRecipes;
+    // La main-d'œuvre « directe » (temps réellement nécessaire) inclut celle des sous-recettes ; la différence avec
+    // `totalLaborCost` reste uniquement la capacité inutilisée absorbée.
+    totalDirectLaborCost += rawLaborFromSubRecipes;
+    totalPackagingCost += packagingFromSubRecipes;
 
     // Sous-traitance (Phase 1.4) : coût d'opérations données à l'externe, propre au format (ex. un
     // format spécifique confié à un tiers pour l'embouteillage). Masqué par défaut (`enabled`
@@ -224,6 +260,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     if (fmt.subcontracting?.enabled) {
         totalSubcontractingCost = (fmt.subcontracting.items || []).reduce((sum, item) => sum + parseLocaleNumber(item.cost), 0);
     }
+    totalSubcontractingCost += subcontractingFromSubRecipes;
 
     // Frais indirects Général — REPLI HISTORIQUE uniquement (révisé le 21/10, retour utilisateur) :
     // tant qu'un `indirectPools` est fourni à `computeAnalysisData` (analysisData.js, le chemin
@@ -311,7 +348,9 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     const totalRecipeCost = totalIngredientsCost + totalPackagingCost + totalLaborCost + totalSubcontractingCost + indirectCostTotal;
 
     // Soupape de sécurité (méthode "ventes") : sur données dégénérées (ex. un volume réel très
-    // faible pour ce format), le total d'un plat ne peut dépasser le pool de frais indirects.
+    // faible pour ce format), le total d'un produit ne peut dépasser le pool de frais indirects.
+    // Elle relève du même repli historique que le bloc ci-dessus : avec des pools fournis (le chemin normal de l'app),
+    // `totalIndirects` vaut 0 et elle ne fait rien.
     if (method !== 'laborTime') {
         const maxIndirects = parseLocaleNumber(generalInfo.totalIndirects);
         if (maxIndirects > 0 && indirectCostTotal > maxIndirects) {
@@ -347,6 +386,9 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         const months = parseLocaleNumber(fmt.aging.months);
         totalAgingCost = (totalIngredientsCost + totalPackagingCost + totalLaborCost + totalSubcontractingCost) * (rate / 12) * months;
     }
+    // Le portage d'une sous-recette qui vieillit (20/11, audit constat 4) : compté ici, dans la ligne « vieillissement » du plat
+    // qui l'utilise, et non dans ses coûts directs — c'est un coût d'opportunité pour établir le prix, pas une dépense réelle.
+    totalAgingCost += agingFromSubRecipes;
     const costAgingPerPortion = nbPortions > 0 ? totalAgingCost / nbPortions : 0;
 
     const totalCostPerPortion = totalDirectCostPerPortion + costIndirectPerPortion + costAgingPerPortion;
@@ -399,10 +441,12 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         totalBaseIngredientsCost,
         totalLossCost,
         totalBasePackagingCost,
-        totalPackagingLossCost
+        totalPackagingLossCost,
+        hasLoop
     };
 
-    if (overridePrice === null) {
+    // Un résultat qui dépend d'une boucle coupée varie selon le point d'entrée du calcul : jamais mis en cache.
+    if (overridePrice === null && !hasLoop) {
         memo[fmt.id] = result;
     }
     return result;
@@ -464,7 +508,8 @@ export const computeMarginsForPrice = (prixVente, costs) => {
 // elle en était absente, une incohérence avec « Frais fixes totaux par unité » qui l'inclut déjà).
 // Dénominateur = marge de CONTRIBUTION sans la main-d'œuvre (`margeBruteDollar` + main-d'œuvre par
 // unité rajoutée, puisqu'elle sort du calcul variable) — jamais la marge brute habituelle, qui
-// resterait inchangée partout ailleurs dans l'app (cette révision ne touche QUE le point mort).
+// resterait inchangée partout ailleurs dans l'app (cette révision ne touche QUE le point mort). Le vieillissement par unité
+// est retiré de cette marge de contribution (21/11) : c'est un coût proportionnel au volume, que la marge nette déduit déjà.
 // `channelPools` (Phase 4.6, optionnel — `{ [channelId]: { amount, driverTotal } }`) : pool de
 // frais fixes propre à CE canal (voir engine/analysisData.js, computeIndirectCostDriverTotals).
 // Quand fourni, chaque entrée ajoute, EN PLUS de `costs.costIndirectPerPortion` (Général + Activité,
@@ -488,8 +533,12 @@ export const computeChannelBreakdown = (costs, channelPrices = [], salesChannels
         .map(cp => {
             const channel = salesChannels.find(c => c.id === cp.channelId);
             const netPrice = parseLocaleNumber(cp.netPrice);
-            if (!channel || !(netPrice > 0)) return null;
             const volume = parseLocaleNumber(cp.volume);
+            // Un canal sans prix ET sans volume n'est pas vendu : omis. Mais un volume vendu à 0 $ (produit offert, don,
+            // échantillons) reste dans les chiffres : il consomme des coûts directs et sa part des frais de canal, et sa
+            // marge est négative. L'omettre ferait disparaître ces coûts (20/11, audit constat 6) ; `projectChecks`
+            // signale ce cas pour que l'utilisateur confirme qu'il est voulu.
+            if (!channel || !(netPrice > 0 || volume > 0)) return null;
 
             let channelCosts = costs;
             let costIndirectChannelPerPortion = 0;
@@ -506,7 +555,10 @@ export const computeChannelBreakdown = (costs, channelPrices = [], salesChannels
             }
 
             const margins = computeMarginsForPrice(netPrice, channelCosts);
-            const contributionExcludingLabor = margins.margeBruteDollar + parseLocaleNumber(costs.costLaborPerPortion);
+            // Le vieillissement (coût de portage) varie avec chaque unité produite : il sort de la marge de contribution, comme la
+            // main-d'œuvre y est ajoutée. Sans cela, au volume du point mort la marge nette resterait négative du montant du
+            // vieillissement (21/11).
+            const contributionExcludingLabor = margins.margeBruteDollar + parseLocaleNumber(costs.costLaborPerPortion) - parseLocaleNumber(costs.costAgingPerPortion);
             const fixedCostForThisChannel = fixedCostForBreakEven != null
                 ? fixedCostForBreakEven + (costIndirectChannelPerPortion * volume)
                 : null;

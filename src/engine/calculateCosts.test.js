@@ -733,3 +733,106 @@ describe('computeMarginsForPrice', () => {
         expect(margins.costMatierePercent).toBeCloseTo(costs.costMatierePercent);
     });
 });
+
+describe("calculateCosts - nature des coûts d'une sous-recette (audit 20/11, constat 3)", () => {
+    // Sous-recette « purée » : 5 $ de farine, 2 $ d'emballage, 1 h de main-d'œuvre à 30 $/h (productivité 100 %), lot de 10 portions de 1 kg.
+    const labor = [{ postName: 'Cuisinier', employees: [{ hourlyRate: 30, socialCharges: 0, vacationPercentage: 0, workedHours: 10 }] }];
+    const pkg = [{ id: 'boite', unitPrice: 0.2, lossPercentage: 0, unit: 'unité' }];
+    const sub = baseProduct({
+        id: 'sub', isIngredient: true, onMenu: false, nbPortions: 10, portionSize: 1, portionUnit: 'kg',
+        ingredients: [{ id: 'farine', quantity: 5, recipeUnit: 'kg', yieldPercentage: 0 }],
+        packagingItems: [{ id: 'boite', quantity: 10, recipeUnit: 'unité' }],
+        productionSteps: [{ duration: 3600, startTime: 0, personnel: [{ postId: 'Cuisinier' }] }],
+    });
+    const parent = baseProduct({
+        id: 'par', nbPortions: 1,
+        ingredients: [{ id: 'sub', quantity: 2, recipeUnit: 'kg', yieldPercentage: 0 }, { id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }],
+    });
+    const baseIng = [{ id: 'farine', unitPrice: 1, lossPercentage: 0, unit: 'kg' }];
+    const run = (sp = sub) => calculateCosts(parent, baseGeneralInfo(), baseIng, [parent, sp], labor, null, {}, new Set(), null, pkg);
+
+    it("garde la matière, l'emballage et la main-d'œuvre de la sous-recette sous leur propre nature", () => {
+        const c = run();
+        // 2 kg de purée = 2 × (0,5 matière + 0,2 emballage + 3 main-d'œuvre) ; + 1 kg de farine (1 $) en matière propre.
+        expect(c.costMatierePerPortion).toBeCloseTo(1 + 2 * 0.5, 8);
+        expect(c.costPackagingPerPortion).toBeCloseTo(2 * 0.2, 8);
+        expect(c.costLaborPerPortion).toBeCloseTo(2 * 3, 8);
+    });
+    it("ne change pas le total direct", () => {
+        const c = run();
+        expect(c.totalDirectCostPerPortion).toBeCloseTo(1 + 1 + 0.4 + 6, 8);
+        expect(c.costMatierePerPortion + c.costPackagingPerPortion + c.costLaborPerPortion + c.costSubcontractingPerPortion).toBeCloseTo(c.totalDirectCostPerPortion, 8);
+    });
+    it("la main-d'œuvre « directe » du parent inclut celle de la sous-recette (l'écart avec le total reste la capacité inutilisée)", () => {
+        const c = run();
+        expect(c.totalDirectLaborCost).toBeCloseTo(6, 8);
+        expect(c.totalLaborCost).toBeCloseTo(6, 8);
+    });
+    it("la sous-traitance d'une sous-recette reste de la sous-traitance chez le parent", () => {
+        const withSt = { ...sub, subcontracting: { enabled: true, items: [{ cost: 10 }] } };
+        const c = run(withSt);
+        expect(c.costSubcontractingPerPortion).toBeCloseTo(2 * 1, 8); // 10 $ pour 10 kg
+    });
+});
+
+describe("calculateCosts - vieillissement d'une sous-recette et boucles (audit 20/11, constats 4 et 9)", () => {
+    const baseIng = [{ id: 'farine', unitPrice: 1, lossPercentage: 0, unit: 'kg' }];
+    const sub = baseProduct({
+        id: 'sub', isIngredient: true, onMenu: false, nbPortions: 10, portionSize: 1, portionUnit: 'kg',
+        ingredients: [{ id: 'farine', quantity: 10, recipeUnit: 'kg', yieldPercentage: 0 }],
+        aging: { enabled: true, interestRate: 12, months: 6 },
+    });
+    const parent = baseProduct({ id: 'par', nbPortions: 1, ingredients: [{ id: 'sub', quantity: 2, recipeUnit: 'kg', yieldPercentage: 0 }] });
+    it("le vieillissement de la sous-recette suit dans la ligne vieillissement du parent, pas dans ses coûts directs", () => {
+        const c = calculateCosts(parent, baseGeneralInfo(), baseIng, [parent, sub], []);
+        // sous-recette : 10 $ de farine pour 10 kg = 1 $/kg ; vieillissement = 10 $ × 12 %/12 × 6 mois = 0,60 $ pour 10 kg = 0,06 $/kg
+        expect(c.totalDirectCostPerPortion).toBeCloseTo(2, 8);
+        expect(c.costAgingPerPortion).toBeCloseTo(2 * 0.06, 8);
+        expect(c.totalCostPerPortion).toBeCloseTo(2 + 0.12, 8);
+    });
+    it("s'ajoute au vieillissement propre du parent sans le gonfler", () => {
+        const aged = { ...parent, aging: { enabled: true, interestRate: 12, months: 6 } };
+        const c = calculateCosts(aged, baseGeneralInfo(), baseIng, [aged, sub], []);
+        // propre : 2 $ directs × 12 %/12 × 6 = 0,12 $ ; hérité : 0,12 $
+        expect(c.costAgingPerPortion).toBeCloseTo(0.24, 8);
+    });
+    it("une boucle est signalée (hasLoop) et son résultat n'est jamais mis en cache", () => {
+        const a = baseProduct({ id: 'A', isIngredient: true, portionUnit: 'kg', ingredients: [{ id: 'B', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }, { id: 'farine', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }] });
+        const b = baseProduct({ id: 'B', isIngredient: true, portionUnit: 'kg', ingredients: [{ id: 'A', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }] });
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const memo = {};
+        const costs = calculateCosts(a, baseGeneralInfo(), baseIng, [a, b], [], null, memo);
+        spy.mockRestore();
+        expect(costs.hasLoop).toBe(true);
+        expect(memo.A).toBeUndefined();
+        expect(memo.B).toBeUndefined();
+    });
+    it("un produit à deux formats dont l'un utilise l'autre n'est PAS une boucle", () => {
+        const f1 = { id: 'f1', nbPortions: 10, portionSize: 1, portionUnit: 'kg', ingredients: [{ id: 'farine', quantity: 10, recipeUnit: 'kg', yieldPercentage: 0 }], productionSteps: [], packagingItems: [], channelPrices: [] };
+        const f2 = { id: 'f2', nbPortions: 1, portionSize: 1, portionUnit: 'kg', ingredients: [{ id: 'f1', quantity: 1, recipeUnit: 'kg', yieldPercentage: 0 }], productionSteps: [], packagingItems: [], channelPrices: [] };
+        const p = baseProduct({ id: 'P', isIngredient: true, formats: [f1, f2] });
+        const costs = calculateCosts(p, baseGeneralInfo(), baseIng, [p], [], null, {}, new Set(), f2);
+        expect(costs.hasLoop).toBe(false);
+        expect(costs.costMatierePerPortion).toBeCloseTo(1, 8);
+    });
+});
+
+describe("computeChannelBreakdown - le vieillissement sort de la marge de contribution du point mort (21/11)", () => {
+    const costs = (aging) => ({
+        totalDirectCostPerPortion: 4, costMatierePerPortion: 4, costPackagingPerPortion: 0, costLaborPerPortion: 0, costIndirectPerPortion: 0,
+        costAgingPerPortion: aging, totalCostPerPortion: 4 + aging, portionSize: 1,
+    });
+    const prices = [{ channelId: 'c', netPrice: 10, volume: 5 }];
+    const channels = [{ id: 'c', name: 'Canal' }];
+    it("sans vieillissement : frais fixes ÷ (prix − coûts directs)", () => {
+        const [row] = computeChannelBreakdown(costs(0), prices, channels, 100);
+        expect(row.breakEvenUnits).toBe(Math.ceil(100 / 6));
+    });
+    it("avec vieillissement : frais fixes ÷ (prix − coûts directs − vieillissement), et la marge nette au point mort est nulle", () => {
+        const [row] = computeChannelBreakdown(costs(1), prices, channels, 100);
+        expect(row.breakEvenUnits).toBe(20); // 100 ÷ (10 − 4 − 1)
+        // À 20 unités : 20 × (10 − 4 − 1) − 100 = 0 de profit net, vieillissement compris.
+        expect(row.margeNetteDollar).toBeCloseTo(5, 8);
+        expect(row.breakEvenUnits * row.margeNetteDollar - 100).toBeCloseTo(0, 8);
+    });
+});

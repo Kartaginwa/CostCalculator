@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Upload, X } from 'lucide-react';
-import { todayLocalISO, parseLocaleNumber, generateSlug, isNotEmpty, isValidNumber, isValidPercentage, APP_FIELDS, formatCurrency } from '../utils.js';
+import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, isNotEmpty, isValidNumber, isValidPercentage, APP_FIELDS, formatCurrency } from '../utils.js';
 import { Tooltip } from '../components/common.jsx';
 import { useEscapeKey } from '../ui-utils.jsx';
 
@@ -277,7 +277,7 @@ export const CatalogImportWizardModal = ({
             }
 
             const { processed } = item;
-            const unitPrice = (parseLocaleNumber(processed.purchasePrice) || 0) / (processed.purchaseFormat || 1);
+            const unitPrice = landedUnitPrice(processed);
 
             if (item.importStatus === 'update') {
                 updatedCount++;

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowUpDown, Copy, PlusCircle, Trash2, Upload } from 'lucide-react';
-import { todayLocalISO, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel, areUnitsCompatible } from '../utils.js';
+import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel, areUnitsCompatible } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { findPackagingUsages, formatNameList } from '../engine/usage.js';
@@ -138,11 +138,9 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             itemToUpdate.uniqueId = newName ? generateSlug(newName, newProvider, itemToUpdate.purchaseFormat, itemToUpdate.unit) : '';
         }
 
-        const purchasePrice = parseLocaleNumber(itemToUpdate.purchasePrice);
-        const purchaseFormat = parseLocaleNumber(itemToUpdate.purchaseFormat) || 1;
-        itemToUpdate.unitPrice = purchasePrice / purchaseFormat;
+        itemToUpdate.unitPrice = landedUnitPrice(itemToUpdate);
 
-        if (field === 'purchasePrice') {
+        if (field === 'purchasePrice' || field === 'discountPercentage' || field === 'inboundCost') {
             itemToUpdate.lastUpdated = todayLocalISO();
         }
 
@@ -337,8 +335,20 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('name')} className="flex items-center w-full">Emballage {getSortIcon('name')}</button></th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('provider')} className="flex items-center w-full">Fournisseur {getSortIcon('provider')}</button></th>
                             <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchaseFormat')} className="flex items-center w-full">Format d'achat {getSortIcon('purchaseFormat')}</button></th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Unité de base</th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Unité de base</th>
                             <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchasePrice')} className="flex items-center w-full">Prix achat ($) {getSortIcon('purchasePrice')}</button></th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
+                                <div className="flex items-center">
+                                    Escompte (%)
+                                    <Tooltip tip="ing.escompte" />
+                                </div>
+                            </th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
+                                <div className="flex items-center">
+                                    Transport ($)
+                                    <Tooltip tip="ing.transport" />
+                                </div>
+                            </th>
                             <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
                                     <button onClick={() => requestSort('lossPercentage')} className="flex items-center">Taux de perte (%) {getSortIcon('lossPercentage')}</button>
@@ -371,28 +381,36 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 </td>
                                 <td className="px-2 py-2"><input type="text" list="packaging-provider-list" value={item.provider || ''} onChange={e => handleUpdate(item.id, 'provider', e.target.value)} className="w-full p-1 text-sm border rounded" /></td>
                                 <td className="px-2 py-2">
-                                    <input type="text" inputMode="decimal" value={item.purchaseFormat || ''} onChange={e => handleUpdate(item.id, 'purchaseFormat', e.target.value)} className={`w-16 p-1 border rounded text-right ${!isValidNumber(item.purchaseFormat) ? 'border-red-500' : 'border-gray-300'}`} />
+                                    <input type="text" inputMode="decimal" value={item.purchaseFormat || ''} onChange={e => handleUpdate(item.id, 'purchaseFormat', e.target.value)} className={`w-16 p-1 text-sm border rounded text-right ${!isValidNumber(item.purchaseFormat) ? 'border-red-500' : 'border-gray-300'}`} />
                                     {!isValidNumber(item.purchaseFormat) && <ValidationMessage message="Nombre invalide." />}
                                 </td>
-                                <td className="px-4 py-2">
-                                    <select value={item.unit} onChange={e => handleUpdate(item.id, 'unit', e.target.value)} className="w-full p-1 border rounded">
+                                <td className="px-2 py-2">
+                                    <select value={item.unit} onChange={e => handleUpdate(item.id, 'unit', e.target.value)} className="w-full min-w-[4.5rem] p-1 text-sm border rounded">
                                         {filterActiveUnits(Object.keys(CONVERSION_FACTORS), activeUnits, item.unit).map(u => (
                                             <option key={u} value={u}>{unitLabel(u)}</option>
                                         ))}
                                     </select>
                                 </td>
                                 <td className="px-2 py-2">
-                                    <input type="text" inputMode="decimal" value={item.purchasePrice || ''} onChange={e => handleUpdate(item.id, 'purchasePrice', e.target.value)} className={`w-16 p-1 border rounded text-right ${!isValidNumber(item.purchasePrice) ? 'border-red-500' : 'border-gray-300'}`} />
+                                    <input type="text" inputMode="decimal" value={item.purchasePrice || ''} onChange={e => handleUpdate(item.id, 'purchasePrice', e.target.value)} className={`w-20 p-1 text-sm border rounded text-right ${!isValidNumber(item.purchasePrice) ? 'border-red-500' : 'border-gray-300'}`} />
                                     {!isValidNumber(item.purchasePrice) && <ValidationMessage message="Nombre invalide." />}
                                 </td>
                                 <td className="px-2 py-2">
-                                    <input type="text" inputMode="decimal" value={item.lossPercentage || ''} onChange={e => handleUpdate(item.id, 'lossPercentage', e.target.value)} className={`w-16 p-1 border rounded text-right ${isInvalidPercentage(item.lossPercentage) ? 'border-red-500' : 'border-gray-300'}`} />
+                                    <input type="text" inputMode="decimal" value={item.discountPercentage || ''} onChange={e => handleUpdate(item.id, 'discountPercentage', e.target.value)} className={`w-16 p-1 text-sm border rounded text-right ${isInvalidPercentage(item.discountPercentage) ? 'border-red-500' : 'border-gray-300'}`} aria-label="Escompte (%)" />
+                                    {isInvalidPercentage(item.discountPercentage) && <ValidationMessage message="Doit être un %." />}
+                                </td>
+                                <td className="px-2 py-2">
+                                    <input type="text" inputMode="decimal" value={item.inboundCost || ''} onChange={e => handleUpdate(item.id, 'inboundCost', e.target.value)} className={`w-16 p-1 text-sm border rounded text-right ${isNotEmpty(item.inboundCost) && !isValidNumber(item.inboundCost) ? 'border-red-500' : 'border-gray-300'}`} aria-label="Transport ($)" />
+                                    {isNotEmpty(item.inboundCost) && !isValidNumber(item.inboundCost) && <ValidationMessage message="Nombre invalide." />}
+                                </td>
+                                <td className="px-2 py-2">
+                                    <input type="text" inputMode="decimal" value={item.lossPercentage || ''} onChange={e => handleUpdate(item.id, 'lossPercentage', e.target.value)} className={`w-16 p-1 text-sm border rounded text-right ${isInvalidPercentage(item.lossPercentage) ? 'border-red-500' : 'border-gray-300'}`} />
                                     {isInvalidPercentage(item.lossPercentage) && <ValidationMessage message="Doit être un %." />}
                                 </td>
-                                <td className="px-2 py-2"><input type="text" value={formatCurrency(item.unitPrice)} readOnly disabled className="w-16 p-1 bg-gray-50 border-0 rounded text-right" /></td>
+                                <td className="px-2 py-2"><input type="text" value={formatCurrency(item.unitPrice)} readOnly disabled className="w-16 p-1 text-sm bg-gray-50 border-0 rounded text-right" /></td>
                                 <td className="px-4 py-2">
                                     <div className="flex items-center">
-                                        <input type="date" value={item.lastUpdated || ''} onChange={e => handleUpdate(item.id, 'lastUpdated', e.target.value)} className="w-full p-1 border rounded" />
+                                        <input type="date" value={item.lastUpdated || ''} onChange={e => handleUpdate(item.id, 'lastUpdated', e.target.value)} className="w-full p-1 text-sm border rounded" />
                                         {isOld && <span title="Prix non mis à jour depuis plus de 30 jours" className="ml-2 h-3 w-3 bg-yellow-400 rounded-full"></span>}
                                     </div>
                                 </td>
@@ -405,7 +423,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                             </tr>
                         )})}
                         {displayedPackaging.length === 0 && (
-                            <tr><td colSpan={8} className="px-4 py-6 text-center text-sm text-gray-500">Aucun emballage ne correspond au filtre.</td></tr>
+                            <tr><td colSpan={10} className="px-4 py-6 text-center text-sm text-gray-500">Aucun emballage ne correspond au filtre.</td></tr>
                         )}
                     </tbody>
                 </table>

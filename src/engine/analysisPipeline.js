@@ -2,17 +2,17 @@
 // répartition des frais fixes (pools) → calcul final. Reproduit exactement ce que fait App.jsx pour l'état courant ;
 // sert à fabriquer des relevés (points de référence) qui suivent la MÊME méthode que les tuiles — notamment l'historique
 // du projet démo, qui était calculé sans absorption complète ni répartition des frais fixes (audit du 19/11).
-import { parseLocaleNumber as P, sumLineAmounts } from '../utils.js';
+import { parseLocaleNumber as P, sumLineAmounts, loadedHourlyRate } from '../utils.js';
 import { computeAnalysisData, computeIndirectPools } from './analysisData.js';
 import { computeLaborHoursNeeded } from './laborHours.js';
 
 const sum = (list, fn) => list.reduce((total, item) => total + fn(item), 0);
 
 // Taux d'absorption (en %) : coût des heures nécessaires ÷ paie de TOUS les postes (décision du 19/11).
-export function computeLaborAbsorption(products, laborDatabase, baseIngredients = []) {
+export function computeLaborAbsorption(products, laborDatabase, baseIngredients = [], salesChannels = []) {
     // Heures nécessaires : ventes de chaque format ET consommation de sous-recettes (voir laborHours.js).
-    const { byPost, total } = computeLaborHoursNeeded(products, baseIngredients);
-    const payrollOf = (employees) => sum(employees, e => P(e.workedHours) * P(e.hourlyRate) * (1 + P(e.socialCharges) / 100) * (1 + P(e.vacationPercentage) / 100));
+    const { byPost, total } = computeLaborHoursNeeded(products, baseIngredients, salesChannels);
+    const payrollOf = (employees) => sum(employees, e => P(e.workedHours) * loadedHourlyRate(e));
     const payroll = sum(laborDatabase, post => payrollOf(post.employees || []));
     const directNeeded = sum(laborDatabase, post => {
         const hours = sum(post.employees || [], e => P(e.workedHours));
@@ -29,7 +29,7 @@ export function computeProjectAnalysis({
     expenseLines, revenueLines, directCostLines, repartitionKeys,
 }) {
     const info = { ...generalInfo, totalIndirects: sumLineAmounts(expenseLines || []) };
-    const absorption = computeLaborAbsorption(products, laborDatabase, baseIngredients);
+    const absorption = computeLaborAbsorption(products, laborDatabase, baseIngredients, salesChannels);
     const calc = { ...info, ...absorption, productivityReport: { rows: [] } };
     const draft = computeAnalysisData(products, baseIngredients, laborDatabase, info, calc, basePackaging, salesChannels);
     const pools = computeIndirectPools(draft.productsWithCosts, { expenseLines, repartitionKeys, revenueLines, directCostLines, productionActivities, salesChannels, generalInfo: info });

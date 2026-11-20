@@ -1,5 +1,6 @@
-import { parseLocaleNumber, CONVERSION_FACTORS, buildRowDisplayName, round2, sumLineAmounts, sumAmountsMap, unitConversionFactor } from '../utils.js';
+import { parseLocaleNumber, CONVERSION_FACTORS, buildRowDisplayName, round2, sumLineAmounts, sumAmountsMap, unitConversionFactor, activeChannelPrices } from '../utils.js';
 import { calculateCosts, computeChannelBreakdown, computeMarginsForPrice } from './calculateCosts.js';
+import { effectiveNbPortions } from './yieldCalculator.js';
 
 // Phase 4.5bis/4.6 — contenants « Activité » partagés entre Revenus, Charges directes réelles et
 // Frais fixes : Général + chaque activité de production, dans cet ordre (voir
@@ -223,7 +224,7 @@ function computePurchasingAndAbc(catalogue, activeProducts, unitsSoldById, recip
         for (const product of activeProducts) {
             const portionsSold = unitsSoldById[product.id] || 0;
             if (portionsSold <= 0) continue;
-            const batchesNeeded = portionsSold / (parseLocaleNumber(product.nbPortions) || 1);
+            const batchesNeeded = portionsSold / effectiveNbPortions(product.format || product);
             // `product` est ici une LIGNE de `activeProducts` (Phase 1.6 : une par format) — son
             // propre format attaché (`product.format`), pas une nouvelle dérivation du premier
             // format du produit sous-jacent.
@@ -454,8 +455,8 @@ function aggregateSegmentRows(rows) {
     const margeNetteTotal = margeBruteTotal - totalIndirectTotal - costAgingTotal;
 
     // Point mort (voir commentaire de fonction) : marge de contribution SANS la main-d'œuvre, qui
-    // rejoint les frais fixes au numérateur.
-    const contributionTotal = margeBruteTotal + costLaborTotal;
+    // rejoint les frais fixes au numérateur. Le vieillissement, proportionnel au volume, en est retiré (21/11).
+    const contributionTotal = margeBruteTotal + costLaborTotal - costAgingTotal;
     const contributionRatio = contributionTotal / revenueTotal;
     const fixedCostForBreakEven = totalIndirectTotal + costLaborTotal;
     const breakEvenRevenue = contributionRatio > 0 ? fixedCostForBreakEven / contributionRatio : null;
@@ -875,7 +876,7 @@ export function computeSnapshotMenuKpis(rows) {
 
 // Point mort GLOBAL en chiffre d'affaires : frais fixes ÷ taux de marge de contribution pondéré par le
 // REVENU, avec la main-d'œuvre directe traitée comme un coût FIXE (ajoutée aux frais fixes, retirée de la
-// marge de contribution). Fonction unique, utilisée par les tuiles ET par les points de référence, pour
+// marge de contribution ; le vieillissement est aussi retiré de cette marge). Fonction unique, utilisée par les tuiles ET par les points de référence, pour
 // que la courbe d'évolution rejoigne toujours la valeur actuelle (avant le 19/11, les points de référence
 // utilisaient une autre formule : frais fixes ÷ marge brute %, main-d'œuvre traitée comme variable).
 // `rows` : lignes de formats ACTIFS portant `blended`, `costs` et `channelBreakdown`.
@@ -886,7 +887,9 @@ export function computeGlobalBreakEven(rows, totalIndirects) {
     const menuRevenue = active.reduce((s, p) => s + revenueOf(p), 0);
     const totalMarginDollar = active.reduce((s, p) => s + parseLocaleNumber(p.blended?.margeBruteDollar) * unitsOf(p), 0);
     const totalLaborDollar = active.reduce((s, p) => s + parseLocaleNumber(p.costs?.costLaborPerPortion) * unitsOf(p), 0);
-    const ratio = menuRevenue > 0 ? (totalMarginDollar + totalLaborDollar) / menuRevenue : 0;
+    // Le vieillissement (proportionnel au volume) est retiré de la marge de contribution, comme dans la marge nette (21/11).
+    const totalAgingDollar = active.reduce((s, p) => s + parseLocaleNumber(p.costs?.costAgingPerPortion) * unitsOf(p), 0);
+    const ratio = menuRevenue > 0 ? (totalMarginDollar + totalLaborDollar - totalAgingDollar) / menuRevenue : 0;
     return ratio > 0 ? (parseLocaleNumber(totalIndirects) + totalLaborDollar) / ratio : 0;
 }
 
@@ -997,7 +1000,9 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
     for (const p of products) {
         const formatsList = (p.formats && p.formats.length > 0) ? p.formats : [p];
         formatsList.forEach((fmt, formatIndex) => {
-            let costs = calculateCosts(p, calculatedGeneralInfoForCosts, baseIngredients, products, laborDatabase, null, costsMemo, new Set(), fmt, basePackaging);
+            // Les ventes d'un canal supprimé ne comptent pas dans le volume qui répartit les frais fixes (voir activeChannelPrices).
+            const fmtForCosts = salesChannels.length > 0 ? { ...fmt, channelPrices: activeChannelPrices(fmt, salesChannels) } : fmt;
+            let costs = calculateCosts(p, calculatedGeneralInfoForCosts, baseIngredients, products, laborDatabase, null, costsMemo, new Set(), fmtForCosts, basePackaging);
 
             // Général (révisé le 21/10) : même mécanisme que la part Activité ci-dessous, mais avec
             // un seul pool PARTAGÉ par tous les produits (`indirectPools.generalPool`), pas un pool

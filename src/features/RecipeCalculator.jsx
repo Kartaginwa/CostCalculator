@@ -3,11 +3,12 @@ import { AlertCircle, ChevronDown, GripVertical, Trash2, Scale, PlusCircle } fro
 import {
     unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPositiveNumber, isInvalidPercentage,
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent, formatQuantityLabel,
-    getCompatibleUnits, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits, formatNumber, unitConversionFactor, unitLabel } from '../utils.js';
+    getCompatibleUnits, loadedHourlyRate, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits, formatNumber, unitConversionFactor, unitLabel } from '../utils.js';
 import { getCostTargetIndicator, useValueFlash, useSessionState } from '../ui-utils.jsx';
 import { Tooltip, EmptyState, CostNatureBadge, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
 import { computeYieldUnits } from '../engine/yieldCalculator.js';
+import { wouldCreateRecipeLoop } from '../engine/usage.js';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, onSelectProduct, openRecipeSections, setOpenRecipeSections, onAddFormat, onDuplicateFormat }) => {
@@ -320,7 +321,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
     // correspond plus à aucun id de ligne depuis que chaque format a son propre id — Phase 1.6a) :
     // un produit ne doit pas pouvoir s'utiliser lui-même comme ingrédient, quel que soit le format.
     const ownFormatIds = new Set((product.formats || []).map(f => f.id));
-    const availableIngredients = ingredientsList.filter(ing => !ownFormatIds.has(ing.id));
+    // Ni lui-même, ni une sous-recette qui l'utilise déjà (directement ou par plusieurs étapes) : ce serait une boucle.
+    const availableIngredients = ingredientsList.filter(ing => !ownFormatIds.has(ing.id) && !wouldCreateRecipeLoop(products, product, ing.id));
 
 
     // --- GESTIONNAIRES : PRODUIT (recette mère — regroupement organisationnel uniquement) ---
@@ -1114,8 +1116,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
 
                                     const totalHours = postData.employees.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
                                     const totalCost = postData.employees.reduce((sum, emp) => {
-                                        const baseHourlyCost = parseLocaleNumber(emp.hourlyRate) * (1 + parseLocaleNumber(emp.socialCharges) / 100) * (1 + parseLocaleNumber(emp.vacationPercentage) / 100);
-                                        return sum + (baseHourlyCost * parseLocaleNumber(emp.workedHours));
+                                        return sum + (loadedHourlyRate(emp) * parseLocaleNumber(emp.workedHours));
                                     }, 0);
                                     const weightedAverageCost = totalHours > 0 ? totalCost / totalHours : 0;
 

@@ -59,6 +59,34 @@ export const parseLocaleNumber = (stringValue) => {
     return parseFloat(normalizeNumberString(stringValue)) || 0;
 };
 
+// Taux horaire CHARGÉ d'un employé : taux × (1 + charges sociales) × (1 + vacances). Formule UNIQUE (avant le 20/11 elle
+// était recopiée à 7 endroits : moteur, absorption, onglet Main-d'œuvre, fiche recette, export Excel). Les deux
+// pourcentages se composent (les charges sociales s'appliquent aussi à la paie de vacances).
+export const loadedHourlyRate = (emp) => parseLocaleNumber(emp?.hourlyRate)
+    * (1 + parseLocaleNumber(emp?.socialCharges) / 100)
+    * (1 + parseLocaleNumber(emp?.vacationPercentage) / 100);
+
+// Prix unitaire d'achat « rendu » : (prix d'achat − escompte + transport/frais d'entrée) ÷ format d'achat. Formule UNIQUE du
+// catalogue (ingrédients, emballages, import). Sans escompte ni transport saisis, c'est l'ancien « prix ÷ format » : un projet
+// existant ne change donc pas. Les taxes récupérables (TPS/TVQ) ne font pas partie du coût : à saisir hors taxes.
+export const landedUnitPrice = (item) => {
+    const price = parseLocaleNumber(item?.purchasePrice);
+    const format = parseLocaleNumber(item?.purchaseFormat) || 1;
+    const discount = Math.min(Math.max(parseLocaleNumber(item?.discountPercentage), 0), 100);
+    const inbound = parseLocaleNumber(item?.inboundCost);
+    return (price * (1 - discount / 100) + inbound) / format;
+};
+
+// Lignes prix/volume d'un format qui pointent vers un canal de vente EXISTANT. Un canal supprimé garde parfois ses lignes dans
+// d'anciens projets : leurs ventes ne se retrouvent dans aucune marge, elles ne doivent donc compter ni dans le volume qui sert à
+// répartir les frais fixes ni dans les heures de main-d'œuvre (21/11). Sans liste de canaux (anciens tests, projet neuf), rien n'est filtré.
+export const activeChannelPrices = (fmt, salesChannels) => {
+    const list = fmt?.channelPrices || [];
+    if (!(salesChannels?.length > 0)) return list;
+    const ids = new Set(salesChannels.map(c => c.id));
+    return list.filter(cp => ids.has(cp.channelId));
+};
+
 // Arrondit à 2 décimales (montants en argent) — évite les décimales résiduelles d'un calcul
 // proportionnel (ex. 62.499999999999993) ou d'une saisie utilisateur trop précise.
 export const round2 = (value) => Math.round(parseLocaleNumber(value) * 100) / 100;

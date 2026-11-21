@@ -4064,4 +4064,20 @@ Sauvegarde avant le travail : tag `sauvegarde-avant-refonte-rapport` (sur c666bf
 - Visite guidée : adaptation minimale seulement (scènes `abc` et `productivite` passées dans le chapitre « Analyser », scène `benefices` sans réconciliation) ; elle sera refaite à l'étape suivante, avec les exports PDF.
 - Tests : 383 unitaires, e2e adaptés + `report-restructure.spec.js` (5 tests).
 
-**Reste** : lot 2 (marge de sécurité, résumé par fournisseur, paie non utilisée, cascade de la paie, coût réel d'une heure productive, charge de travail enrichie, bénéfice brut par heure par activité et par produit, marge de croissance), lot 3 (constats clés), puis exports PDF/Excel, visite guidée et révision de la langue.
+Lot 1 commité (31 fichiers, sans les fichiers non suivis de l'utilisateur).
+
+**Retours de l'utilisateur après le lot 1 (appliqués avec le lot 2)** :
+- Plus de trait vertical entre les groupes de sous-onglets ; la barre passe à la ligne (`flex-wrap`) au lieu de défiler, et les onglets sont plus serrés (`px-3`) : les neuf tiennent sur une ligne à 1 300 px.
+- Les deux tableaux de Main-d'œuvre (productivité, charge de travail) ont le même gabarit compact (`text-sm`, `py-1.5`). Dans l'application les deux avaient déjà les mêmes classes : l'écart venait de la maquette (capture agrandie).
+- Le bloc des tuiles s'appelle **« Indicateurs clés de rentabilité »** (ex-« Analyse stratégique et point mort global ») : les tuiles sont des moyennes pondérées de coûts, de marge, le point mort et la marge de sécurité.
+
+**Lot 2 — nouveaux modules chiffrés : FAIT (21/11)** :
+- `engine/laborReport.js` (fonctions pures, 17 tests) : `computeSafetyMargin`, `computeProviderShares`, `computeLaborCascade`, `computeProductLaborProfitability`, `computeActivityLaborRatios`, `computeGrowthMargin`. `engine/reportThresholds.js` : fichier UNIQUE des seuils (dépendance fournisseur : 40 %), que le lot 3 complétera. `laborHours.js` expose `hoursByFormat` (même somme que `byPost`) ; App.jsx l'ajoute à `generalInfo.laborHoursByFormat`.
+- **Marge de sécurité** (6e tuile) = (ventes prévues − point mort) ÷ ventes prévues ; rouge si négative ; « — » sans ventes prévues. Démo : 13,89 %.
+- **Ingrédients et Emballages** : tableau « Achats par fournisseur » (part, barre orange et « dépendance » à 40 % ou plus) puis UN détail triable (tri par défaut : coût perte stock décroissant), filtrable par fournisseur et paginé (remplace les blocs par fournisseur et le menu « Totaux seulement »).
+- **Main-d'œuvre** : paie non utilisée (2 410,98 $, 21,8 % de la paie dans le démo), marge de croissance (heures productives libres des SEULS postes de production × revenu et bénéfice brut moyens par heure, arrondie à la centaine, avertissement d'estimation), « Où va la paie » (heures utilisées / productives inutilisées / non productives, en heures et en $), coût réel d'une heure productive (32,11 $/h contre 25,78 $/h de taux moyen), charge de travail par activité avec revenu et bénéfice brut par heure, classement des produits par bénéfice brut par heure (paginé). **Les produits de revente sont exclus** des ratios (la Sauce artisanale du Terroir, 0 h, gonflait les Sauces : 657 $/h → 86,47 $/h).
+- **Par Activité** : le tableau d'origine est intact ; une section « Main-d'œuvre » (heures, part, bénéfice brut par heure) s'ajoute dessous.
+- Infobulles (14 nouvelles : `kpi.margeSecurite`, `rapport.partAchats`, `mo.*`, `seg.*`), guide (marge de sécurité, achats par fournisseur, paie non utilisée, marge de croissance, cascade, coût de l'heure, rentabilité par produit, section de Par Activité), glossaire inchangé, chiffres du démo (`guideNumbers.js`).
+- Tests : 400 unitaires (+17), e2e : `report-lot2.spec.js` (6 tests).
+
+**Reste** : lot 3 (constats clés, `10-Constats-Cles.md`), puis exports PDF/Excel, visite guidée (scène sur la marge de sécurité et la paie à y ajouter) et révision de la langue.

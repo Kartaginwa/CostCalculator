@@ -249,11 +249,17 @@ export const DEMO = {
     etat: { revenus: '80 000.00 $', chargesDirectes: '48 000.00 $', beneficeBrut: '32 000.00 $', fraisFixes: '28 000.00 $', beneficeNet: '4 000.00 $',
         revenusTheorique: '79 713.59 $', chargesDirectesTheorique: '45 356.35 $', beneficeBrutTheorique: '34 357.24 $', beneficeNetTheorique: '6 299.48 $' },
     // Main-d'œuvre
-    mo: { coutCuisinier: '26.17 $/h', utilisation: '87.48 %', heuresAttendues: '393.72 h', heuresReelles: '344.42 h' },
+    mo: {
+        coutCuisinier: '26.17 $/h', utilisation: '87.48 %', heuresAttendues: '393.72 h', heuresReelles: '344.42 h',
+        // Lot 2 (21/11) : paie non utilisée, cascade, coût réel de l'heure, marge de croissance, bénéfice brut par heure.
+        paieTotale: '11 058.23 $', paieNonUtilisee: '2 410.98 $', partNonUtilisee: '21.8 %', coutHeureReel: '32.11 $/h', tauxMoyen: '25.78 $/h',
+        heuresLibres: '32.3 h', revenuHeure: '248.37 $', beneficeHeure: '108.10 $',
+        heureActivite: { plats: '164.46 $', soupes: '40.92 $', sauces: '86.47 $' }, heureProduit: { meilleur: '256.24 $/h', dernier: '74.89 $/h' },
+    },
     // Ingrédients
     ingredients: { abcA: '73.6% des coûts', coutNet: '19 004.06 $', pertes: '818.98 $', achatRequis: '19 823.04 $' },
     // Rapport — Vue d'ensemble
-    apercu: { coutMatiere: '34.57 %', coutEmballage: '7.17 %', coutMO: '13.87 %', margeBrute: '43.10 %', pointMortMenu: '68 642.61 $' },
+    apercu: { coutMatiere: '34.57 %', coutEmballage: '7.17 %', coutMO: '13.87 %', margeBrute: '43.10 %', pointMortMenu: '68 642.61 $', margeSecurite: '13.89 %' },
 };
 
 // Chaînes que le guide cite et qui doivent s'afficher à l'écran du projet démo, par écran.
@@ -280,11 +286,13 @@ export const DEMO_SCREEN_CHECKS = {
     // Rapports déplacés dans Rapport et suivi (21/11) : productivité et charge de travail, achats et perte stock, réconciliation.
     "summary:Main-d'œuvre": [
         DEMO.mo.utilisation, DEMO.mo.heuresAttendues, DEMO.mo.heuresReelles,
+        DEMO.mo.paieTotale, DEMO.mo.paieNonUtilisee, DEMO.mo.partNonUtilisee, DEMO.mo.coutHeureReel, DEMO.mo.tauxMoyen, DEMO.mo.heuresLibres,
+        DEMO.mo.revenuHeure, DEMO.mo.beneficeHeure, DEMO.mo.heureActivite.plats, DEMO.mo.heureActivite.soupes, DEMO.mo.heureProduit.meilleur, DEMO.mo.heureProduit.dernier,
         '92.21 %', '89.88 %', '88.47 %', '126.81 h', '36.82 %', '210.14 h', '61.01 %',
     ],
     "summary:Ingrédients": [DEMO.ingredients.abcA, DEMO.ingredients.coutNet, DEMO.ingredients.pertes, DEMO.ingredients.achatRequis],
     "summary:Vue d'ensemble": [
-        DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute, DEMO.apercu.pointMortMenu,
+        DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute, DEMO.apercu.pointMortMenu, DEMO.apercu.margeSecurite,
         DEMO.etat.revenus, DEMO.etat.chargesDirectes, DEMO.etat.beneficeBrut, DEMO.etat.beneficeNet,
         DEMO.etat.revenusTheorique, DEMO.etat.chargesDirectesTheorique, DEMO.etat.beneficeBrutTheorique, DEMO.etat.beneficeNetTheorique,
         '+286.41 $', '+0.4 %', '+2 643.65 $', '+5.8 %', '-2 357.24 $', '-6.9 %', '-2 299.48 $', '-36.5 %',
@@ -323,5 +331,6 @@ export const DEMO_RAPPORT = {
 const R = DEMO_RAPPORT;
 DEMO_SCREEN_CHECKS['summary:Par SKU'].push(...Object.values(R.bySkuDetail));
 DEMO_SCREEN_CHECKS['summary:Par Activité'] = Object.values(R.activites).flatMap((o) => Object.values(o));
+DEMO_SCREEN_CHECKS['summary:Par Activité'].push(DEMO.mo.heureActivite.plats, DEMO.mo.heureActivite.soupes, DEMO.mo.heureActivite.sauces);
 DEMO_SCREEN_CHECKS['summary:Par Canal'] = Object.values(R.canaux).flatMap((o) => Object.values(o));
 DEMO_SCREEN_CHECKS['summary:Portefeuille'] = Object.values(R.bcg); // matrice stratégique : sous-onglet Portefeuille (21/11)

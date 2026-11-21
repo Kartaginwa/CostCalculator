@@ -1,6 +1,6 @@
 # Constats clés — principes et catalogue des règles
 
-Statut : **lot 3** de la refonte de Rapport et suivi (21/11). Le lot 1 (rapatriement et navigation) est livré ; le lot 2 (nouveaux modules chiffrés) et ce lot 3 restent à faire. Voir `03-Feuille-de-route.md`.
+Statut : **lot 3** de la refonte de Rapport et suivi (21/11). Les lots 1 (rapatriement et navigation) et 2 (nouveaux modules chiffrés) sont livrés ; ce lot 3 reste à faire. Le fichier des seuils existe déjà : `src/engine/reportThresholds.js`. Voir `03-Feuille-de-route.md`.
 
 ## Ce que c'est
 

@@ -319,6 +319,7 @@ const App = ({ tourMode = false } = {}) => {
             byPost: totalDirectLaborHoursNeededByPost,
             byActivity: totalDirectLaborHoursNeededByActivity,
             total: totalDirectLaborHoursNeeded,
+            hoursByFormat: laborHoursByFormat,
         } = computeLaborHoursNeeded(products, baseIngredients, salesChannels);
 
         // TOUS les postes de l'onglet Main-d'œuvre doivent se retrouver dans le coût des produits (décision du 19/11) :
@@ -376,6 +377,8 @@ const App = ({ tourMode = false } = {}) => {
             // Total des heures de MO nécessaires au menu : dénominateur de la méthode d'attribution
             // « temps de production » (taux = frais indirects / ce total → réconcilie exactement).
             totalDirectLaborHoursNeeded: totalDirectLaborHoursNeeded,
+            // Heures de main-d'œuvre par format (rentabilité de l'heure par produit, Rapport et suivi → Main-d'œuvre).
+            laborHoursByFormat,
         };
     }, [generalInfo, products, baseIngredients, laborDatabase, autoCalculatedLaborCost, productionActivities, salesChannels]);
     // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---

@@ -14,6 +14,8 @@ import { AbcAnalysis } from './reports/AbcAnalysis.jsx';
 import { PurchasingReport } from './reports/PurchasingReport.jsx';
 import { LaborReport } from './reports/LaborReport.jsx';
 import { ReconciliationReport } from './reports/ReconciliationReport.jsx';
+import { ActivityLaborSection } from './reports/ActivityLaborSection.jsx';
+import { computeSafetyMargin } from '../engine/laborReport.js';
 
 // Sous-onglets de Rapport et suivi (refonte du 21/11), en quatre groupes séparés par un trait : Vue d'ensemble | produits et segments |
 // approvisionnement et équipe | simulation. L'ancien sous-onglet « Intrants » est scindé en Ingrédients et Emballages.
@@ -819,49 +821,60 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
         weightedPackagingCost,
         weightedLaborCost,
         totalSalesMix,
+        menuRevenue,
     } = analysisData;
+    // Marge de sécurité : de combien les ventes prévues peuvent baisser avant le point mort. Absente (—) sans ventes prévues.
+    const safetyMargin = computeSafetyMargin(menuRevenue, globalBreakEven);
 
 
     if (!analysisData.activeProducts || analysisData.activeProducts.length === 0) return null;
 
     return (
         <div id="strategic-analysis" className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Analyse stratégique et point mort global</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Indicateurs clés de rentabilité</h2>
 
             {/* flex + largeur fixe (plutôt que grid-cols-3) pour que la dernière ligne (2 tuiles sur
                 5) reste centrée au lieu de coller à gauche — un grid laisserait un trou à droite. */}
-            <div data-tour="kpi-tiles" className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 text-center">
-                <div className="p-4 bg-white rounded-lg shadow">
+            <div data-tour="kpi-tiles" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 text-center">
+                <div className="p-3 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">
                         Coût Matière Moyen Pondéré
                         <Tooltip tip="kpi.matiere" />
                         {getCostTargetIndicator(weightedMaterialCost, generalInfo.foodCostTarget)}
                     </div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg shadow">
+                <div className="p-3 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">
                         Coût Emballage Moyen Pondéré
                         <Tooltip tip="kpi.emballage" />
                         {getCostTargetIndicator(weightedPackagingCost, generalInfo.packagingCostTarget)}
                     </div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg shadow">
+                <div className="p-3 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">
                         Coût Main-d'œuvre Moyen Pondéré
                         <Tooltip tip="kpi.mo" />
                         {getCostTargetIndicator(weightedLaborCost, generalInfo.laborCostTarget)}
                     </div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg shadow">
+                <div className="p-3 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /></div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg shadow">
+                <div className="p-3 bg-white rounded-lg shadow">
                     <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort des Produits Actifs <Tooltip tip="kpi.pointMort" /></div>
-                    <p className="text-3xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
+                </div>
+                <div className="p-3 bg-white rounded-lg shadow">
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge de sécurité <Tooltip tip="kpi.margeSecurite" /></div>
+                    {safetyMargin ? (
+                        <>
+                            <p className={`text-2xl font-bold ${safetyMargin.ratio < 0 ? 'text-red-600' : 'text-blue-600'}`}>{formatPercent(safetyMargin.ratio)} %</p>
+                        </>
+                    ) : <p className="text-2xl font-bold text-gray-400" title="Aucune vente prévue ou point mort non calculable">—</p>}
                 </div>
             </div>
             {Math.round(totalSalesMix) !== 100 && totalSalesMix > 0 && (
@@ -1519,19 +1532,19 @@ export const SummaryTable = ({
                 </div>
             )}
 
-            {/* Barre des sous-onglets (21/11, refonte de Rapport et suivi) : quatre groupes séparés par un trait — Vue d'ensemble | produits et
-                segments | approvisionnement et équipe | simulation. Voir Projet_Claude/03-Feuille-de-route.md. */}
-            <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
+            {/* Barre des sous-onglets (21/11, refonte de Rapport et suivi) : quatre groupes dans l'ordre — Vue d'ensemble, produits et segments,
+                approvisionnement et équipe, simulation. Pas de trait vertical entre les groupes (retour utilisateur) ; la barre passe à la ligne
+                dans une fenêtre étroite au lieu de défiler. Voir Projet_Claude/03-Feuille-de-route.md. */}
+            <div className="flex flex-wrap gap-x-1 border-b border-gray-200 mb-6">
                 {REPORT_SUBTAB_GROUPS.map((group, groupIndex) => (
                     <React.Fragment key={groupIndex}>
-                        {groupIndex > 0 && <span aria-hidden="true" className="mx-2 self-center h-5 w-px bg-gray-300 flex-shrink-0" />}
                         {group.map(tab => (
                             <button
                                 key={tab.id}
                                 data-tour={`subtab-${tab.id}`}
                                 aria-current={subTab === tab.id ? 'page' : undefined}
                                 onClick={() => onActiveSubTabChange(tab.id)}
-                                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${subTab === tab.id ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                                className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${subTab === tab.id ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                             >
                                 {tab.label}
                             </button>
@@ -1612,9 +1625,13 @@ export const SummaryTable = ({
                 computeChannelSummaries, engine/analysisData.js, pour la méthodologie : $ sommés
                 jamais % moyennés, point mort en $ de revenu pas en unités). */}
             {subTab === 'byActivity' && (
+            <>
             <div id="tutorial-section-summary-byactivity">
                 <SegmentSummaryTable rows={activitySummaries} nameColumnLabel="Activité" idKey="activityId" nameKey="activityName" />
             </div>
+            {/* Section ajoutée SOUS le tableau d'origine, qui reste intact (hors de son conteneur). */}
+            <ActivityLaborSection activitySummaries={activitySummaries} activeProducts={analysisData.activeProducts} productivityReport={generalInfo.productivityReport} productionActivities={productionActivities} />
+            </>
             )}
 
             {subTab === 'byChannel' && (
@@ -1845,7 +1862,7 @@ export const SummaryTable = ({
             <div className="space-y-8">
                 <AbcAnalysis id="tutorial-section-ingredients-abc" abc={analysisData.abcAnalysisData} volatilityByName={priceVolatility.byName} nounPlural="ingrédients" />
                 <div className="pt-6 border-t">
-                    <PurchasingReport id="tutorial-section-ingredients-rapport" report={analysisData.purchasingReportData} itemLabel="Ingrédient" selectId="reportFilterProvider" memoryKey="ingredients.reportFilter" />
+                    <PurchasingReport id="tutorial-section-ingredients-rapport" report={analysisData.purchasingReportData} itemLabel="Ingrédient" selectId="reportFilterProvider" memoryKey="ingredients.reportFilter" itemsPerPage={itemsPerPage} onItemsPerPageChange={onItemsPerPageChange} />
                 </div>
                 <div id="tutorial-section-tracking-ingredient" className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-4 mb-4">
@@ -1892,7 +1909,7 @@ export const SummaryTable = ({
             <div className="space-y-8">
                 <AbcAnalysis id="tutorial-section-packaging-abc" abc={analysisData.packagingAbcAnalysisData} volatilityByName={packagingVolatility.byName} nounPlural="emballages" emptyMessage="Aucun emballage consommé pour la période — rattachez des emballages à vos formats de vente (onglet Production) pour voir apparaître cette analyse." />
                 <div className="pt-6 border-t">
-                    <PurchasingReport id="tutorial-section-packaging-rapport" report={analysisData.packagingPurchasingReportData} itemLabel="Emballage" selectId="reportFilterProviderPackaging" memoryKey="packaging.reportFilter" />
+                    <PurchasingReport id="tutorial-section-packaging-rapport" report={analysisData.packagingPurchasingReportData} itemLabel="Emballage" selectId="reportFilterProviderPackaging" memoryKey="packaging.reportFilter" itemsPerPage={itemsPerPage} onItemsPerPageChange={onItemsPerPageChange} />
                 </div>
                 {/* Emballage — poste SÉPARÉ des ingrédients (voir Phase 2), jamais fusionné. */}
                 <div id="tutorial-section-tracking-packaging" className="p-4 bg-gray-50 rounded-lg">
@@ -1937,7 +1954,7 @@ export const SummaryTable = ({
             )}
 
             {/* Main-d'œuvre : rapport de productivité et charge de travail par activité. */}
-            {subTab === 'labor' && <LaborReport />}
+            {subTab === 'labor' && <LaborReport itemsPerPage={itemsPerPage} onItemsPerPageChange={onItemsPerPageChange} />}
 
             {/* 06/10 : sous-onglet dédié — être dans cet onglet suffit, pas besoin de redéplier
                 le simulateur derrière un second clic (voir CostShockSimulator, prop collapsible). */}

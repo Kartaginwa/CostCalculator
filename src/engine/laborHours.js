@@ -25,6 +25,9 @@ export function computeLaborHoursNeeded(products, baseIngredients = [], salesCha
     // Lots à produire par FORMAT (ventes + consommation par d'autres recettes) : sert aussi à vérifier que la paie absorbée
     // par les produits est exactement la paie versée.
     const batchesByFormat = {};
+    // Heures de main-d'œuvre par FORMAT (21/11, rentabilité de l'heure par produit) : durée des étapes × lots à produire, par personne affectée —
+    // la même somme que byPost (leur total est donc identique). Le temps d'une sous-recette reste attribué à SON format, jamais au parent.
+    const hoursByFormat = {};
 
     // Même résolution que calculateCosts : l'id d'une ligne désigne un FORMAT de sous-recette, ou (anciens projets) un produit.
     const findSubRecipe = (id) => {
@@ -43,6 +46,7 @@ export function computeLaborHoursNeeded(products, baseIngredients = [], salesCha
             (step.personnel || []).forEach(person => {
                 const hours = (P(step.duration) / 3600) * batches;
                 byPost[person.postId] = (byPost[person.postId] || 0) + hours;
+                hoursByFormat[fmt.id] = (hoursByFormat[fmt.id] || 0) + hours;
                 if (product.activityId) byActivity[product.activityId] = (byActivity[product.activityId] || 0) + hours;
             });
         });
@@ -67,5 +71,5 @@ export function computeLaborHoursNeeded(products, baseIngredients = [], salesCha
         });
     });
 
-    return { byPost, byActivity, batchesByFormat, total: Object.values(byPost).reduce((sum, h) => sum + h, 0) };
+    return { byPost, byActivity, batchesByFormat, hoursByFormat, total: Object.values(byPost).reduce((sum, h) => sum + h, 0) };
 }

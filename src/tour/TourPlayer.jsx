@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Play, Pause, SkipBack, SkipForward, X } from 'lucide-react';
 import { SCENES, CHAPTERS, TOTAL_DURATION, INTRO_MS, SETTLE_MS, NAV_STEP_MS, POINT_LEAD, hasIntro, sceneLength, expandSteps } from './tourScript.js';
+import { TOUR_AUDIO } from './tourAudio.js';
 import {
     resolveEl, makeReader, setFieldValue, selectOptionByText, clickEl, hoverEl, hoverAtEl, pressEscape, scrollToEl, focusField, blurField,
 } from './tourDom.js';
@@ -129,6 +130,28 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
     const segFills = useRef([]);
     const lastClockRef = useRef(-1);
     const introOnRef = useRef(hasIntro(0));
+    const audioRef = useRef(null);          // voix humaine de la scène (facultative : seulement si un fichier existe, voir tourAudio.js)
+    const audioPendingRef = useRef(false);  // la voix parle encore : la scène ne passe pas à la suivante
+    const audioStartedRef = useRef(false);
+
+    // Voix de la scène : démarre quand la scène commence vraiment (après le titre de chapitre et le changement d'onglet),
+    // suit la pause et la vitesse, et se tait dès qu'on change de scène ou qu'on quitte.
+    const stopAudio = useCallback(() => {
+        const a = audioRef.current;
+        if (a) { a.onended = null; a.onerror = null; a.pause(); }
+        audioRef.current = null; audioPendingRef.current = false; audioStartedRef.current = false;
+    }, []);
+    const startAudio = useCallback((scene) => {
+        const url = TOUR_AUDIO[scene.id];
+        if (!url || typeof Audio === 'undefined') return;
+        const a = new Audio(url);
+        a.playbackRate = speedRef.current;
+        audioRef.current = a; audioPendingRef.current = true;
+        const done = () => { audioPendingRef.current = false; };
+        a.onended = done; a.onerror = done;
+        const p = a.play();
+        if (p && p.catch) p.catch(done);
+    }, []);
 
     // Pendant la visite, l'utilisateur ne fait pas défiler la page : seule la caméra le fait (cadres bien placés).
     useEffect(() => {
@@ -231,7 +254,8 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
         haloTargetRef.current = null; focusRef.current = null;
         noteDataRef.current = []; noteTargetsRef.current.clear(); setNotes([]);
         pendingRef.current = []; extraRef.current = [];
-    }, []);
+        stopAudio();
+    }, [stopAudio]);
 
     const quit = useCallback(() => { clearTimeout(fadeTimerRef.current); cleanupScene(); onExit(); }, [cleanupScene, onExit]);
 
@@ -307,6 +331,7 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
                 elapsedRef.current += dt * speedRef.current;
                 const el = elapsedRef.current;
                 if (introOnRef.current && el >= 0) { introOnRef.current = false; setIntroOn(false); }
+                if (el >= 0 && !audioStartedRef.current) { audioStartedRef.current = true; startAudio(scene); }
                 // navigation ajoutée à l'exécution, puis gestes du scénario
                 extraRef.current.forEach((x) => { if (!x.done && x.at <= el) { x.done = true; if (!run(x)) pendingRef.current.push({ s: x, since: el }); } });
                 EXPANDED[i].forEach((s, k) => {
@@ -334,7 +359,8 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
                     }
                     return true;
                 });
-                if (el >= scene.duration) goTo(i + 1);
+                // une voix qui parle encore retient la scène : elle ne se termine qu'une fois la phrase finie
+                if (el >= scene.duration && !audioPendingRef.current) goTo(i + 1);
             }
             // progression
             const cur = Math.min(idxRef.current, SCENES.length - 1);
@@ -431,12 +457,18 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
         };
         raf = requestAnimationFrame(frame);
         return () => cancelAnimationFrame(raf);
-    }, [goTo, run, rootRef]);
+    }, [goTo, run, rootRef, startAudio]);
 
     // --- contrôles -------------------------------------------------------------------------------------------
-    const setPlay = useCallback((v) => { playingRef.current = v; setPlaying(v); }, []);
+    const setPlay = useCallback((v) => {
+        playingRef.current = v; setPlaying(v);
+        const a = audioRef.current;
+        if (a && audioPendingRef.current) {
+            if (v) { const p = a.play(); if (p && p.catch) p.catch(() => { audioPendingRef.current = false; }); } else a.pause();
+        }
+    }, []);
     const togglePlay = useCallback(() => setPlay(!playingRef.current), [setPlay]);
-    const changeSpeed = (v) => { speedRef.current = v; setSpeed(v); };
+    const changeSpeed = (v) => { speedRef.current = v; setSpeed(v); if (audioRef.current) audioRef.current.playbackRate = v; };
 
     useEffect(() => {
         const onKey = (e) => {

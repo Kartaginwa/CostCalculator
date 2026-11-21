@@ -13,6 +13,10 @@
 //   hoverAt    { target, fx, fy }              — survol d'un point d'un graphique (fractions de largeur / hauteur)
 //   scroll / highlight / point / hover / guideOpen / guideClose / escape
 // Cibles : sélecteur CSS, { sel, nth }, { btn, nth?, contains?, within? }, { text, within?, up? }.
+//
+// Sous-titres = texte de la narration (rédigé pour être lu à voix haute le jour où la visite recevra une voix humaine :
+// phrases courtes, ponctuation qui respire, ni symbole ni abréviation qu'il faudrait épeler). `**mot**` = mot clé mis en
+// couleur à l'écran (la voix n'en tient pas compte). Pour ajouter une voix, voir src/tour/audio/LISEZMOI.md.
 
 export const CHAPTERS = [
     { id: 'bienvenue', title: 'Bienvenue', sub: '' },
@@ -20,7 +24,9 @@ export const CHAPTERS = [
     { id: 'intrants', title: 'Vos intrants', sub: 'Ce que vous achetez, ce que vous payez' },
     { id: 'produit', title: 'Un produit, de A à Z', sub: 'De la recette au prix de revient' },
     { id: 'frais', title: 'Vos frais', sub: 'Ce qui ne dépend d\'aucun produit en particulier' },
-    { id: 'analyse', title: 'Analyser', sub: 'Où gagnez-vous vraiment de l\'argent ?' },
+    { id: 'portrait', title: 'Le portrait de votre entreprise', sub: 'Où vous en êtes, et ce qui change' },
+    { id: 'detail', title: 'Zoom sur vos produits', sub: 'Par produit, par activité, par canal' },
+    { id: 'coulisses', title: 'Les coulisses', sub: 'Vos achats, votre équipe, vos « et si »' },
     { id: 'aide', title: 'Jamais perdu', sub: 'Où trouver l\'aide quand on en a besoin' },
 ];
 
@@ -33,17 +39,21 @@ const NEW_ING = '[id^="ingredient-row-manual_"]';
 const NEW_EXPENSE = '#tutorial-section-expenses tbody tr:last-child';
 const SHOCK_PCT = '[data-tour="shock-row"] input[inputmode="decimal"]';
 const KPI = '[data-tour="kpi-tiles"]';
+const SUBBAR = '[data-tour="subtab-bar"]';
+const FINDINGS = '#tutorial-section-key-findings';
+const RECON = '#tutorial-section-reconciliation';
 const CHART = '#tutorial-section-tracking-global .recharts-wrapper';
 const MODAL = '.fixed.inset-0.z-50';
 const tabNote = (i, to, text) => ({ at: 700 + i * 1250, do: 'note', id: `tab-${to}`, target: `#tab-${to}`, text, side: 'bottom' });
+const subNote = (at, to, text) => [{ at, do: 'point', target: `[data-tour="subtab-${to}"]` }, { at: at + 100, do: 'note', id: `sub-${to}`, target: `[data-tour="subtab-${to}"]`, text, side: 'bottom' }];
 const PRODUCT = { at: 0, do: 'pick', target: 'select', option: 'Chili con carne mijoté', instant: true };
 
-// Sous-titres : français vivant, vocabulaire de l'étape 6 (produit, actif ; jamais « plat » ni « menu »).
+// Vocabulaire de l'étape 6 : produit, actif ; jamais « plat » ni « menu ». « Colonne » (jamais « ligne ») pour un segment.
 export const SCENES = [
     // --- 0. Bienvenue ---------------------------------------------------------------------------------------
     {
-        id: 'accueil', chapter: 0, tab: 'info', duration: 7500, introTitle: 'Le vrai coût de chaque produit', introSub: 'Visite guidée · environ 5 minutes',
-        caption: '**Combien** coûte vraiment chacun de vos produits ? Et **lesquels** vous font réellement gagner de l\'argent ? Cinq minutes pour tout comprendre.',
+        id: 'accueil', chapter: 0, tab: 'info', introTitle: 'Le vrai coût de chaque produit', introSub: 'Visite guidée · environ sept minutes',
+        caption: `Imaginez une petite entreprise qui fabrique des repas surgelés. Chaque mois, la même question la ronge : **combien** coûte vraiment chaque produit, et **lesquels** rapportent de l'argent ? Cette visite y répond.`,
         steps: [
             { at: 400, do: 'highlight', target: 'img[alt^="Logo"]' },
             { at: 3600, do: 'note', id: 'bar', target: '#tutorial-tab-bar', text: 'Tout se passe dans ces sept onglets', side: 'bottom' },
@@ -51,8 +61,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'ordre', chapter: 0, tab: 'info', duration: 10500,
-        caption: 'Sept onglets, **sept étapes**. On avance de **gauche à droite** : ce que vous achetez, ce que ça coûte à fabriquer, ce qui s\'y ajoute, puis ce que ça rapporte.',
+        id: 'ordre', chapter: 0, tab: 'info',
+        caption: `Sept onglets, de **gauche à droite**. D'abord ce que vous achetez, puis ce que ça coûte à fabriquer, ce qui s'y ajoute, et enfin ce que tout cela vous rapporte.`,
         steps: [
             { at: 0, do: 'highlight', target: '#tutorial-tab-bar' },
             // une seule étiquette à la fois : la précédente s'efface quand le pointeur passe à l'onglet suivant
@@ -64,10 +74,10 @@ export const SCENES = [
         ],
     },
 
-    // --- 1. Vos intrants --------------------------------------------------------------------------------------
+    // --- 1. Votre entreprise ----------------------------------------------------------------------------------
     {
-        id: 'entreprise', chapter: 1, tab: 'info', duration: 10500,
-        caption: 'On commence par **vous présenter** : le nom de l\'entreprise, puis vos **cibles de coûts**. L\'application comparera chacun de vos résultats à ces objectifs.',
+        id: 'entreprise', chapter: 1, tab: 'info',
+        caption: `Commençons par **vous**. Le nom de l'entreprise, d'abord. Puis vos cibles : la part du prix de vente que vous acceptez de consacrer aux ingrédients. Chaque résultat sera comparé à ces objectifs.`,
         steps: [
             { at: 300, do: 'note', id: 'nom', target: '#tutorial-company-name', text: 'Le nom de votre entreprise', side: 'right' },
             { at: 400, do: 'type', target: '#tutorial-company-name', text: 'Boréal Mets Préparés inc.', rate: 70 },
@@ -79,8 +89,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'activites', chapter: 1, tab: 'info', duration: 8000,
-        caption: 'Vos **activités** de production (surgélation, conserves…) servent à **répartir les frais** : chaque produit appartient à l\'une d\'elles.',
+        id: 'activites', chapter: 1, tab: 'info',
+        caption: `Vous fabriquez plusieurs familles de produits ? Ce sont vos **activités** : mets surgelés, soupes, sauces. Elles servent à répartir les frais, et chaque produit appartient à l'une d'elles.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-info-activites' },
             { at: 900, do: 'highlight', target: '#tutorial-section-info-activites' },
@@ -90,8 +100,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'canaux', chapter: 1, tab: 'info', duration: 13500,
-        caption: 'Vos **canaux de vente** décrivent la chaîne qui mène le produit jusqu\'au client. Ouvrons ses **maillons** : chaque intermédiaire ajoute sa marge, et le prix s\'ajuste à chaque étape.',
+        id: 'canaux', chapter: 1, tab: 'info',
+        caption: `Entre vous et le client, il y a parfois des intermédiaires. Chaque **canal de vente** a sa chaîne, et chaque maillon prend sa part. Regardez : le prix s'ajuste à chaque étape.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-info-channels' },
             { at: 900, do: 'highlight', target: '#tutorial-section-info-channels' },
@@ -103,8 +113,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'produits', chapter: 1, tab: 'info', duration: 10500,
-        caption: 'Voici **vos produits** : chacun avec ses formats, son prix et sa part des ventes. Une liste longue ? **Tapez quelques lettres** pour retrouver un produit.',
+        id: 'produits', chapter: 1, tab: 'info',
+        caption: `Voici **vos produits**, chacun avec ses formats, son prix et sa part des ventes. Une longue liste ? Tapez quelques lettres, et le produit que vous cherchez apparaît.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-info-menu', block: 'start' },
             { at: 1100, do: 'note', id: 'rech', target: '#filterPlatName', text: 'La recherche filtre la liste en direct', side: 'right' },
@@ -114,9 +124,11 @@ export const SCENES = [
             { at: 8200, do: 'type', target: '#filterPlatName', text: '', rate: 100 },
         ],
     },
+
+    // --- 2. Vos intrants --------------------------------------------------------------------------------------
     {
-        id: 'ingredient-saisie', chapter: 2, tab: 'ingredients', duration: 12500,
-        caption: '**Ajoutons un ingrédient** : son nom, son fournisseur, son format, son prix. L\'application calcule seule le **coût de chaque kilo**, pertes comprises.',
+        id: 'ingredient-saisie', chapter: 2, tab: 'ingredients',
+        caption: `Maintenant, ce que vous **achetez**. Ajoutons de la farine : son fournisseur, son format, son prix, sa perte. L'application calcule seule le coût réel de chaque kilo, perte comprise.`,
         steps: [
             { at: 600, do: 'click', target: '#tutorial-add-ingredient' },
             { at: 1900, do: 'scroll', target: NEW_ING },
@@ -131,8 +143,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'allergenes', chapter: 2, tab: 'ingredients', duration: 11500,
-        caption: 'Un point fort, souvent méconnu : les **allergènes**. Cochez ceux de chaque ingrédient ; ils **remontent automatiquement** jusqu\'à la recette, prêts pour votre étiquetage.',
+        id: 'allergenes', chapter: 2, tab: 'ingredients',
+        caption: `Un détail qui change tout pour l'étiquetage : les **allergènes**. Cochez-les une seule fois sur l'ingrédient, et ils remontent d'eux-mêmes jusqu'à la recette.`,
         steps: [
             { at: 300, do: 'scroll', target: '#tutorial-section-ingredients-db tbody tr:first-child' },
             { at: 1000, do: 'note', id: 'al0', target: '#tutorial-section-ingredients-db tbody tr:first-child button[title="Gérer les allergènes"]', text: 'Le bouton des allergènes', side: 'left' },
@@ -145,20 +157,20 @@ export const SCENES = [
         ],
     },
     {
-        id: 'emballage', chapter: 2, tab: 'packaging', duration: 8500,
-        caption: 'L\'**emballage** suit la même logique que les ingrédients : contenants, étiquettes, cartons. Une longue liste dans un chiffrier ? **Importez-la** d\'un coup.',
+        id: 'emballage', chapter: 2, tab: 'packaging',
+        caption: `Les contenants, les étiquettes, les cartons : l'**emballage** fonctionne comme les ingrédients. Et si vos prix dorment déjà dans un chiffrier, importez-les d'un seul coup.`,
         steps: [
             { at: 500, do: 'highlight', target: '#tutorial-section-packaging-db' },
             { at: 1400, do: 'note', id: 'pk', target: { sel: '#tutorial-section-packaging-db tbody tr:first-child input', nth: 3 }, text: 'Le prix d\'achat : le coût unitaire suit', side: 'top' },
-            { at: 1800, do: 'type', target: { sel: '#tutorial-section-packaging-db tbody tr:first-child input', nth: 3 }, text: '0,85', rate: 230 },
+            { at: 1800, do: 'type', target: { sel: '#tutorial-section-packaging-db tbody tr:first-child input', nth: 3 }, text: '92,40', rate: 230 },
             { at: 3700, do: 'unnote' },
             { at: 3900, do: 'note', id: 'imp', target: { btn: 'Importer une liste' }, text: 'Une longue liste ? Importez-la depuis Excel', side: 'bottom' },
             { at: 4100, do: 'point', target: { btn: 'Importer une liste' } },
         ],
     },
     {
-        id: 'main-oeuvre', chapter: 2, tab: 'labor', duration: 11500,
-        caption: 'La **main-d\'œuvre** : un poste, ses employés, leur salaire et leurs charges. Changez un salaire et le **coût horaire du poste** suit tout de suite.',
+        id: 'main-oeuvre', chapter: 2, tab: 'labor',
+        caption: `Et les gens qui fabriquent ? Un poste, ses employés, leur salaire, leurs charges. Modifiez un salaire, et le **coût horaire du poste** suit aussitôt.`,
         steps: [
             { at: 700, do: 'highlight', target: '#tutorial-section-labor-db' },
             { at: 1300, do: 'note', id: 'sal', target: { sel: '#tutorial-section-labor-db input', nth: 2 }, text: 'Salaire horaire de cet employé', side: 'top' },
@@ -167,10 +179,10 @@ export const SCENES = [
         ],
     },
 
-    // --- 2. Un produit, de A à Z -------------------------------------------------------------------------------
+    // --- 3. Un produit, de A à Z -------------------------------------------------------------------------------
     {
-        id: 'recette', chapter: 3, tab: 'recipe', duration: 10500,
-        caption: 'Onglet **Production** : on choisit un produit… et sa **recette** apparaît. Quantité produite, ingrédients, emballage, étapes de fabrication.',
+        id: 'recette', chapter: 3, tab: 'recipe',
+        caption: `Place à la **recette**. Choisissez un produit : la quantité produite, les ingrédients, l'emballage et les étapes apparaissent. Ici, un lot de vingt unités de chili.`,
         steps: [
             { at: 600, do: 'pick', target: 'select', option: 'Chili con carne mijoté' },
             { at: 2400, do: 'note', id: 'qte', target: { sel: '#tutorial-section-recipe-header input', nth: 0 }, text: 'Un lot = 20 unités de 400 g', side: 'right' },
@@ -180,8 +192,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'recette-direct', chapter: 3, tab: 'recipe', duration: 12500,
-        caption: '**Tout se recalcule en direct.** Plus de bœuf dans la recette ? Regardez le **coût matière** monter… et la marge fondre.',
+        id: 'recette-direct', chapter: 3, tab: 'recipe',
+        caption: `Et tout se recalcule **en direct**. Un peu plus de bœuf dans la recette ? Regardez le coût matière grimper… et la marge fondre.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#tutorial-section-recipe-ingredients' },
@@ -196,8 +208,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'etapes', chapter: 3, tab: 'recipe', duration: 8500,
-        caption: 'Les **étapes de fabrication** disent qui travaille, quand et combien de temps. C\'est de là que vient le **coût de main-d\'œuvre** de chaque unité.',
+        id: 'etapes', chapter: 3, tab: 'recipe',
+        caption: `Les **étapes** disent qui travaille, quand, et pendant combien de temps. C'est de là que vient le coût de main-d'œuvre de chaque unité.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#tutorial-section-recipe-labor', block: 'start' },
@@ -207,8 +219,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'cascade', chapter: 3, tab: 'recipe', duration: 12500,
-        caption: 'Le **récapitulatif** : du coût de revient complet jusqu\'au **point mort**. Et selon le **canal de vente**, la marge n\'est pas la même — essayez !',
+        id: 'cascade', chapter: 3, tab: 'recipe',
+        caption: `Tout en bas, le **récapitulatif** : du coût de revient complet jusqu'au point mort. Et selon le canal de vente, la marge change. Essayez les épiceries.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#recap-section', block: 'start' },
@@ -224,8 +236,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'simulation-prix', chapter: 3, tab: 'recipe', duration: 14000,
-        caption: 'Et si vous changiez le **prix de vente** ? Le mode **simulation** recalcule les marges et le point mort, sans toucher au prix réel. Trop bas, et la marge s\'effondre.',
+        id: 'simulation-prix', chapter: 3, tab: 'recipe',
+        caption: `Et si vous changiez le **prix de vente** ? Testez-le sans toucher au vrai prix : les marges et le point mort se recalculent. Descendez trop bas, et la marge s'effondre.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: { btn: 'Simuler un nouveau prix' } },
@@ -238,10 +250,10 @@ export const SCENES = [
         ],
     },
 
-    // --- 3. Vos frais --------------------------------------------------------------------------------------------
+    // --- 4. Vos frais --------------------------------------------------------------------------------------------
     {
-        id: 'revenus', chapter: 4, tab: 'income-statement', duration: 8000,
-        caption: 'L\'**état des résultats** reprend vos chiffres réels : vos **revenus**, puis vos **charges directes** (matières, emballage, sous-traitance), comme votre comptable les présente.',
+        id: 'revenus', chapter: 4, tab: 'income-statement',
+        caption: `Jusqu'ici, c'était le modèle. Voici maintenant le **réel**, comme votre comptable le présente : ce que vous avez encaissé, puis ce que la fabrication vous a coûté.`,
         steps: [
             { at: 700, do: 'highlight', target: '#tutorial-section-revenue' },
             { at: 900, do: 'note', id: 'rev', target: '#tutorial-section-revenue', text: 'Ce que vous avez encaissé', side: 'top' },
@@ -251,8 +263,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'frais-fixes', chapter: 4, tab: 'income-statement', duration: 16500,
-        caption: 'Les **frais fixes** — loyer, assurances, entretien — ne dépendent d\'aucun produit. **Ajoutez-en un**, dites **où il va** : le total, puis le **bénéfice net**, réagissent aussitôt.',
+        id: 'frais-fixes', chapter: 4, tab: 'income-statement',
+        caption: `Les **frais fixes**, comme le loyer, les assurances ou l'entretien, ne dépendent d'aucun produit. Ajoutez-en un, dites où il va, et le total comme le bénéfice net réagissent aussitôt.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-expenses', block: 'start' },
             { at: 900, do: 'highlight', target: '#tutorial-section-expenses' },
@@ -272,8 +284,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'repartition', chapter: 4, tab: 'income-statement', duration: 8500,
-        caption: 'Ces frais, il faut les **répartir** entre vos produits. Vous choisissez la règle : selon les **coûts directs**, le **temps de production** ou le **volume** fabriqué.',
+        id: 'repartition', chapter: 4, tab: 'income-statement',
+        caption: `Mais chaque produit doit porter sa part de ces frais. À vous de choisir la règle de partage : selon les coûts directs, le temps de production ou le volume fabriqué.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-cici' },
             { at: 1000, do: 'highlight', target: '#tutorial-section-cici' },
@@ -283,8 +295,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'benefices', chapter: 4, tab: 'income-statement', duration: 7500,
-        caption: 'Le **bénéfice brut** (revenus moins charges directes) puis le **bénéfice net** (moins les frais fixes).',
+        id: 'benefices', chapter: 4, tab: 'income-statement',
+        caption: `Le **bénéfice brut**, c'est ce qui reste après les charges directes. Le **bénéfice net**, c'est ce qui reste après les frais fixes. Voilà ce qui vous revient vraiment.`,
         steps: [
             { at: 200, do: 'scroll', target: { sel: '[data-tour="profit-bar"]', nth: 0 } },
             { at: 900, do: 'highlight', target: { sel: '[data-tour="profit-bar"]', nth: 0 } },
@@ -295,10 +307,24 @@ export const SCENES = [
         ],
     },
 
-    // --- 4. Analyser ------------------------------------------------------------------------------------------------------
+    // --- 5. Le portrait de votre entreprise (Rapport et suivi : Vue d'ensemble) ---------------------------------------
     {
-        id: 'indicateurs', chapter: 5, tab: 'summary', subtab: 'overview', duration: 9500,
-        caption: 'Voici le **tableau de bord** : cinq indicateurs pour **tous vos produits actifs**, comparés à vos objectifs. Un **triangle rouge**, c\'est un coût au-dessus de la cible.',
+        id: 'rapport-carte', chapter: 5, tab: 'summary', subtab: 'overview',
+        caption: `Tout converge ici, dans **Rapport et suivi**. Neuf sous-onglets, mais quatre idées : le portrait de l'entreprise, vos produits, vos achats et votre équipe, vos « et si ».`,
+        steps: [
+            { at: 300, do: 'highlight', target: SUBBAR },
+            ...subNote(1100, 'overview', 'Le portrait de l\'entreprise'),
+            { at: 3500, do: 'unnote' },
+            ...subNote(3600, 'portfolio', 'Vos produits, activités et canaux'),
+            { at: 6100, do: 'unnote' },
+            ...subNote(6200, 'ingredients', 'Vos achats et votre équipe'),
+            { at: 8700, do: 'unnote' },
+            ...subNote(8800, 'simulation', 'Vos « et si »'),
+        ],
+    },
+    {
+        id: 'indicateurs', chapter: 5, tab: 'summary', subtab: 'overview',
+        caption: `D'abord, le portrait d'ensemble : six chiffres comparés à vos objectifs. Un triangle rouge, et les ingrédients coûtent plus cher que prévu. La **marge de sécurité**, elle, dit de combien les ventes peuvent baisser avant la perte.`,
         steps: [
             { at: 300, do: 'scroll', target: KPI }, { at: 1000, do: 'highlight', target: KPI },
             { at: 1300, do: 'note', id: 'k1', target: `${KPI} > div:first-child`, text: 'Coût matière moyen : {v}', side: 'top', read: { label: 'Coût Matière Moyen Pondéré' } },
@@ -306,70 +332,12 @@ export const SCENES = [
             { at: 4000, do: 'unnote' },
             { at: 4200, do: 'note', id: 'k2', target: `${KPI} > div:first-child`, text: 'Triangle rouge : au-dessus de votre cible', side: 'top' },
             { at: 6600, do: 'unnote' },
-            { at: 6800, do: 'note', id: 'k3', target: `${KPI} > div:nth-child(2)`, text: 'Crochet vert : sous la cible', side: 'top' },
+            { at: 6800, do: 'note', id: 'k6', target: `${KPI} > div:nth-child(6)`, text: 'Vos ventes peuvent baisser de {v} avant la perte', side: 'top', read: { label: 'Marge de sécurité', within: KPI } },
         ],
     },
     {
-        id: 'matrice', chapter: 5, tab: 'summary', subtab: 'portfolio', duration: 13500,
-        caption: 'La **matrice stratégique** classe chaque produit : **étoiles**, **vaches à lait**, **dilemmes**, **poids morts**. Changez de canal : le classement change aussi.',
-        steps: [
-            { at: 300, do: 'scroll', target: '[data-tour="bcg-title"]', block: 'start' },
-            { at: 1200, do: 'highlight', target: { text: 'Étoiles', within: '[data-tour="bcg-matrix"]', up: 2 } },
-            { at: 1500, do: 'note', id: 'etoiles', target: { text: 'Étoiles', within: '[data-tour="bcg-matrix"]', up: 2 }, text: 'À promouvoir', side: 'bottom' },
-            { at: 3400, do: 'unnote' },
-            { at: 3500, do: 'highlight', target: { text: 'Poids morts', within: '[data-tour="bcg-matrix"]', up: 2 } },
-            { at: 3600, do: 'note', id: 'poids', target: { text: 'Poids morts', within: '[data-tour="bcg-matrix"]', up: 2 }, text: 'À repenser ou retirer', side: 'bottom' },
-            { at: 6000, do: 'unnote' },
-            { at: 6200, do: 'pick', target: '#bcgChannelFilter', option: 'Épiceries' },
-            { at: 8200, do: 'note', id: 'chg', target: '#bcgChannelFilter', text: 'Mêmes produits, autre canal : le classement bouge', side: 'right' },
-        ],
-    },
-    {
-        id: 'par-sku', chapter: 5, tab: 'summary', subtab: 'bySku', duration: 10500,
-        caption: '**Par SKU** : un produit suivi à travers chacun de ses canaux. Prix, marges, frais fixes, **point mort**. Choisissez-en un autre, le tableau se refait.',
-        steps: [
-            { at: 500, do: 'highlight', target: '#tutorial-section-summary-bysku' },
-            { at: 1200, do: 'note', id: 'sku', target: '#summarySkuSelect', text: 'Choisissez un produit', side: 'right' },
-            { at: 2400, do: 'pick', target: '#summarySkuSelect', option: 'Saumon' },
-            { at: 5200, do: 'note', id: 'mn', target: { text: 'Marge nette', within: '#tutorial-section-summary-bysku' }, text: 'Marge nette par canal', side: 'top' },
-        ],
-    },
-    {
-        id: 'par-activite', chapter: 5, tab: 'summary', subtab: 'byActivity', duration: 7000,
-        caption: '**Par Activité** : la même analyse vue d\'en haut, une colonne par activité. Où l\'entreprise **gagne**, où elle **perd** — en un coup d\'œil.',
-        steps: [
-            { at: 500, do: 'highlight', target: '#tutorial-section-summary-byactivity' },
-            { at: 900, do: 'note', id: 'ba', target: '#tutorial-section-summary-byactivity', text: 'Une colonne par activité', side: 'top' },
-            { at: 2600, do: 'point', target: { sel: '#tutorial-section-summary-byactivity thead th', nth: 1 } },
-            { at: 4300, do: 'point', target: { sel: '#tutorial-section-summary-byactivity thead th', nth: 2 } },
-        ],
-    },
-    {
-        id: 'par-canal', chapter: 5, tab: 'summary', subtab: 'byChannel', duration: 7000,
-        caption: '**Par Canal** : la même chose, avec une colonne par circuit de vente. Lequel rapporte vraiment, lequel coûte plus qu\'il ne rapporte ?',
-        steps: [
-            { at: 500, do: 'highlight', target: '#tutorial-section-summary-bychannel' },
-            { at: 900, do: 'note', id: 'bc', target: '#tutorial-section-summary-bychannel', text: 'Une colonne par canal de vente', side: 'top' },
-            { at: 2600, do: 'point', target: { sel: '#tutorial-section-summary-bychannel thead th', nth: 1 } },
-            { at: 4300, do: 'point', target: { sel: '#tutorial-section-summary-bychannel thead th', nth: 2 } },
-        ],
-    },
-    {
-        id: 'simulation', chapter: 5, tab: 'summary', subtab: 'simulation', duration: 14500,
-        caption: '**Et si** vos prix d\'achat montaient de 8 % ? Puis de 15 % ? Le simulateur montre l\'effet sur la **marge**, le **point mort** et chaque activité.',
-        steps: [
-            { at: 500, do: 'click', target: { btn: 'Ajouter un choc' }, unless: '[data-tour="shock-row"]' },
-            { at: 2100, do: 'note', id: 'pct', target: SHOCK_PCT, text: 'Hausse des prix d\'achat (%)', side: 'top' },
-            { at: 2400, do: 'type', target: SHOCK_PCT, text: '8', rate: 300 },
-            { at: 4000, do: 'scroll', target: '[data-tour="shock-results"]', block: 'start' },
-            { at: 4800, do: 'highlight', target: '[data-tour="shock-results"]' },
-            { at: 5000, do: 'note', id: 'mg', target: { text: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' }, text: 'Marge brute : {v}', side: 'top', read: { label: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' } },
-            { at: 7400, do: 'type', target: SHOCK_PCT, text: '15', rate: 300 },
-        ],
-    },
-    {
-        id: 'points-reference', chapter: 5, tab: 'summary', subtab: 'overview', duration: 19500,
-        caption: 'Un **point de référence** est une **photo** de votre projet. Chaque photo ajoute **un point** aux graphiques d\'évolution : en les alignant, vous voyez vos coûts et vos marges **bouger dans le temps**.',
+        id: 'points-reference', chapter: 5, tab: 'summary', subtab: 'overview',
+        caption: `Pour voir le temps passer, prenez une **photo** de votre projet : un point de référence. Chaque photo ajoute un point aux courbes, et vos coûts et vos marges se mettent enfin à bouger sous vos yeux.`,
         steps: [
             { at: 400, do: 'click', target: '#tutorial-snapshot' },
             { at: 2000, do: 'click', target: { btn: 'Nouveau point de référence' } },
@@ -388,8 +356,95 @@ export const SCENES = [
         ],
     },
     {
-        id: 'intrants', chapter: 5, tab: 'summary', subtab: 'ingredients', duration: 15500,
-        caption: 'Le sous-onglet **Ingrédients** suit aussi le **prix de chaque ingrédient** d\'un point de référence à l\'autre. Un prix qui s\'envole ? La **volatilité** le signale.',
+        id: 'constats', chapter: 5, tab: 'summary', subtab: 'overview',
+        caption: `Pas envie de fouiller dans les chiffres ? Les **constats clés** le font pour vous : vos objectifs atteints ou non, ce qui s'améliore ou se détériore, vos forces et vos faiblesses.`,
+        steps: [
+            { at: 300, do: 'scroll', target: FINDINGS, block: 'start' },
+            { at: 1100, do: 'highlight', target: FINDINGS },
+            { at: 1400, do: 'note', id: 'c1', target: { text: 'Objectifs stratégiques', within: FINDINGS }, text: 'Vos cibles : atteintes ou non', side: 'right' },
+            { at: 4000, do: 'unnote' }, { at: 4100, do: 'scroll', target: { text: 'Amélioration / détérioration', within: FINDINGS }, block: 'start' },
+            { at: 5000, do: 'note', id: 'c2', target: { text: 'Amélioration / détérioration', within: FINDINGS }, text: 'Ce qui bouge depuis vos derniers points de référence', side: 'right' },
+            { at: 7600, do: 'unnote' }, { at: 7700, do: 'scroll', target: { text: 'Forces et faiblesses', within: FINDINGS }, block: 'start' },
+            { at: 8600, do: 'note', id: 'c3', target: { text: 'Forces et faiblesses', within: FINDINGS }, text: 'Ce qui vous distingue, en bien comme en moins bien', side: 'right' },
+        ],
+    },
+    {
+        id: 'reconciliation', chapter: 5, tab: 'summary', subtab: 'overview',
+        caption: `Dernier regard sur l'ensemble : la **réconciliation**. Ce que vous encaissez vraiment, contre ce que votre modèle de recettes prévoit. L'écart, c'est là qu'il faut chercher les pertes invisibles.`,
+        steps: [
+            { at: 300, do: 'scroll', target: RECON, block: 'start' },
+            { at: 1100, do: 'highlight', target: RECON },
+            { at: 1400, do: 'note', id: 'rec', target: { text: 'Réconciliation réel / théorique', within: RECON }, text: 'Réel contre théorique', side: 'right' },
+            { at: 4000, do: 'unnote' },
+            { at: 4300, do: 'highlight', target: { sel: `${RECON} tbody tr:last-child` } },
+            { at: 4600, do: 'note', id: 'ecart', target: { sel: `${RECON} tbody tr:last-child` }, text: 'Écart du bénéfice net : {v}', side: 'bottom', read: { sel: `${RECON} tbody tr:last-child td`, nth: 3 } },
+        ],
+    },
+
+    // --- 6. Zoom sur vos produits (Portefeuille, Par SKU, Par Activité, Par Canal) ------------------------------------
+    {
+        id: 'matrice', chapter: 6, tab: 'summary', subtab: 'portfolio',
+        caption: `Vos produits ne se valent pas. La **matrice stratégique** les range selon leur popularité et leur rentabilité : étoiles, vaches à lait, dilemmes, poids morts. Changez de canal, et le classement bouge.`,
+        steps: [
+            { at: 300, do: 'scroll', target: '[data-tour="bcg-title"]', block: 'start' },
+            { at: 1200, do: 'highlight', target: { text: 'Étoiles', within: '[data-tour="bcg-matrix"]', up: 2 } },
+            { at: 1500, do: 'note', id: 'etoiles', target: { text: 'Étoiles', within: '[data-tour="bcg-matrix"]', up: 2 }, text: 'À promouvoir', side: 'bottom' },
+            { at: 3400, do: 'unnote' },
+            { at: 3500, do: 'highlight', target: { text: 'Poids morts', within: '[data-tour="bcg-matrix"]', up: 2 } },
+            { at: 3600, do: 'note', id: 'poids', target: { text: 'Poids morts', within: '[data-tour="bcg-matrix"]', up: 2 }, text: 'À repenser ou retirer', side: 'bottom' },
+            { at: 6000, do: 'unnote' },
+            { at: 6200, do: 'pick', target: '#bcgChannelFilter', option: 'Épiceries' },
+            { at: 8200, do: 'note', id: 'chg', target: '#bcgChannelFilter', text: 'Mêmes produits, autre canal : le classement bouge', side: 'right' },
+        ],
+    },
+    {
+        id: 'par-sku', chapter: 6, tab: 'summary', subtab: 'bySku',
+        caption: `Un produit à la fois, maintenant. Du prix de vente jusqu'au point mort, voyez ce qu'il rapporte vraiment dans chacun de ses canaux. Choisissez-en un autre, et le tableau se refait.`,
+        steps: [
+            { at: 500, do: 'highlight', target: '#tutorial-section-summary-bysku' },
+            { at: 1200, do: 'note', id: 'sku', target: '#summarySkuSelect', text: 'Choisissez un produit', side: 'right' },
+            { at: 2400, do: 'pick', target: '#summarySkuSelect', option: 'Saumon' },
+            { at: 5200, do: 'note', id: 'mn', target: { text: 'Marge nette', within: '#tutorial-section-summary-bysku' }, text: 'Marge nette par canal', side: 'top' },
+        ],
+    },
+    {
+        id: 'par-activite', chapter: 6, tab: 'summary', subtab: 'byActivity',
+        caption: `Reculez d'un cran : une **colonne** par activité. Laquelle porte l'entreprise, laquelle rapporte le moins ? Tout se lit d'un seul coup d'œil.`,
+        steps: [
+            { at: 500, do: 'highlight', target: '#tutorial-section-summary-byactivity' },
+            { at: 900, do: 'note', id: 'ba', target: '#tutorial-section-summary-byactivity', text: 'Une colonne par activité', side: 'top' },
+            { at: 2600, do: 'point', target: { sel: '#tutorial-section-summary-byactivity thead th', nth: 1 } },
+            { at: 4300, do: 'point', target: { sel: '#tutorial-section-summary-byactivity thead th', nth: 2 } },
+        ],
+    },
+    {
+        id: 'par-canal', chapter: 6, tab: 'summary', subtab: 'byChannel',
+        caption: `Et la même chose par **canal**. Quel circuit de vente rapporte vraiment, et lequel coûte presque autant qu'il rapporte ?`,
+        steps: [
+            { at: 500, do: 'highlight', target: '#tutorial-section-summary-bychannel' },
+            { at: 900, do: 'note', id: 'bc', target: '#tutorial-section-summary-bychannel', text: 'Une colonne par canal de vente', side: 'top' },
+            { at: 2600, do: 'point', target: { sel: '#tutorial-section-summary-bychannel thead th', nth: 1 } },
+            { at: 4300, do: 'point', target: { sel: '#tutorial-section-summary-bychannel thead th', nth: 2 } },
+        ],
+    },
+
+    // --- 7. Les coulisses (Ingrédients, Emballages, Main-d'œuvre, Simulation) -------------------------------------------
+    {
+        id: 'achats-ingredients', chapter: 7, tab: 'summary', subtab: 'ingredients',
+        caption: `Dans les coulisses, vos achats. L'analyse ABC montre les ingrédients qui pèsent le plus lourd. Plus bas, vos fournisseurs : quand un seul pèse la moitié des achats, c'est une dépendance.`,
+        steps: [
+            { at: 200, do: 'scroll', target: '#tutorial-section-ingredients-abc' },
+            { at: 900, do: 'highlight', target: '#tutorial-section-ingredients-abc' },
+            { at: 1300, do: 'note', id: 'a', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 0 }, text: 'Catégorie A : les gros postes de dépense', side: 'top' },
+            { at: 4000, do: 'unnote' },
+            { at: 4200, do: 'scroll', target: { text: 'Achats par fournisseur', within: '#tutorial-section-ingredients-rapport' } },
+            { at: 5200, do: 'highlight', target: { text: 'Achats par fournisseur', within: '#tutorial-section-ingredients-rapport', up: 1 } },
+            { at: 5500, do: 'note', id: 'dep', target: { text: 'dépendance', within: '#tutorial-section-ingredients-rapport' }, text: 'Un seul fournisseur pèse la moitié des achats', side: 'top' },
+        ],
+    },
+    {
+        id: 'intrants', chapter: 7, tab: 'summary', subtab: 'ingredients',
+        caption: `Chaque prix a son histoire. Choisissez un ingrédient : son prix à chaque point de référence. Quand un prix s'envole, la **volatilité** vous le signale.`,
         steps: [
             { at: 300, do: 'scroll', target: '#tutorial-section-tracking-ingredient', block: 'start' },
             { at: 1200, do: 'highlight', target: '#tutorial-section-tracking-ingredient select' },
@@ -408,30 +463,52 @@ export const SCENES = [
         ],
     },
     {
-        id: 'abc', chapter: 5, tab: 'summary', subtab: 'ingredients', duration: 8500,
-        caption: 'L\'analyse **ABC** désigne les ingrédients qui pèsent le plus lourd dans vos coûts. Surveiller ceux-là rapporte le plus. Un prix qui bouge beaucoup ? Une **alerte** s\'affiche.',
+        id: 'emballages', chapter: 7, tab: 'summary', subtab: 'packaging',
+        caption: `Même lecture pour vos **emballages** : les plus coûteux, vos fournisseurs, l'évolution des prix. Rien de nouveau à apprendre.`,
         steps: [
-            { at: 200, do: 'scroll', target: '#tutorial-section-ingredients-abc' },
-            { at: 1000, do: 'highlight', target: '#tutorial-section-ingredients-abc' },
-            { at: 1300, do: 'note', id: 'a', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 0 }, text: 'Catégorie A : les gros postes de dépense', side: 'top' },
-            { at: 4300, do: 'note', id: 'c', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 2 }, text: 'Catégorie C : les petits détails', side: 'top' },
+            { at: 200, do: 'scroll', target: '#tutorial-section-packaging-abc' },
+            { at: 900, do: 'highlight', target: '#tutorial-section-packaging-abc' },
+            { at: 1300, do: 'note', id: 'pa', target: { sel: '#tutorial-section-packaging-abc h3', nth: 0 }, text: 'Vos contenants les plus coûteux', side: 'top' },
+            { at: 3600, do: 'unnote' },
+            { at: 3800, do: 'scroll', target: '#tutorial-section-tracking-packaging', block: 'start' },
+            { at: 4800, do: 'note', id: 'pe', target: '#tutorial-section-tracking-packaging', text: 'Leur prix, à chaque point de référence', side: 'top' },
         ],
     },
     {
-        id: 'productivite', chapter: 5, tab: 'summary', subtab: 'labor', duration: 7000,
-        caption: 'Le **rapport de productivité** compare les heures payées aux heures vraiment nécessaires. L\'écart, c\'est de la **capacité inutilisée** que vous payez quand même.',
+        id: 'main-oeuvre-rapport', chapter: 7, tab: 'summary', subtab: 'labor',
+        caption: `Reste votre équipe. Combien d'heures payées servent vraiment ? L'écart, c'est de la **paie non utilisée**. Et ces heures libres sont des ventes possibles en plus : votre marge de croissance.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-labor-rapport' },
             { at: 1000, do: 'highlight', target: '#tutorial-section-labor-rapport' },
             { at: 1500, do: 'note', id: 'ecart', target: { text: 'Taux d\'Utilisation', within: '#tutorial-section-labor-rapport' }, text: 'Sous 100 % : des heures payées, mais inutilisées', side: 'top' },
-            { at: 3600, do: 'point', target: { sel: '#tutorial-section-labor-rapport tbody tr', nth: 0 } },
+            { at: 4300, do: 'unnote' },
+            { at: 4400, do: 'scroll', target: '#tutorial-section-labor-paie' },
+            { at: 5300, do: 'highlight', target: '#tutorial-section-labor-paie' },
+            { at: 5500, do: 'note', id: 'pn', target: { text: 'Paie non utilisée', within: '#tutorial-section-labor-paie' }, text: 'Paie non utilisée : {v}', side: 'top', read: { label: 'Paie non utilisée', within: '#tutorial-section-labor-paie' } },
+            { at: 8200, do: 'unnote' },
+            { at: 8300, do: 'scroll', target: '#tutorial-section-labor-croissance' },
+            { at: 9200, do: 'highlight', target: '#tutorial-section-labor-croissance' },
+            { at: 9400, do: 'note', id: 'cr', target: { text: 'Ventes additionnelles possibles', within: '#tutorial-section-labor-croissance' }, text: 'Ventes additionnelles possibles : {v}', side: 'top', read: { label: 'Ventes additionnelles possibles', within: '#tutorial-section-labor-croissance' } },
+        ],
+    },
+    {
+        id: 'simulation', chapter: 7, tab: 'summary', subtab: 'simulation',
+        caption: `Et si vos prix d'achat montaient de huit pour cent ? Puis de quinze ? Le simulateur montre l'effet sur la **marge**, le point mort et chaque activité, avant que ça n'arrive.`,
+        steps: [
+            { at: 500, do: 'click', target: { btn: 'Ajouter un choc' }, unless: '[data-tour="shock-row"]' },
+            { at: 2100, do: 'note', id: 'pct', target: SHOCK_PCT, text: 'Hausse des prix d\'achat (%)', side: 'top' },
+            { at: 2400, do: 'type', target: SHOCK_PCT, text: '8', rate: 300 },
+            { at: 4000, do: 'scroll', target: '[data-tour="shock-results"]', block: 'start' },
+            { at: 4800, do: 'highlight', target: '[data-tour="shock-results"]' },
+            { at: 5000, do: 'note', id: 'mg', target: { text: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' }, text: 'Marge brute : {v}', side: 'top', read: { label: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' } },
+            { at: 7400, do: 'type', target: SHOCK_PCT, text: '15', rate: 300 },
         ],
     },
 
-    // --- 5. Jamais perdu ---------------------------------------------------------------------------------------------------
+    // --- 8. Jamais perdu ---------------------------------------------------------------------------------------------------
     {
-        id: 'infobulles', chapter: 6, tab: 'summary', subtab: 'overview', duration: 11000,
-        caption: 'Un terme qui vous échappe ? **Passez la souris** sur le point d\'interrogation : une courte explication s\'affiche, avec un lien **« En savoir plus »**.',
+        id: 'infobulles', chapter: 8, tab: 'summary', subtab: 'overview',
+        caption: `Un mot vous échappe ? Passez la souris sur le point d'interrogation : une courte explication s'affiche, avec un lien « En savoir plus ».`,
         steps: [
             { at: 300, do: 'scroll', target: KPI },
             { at: 1500, do: 'point', target: `${KPI} [data-testid="tooltip-trigger"]` },
@@ -441,8 +518,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'guide', chapter: 6, tab: 'summary', subtab: 'overview', duration: 14500,
-        caption: 'Le **guide** est la bibliothèque complète : chaque écran, chaque calcul, avec les chiffres du projet d\'exemple. On y **cherche un mot** : toutes ses occurrences sont surlignées.',
+        id: 'guide', chapter: 8, tab: 'summary', subtab: 'overview',
+        caption: `Pour aller plus loin, le **guide** : chaque écran, chaque calcul, avec les chiffres du projet d'exemple. Cherchez un mot, et toutes ses occurrences sont surlignées.`,
         steps: [
             { at: 300, do: 'guideOpen', unless: '[aria-label="Fermer le guide"]' },
             { at: 2800, do: 'type', target: '[data-testid="guide-search"]', text: 'point mort', rate: 110 },
@@ -455,8 +532,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'depart', chapter: 6, tab: 'info', duration: 8500,
-        caption: 'À vous de jouer ! **Commencez par Paramètres** : nommez votre entreprise, puis passez aux **ingrédients**. Avancez de gauche à droite : le reste suivra tout seul.',
+        id: 'depart', chapter: 8, tab: 'info',
+        caption: `À vous de jouer ! Commencez par **Paramètres** : nommez votre entreprise, puis passez aux ingrédients. Avancez de gauche à droite, le reste suivra tout seul.`,
         steps: [
             { at: 0, do: 'guideClose' },
             { at: 300, do: 'scrollTop' }, // on revient sur Paramètres, que l'application rouvre là où on l'avait laissé : on repart du haut
@@ -476,6 +553,9 @@ export const readingMs = (caption) => Math.round(words(caption) * 260) + 1200;
 // Moins de temps mort : la scène s'arrête dès que le sous-titre est lu et que l'action est terminée.
 const gestureEnd = (st) => st.at + (st.do === 'type' ? POINT_LEAD + String(st.text).length * (st.rate || 80) : ['click', 'pick'].includes(st.do) ? POINT_LEAD : 0);
 SCENES.forEach((s) => { s.duration = Math.max(Math.max(0, ...s.steps.map(gestureEnd)) + 1800, readingMs(s.caption)); });
+
+// Texte de la narration d'une scène (sans les marques de couleur) : ce qu'une voix lirait.
+export const narrationOf = (scene) => scene.caption.replace(/\*\*/g, '');
 
 // ---- Dérivés -----------------------------------------------------------------------------------------------------------
 export const expandSteps = (steps) => steps.flatMap((s) => {

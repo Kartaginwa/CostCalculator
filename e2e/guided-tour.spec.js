@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // Étape 7 de la Phase 7 : la visite guidée est une démonstration qui se joue seule, sur une COPIE du projet
 // démo (saisie lettre à lettre, étiquettes, valeurs lues en direct), sans jamais toucher au projet de l'utilisateur.
 // À la fin, elle se ferme d'elle-même : l'utilisateur retrouve ce qu'il avait (un projet, ou l'accueil).
-const SCENES = 32;
+const SCENES = 36;
 const collectErrors = (page) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(`pageerror : ${e.message}`));
@@ -27,7 +27,7 @@ test('La visite démarre seule, se contrôle par une petite barre (pause, scène
     const errors = collectErrors(page);
     await page.goto('/');
     await page.getByTestId('start-tour').click();
-    await expect(page.getByTestId('tour-caption')).toContainText('Combien coûte vraiment');
+    await expect(page.getByTestId('tour-caption')).toContainText('combien coûte vraiment');
     await expect(page.getByTestId('tour-caption')).not.toContainText(/touch|copie/i); // aucune précaution inutile en ouverture
     await expect(page.getByTestId('tour-layer')).toHaveAttribute('data-scene', 'accueil');
     // l'utilisateur ne peut pas faire défiler la page pendant la visite (la caméra s'en charge)

@@ -1,5 +1,9 @@
 # Refonte de la visite guidée — cadrage et scénario (version à valider)
 
+> **Mise à jour du 21/11 (version 4).** Ce document garde l'historique du cadrage de l'étape 7 (18/11). Le scénario actuel — 36 scènes, 9 chapitres,
+> environ 6 min 35 s, adapté à la refonte de Rapport et suivi (neuf sous-onglets) et rédigé pour être lu à voix haute — est décrit dans la feuille
+> de route (entrée du 21/11) ; le texte de la narration, scène par scène, est dans `11-Narration-Visite.md` (généré depuis `src/tour/tourScript.js`).
+
 Statut : **scénario validé le 18/11 et réalisé le 19/11** (voir la feuille de route). Étape 7 de la Phase 7, avant le rapport final.
 
 Décisions complémentaires (18/11) : pas de parcours court d'une minute ; pas de lancement depuis le bouton « i » ; accessible depuis l'accueil, la fenêtre « nouveau projet » et un lien dans le guide.

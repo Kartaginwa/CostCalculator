@@ -55,7 +55,7 @@ export const chapitreIngredients = {
         { type: 'callout', kind: 'astuce', text: 'L\'assistant repère les doublons : il rapproche un ingrédient du fichier d\'un ingrédient existant par sa combinaison identifiant unique + fournisseur, ou à défaut nom + format + fournisseur. Importer le même fichier deux fois met donc à jour les prix au lieu de dupliquer les lignes.' },
 
         { type: 'h', id: 'guide-ing-analyses', text: 'L\'analyse ABC et le rapport d\'achats' },
-        { type: 'p', text: 'L\'analyse ABC de vos ingrédients, le rapport d\'achats et perte stock et l\'évolution des prix ne se trouvent plus sous ce tableau : ils sont dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Ingrédients}}. Voir le chapitre [[guide-rapport-intrants|Ingrédients et Emballages : vos achats]].' },
+        { type: 'p', text: 'L\'analyse ABC de vos ingrédients, le rapport d\'achats et perte stock et l\'évolution des prix sont dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Ingrédients}}. Voir le chapitre [[guide-rapport-intrants|Ingrédients et Emballages : vos achats]].' },
 
         { type: 'callout', kind: 'retenir', text: 'Chaque ligne est un ingrédient chez un fournisseur. Le prix unitaire se calcule seul. Le taux de perte ne concerne que ce qui se perd avant la production. Tenez les prix à jour : la date de dernière mise à jour et le point jaune vous y aident.' },
         { type: 'words', items: [

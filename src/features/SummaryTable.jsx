@@ -839,40 +839,40 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData, children 
             {/* flex + largeur fixe (plutôt que grid-cols-3) pour que la dernière ligne (2 tuiles sur
                 5) reste centrée au lieu de coller à gauche — un grid laisserait un trou à droite. */}
             <div data-tour="kpi-tiles" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 text-center">
-                <div className="p-3 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
+                <div className="p-3 bg-white rounded-lg shadow flex flex-col">
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
                         Coût Matière Moyen Pondéré
                         <Tooltip tip="kpi.matiere" />
                         {getCostTargetIndicator(weightedMaterialCost, generalInfo.foodCostTarget)}
                     </div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
                 </div>
-                <div className="p-3 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
+                <div className="p-3 bg-white rounded-lg shadow flex flex-col">
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
                         Coût Emballage Moyen Pondéré
                         <Tooltip tip="kpi.emballage" />
                         {getCostTargetIndicator(weightedPackagingCost, generalInfo.packagingCostTarget)}
                     </div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
                 </div>
-                <div className="p-3 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
+                <div className="p-3 bg-white rounded-lg shadow flex flex-col">
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
                         Coût Main-d'œuvre Moyen Pondéré
                         <Tooltip tip="kpi.mo" />
                         {getCostTargetIndicator(weightedLaborCost, generalInfo.laborCostTarget)}
                     </div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
                 </div>
-                <div className="p-3 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /></div>
+                <div className="p-3 bg-white rounded-lg shadow flex flex-col">
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /></div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
-                <div className="p-3 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort des Produits Actifs <Tooltip tip="kpi.pointMort" /></div>
+                <div className="p-3 bg-white rounded-lg shadow flex flex-col">
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Point Mort des Produits Actifs <Tooltip tip="kpi.pointMort" /></div>
                     <p className="text-2xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
                 </div>
-                <div className="p-3 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge de sécurité <Tooltip tip="kpi.margeSecurite" /></div>
+                <div className="p-3 bg-white rounded-lg shadow flex flex-col">
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Marge de sécurité <Tooltip tip="kpi.margeSecurite" /></div>
                     {safetyMargin ? (
                         <>
                             <p className={`text-2xl font-bold ${safetyMargin.ratio < 0 ? 'text-red-600' : 'text-blue-600'}`}>{formatPercent(safetyMargin.ratio)} %</p>

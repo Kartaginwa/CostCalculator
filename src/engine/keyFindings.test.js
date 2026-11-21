@@ -143,10 +143,11 @@ describe('constats clés — approvisionnement et main-d\'œuvre', () => {
         expect(find(r, 'product-worst-hour').title).toContain('« C »');
         expect(computeKeyFindings(ctx({ top: { productRows: rows.slice(0, 2) } })).all).toEqual([]);
     });
-    it('marge de croissance : seulement à partir du minimum d\'heures libres', () => {
+    it('marge de croissance : seulement à partir d\'une part minimale des heures productives attendues', () => {
         const g = (h) => ({ freeHours: h, additionalRevenue: h * 250, revenuePerHour: 250, grossProfitPerHour: 100, additionalGrossProfit: h * 100 });
-        expect(find(computeKeyFindings(ctx({ top: { growth: g(32) } })), 'labor-growth').tone).toBe('force');
-        expect(find(computeKeyFindings(ctx({ top: { growth: g(3) } })), 'labor-growth')).toBeUndefined();
+        const cascade = { payroll: 10000, unusedShare: 0.12, unusedPay: 1200, expectedHours: 400 };   // seuil : 5 % de 400 h = 20 h
+        expect(find(computeKeyFindings(ctx({ top: { growth: g(32), cascade } })), 'labor-growth').tone).toBe('force');
+        expect(find(computeKeyFindings(ctx({ top: { growth: g(12), cascade } })), 'labor-growth')).toBeUndefined();
     });
 });
 

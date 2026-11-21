@@ -71,10 +71,15 @@ test('Main-d\'œuvre : paie non utilisée, marge de croissance, cascade, coût r
 
     const growth = page.locator('#tutorial-section-labor-croissance');
     await expect(growth.getByText('32,3 h')).toBeVisible();
-    await expect(growth.getByText('248,37 $ de revenu par heure')).toBeVisible();
+    await expect(growth.getByText('200,79 $ de revenu par heure')).toBeVisible();
+    await expect(growth.getByText('6 500 $')).toBeVisible();
 
     const cascade = page.locator('#tutorial-section-labor-cascade');
-    await expect(cascade.getByText('344,4 h · 8 647,25 $')).toBeVisible();
+    const production = cascade.locator('div.p-3').filter({ hasText: 'Production réelle' });
+    await expect(production.getByText('344,4 h')).toBeVisible();
+    await expect(production.getByText('8 647,25 $')).toBeVisible();
+    await expect(cascade.getByText('Capacité inutilisée')).toBeVisible();
+    await expect(cascade.getByText('Temps non productif')).toBeVisible();
     await expect(cascade.getByText('32,11 $/h')).toBeVisible();
     await expect(cascade.getByText('25,78 $/h')).toBeVisible();
 

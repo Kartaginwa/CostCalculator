@@ -5,7 +5,7 @@ import { Tooltip, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const LaborDatabaseTab = ({ openPostIds, setOpenPostIds }) => {
-    const { laborDatabase, onUpdateLaborDatabase, showNotification, setNotification, goToReport } = useProject();
+    const { laborDatabase, onUpdateLaborDatabase, showNotification, setNotification } = useProject();
 
 const [newlyAddedPostId, setNewlyAddedPostId] = useState(null);
 const [newlyAddedEmployeeId, setNewlyAddedEmployeeId] = useState(null);
@@ -282,12 +282,6 @@ useEffect(() => {
                     </div>
                 </div>
             )})}
-            </div>
-            {/* Le rapport de productivité et la charge de travail par activité vivent dans Rapport et suivi → Main-d'œuvre (21/11) :
-                cet onglet ne garde que la saisie des postes et des employés. */}
-            <div id="tutorial-section-labor-rapport-lien" className="mt-8 pt-4 border-t text-sm text-gray-600">
-                Le rapport de productivité et la charge de travail par activité se trouvent dans{' '}
-                <button type="button" onClick={() => goToReport('labor')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Main-d'œuvre</button>.
             </div>
         </div>
     );

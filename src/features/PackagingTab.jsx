@@ -15,7 +15,7 @@ const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.j
 // assistant d'import (même composant générique que les ingrédients — voir
 // CatalogImportWizardModal.jsx). Sans allergènes (non pertinent pour un emballage).
 export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, requestConfirmation, products, activeUnits, goToReport } = useProject();
+    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, requestConfirmation, products, activeUnits } = useProject();
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
 
     const [isNameTouched, touchName] = useTouched();
@@ -434,12 +434,6 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 />
             </div>
 
-            {/* L'analyse ABC, le rapport d'achats et perte stock, et l'évolution des prix vivent dans Rapport et suivi → Emballages (21/11) :
-                cet onglet ne garde que la saisie du catalogue. */}
-            <div className="mt-8 pt-4 border-t text-sm text-gray-600">
-                L'analyse ABC, le rapport d'achats et perte stock et l'évolution des prix de vos emballages se trouvent dans{' '}
-                <button type="button" onClick={() => goToReport('packaging')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Emballages</button>.
-            </div>
 
             {isImportWizardOpen && (
                 <Suspense fallback={null}>

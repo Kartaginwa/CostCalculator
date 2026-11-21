@@ -20,7 +20,7 @@ export const partie3 = {
             title: 'L\'onglet Rapport et suivi : vue générale',
             blocks: [
                 { type: 'callout', kind: 'pourquoi', text: 'Tout ce que vous avez saisi converge ici. Cet onglet répond aux questions qui comptent : mes produits sont-ils rentables ? Dans quel canal gagne-t-on, dans lequel perd-on ? Quelle hausse de coûts m\'est supportable ? Mes décisions ont-elles porté leurs fruits depuis six mois ?' },
-                { type: 'p', text: 'En haut, trois boutons : {{Exporter vers Excel}}, {{Générer un rapport PDF}} et {{Point de référence}} (voir [[guide-points-reference|plus bas]]). Dessous, neuf sous-onglets, en quatre groupes séparés par un trait :' },
+                { type: 'p', text: 'En haut, trois boutons : {{Exporter vers Excel}}, {{Générer un rapport PDF}} et {{Point de référence}} (voir [[guide-points-reference|plus bas]]). Dessous, neuf sous-onglets, en quatre groupes :' },
                 {
                     type: 'table', head: ['Sous-onglet', 'Question à laquelle il répond'], wrapCells: true, rows: [
                         ['{{Vue d\'ensemble}}', 'Comment va mon entreprise, et mes résultats réels suivent-ils mon modèle ?'],
@@ -80,13 +80,13 @@ export const partie3 = {
                 { type: 'p', text: 'Les trois premières tuiles affichent un voyant de comparaison à vos objectifs (coche verte ou triangle rouge). Ces moyennes sont **pondérées par le revenu** de chaque produit : un produit qui génère beaucoup de ventes pèse davantage (voir [[guide-concept-mix|chapitre 9]]). Elles reposent sur la vue « tous canaux » de chaque produit : le prix net de chaque canal, pondéré par son volume.' },
                 { type: 'callout', kind: 'astuce', text: `Les trois ratios de coûts et la marge brute ne totalisent pas tout à fait 100 % : ici ${d(DEMO.apercu.coutMatiere)} + ${d(DEMO.apercu.coutEmballage)} + ${d(DEMO.apercu.coutMO)} + ${d(DEMO.apercu.margeBrute)} = 98,08 %. La différence de 1,92 % est la part de la sous-traitance, un coût direct qui n'a pas sa propre tuile.` },
                 { type: 'callout', kind: 'attention', text: 'Le point mort des produits actifs est un chiffre d\'affaires (en dollars), pas un nombre d\'unités : des produits très différents n\'ont pas d\'unité commune. Comparez-le à votre chiffre d\'affaires réel de la période : s\'il lui est supérieur, vous perdez de l\'argent en moyenne.' },
-                { type: 'p', text: 'La {{marge de sécurité}} répond à une question simple : **de combien mes ventes peuvent-elles baisser avant que je perde de l\'argent ?** À 20 %, vos ventes prévues peuvent reculer d\'un cinquième avant d\'atteindre le point mort. Une marge négative signifie que les ventes prévues sont déjà sous le point mort.' },
+                { type: 'p', text: 'La {{Marge de sécurité}} répond à une question simple : **de combien mes ventes peuvent-elles baisser avant que je perde de l\'argent ?** À 20 %, vos ventes prévues peuvent reculer d\'un cinquième avant d\'atteindre le point mort. Une marge négative signifie que les ventes prévues sont déjà sous le point mort.' },
                 { type: 'callout', kind: 'pourquoi', text: 'C\'est l\'indicateur à consulter avant de vous engager dans une dépense fixe (loyer, équipement, embauche) : plus la marge de sécurité est mince, moins vous avez de place pour une mauvaise surprise. Le point mort donne la cible en dollars ; la marge de sécurité dit à quelle distance vous en êtes.' },
                 { type: 'callout', kind: 'attention', text: 'La marge de sécurité repose sur les ventes **prévues** (prix net × volumes saisis dans Produits et SKUs), pas sur vos revenus réels, et sur le même point mort que la tuile voisine (main-d\'œuvre directe traitée comme un coût fixe). Elle reste vide (—) sans ventes prévues.' },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ventes prévues de ${d(DEMO.etat.revenusTheorique)}, point mort de ${d(DEMO.apercu.pointMortMenu)} : la marge de sécurité est de ${d(DEMO.apercu.margeSecurite)}.` },
 
                 { type: 'h', id: 'guide-rapport-constats', text: 'Constats clés' },
-                { type: 'p', text: 'Sous les tuiles, les {{constats clés}} disent ce que vos chiffres révèlent de votre entreprise, en **forces** (ce qui va bien) et en **faiblesses** (ce qui mérite votre attention). Ils ne viennent pas d\'une intelligence artificielle : ce sont des règles fixes, appliquées à vos données, avec un chiffre et un lien vers l\'endroit où agir. Cinq constats au plus s\'affichent par colonne, les plus importants d\'abord ; {{Voir tous les constats}} ouvre une fenêtre qui les montre tous, regroupés par thème.' },
+                { type: 'p', text: 'Sous les tuiles, les {{Constats clés}} disent ce que vos chiffres révèlent de votre entreprise, en **forces** (ce qui va bien) et en **faiblesses** (ce qui mérite votre attention). Ils ne viennent pas d\'une intelligence artificielle : ce sont des règles fixes, appliquées à vos données, avec un chiffre et un lien vers l\'endroit où agir. Cinq constats au plus s\'affichent par colonne, les plus importants d\'abord ; {{Voir tous les constats}} ouvre une fenêtre qui les montre tous, regroupés par thème.' },
                 {
                     type: 'ul', items: [
                         { label: 'Rentabilité et coûts.', text: 'La marge de sécurité, le bénéfice net prévu, les coûts comparés à vos cibles, et les produits qui dépassent la cible de coût matière.' },
@@ -97,7 +97,7 @@ export const partie3 = {
                     ],
                 },
                 { type: 'callout', kind: 'attention', text: 'Un constat n\'apparaît que si la donnée existe : sans cible saisie dans Paramètres, aucun constat sur les cibles ; sans chiffres réels dans l\'État des résultats, aucun constat sur l\'écart réel / théorique ; sans au moins deux points de référence, aucun constat sur l\'évolution. Les problèmes de données (un produit sans prix, par exemple) ne sont pas des constats : ils restent dans le panneau « points à vérifier ».' },
-                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la marge de sécurité de ${d(DEMO.apercu.margeSecurite)} est une force, alors que la dépendance aux Grandes surfaces (58 % des revenus, 15 % du bénéfice net) est une faiblesse.` },
+                { type: 'callout', kind: 'exemple', text: 'Dans le projet démo, le Sauté de poulet thaï (350 g), rentable dans ses trois canaux, est une force, alors que la dépendance aux Grandes surfaces (58 % des revenus, 15 % du bénéfice net) est une faiblesse.' },
                 { type: 'callout', kind: 'retenir', text: 'Une force et une faiblesse peuvent concerner le même produit sans se contredire : le Pâté chinois (340 g) rapporte beaucoup à l\'heure de main-d\'œuvre (force), mais c\'est aussi une vache à lait, très vendu pour une marge unitaire modeste (faiblesse). Ce sont deux angles différents.' },
 
                 { type: 'h', id: 'guide-rapport-evolution', text: 'Évolution des marges et coûts moyens' },
@@ -109,8 +109,8 @@ export const partie3 = {
                 { type: 'callout', kind: 'pourquoi', text: 'Cette matrice montre où se cachent vos pertes. Une activité globalement rentable peut perdre de l\'argent dans un canal précis ; un canal qui fait beaucoup de chiffre d\'affaires peut ne rien rapporter.' },
 
                 { type: 'h', id: 'guide-ff-reconciliation', text: 'Réconciliation réel / théorique' },
-                { type: 'p', text: 'Compare, pour l\'entreprise entière, vos revenus et vos charges directes réels (saisis plus haut) à ce que prévoit votre modèle de recettes : le prix net et le volume réel saisis par canal pour chaque format (Paramètres → Produits et SKUs), multipliés par les coûts de vos recettes. Ce n\'est jamais un chiffre d\'affaires global déclaré.' },
-                { type: 'p', text: 'Pourquoi : un grand écart signale que le modèle ne reflète plus la réalité comptable. Les causes habituelles : des prix, des volumes ou des coûts de recette à mettre à jour, ou des ventes réelles dont le volume n\'a pas encore été saisi par canal. C\'est la même logique que le rapport de productivité de l\'onglet Main-d\'œuvre (heures attendues contre heures réelles).' },
+                { type: 'p', text: 'Compare, pour l\'entreprise entière, vos revenus et vos charges directes réels (saisis dans l\'État des résultats) à ce que prévoit votre modèle de recettes : le prix net et le volume réel saisis par canal pour chaque format (Paramètres → Produits et SKUs), multipliés par les coûts de vos recettes. Ce n\'est jamais un chiffre d\'affaires global déclaré.' },
+                { type: 'p', text: 'Pourquoi : un grand écart signale que le modèle ne reflète plus la réalité comptable. Les causes habituelles : des prix, des volumes ou des coûts de recette à mettre à jour, ou des ventes réelles dont le volume n\'a pas encore été saisi par canal. C\'est la même logique que le rapport de productivité du sous-onglet {{Main-d\'œuvre}} (heures attendues contre heures réelles).' },
                 {
                     type: 'table', caption: 'Réconciliation du projet démo', head: ['Poste', 'Réel', 'Théorique', 'Écart'], rows: [
                         ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+286,41 $ (+0,4 %)'],
@@ -137,6 +137,8 @@ export const partie3 = {
                 { type: 'words', items: [
                     { term: 'Marge brute moyenne pondérée', def: 'la marge brute moyenne des produits actifs, chaque produit pesant selon son revenu.' },
                     { term: 'Réconciliation', def: 'la comparaison entre le réel (État des résultats) et le théorique (modèle de recettes).' },
+                    { term: 'Marge de sécurité', def: 'de combien les ventes prévues peuvent baisser avant d\'atteindre le point mort.' },
+                    { term: 'Constat clé', def: 'une force ou une faiblesse calculée par une règle fixe à partir de vos chiffres.' },
                 ] },
             ],
         },
@@ -330,21 +332,22 @@ export const partie3 = {
                         { label: 'Coût d\'achat total requis.', text: 'La somme des deux : ce qu\'il faut réellement acheter, et donc budgéter.' },
                     ],
                 },
-                { type: 'callout', kind: 'attention', text: 'La {{perte stock}} est **prévue**, pas mesurée : c\'est le taux de perte saisi dans le catalogue, appliqué aux quantités que vos ventes requièrent. La perte réellement constatée se lit dans la {{Réconciliation réel / théorique}} de la Vue d\'ensemble.' },
+                { type: 'callout', kind: 'attention', text: 'La **perte stock** est **prévue**, pas mesurée : c\'est le taux de perte saisi dans le catalogue, appliqué aux quantités que vos ventes requièrent. La perte réellement constatée se lit dans la {{Réconciliation réel / théorique}} de la Vue d\'ensemble.' },
                 { type: 'p', text: `Dans le projet démo : ${d(DEMO.ingredients.coutNet)} de coût net, ${d(DEMO.ingredients.pertes)} de perte stock, soit ${d(DEMO.ingredients.achatRequis)} d'achats requis.` },
                 { type: 'h', id: 'guide-rapport-fournisseurs', text: 'Achats par fournisseur', level: 5 },
-                { type: 'p', text: 'Un premier tableau montre, pour chaque fournisseur, son coût d\'achat requis et sa **part des achats**. Une barre orange et la mention {{dépendance}} signalent un fournisseur qui pèse 40 % ou plus des achats : s\'il fait défaut ou augmente ses prix, une grande part de vos achats est touchée. C\'est aussi votre levier de négociation. Les achats dont le fournisseur n\'est pas renseigné sont regroupés sous « Non spécifié ».' },
+                { type: 'p', text: 'Un premier tableau montre, pour chaque fournisseur, son coût d\'achat requis et sa **part des achats**. Une barre orange et la mention {{dépendance}} signalent un fournisseur qui pèse 30 % ou plus des achats : s\'il fait défaut ou augmente ses prix, une grande part de vos achats est touchée. C\'est aussi votre levier de négociation. Les achats dont le fournisseur n\'est pas renseigné sont regroupés sous « Non spécifié ».' },
                 { type: 'callout', kind: 'exemple', text: 'Dans le projet démo, la Boucherie Nordique pèse 50 % des achats d\'ingrédients : c\'est une dépendance.' },
-                { type: 'p', text: 'Le tableau de détail réunit toutes les lignes, tous fournisseurs confondus. Un clic sur un titre de colonne le trie ; il est trié par défaut sur le {{Coût perte stock}}, du plus élevé au plus faible : les pertes les plus coûteuses sont en haut. La liste {{Fournisseur}} limite le détail à un seul fournisseur, et le nombre de lignes par page se règle en bas. Pour chaque ligne : la quantité nette, le taux de perte stock, le coût net, la quantité de perte stock et son coût.' },
+                { type: 'p', text: 'Le tableau de détail réunit toutes les lignes, tous fournisseurs confondus. Un clic sur un titre de colonne le trie ; il est trié par défaut sur le {{Coût perte stock}}, du plus élevé au plus faible : les pertes les plus coûteuses sont en haut. La liste {{Fournisseur}} limite le détail à un seul fournisseur, et le nombre de lignes par page se règle en bas.' },
                 {
                     type: 'table', caption: 'Les colonnes du détail', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
-                    rowIds: ['guide-ing-ra-qte-nette', 'guide-ing-ra-cout-net', 'guide-ing-ra-qte-perdue', 'guide-ing-ra-cout-perdu', 'guide-ing-ra-achat-requis'],
+                    rowIds: ['guide-ing-ra-qte-nette', null, 'guide-ing-ra-cout-net', 'guide-ing-ra-qte-perdue', 'guide-ing-ra-cout-perdu', 'guide-ing-ra-achat-requis'],
                     rows: [
-                        ['{{Qté nette (Production)}}', 'La quantité de l\'ingrédient réellement utilisée dans vos produits, d\'après vos ventes de la période.'],
-                        ['{{Coût net (Production)}}', 'Le coût de cette quantité : la valeur de la matière qui est transformée en produits vendus.'],
+                        ['{{Qté nette}}', 'La quantité de l\'ingrédient réellement utilisée dans vos produits, d\'après vos ventes de la période.'],
+                        ['{{Taux perte stock}}', 'Le taux de perte saisi dans le catalogue pour cet ingrédient.'],
+                        ['{{Coût net}}', 'Le coût de cette quantité : la valeur de la matière qui est transformée en produits vendus.'],
                         ['{{Qté perte stock}}', 'La quantité à acheter en plus pour compenser ce qui se perd en stock avant d\'être utilisé, selon le taux de perte de l\'ingrédient.'],
                         ['{{Coût perte stock}}', 'Le coût de cette perte stock.'],
-                        ['{{Coût d\'achat requis}}', 'La somme du coût net et du coût de la perte stock : ce qu\'il faut réellement acheter et budgéter pour cet ingrédient.'],
+                        ['{{Achat requis}}', 'La somme du coût net et du coût de la perte stock : ce qu\'il faut réellement acheter et budgéter pour cet ingrédient.'],
                     ],
                 },
                 { type: 'callout', kind: 'attention', text: 'Ce rapport n\'est aussi juste que vos volumes : si vous n\'avez saisi aucun volume de vente dans Produits et SKUs, il n\'a rien à calculer et affiche des zéros.' },
@@ -369,7 +372,12 @@ export const partie3 = {
                 },
                 { type: 'p', text: 'Ces mesures existent dès deux points de référence ; le projet démo en compte dix-neuf, ce qui donne des séries longues. Le tableau se croise avec l\'analyse ABC ci-dessus : un ingrédient de catégorie A dont le prix est volatil est une priorité d\'approvisionnement.' },
                 { type: 'callout', kind: 'astuce', text: 'Le tableau est trié par amplitude décroissante : les prix les plus capricieux sont en haut. Regardez d\'abord la colonne de tendance : un prix volatil mais sans tendance fluctue autour d\'une moyenne ; un prix à tendance haussière régulière appelle une action (contrat, second fournisseur, révision de prix).' },
-                { type: 'p', text: 'Les emballages, un poste séparé, ont leur propre sous-onglet : jamais fusionnés avec les ingrédients.' },
+                { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : l\'analyse ABC (où est l\'argent), les achats par fournisseur (où sont les dépendances), le détail trié par perte stock (où l\'on perd), puis l\'évolution des prix (ce qui menace vos coûts). Faites-le pour les ingrédients, puis pour les emballages.' },
+                { type: 'words', items: [
+                    { term: 'Perte stock', def: 'la quantité à acheter en plus pour compenser ce qui se perd avant l\'utilisation ; prévue, pas mesurée.' },
+                    { term: 'Dépendance (fournisseur)', def: 'un fournisseur qui pèse 30 % ou plus des achats.' },
+                    { term: 'Amplitude', def: 'l\'écart entre le prix le plus bas et le plus haut, en % de la moyenne.' },
+                ] },
             ],
         },
 
@@ -389,30 +397,30 @@ export const partie3 = {
                         { label: 'Taux d\'utilisation (%).', text: 'Les heures réelles ÷ les heures attendues.' },
                     ],
                 },
-                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 90,31 %, l'« Opérateur d'emballage » à 90,55 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
+                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 92,21 %, l'« Opérateur d'emballage » à 89,88 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
                 { type: 'callout', kind: 'pourquoi', text: 'Un taux d\'utilisation bas signale de la capacité payée et inutilisée : trop de personnel pour le volume vendu, des recettes qui ne reflètent pas le travail réel, ou des ventes qui n\'ont pas encore été saisies. C\'est un levier de rentabilité majeur, car **ce coût est réparti sur tous vos produits** (voir [[guide-concept-capacite|chapitre 10]]).' },
                 { type: 'callout', kind: 'attention', text: 'Une personne présente dans cet onglet mais affectée à aucune étape, comme le responsable de production du démo, fait baisser le taux d\'utilisation global. Son coût n\'est pas perdu : il est réparti sur toutes les recettes sous forme de coût indirect de main-d\'œuvre. Si cette personne ne fait pas de production, mieux vaut la retirer de l\'onglet et la saisir dans les frais fixes.' },
 
                 { type: 'h', id: 'guide-mo-paie-inutilisee', text: 'La paie non utilisée' },
-                { type: 'p', text: 'Sous le tableau, la {{paie non utilisée}} chiffre en dollars ce que le taux d\'utilisation exprime en pourcentage : la paie versée pour des heures qui ne servent pas à produire, c\'est-à-dire le temps non productif prévu et la capacité productive inutilisée. Cette somme n\'est pas perdue : elle est absorbée dans le coût de revient de vos produits.' },
+                { type: 'p', text: 'Sous le tableau, la {{Paie non utilisée}} chiffre en dollars ce que le taux d\'utilisation exprime en pourcentage : la paie versée pour des heures qui ne servent pas à produire, c\'est-à-dire le temps non productif prévu et la capacité productive inutilisée. Cette somme n\'est pas perdue : elle est absorbée dans le coût de revient de vos produits.' },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la paie totale est de ${d(DEMO.mo.paieTotale)} et ${d(DEMO.mo.paieNonUtilisee)} ne servent pas à produire (${d(DEMO.mo.partNonUtilisee)}).` },
 
                 { type: 'h', id: 'guide-mo-croissance', text: 'La marge de croissance' },
-                { type: 'p', text: 'La {{marge de croissance}} estime ce que l\'équipe actuelle pourrait produire de plus sans embauche : les **heures productives libres** des postes de production, multipliées par le revenu (et par le bénéfice brut) moyen d\'une heure de main-d\'œuvre des produits fabriqués. Elle donne un ordre de grandeur pour décider s\'il vaut la peine de chercher des clients avant d\'embaucher.' },
+                { type: 'p', text: 'La {{Marge de croissance}} estime ce que l\'équipe actuelle pourrait produire de plus sans embauche : les **heures productives libres** des postes de production, multipliées par le revenu (et par le bénéfice brut) moyen d\'une heure de production : le revenu des produits fabriqués divisé par toutes les heures de l\'équipe, sous-recettes comprises. Elle donne un ordre de grandeur pour décider s\'il vaut la peine de chercher des clients avant d\'embaucher. Ces heures libres sont inférieures à la différence totale du rapport de productivité : on en retire les heures des postes dont aucune recette ne demande de temps, car ce temps ne peut pas servir à produire.' },
                 { type: 'callout', kind: 'attention', text: 'C\'est une estimation indicative. Elle suppose que le mix de produits et de canaux reste le même, que la demande existe et que les heures libres tombent au bon poste. Les postes dont aucune recette ne demande d\'heures (comme le responsable de production du démo) et les produits de revente en sont exclus.' },
-                { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ${d(DEMO.mo.heuresLibres)} productives libres, à ${d(DEMO.mo.revenuHeure)} de revenu et ${d(DEMO.mo.beneficeHeure)} de bénéfice brut par heure : environ 8 000 $ de ventes et 3 500 $ de bénéfice brut additionnels, arrondis à la centaine.` },
+                { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ${d(DEMO.mo.heuresLibres)} productives libres, à ${d(DEMO.mo.revenuHeure)} de revenu et ${d(DEMO.mo.beneficeHeure)} de bénéfice brut par heure : environ 6 500 $ de ventes et 2 800 $ de bénéfice brut additionnels, arrondis à la centaine.` },
 
-                { type: 'h', id: 'guide-mo-cascade', text: 'Où va la paie' },
-                { type: 'p', text: 'Ce graphique suit les heures payées jusqu\'aux heures réellement utilisées, en trois parts, chacune avec son coût (heures × coût horaire chargé du poste) :' },
+                { type: 'h', id: 'guide-mo-cascade', text: 'Utilisation de la masse salariale' },
+                { type: 'p', text: 'La **masse salariale** est la paie totale chargée de votre équipe. Ce graphique suit les heures payées jusqu\'aux heures réellement utilisées, en trois parts, chacune avec ses heures, son coût (heures × coût horaire chargé du poste) et sa part de la paie :' },
                 {
                     type: 'ul', items: [
-                        { label: 'Heures utilisées à produire.', text: 'Celles que vos recettes demandent vraiment.' },
-                        { label: 'Productives mais inutilisées.', text: 'Des heures productives payées que vos recettes ne demandent pas. Un poste sans aucune étape de recette y figure en entier.' },
-                        { label: 'Non productives.', text: 'Le temps payé hors production (administration, réunions), déjà exclu du % de temps productif attendu.' },
+                        { label: 'Production réelle.', text: 'Les heures que vos recettes demandent vraiment pour produire vos ventes.' },
+                        { label: 'Capacité inutilisée.', text: 'Des heures productives payées que vos recettes ne demandent pas. Un poste sans aucune étape de recette y figure en entier.' },
+                        { label: 'Temps non productif.', text: 'Le temps payé hors production (administration, réunions), déjà exclu du % de temps productif attendu.' },
                     ],
                 },
                 { type: 'h', id: 'guide-mo-cout-heure', text: 'Le coût réel d\'une heure productive' },
-                { type: 'p', text: 'Le {{coût réel d\'une heure productive}} répartit toute la paie sur les seules heures réellement utilisées à produire. Il se compare au {{taux horaire moyen chargé}} (la paie divisée par les heures payées) : l\'écart mesure ce que coûtent les heures payées sans servir.' },
+                { type: 'p', text: 'Le {{Coût réel d\'une heure productive}} répartit toute la paie sur les seules heures réellement utilisées à produire. Il se compare au {{Taux horaire moyen chargé}} (la paie divisée par les heures payées) : l\'écart mesure ce que coûtent les heures payées sans servir.' },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ${d(DEMO.mo.coutHeureReel)} contre ${d(DEMO.mo.tauxMoyen)} de taux moyen chargé, soit environ 25 % de plus.` },
 
                 { type: 'h', id: 'guide-mo-capacite', text: 'Charge de travail par activité' },
@@ -432,6 +440,13 @@ export const partie3 = {
                 { type: 'p', text: 'Le même calcul, produit par produit : le bénéfice brut de chaque produit divisé par les heures de main-d\'œuvre de son format. Le classement montre quels produits font le meilleur usage du temps de l\'équipe. Un produit de revente reste dans la liste, marqué {{Revente}}, sans ratio. Le temps d\'une sous-recette reste attribué à son propre format, jamais au produit qui la consomme.' },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo, le Pâté chinois (340 g) rapporte ${d(DEMO.mo.heureProduit.meilleur)} et le Potage à la courge musquée ${d(DEMO.mo.heureProduit.dernier)} : le premier rentabilise bien mieux l'heure de l'équipe.` },
                 { type: 'callout', kind: 'pourquoi', text: 'Quand le temps de l\'équipe est limité, ce classement dit où placer la prochaine heure. Un produit populaire mais qui rapporte peu à l\'heure est un candidat à la révision de son prix ou de sa recette.' },
+                { type: 'callout', kind: 'retenir', text: 'Le taux d\'utilisation mesure la capacité payée qui sert vraiment ; la paie non utilisée en donne le prix en dollars ; le coût réel d\'une heure productive montre l\'effet sur chaque heure travaillée ; la marge de croissance indique ce que cette capacité pourrait produire ; les ratios par heure disent où la placer. Tous les tableaux se trient en cliquant sur le titre d\'une colonne.' },
+                { type: 'words', items: [
+                    { term: 'Masse salariale', def: 'la paie totale chargée de l\'équipe (salaires, charges sociales et vacances).' },
+                    { term: 'Paie non utilisée', def: 'la paie versée pour des heures qui ne servent pas à produire.' },
+                    { term: 'Marge de croissance', def: 'une estimation de ce que les heures libres pourraient produire de plus.' },
+                    { term: 'Coût réel d\'une heure productive', def: 'la paie totale divisée par les heures réellement utilisées à produire.' },
+                ] },
             ],
         },
 

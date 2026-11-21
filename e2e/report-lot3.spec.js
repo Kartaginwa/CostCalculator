@@ -20,7 +20,7 @@ test('Vue d\'ensemble : cinq forces et cinq faiblesses au maximum, sous les tuil
     await expect(block.getByTestId('findings-faiblesse').locator('li')).toHaveCount(5);
     // Le démo a plus de constats que ce qui est montré : la fenêtre en donne le nombre.
     await expect(block.getByRole('button', { name: /Voir tous les constats \(\d+\)/ })).toBeVisible();
-    await expect(block.getByTestId('findings-force')).toContainText('Marge de sécurité de 13,9 %');
+    await expect(block.getByTestId('findings-force')).toContainText('est rentable partout');
     await expect(block.getByTestId('findings-faiblesse')).toContainText('58 % des revenus, 15 % du bénéfice net');
     // Ordre : tuiles, constats, puis le graphique d'évolution.
     const y = async (sel) => (await page.locator(sel).first().boundingBox()).y;

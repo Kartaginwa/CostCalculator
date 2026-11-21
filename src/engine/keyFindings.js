@@ -47,7 +47,7 @@ export function buildKeyFindingsContext({ analysisData, generalInfo, laborDataba
         packagingVolatility: computePackagingVolatility(trackingPoints || []),
         ingredientShares: computeProviderShares(a.purchasingReportData),
         packagingShares: computeProviderShares(a.packagingPurchasingReportData),
-        cascade, productRows, growth: computeGrowthMargin(cascade.freeProductionHours, productRows),
+        cascade, productRows, growth: computeGrowthMargin(cascade.freeProductionHours, productRows, info.productivityReport?.totals?.actual),
         hasRealData: totalRevenue !== 0 || totalDirectCosts !== 0,
         reconciliation: computeRealVsTheoreticalReconciliation({
             totalRevenue, totalDirectCosts, activeProducts: a.activeProducts, unitsSoldById: a.unitsSoldById, menuRevenue: a.menuRevenue, totalIndirects: info.totalIndirects,
@@ -207,7 +207,7 @@ const laborRules = (c) => {
         const worst = sorted[sorted.length - 1];
         if (worst.grossProfitPerHour < avg * T.productHourLow) out.push(weak('product-worst-hour', 'Main-d\'œuvre', 45, `« ${worst.name} » rapporte peu à l'heure`, `${usd(worst.grossProfitPerHour)} par heure, contre ${usd(avg)} en moyenne.`, 'labor'));
     }
-    if (c.growth && c.growth.freeHours >= T.growthMinHours) out.push(force('labor-growth', 'Main-d\'œuvre', 55, `Marge de croissance : ${formatNumber(c.growth.freeHours, 0)} h libres`, `Environ ${usd(Math.round(c.growth.additionalRevenue / 100) * 100)} de ventes de plus possibles sans embauche (estimation).`, 'labor'));
+    if (c.growth && c.growth.freeHours >= T.growthMinShare * (c.cascade.expectedHours || 0)) out.push(force('labor-growth', 'Main-d\'œuvre', 55, `Marge de croissance : ${formatNumber(c.growth.freeHours, 0)} h libres`, `Environ ${usd(Math.round(c.growth.additionalRevenue / 100) * 100)} de ventes de plus possibles sans embauche (estimation).`, 'labor'));
     return out;
 };
 

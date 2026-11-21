@@ -148,7 +148,7 @@ export const chapitreEtatResultats = {
         { type: 'p', text: '« Général » se répartit sur l\'ensemble des produits actifs ; chaque activité seulement entre ses propres produits. Les canaux n\'ont pas de CICI : leur coût indirect est toujours un % d\'imputation sur le coût direct (Paramètres → Canaux de vente), jamais une règle au choix.' },
 
         { type: 'h', id: 'guide-ff-rec-lien', text: 'La réconciliation réel / théorique' },
-        { type: 'p', text: 'La comparaison de ces chiffres réels avec ce que prévoit votre modèle de recettes se trouve maintenant dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Vue d\'ensemble}}. Voir [[guide-ff-reconciliation|Réconciliation réel / théorique]].' },
+        { type: 'p', text: 'La comparaison de ces chiffres réels avec ce que prévoit votre modèle de recettes se trouve dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Vue d\'ensemble}}. Voir [[guide-ff-reconciliation|Réconciliation réel / théorique]].' },
 
         { type: 'h', id: 'guide-ff-import', text: 'Importer l\'état des résultats' },
         { type: 'p', text: 'Le bouton {{Importer l\'état des résultats}} remplit les tableaux **Revenus** et **Frais fixes** à partir d\'un fichier : le plus souvent un **PDF textuel** exporté par votre comptable ou votre logiciel comptable (pas une image numérisée), ou un export structuré (QuickBooks, Odoo…) en .csv, .xls ou .xlsx. Les charges directes ne sont pas importées : saisissez-les à la main.' },

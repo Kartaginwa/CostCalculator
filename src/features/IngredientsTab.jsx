@@ -10,7 +10,7 @@ import { findIngredientUsages, formatNameList } from '../engine/usage.js';
 const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.jsx').then(m => ({ default: m.CatalogImportWizardModal })));
 
 export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, requestConfirmation, products, activeUnits, goToReport } = useProject();
+    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, requestConfirmation, products, activeUnits } = useProject();
 
     const [isNameTouched, touchName] = useTouched();
     const [filterName, setFilterName] = useSessionState('ingredients.filterName', '');
@@ -480,12 +480,6 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                     onPageChange={setCurrentPage}
                     onItemsPerPageChange={onItemsPerPageChange}
                 />
-            </div>
-            {/* L'analyse ABC, le rapport d'achats et perte stock, et l'évolution des prix vivent dans Rapport et suivi → Ingrédients (21/11) :
-                cet onglet ne garde que la saisie du catalogue. */}
-            <div className="mt-8 pt-4 border-t text-sm text-gray-600">
-                L'analyse ABC, le rapport d'achats et perte stock et l'évolution des prix de vos ingrédients se trouvent dans{' '}
-                <button type="button" onClick={() => goToReport('ingredients')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Ingrédients</button>.
             </div>
             <AllergenModal
                 isOpen={!!ingredientToEdit}

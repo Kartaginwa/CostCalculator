@@ -26,11 +26,12 @@ export function computeProviderShares(report, threshold = REPORT_THRESHOLDS.prov
 //   heures payées = heures utilisées + heures productives inutilisées + heures non productives (déjà exclues du « % temps productif attendu »).
 // Le coût d'une heure d'un poste est sa paie chargée ÷ ses heures payées. Un poste sans aucune heure requise par les recettes (ex. responsable de
 // production) compte entièrement en heures productives inutilisées. `freeProductionHours` : heures productives libres des SEULS postes de
-// production (ceux dont les recettes demandent des heures), base de la marge de croissance.
+// production (ceux dont les recettes demandent des heures), base de la marge de croissance ; `noRecipeIdleHours` : les heures des postes sans aucune
+// heure requise. Heures productives inutilisées = heures libres + heures des postes sans recette (= la différence du rapport de productivité).
 export function computeLaborCascade(laborDatabase, productivityRows) {
     const actualByPost = Object.fromEntries((productivityRows || []).map(r => [r.postName, r.actual]));
     const out = {
-        paidHours: 0, expectedHours: 0, usedHours: 0, idleHours: 0, nonProductiveHours: 0, overloadHours: 0, freeProductionHours: 0,
+        paidHours: 0, expectedHours: 0, usedHours: 0, idleHours: 0, nonProductiveHours: 0, overloadHours: 0, freeProductionHours: 0, noRecipeIdleHours: 0,
         payroll: 0, costUsed: 0, costIdle: 0, costNonProductive: 0,
     };
     for (const post of laborDatabase || []) {
@@ -50,6 +51,7 @@ export function computeLaborCascade(laborDatabase, productivityRows) {
         out.paidHours += paid; out.expectedHours += expected; out.usedHours += used; out.idleHours += idle; out.nonProductiveHours += nonProductive;
         out.overloadHours += Math.max(0, actual - expected);
         if (actual > 0) out.freeProductionHours += idle;
+        else out.noRecipeIdleHours += idle;
         out.payroll += pay; out.costUsed += used * rate; out.costIdle += idle * rate; out.costNonProductive += nonProductive * rate;
     }
     const unusedPay = out.costIdle + out.costNonProductive;
@@ -99,12 +101,15 @@ export function computeActivityLaborRatios(activeProducts, hoursByActivity, acti
 }
 
 // Marge de croissance (estimation indicative) : ce que les heures productives libres des postes de production pourraient produire de plus, au
-// revenu et au bénéfice brut moyens par heure des produits fabriqués, au même mix. Suppose que la demande existe et que les heures libres tombent
-// au bon poste.
-export function computeGrowthMargin(freeProductionHours, productRows) {
-    const made = (productRows || []).filter(r => !r.isResale && r.hours > 0);
-    const hours = made.reduce((s, r) => s + r.hours, 0);
-    if (!(freeProductionHours > 0) || !(hours > 0)) return null;
+// revenu et au bénéfice brut moyens par heure de production, au même mix. Suppose que la demande existe et que les heures libres tombent au bon poste.
+// Le revenu (et le bénéfice brut) des produits fabriqués est divisé par TOUTES les heures de production de l'équipe (`totalLaborHours`, sous-recettes
+// comprises), pas seulement par les heures des produits vendus : sans quoi le temps des sous-recettes serait ignoré et le revenu par heure surestimé.
+// Sans `totalLaborHours`, repli sur les heures des produits fabriqués.
+export function computeGrowthMargin(freeProductionHours, productRows, totalLaborHours) {
+    const made = (productRows || []).filter(r => !r.isResale);
+    const madeHours = made.filter(r => r.hours > 0).reduce((s, r) => s + r.hours, 0);
+    const hours = totalLaborHours > 0 ? totalLaborHours : madeHours;
+    if (!(freeProductionHours > 0) || !(hours > 0) || !(madeHours > 0)) return null;
     const revenuePerHour = made.reduce((s, r) => s + r.revenue, 0) / hours;
     const grossProfitPerHour = made.reduce((s, r) => s + r.grossProfit, 0) / hours;
     return { freeHours: freeProductionHours, revenuePerHour, grossProfitPerHour, additionalRevenue: freeProductionHours * revenuePerHour, additionalGrossProfit: freeProductionHours * grossProfitPerHour };

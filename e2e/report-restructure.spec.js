@@ -55,32 +55,34 @@ test('Portefeuille : le classement par contribution se pagine (lignes par page e
     await expect(section.getByText(/Page \d+ sur/)).toHaveCount(0);
 });
 
-test('Onglets de saisie : les rapports ont quitté la page, un lien mène au bon sous-onglet de Rapport et suivi', async ({ page }) => {
+test('Onglets de saisie : les rapports ont quitté la page, sans phrase de renvoi (retour utilisateur)', async ({ page }) => {
     await startDemo(page);
-
+    // Ingrédients : plus d'ABC, de rapport d'achats ni de renvoi.
     await page.locator('#tab-ingredients').click();
     await expect(page.getByText('Analyse ABC des ingrédients')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Rapport et suivi → Ingrédients' }).click();
-    await expect(page.locator('[data-tour="subtab-ingredients"]')).toHaveAttribute('aria-current', 'page');
-    await expect(page.locator('#tutorial-section-ingredients-abc')).toBeVisible();
-    await expect(page.getByText("Rapport d'achats et perte stock pour la période")).toBeVisible();
-
+    await expect(page.getByText("Rapport d'achats et perte stock")).toHaveCount(0);
+    await expect(page.getByText(/se trouvent dans/)).toHaveCount(0);
+    // Emballage.
     await page.locator('#tab-packaging').click();
-    await page.getByRole('button', { name: 'Rapport et suivi → Emballages' }).click();
-    await expect(page.locator('[data-tour="subtab-packaging"]')).toHaveAttribute('aria-current', 'page');
-    await expect(page.locator('#tutorial-section-packaging-abc')).toBeVisible();
-
+    await expect(page.getByText('Analyse ABC des emballages')).toHaveCount(0);
+    await expect(page.getByText(/se trouvent dans/)).toHaveCount(0);
+    // Main-d'œuvre : plus de rapport de productivité dans l'onglet de saisie.
     await page.locator('#tab-labor').click();
     await expect(page.locator('#tutorial-section-labor-rapport')).toHaveCount(0);
-    await page.getByRole('button', { name: "Rapport et suivi → Main-d'œuvre" }).click();
-    await expect(page.locator('[data-tour="subtab-labor"]')).toHaveAttribute('aria-current', 'page');
-    await expect(page.locator('#tutorial-section-labor-rapport')).toBeVisible();
-
+    await expect(page.getByText(/se trouvent dans/)).toHaveCount(0);
+    // État des résultats : plus de réconciliation ni de renvoi.
     await page.locator('#tab-income-statement').click();
     await expect(page.locator('#tutorial-section-reconciliation')).toHaveCount(0);
-    await page.getByRole('button', { name: "Rapport et suivi → Vue d'ensemble" }).click();
-    await expect(page.locator('[data-tour="subtab-overview"]')).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByText(/se trouve dans/)).toHaveCount(0);
+    // Les rapports sont bien dans Rapport et suivi.
+    await page.locator('#tab-summary').click();
     await expect(page.locator('#tutorial-section-reconciliation')).toBeVisible();
+    await page.locator('[data-tour="subtab-ingredients"]').click();
+    await expect(page.locator('#tutorial-section-ingredients-abc')).toBeVisible();
+    await page.locator('[data-tour="subtab-packaging"]').click();
+    await expect(page.locator('#tutorial-section-packaging-abc')).toBeVisible();
+    await page.locator('[data-tour="subtab-labor"]').click();
+    await expect(page.locator('#tutorial-section-labor-rapport')).toBeVisible();
 });
 
 test('Rapport sans chiffres réels : un message remplace la réconciliation (jamais des zéros comparés au théorique)', async ({ page }) => {

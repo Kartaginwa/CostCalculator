@@ -253,7 +253,7 @@ export const DEMO = {
         coutCuisinier: '26.17 $/h', utilisation: '87.48 %', heuresAttendues: '393.72 h', heuresReelles: '344.42 h',
         // Lot 2 (21/11) : paie non utilisée, cascade, coût réel de l'heure, marge de croissance, bénéfice brut par heure.
         paieTotale: '11 058.23 $', paieNonUtilisee: '2 410.98 $', partNonUtilisee: '21.8 %', coutHeureReel: '32.11 $/h', tauxMoyen: '25.78 $/h',
-        heuresLibres: '32.3 h', revenuHeure: '248.37 $', beneficeHeure: '108.10 $',
+        heuresLibres: '32.3 h', revenuHeure: '200.79 $', beneficeHeure: '87.39 $',
         heureActivite: { plats: '164.46 $', soupes: '40.92 $', sauces: '86.47 $' }, heureProduit: { meilleur: '256.24 $/h', dernier: '74.89 $/h' },
     },
     // Ingrédients

@@ -10,18 +10,25 @@ import { SortableTh, sortRows, nextSort } from './tableSort.jsx';
 
 // Rapports de main-d'œuvre de Rapport et suivi → Main-d'œuvre (extraits le 21/11 de l'onglet Main-d'œuvre, qui ne garde que la saisie ; enrichis au lot 2) :
 //   1. rapport de productivité par poste, paie non utilisée, marge de croissance ;
-//   2. où va la paie (heures payées → heures utilisées) et coût réel d'une heure productive ;
+//   2. utilisation de la masse salariale (heures payées → heures utilisées) et coût réel d'une heure productive ;
 //   3. charge de travail par activité (+ revenu et bénéfice brut par heure) ;
 //   4. rentabilité de l'heure de main-d'œuvre, par produit.
 // Les précisions (formules, exclusions, limites d'une estimation) vivent dans les INFOBULLES, jamais en notes dans la page. Tous les tableaux se trient
 // par colonne (tableSort.jsx). Les produits de revente (aucune main-d'œuvre) sont exclus des ratios par heure. Calculs : engine/laborReport.js.
 const td = 'px-4 py-1.5';
 
+// Carte de « Utilisation de la masse salariale » : deux lignes étiquetées (heures, coût), chacune avec sa part, pour qu'on voie d'un coup d'œil de quoi il s'agit.
 const CascadeCard = ({ color, label, tip, hours, cost, hoursShare, payShare }) => (
     <div className="p-3 bg-white rounded-lg shadow">
-        <div className="text-sm text-gray-500 flex items-center"><span className={`inline-block w-3 h-3 rounded-sm mr-2 ${color}`} />{label}<Tooltip tip={tip} /></div>
-        <div className="text-xl font-bold text-gray-800">{formatNumber(hours, 1)} h · {formatCurrency(cost)} $</div>
-        <div className="text-xs text-gray-500">{formatNumber(hoursShare * 100, 1)} % des heures · {formatNumber(payShare * 100, 1)} % de la paie</div>
+        <div className="text-sm font-semibold text-gray-700 flex items-center mb-2"><span className={`inline-block w-3 h-3 rounded-sm mr-2 ${color}`} />{label}<Tooltip tip={tip} /></div>
+        <div className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 gap-y-1">
+            <span className="text-xs text-gray-500">Heures</span>
+            <span className="text-xl font-bold text-gray-800">{formatNumber(hours, 1)} h</span>
+            <span className="text-xs text-gray-500">{formatNumber(hoursShare * 100, 1)} % des heures payées</span>
+            <span className="text-xs text-gray-500">Coût</span>
+            <span className="text-xl font-bold text-gray-800">{formatCurrency(cost)} $</span>
+            <span className="text-xs text-gray-500">{formatNumber(payShare * 100, 1)} % de la paie</span>
+        </div>
     </div>
 );
 
@@ -46,7 +53,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
         return computeActivityLaborRatios(analysisData.activeProducts, hoursByActivity, productionActivities)
             .filter(r => (productivityReport.byActivity || []).some(a => a.activityId === r.activityId));
     }, [analysisData.activeProducts, productivityReport.byActivity, productionActivities]);
-    const growth = useMemo(() => computeGrowthMargin(cascade.freeProductionHours, productRows), [cascade.freeProductionHours, productRows]);
+    const growth = useMemo(() => computeGrowthMargin(cascade.freeProductionHours, productRows, productivityReport.totals.actual), [cascade.freeProductionHours, productRows, productivityReport.totals.actual]);
 
     const sortedPosts = useMemo(() => sortRows(productivityReport.rows, postSort), [productivityReport.rows, postSort]);
     const sortedActivities = useMemo(() => sortRows(activityRatios, activitySort), [activityRatios, activitySort]);
@@ -123,6 +130,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <div className="p-4 bg-white rounded-lg shadow">
                                 <div className="text-sm text-gray-500">Heures productives libres</div>
                                 <p className="text-3xl font-bold text-blue-600">{formatNumber(growth.freeHours, 1)} h</p>
+                                {cascade.noRecipeIdleHours > 0 && <p className="text-xs text-gray-500 mt-1">{formatNumber(cascade.idleHours, 1)} h de différence − {formatNumber(cascade.noRecipeIdleHours, 1)} h de postes sans étape de recette</p>}
                             </div>
                             <div className="p-4 bg-white rounded-lg shadow">
                                 <div className="text-sm text-gray-500">Ventes additionnelles possibles</div>
@@ -141,16 +149,16 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
 
             {hasPayroll && (
                 <div id="tutorial-section-labor-cascade" className="p-6 bg-gray-50 rounded-xl shadow-inner">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Où va la paie</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Utilisation de la masse salariale</h2>
                     <div className="flex h-8 rounded overflow-hidden" role="img" aria-label="Répartition des heures payées">
-                        <div className="bg-blue-500" style={{ width: `${(cascade.usedHours / cascade.paidHours) * 100}%` }} title="Heures utilisées à produire" />
-                        <div className="bg-amber-400" style={{ width: `${(cascade.idleHours / cascade.paidHours) * 100}%` }} title="Heures productives inutilisées" />
-                        <div className="bg-gray-400" style={{ width: `${(cascade.nonProductiveHours / cascade.paidHours) * 100}%` }} title="Heures non productives" />
+                        <div className="bg-blue-500" style={{ width: `${(cascade.usedHours / cascade.paidHours) * 100}%` }} title="Production réelle" />
+                        <div className="bg-amber-400" style={{ width: `${(cascade.idleHours / cascade.paidHours) * 100}%` }} title="Capacité inutilisée" />
+                        <div className="bg-gray-400" style={{ width: `${(cascade.nonProductiveHours / cascade.paidHours) * 100}%` }} title="Temps non productif" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-                        <CascadeCard color="bg-blue-500" label="Heures utilisées à produire" tip="mo.cascadeUtilisees" hours={cascade.usedHours} cost={cascade.costUsed} hoursShare={cascade.usedHours / cascade.paidHours} payShare={cascade.costUsed / cascade.payroll} />
-                        <CascadeCard color="bg-amber-400" label="Productives mais inutilisées" tip="mo.cascadeInutilisees" hours={cascade.idleHours} cost={cascade.costIdle} hoursShare={cascade.idleHours / cascade.paidHours} payShare={cascade.costIdle / cascade.payroll} />
-                        <CascadeCard color="bg-gray-400" label="Non productives (prévues)" tip="mo.cascadeNonProductives" hours={cascade.nonProductiveHours} cost={cascade.costNonProductive} hoursShare={cascade.nonProductiveHours / cascade.paidHours} payShare={cascade.costNonProductive / cascade.payroll} />
+                        <CascadeCard color="bg-blue-500" label="Production réelle" tip="mo.cascadeUtilisees" hours={cascade.usedHours} cost={cascade.costUsed} hoursShare={cascade.usedHours / cascade.paidHours} payShare={cascade.costUsed / cascade.payroll} />
+                        <CascadeCard color="bg-amber-400" label="Capacité inutilisée" tip="mo.cascadeInutilisees" hours={cascade.idleHours} cost={cascade.costIdle} hoursShare={cascade.idleHours / cascade.paidHours} payShare={cascade.costIdle / cascade.payroll} />
+                        <CascadeCard color="bg-gray-400" label="Temps non productif" tip="mo.cascadeNonProductives" hours={cascade.nonProductiveHours} cost={cascade.costNonProductive} hoursShare={cascade.nonProductiveHours / cascade.paidHours} payShare={cascade.costNonProductive / cascade.payroll} />
                     </div>
                     {cascade.effectiveHourlyCost != null && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">

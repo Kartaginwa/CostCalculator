@@ -56,6 +56,8 @@ describe('computeLaborCascade — où va la paie', () => {
         const c = computeLaborCascade(db, [{ postName: 'Cuisine', actual: 120 }, { postName: 'Gestion', actual: 0 }]);
         expect(c.idleHours).toBeCloseTo(40 + 10, 8);          // 160 − 120 pour la cuisine, 10 h pour la gestion
         expect(c.freeProductionHours).toBeCloseTo(40, 8);      // la gestion n'y figure pas
+        expect(c.noRecipeIdleHours).toBeCloseTo(10, 8);        // ses heures : l'écart avec la différence du rapport de productivité
+        expect(c.freeProductionHours + c.noRecipeIdleHours).toBeCloseTo(c.idleHours, 8);
     });
     it('coût réel d\'une heure productive = paie ÷ heures utilisées, supérieur au taux moyen chargé quand des heures sont inutilisées', () => {
         const c = computeLaborCascade(db, [{ postName: 'Cuisine', actual: 120 }, { postName: 'Gestion', actual: 0 }]);
@@ -103,10 +105,17 @@ describe('rentabilité de l\'heure de main-d\'œuvre', () => {
     });
     it('marge de croissance : heures libres × revenu et bénéfice brut moyens par heure, hors revente', () => {
         const rows = computeProductLaborProfitability(products, hoursByFormat);
-        const g = computeGrowthMargin(15, rows);
+        const g = computeGrowthMargin(15, rows);               // sans total d'heures : repli sur les heures des produits fabriqués (15 h)
         expect(g.revenuePerHour).toBeCloseTo(2000 / 15, 8);
         expect(g.additionalRevenue).toBeCloseTo(2000, 8);
         expect(g.additionalGrossProfit).toBeCloseTo(800, 8);
+    });
+    it('marge de croissance : le revenu par heure se calcule sur TOUTES les heures de production (sous-recettes comprises)', () => {
+        const rows = computeProductLaborProfitability(products, hoursByFormat);   // les produits fabriqués ne comptent que 15 h…
+        const g = computeGrowthMargin(15, rows, 20);                                // …mais l'équipe en travaille 20 (5 h de sous-recettes)
+        expect(g.revenuePerHour).toBeCloseTo(2000 / 20, 8);
+        expect(g.grossProfitPerHour).toBeCloseTo(800 / 20, 8);
+        expect(g.additionalRevenue).toBeCloseTo(15 * 100, 8);
     });
     it('marge de croissance absente sans heures libres ou sans produit fabriqué', () => {
         expect(computeGrowthMargin(0, computeProductLaborProfitability(products, hoursByFormat))).toBeNull();

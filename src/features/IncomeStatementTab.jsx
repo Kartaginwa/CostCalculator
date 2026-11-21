@@ -341,7 +341,7 @@ export const IncomeStatementTab = () => {
         expenseLines, onUpdateExpenseLines, revenueLines, onUpdateRevenueLines,
         directCostLines, onUpdateDirectCostLines,
         repartitionKeys, onUpdateRepartitionKeys,
-        productionActivities, onUpdateProductionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification, openGuide, goToReport,
+        productionActivities, onUpdateProductionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification, openGuide,
     } = useProject();
     // Rappel « main-d'œuvre de production déjà comptée dans les recettes » (voir looksLikeProductionLabor).
     const [ignoredLaborWarnings, setIgnoredLaborWarnings] = useSessionState('income.ignoredLaborWarnings', []);
@@ -1380,11 +1380,6 @@ export const IncomeStatementTab = () => {
                 </div>
             </div>
 
-            {/* La Réconciliation réel / théorique vit dans Rapport et suivi → Vue d'ensemble (21/11) : cet onglet ne garde que la saisie. */}
-            <div className="p-4 bg-gray-100 rounded-lg text-sm text-gray-600">
-                La comparaison de ces chiffres réels avec ce que prévoit votre modèle de recettes se trouve dans{' '}
-                <button type="button" onClick={() => goToReport('overview')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Vue d'ensemble</button>.
-            </div>
         </div>
     );
 };

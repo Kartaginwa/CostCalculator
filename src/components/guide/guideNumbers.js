@@ -294,6 +294,8 @@ export const DEMO_SCREEN_CHECKS = {
     "summary:Vue d'ensemble": [
         DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute, DEMO.apercu.pointMortMenu, DEMO.apercu.margeSecurite,
         DEMO.etat.revenus, DEMO.etat.chargesDirectes, DEMO.etat.beneficeBrut, DEMO.etat.beneficeNet,
+        // Constats clés (lot 3) : chiffres cités par le guide.
+        '58 % des revenus, 15 % du bénéfice net',
         DEMO.etat.revenusTheorique, DEMO.etat.chargesDirectesTheorique, DEMO.etat.beneficeBrutTheorique, DEMO.etat.beneficeNetTheorique,
         '+286.41 $', '+0.4 %', '+2 643.65 $', '+5.8 %', '-2 357.24 $', '-6.9 %', '-2 299.48 $', '-36.5 %',
     ],

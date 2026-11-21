@@ -17,6 +17,7 @@ const TERMES = [
     { term: 'Charge indirecte', def: 'Un coût qu\'on ne peut pas rattacher à un produit précis et qu\'on répartit entre les produits : synonyme de frais fixes dans l\'application.' },
     { term: 'CICI', def: 'Coefficient d\'imputation des charges indirectes : la règle qui répartit le bassin de frais fixes d\'une activité entre ses produits (au prorata des coûts directs, du temps de production ou du volume physique).' },
     { term: 'Clé de répartition', def: 'La façon de ventiler un frais fixe entre Général, activités et canaux : manuelle, selon les ventes, selon les charges directes, un élément précis ou une clé personnalisée.' },
+    { term: 'Constat clé', def: 'Une force ou une faiblesse de votre entreprise, calculée par une règle fixe à partir de vos chiffres, avec un lien vers l\'endroit où agir. Affichée dans la Vue d\'ensemble de Rapport et suivi.' },
     { term: 'Contribution totale', def: 'Marge brute par unité multipliée par les unités vendues : l\'argent qu\'un produit apporte pour payer les frais fixes.' },
     { term: 'Coût d\'achat requis', def: 'Le coût net d\'un ingrédient plus le coût de ses pertes en stock : ce qu\'il faut réellement acheter et budgéter.' },
     { term: 'Coût de portage', def: 'L\'intérêt sur l\'argent immobilisé dans un stock qui doit mûrir. Voir vieillissement.' },

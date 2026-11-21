@@ -15,6 +15,7 @@ import { PurchasingReport } from './reports/PurchasingReport.jsx';
 import { LaborReport } from './reports/LaborReport.jsx';
 import { ReconciliationReport } from './reports/ReconciliationReport.jsx';
 import { ActivityLaborSection } from './reports/ActivityLaborSection.jsx';
+import { KeyFindings } from './reports/KeyFindings.jsx';
 import { computeSafetyMargin } from '../engine/laborReport.js';
 
 // Sous-onglets de Rapport et suivi (refonte du 21/11), en quatre groupes séparés par un trait : Vue d'ensemble | produits et segments |
@@ -812,7 +813,8 @@ const getMarginCellStyle = (marginPercent) => {
 };
 
 // --- COMPOSANT D'ANALYSE STRATÉGIQUE ---
-const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
+// `children` : affichés entre les tuiles et le graphique d'évolution (les constats clés).
+const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData, children }) => {
     // Tout est déjà prêt dans analysisData
     const {
         weightedGrossMargin,
@@ -830,6 +832,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
     if (!analysisData.activeProducts || analysisData.activeProducts.length === 0) return null;
 
     return (
+        <>
         <div id="strategic-analysis" className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Indicateurs clés de rentabilité</h2>
 
@@ -884,6 +887,11 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
                 </div>
             )}
 
+        </div>
+
+        {children}
+
+        <div className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
             {/* Évolution des KPI globaux (ex-Suivi, fusionné le 24/10 — retour utilisateur,
                 positionné au-dessus de la Matrice stratégique des produits). Données ABSENTES tant
                 qu'aucun point de référence n'existe : SimpleLineChart affiche alors son propre
@@ -904,6 +912,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
             </div>
 
         </div>
+        </>
     );
 };
 
@@ -1644,7 +1653,9 @@ export const SummaryTable = ({
                 (déplacée ici le 21/11 depuis l'État des résultats : les deux portent sur l'entreprise entière). */}
             {subTab === 'overview' && (
             <>
-            <StrategicAnalysis analysisData={analysisData} generalInfo={generalInfo} globalKpiData={globalKpiData} />
+            <StrategicAnalysis analysisData={analysisData} generalInfo={generalInfo} globalKpiData={globalKpiData}>
+                <KeyFindings />
+            </StrategicAnalysis>
 
             {/* 02/11, retour utilisateur : matrice Activité × Canal insérée au-dessus de la matrice
                 SKU × Canal — même principe (« — » si aucune vente), mais à l'échelle de l'activité

@@ -148,6 +148,7 @@ export const TIPS = {
     "kpi.margeBrute": { text: "Marge brute des produits actifs : total des marges ÷ total des ventes, chaque produit pesant selon son revenu.", guide: "guide-kpi-marge-brute" },
     "kpi.pointMort": { text: "Chiffre d'affaires que les produits actifs doivent générer pour couvrir leurs frais fixes et leur main-d'œuvre directe.", guide: "guide-kpi-point-mort" },
     "kpi.margeSecurite": { text: "De combien vos ventes prévues peuvent baisser avant d'atteindre le point mort. Négatif : vous êtes déjà sous le point mort.", guide: "guide-kpi-marge-securite" },
+    "constats.titre": { text: "Forces et faiblesses calculées à partir de vos chiffres par des règles fixes. Chaque constat mène à l'endroit où agir.", guide: "guide-rapport-constats" },
     "bcg.selecteur": { text: "Tous les canaux : calculé sur le volume réel de l'ensemble des canaux. Un canal : sa marge et sa popularité dans ce canal seulement.", guide: "guide-rapport-bcg" },
     "bcg.etoiles": { text: "Vos produits les plus populaires ET les plus rentables. Mettez-les en avant !", guide: "guide-bcg-etoiles" },
     "bcg.dilemmes": { text: "Produits rentables mais peu vendus. Envisagez une promotion ou une meilleure visibilité.", guide: "guide-bcg-dilemmes" },

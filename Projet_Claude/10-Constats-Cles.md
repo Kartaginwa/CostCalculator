@@ -1,6 +1,6 @@
 # Constats clés — principes et catalogue des règles
 
-Statut : **lot 3** de la refonte de Rapport et suivi (21/11). Les lots 1 (rapatriement et navigation) et 2 (nouveaux modules chiffrés) sont livrés ; ce lot 3 reste à faire. Le fichier des seuils existe déjà : `src/engine/reportThresholds.js`. Voir `03-Feuille-de-route.md`.
+Statut : **lot 3** de la refonte de Rapport et suivi (21/11). Les lots 1 et 2 sont livrés ; ce lot 3 est en cours : la **première tranche** est livrée (21/11), les autres règles du catalogue restent à faire. Le fichier des seuils existe déjà : `src/engine/reportThresholds.js`. Voir `03-Feuille-de-route.md`.
 
 ## Ce que c'est
 
@@ -53,3 +53,13 @@ Un encadré de la **Vue d'ensemble** de Rapport et suivi, sous les tuiles : ce q
 2. Encadré de la Vue d'ensemble (5 + 5) et fenêtre « Voir tous les constats ».
 3. Règles livrées par tranches (une trentaine d'abord), chacune testée.
 4. Infobulles et guide (chapitre Vue d'ensemble : « Constats clés », glossaire) dans le même lot.
+
+## Première tranche livrée (21/11)
+
+Code : `src/engine/keyFindings.js` (règles, `computeKeyFindings`, `buildKeyFindingsContext`), seuils dans `src/engine/reportThresholds.js`, écran `src/features/reports/KeyFindings.jsx` (5 + 5 et fenêtre « Voir tous les constats »), tests `keyFindings.test.js` (19) et `e2e/report-lot3.spec.js` (5).
+
+**Règles livrées (numéros du catalogue)** : 1 (marge de sécurité), 2 (bénéfice net prévu), 9 à 11 (coûts vs cibles), 80 (produits au-dessus de la cible de coût matière), 18 à 20 (produits rentables partout / qui perdent de l'argent / déficitaires partout), 21, 22, 24 (étoiles, poids morts, vaches à lait), 25 (profit concentré), 30 (dépendance à un canal, avec la part du bénéfice net), 32 et 34 (meilleure marge, canal déficitaire), 38, 39, 42 (activités), 45 et 54 (fournisseur en dépendance, ingrédients et emballages), 47, 48 (classe A volatile / stable), 51, 52 (perte stock), 58, 59 (poste bien occupé, paie non utilisée), 61, 62 (meilleur / moins bon produit à l'heure), 64 (marge de croissance), 67, 68, 70 (réel vs théorique), 3, 12 (marge brute et coût matière depuis le premier point de référence). Environ 35 règles ; 30 constats s'appliquent au projet démo (14 forces, 16 faiblesses).
+
+**Restent à faire** : 4 à 8, 13 à 17, 23, 26 à 29, 31, 33, 35 à 37, 40, 41, 43, 44, 46, 49, 50, 53, 55 à 57, 60, 63, 65, 66, 69 et 71 à 79 (la plupart demandent l'historique des points de référence ou les scénarios du simulateur).
+
+Un constat de la Vue d'ensemble n'a pas de lien (on y est déjà). Une règle qui échoue se tait. Les textes sont des gabarits en français de gestion ; ils sont calculés dans le moteur (jamais dans l'écran).

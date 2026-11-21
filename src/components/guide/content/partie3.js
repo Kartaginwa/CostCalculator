@@ -85,6 +85,21 @@ export const partie3 = {
                 { type: 'callout', kind: 'attention', text: 'La marge de sécurité repose sur les ventes **prévues** (prix net × volumes saisis dans Produits et SKUs), pas sur vos revenus réels, et sur le même point mort que la tuile voisine (main-d\'œuvre directe traitée comme un coût fixe). Elle reste vide (—) sans ventes prévues.' },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ventes prévues de ${d(DEMO.etat.revenusTheorique)}, point mort de ${d(DEMO.apercu.pointMortMenu)} : la marge de sécurité est de ${d(DEMO.apercu.margeSecurite)}.` },
 
+                { type: 'h', id: 'guide-rapport-constats', text: 'Constats clés' },
+                { type: 'p', text: 'Sous les tuiles, les {{constats clés}} disent ce que vos chiffres révèlent de votre entreprise, en **forces** (ce qui va bien) et en **faiblesses** (ce qui mérite votre attention). Ils ne viennent pas d\'une intelligence artificielle : ce sont des règles fixes, appliquées à vos données, avec un chiffre et un lien vers l\'endroit où agir. Cinq constats au plus s\'affichent par colonne, les plus importants d\'abord ; {{Voir tous les constats}} ouvre une fenêtre qui les montre tous, regroupés par thème.' },
+                {
+                    type: 'ul', items: [
+                        { label: 'Rentabilité et coûts.', text: 'La marge de sécurité, le bénéfice net prévu, les coûts comparés à vos cibles, et les produits qui dépassent la cible de coût matière.' },
+                        { label: 'Produits, canaux et activités.', text: 'Les produits qui perdent de l\'argent dans un canal, ceux qui sont rentables partout, les étoiles et les poids morts, la dépendance à un canal, l\'activité déficitaire ou à très faible marge.' },
+                        { label: 'Approvisionnement.', text: 'La dépendance à un fournisseur, les ingrédients de classe A à prix volatil, la perte stock prévue.' },
+                        { label: 'Main-d\'œuvre.', text: 'La paie non utilisée, le produit qui rapporte le plus (ou le moins) à l\'heure, la marge de croissance.' },
+                        { label: 'Réel et évolution.', text: 'L\'écart entre votre résultat réel et le modèle, et la variation de la marge brute et du coût matière depuis votre premier point de référence.' },
+                    ],
+                },
+                { type: 'callout', kind: 'attention', text: 'Un constat n\'apparaît que si la donnée existe : sans cible saisie dans Paramètres, aucun constat sur les cibles ; sans chiffres réels dans l\'État des résultats, aucun constat sur l\'écart réel / théorique ; sans au moins deux points de référence, aucun constat sur l\'évolution. Les problèmes de données (un produit sans prix, par exemple) ne sont pas des constats : ils restent dans le panneau « points à vérifier ».' },
+                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la marge de sécurité de ${d(DEMO.apercu.margeSecurite)} est une force, alors que la dépendance aux Grandes surfaces (58 % des revenus, 15 % du bénéfice net) est une faiblesse.` },
+                { type: 'callout', kind: 'retenir', text: 'Une force et une faiblesse peuvent concerner le même produit sans se contredire : le Pâté chinois (340 g) rapporte beaucoup à l\'heure de main-d\'œuvre (force), mais c\'est aussi une vache à lait, très vendu pour une marge unitaire modeste (faiblesse). Ce sont deux angles différents.' },
+
                 { type: 'h', id: 'guide-rapport-evolution', text: 'Évolution des marges et coûts moyens' },
                 { type: 'p', text: 'Un graphique montre l\'évolution de vos coûts moyens (matière, emballage, main-d\'œuvre) et de votre marge brute moyenne, d\'un point de référence à l\'autre. Chaque point est calculé comme les tuiles ci-dessus : une moyenne pondérée par le revenu de chaque produit à cette date, de sorte que le dernier point du graphique correspond à la tuile. Il sert à vérifier si vos décisions portent leurs fruits : un changement de fournisseur a-t-il fait baisser le coût matière ? Une hausse de prix a-t-elle amélioré la marge ? Le graphique est vide tant qu\'aucun point de référence n\'existe. Les 15 points les plus récents sont affichés par défaut ; la gestion des points permet de choisir lesquels alimentent les graphiques.' },
 

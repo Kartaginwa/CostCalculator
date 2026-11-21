@@ -23,7 +23,7 @@ test('Rapport et suivi, Intrants : volatilité étendue à l\'emballage (Phase 6
     // Fournisseur/Prix actuel (pas de ligne "Créez au moins 2 points..." puisque le projet démo en
     // a 19).
     const packagingSection = page.locator('#tutorial-section-tracking-packaging');
-    await expect(packagingSection.getByRole('heading', { name: 'Volatilité des prix d\'achat — Emballage' })).toBeVisible();
+    await expect(packagingSection.getByRole('heading', { name: 'Volatilité des prix d\'achat' })).toBeVisible();
     await expect(packagingSection.getByText('Créez au moins 2 points de référence')).toHaveCount(0);
     const packagingTable = packagingSection.locator('table');
     await expect(packagingTable.locator('th', { hasText: 'Emballage' })).toBeVisible();

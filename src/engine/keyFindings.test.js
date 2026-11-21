@@ -167,12 +167,156 @@ describe('constats clés — réel vs théorique et évolution', () => {
         expect(find(r, 'rec-net').tone).toBe('faiblesse');
         expect(find(computeKeyFindings(ctx({ top: { hasRealData: true, reconciliation: { rows: rows(0.2, 0, 0.3) } } })), 'rec-net').tone).toBe('force');
     });
-    it('évolution : il faut au moins deux points de référence', () => {
+    it('évolution : comparée au DERNIER point de référence (un seul suffit), muette sans point', () => {
         const point = (name, timestamp, gross, mat) => ({ name, timestamp, productsWithCosts: [{ onMenu: true, salesMix: '100', prixVente: '10', costs: { margeBrutePercent: gross, costMatierePercent: mat, costPackagingPercent: 0, costLaborPercent: 0 }, channelBreakdown: [] }] });
         const a = { weightedGrossMargin: 0.40, weightedMaterialCost: 0.36 };
-        expect(computeKeyFindings(ctx({ analysis: a, top: { trackingPoints: [point('Premier', '2026-01-01', 0.45, 0.33)] } })).all).toEqual([]);
+        expect(computeKeyFindings(ctx({ analysis: a })).all).toEqual([]);
+        expect(find(computeKeyFindings(ctx({ analysis: a, top: { trackingPoints: [point('Premier', '2026-01-01', 0.45, 0.33)] } })), 'history-gross').title).toContain('Premier');
         const r = computeKeyFindings(ctx({ analysis: a, top: { trackingPoints: [point('Premier', '2026-01-01', 0.45, 0.33), point('Dernier', '2026-06-01', 0.42, 0.34)] } }));
+        expect(find(r, 'history-gross').title).toContain('constante');
         expect(find(r, 'history-gross')).toMatchObject({ tone: 'faiblesse' });
         expect(find(r, 'history-material')).toMatchObject({ tone: 'faiblesse' });
+    });
+});
+
+describe('constats clés — trois groupes (test)', () => {
+    it('chaque constat appartient à un seul groupe : objectifs (cibles), évolution (points de référence), forces et faiblesses (le reste)', () => {
+        const r = computeKeyFindings(ctx({
+            analysis: { weightedMaterialCost: 0.35, menuRevenue: 100000, globalBreakEven: 120000, weightedGrossMargin: 0.40 },
+            info: { foodCostTarget: '32' },
+            top: { trackingPoints: [
+                { name: 'Premier', timestamp: '2026-01-01', productsWithCosts: [{ onMenu: true, salesMix: '100', prixVente: '10', costs: { margeBrutePercent: 0.45, costMatierePercent: 0.33, costPackagingPercent: 0, costLaborPercent: 0 }, channelBreakdown: [] }] },
+                { name: 'Dernier', timestamp: '2026-06-01', productsWithCosts: [{ onMenu: true, salesMix: '100', prixVente: '10', costs: { margeBrutePercent: 0.44, costMatierePercent: 0.34, costPackagingPercent: 0, costLaborPercent: 0 }, channelBreakdown: [] }] },
+            ] },
+        }));
+        const g = r.groups;
+        expect(g.objectif.all.map(f => f.id)).toEqual(['cost-matiere']);
+        expect(g.evolution.all.map(f => f.id)).toContain('history-gross');
+        expect(g.structure.all.map(f => f.id)).toContain('safety');
+        // partition : aucun constat perdu, aucun en double
+        const total = g.objectif.all.length + g.evolution.all.length + g.structure.all.length;
+        expect(total).toBe(r.all.length);
+        r.all.forEach(f => expect(['objectif', 'evolution', 'structure']).toContain(f.group));
+    });
+    it('chaque groupe sépare ses constats positifs et négatifs', () => {
+        const r = computeKeyFindings(ctx({ analysis: { weightedPackagingCost: 0.07, weightedMaterialCost: 0.35 }, info: { foodCostTarget: '32', packagingCostTarget: '8' } }));
+        expect(r.groups.objectif.forces.map(f => f.id)).toEqual(['cost-emballage']);
+        expect(r.groups.objectif.faiblesses.map(f => f.id)).toEqual(['cost-matiere']);
+    });
+});
+
+describe('constats clés — règles de tendance', () => {
+    const row = (id, cost, price, vol, net) => ({ id, displayName: `Plat ${id}`, onMenu: true, costs: { totalCostPerPortion: cost }, channelBreakdown: [{ channelId: 'c1', netPrice: price, volume: vol, margeNettePercent: net }] });
+    const snap = (name, ts, rows) => ({ name, timestamp: ts, productsWithCosts: rows, generalInfo: {} });
+    const base = (now, then, extra = {}) => ctx({ analysis: { activeProducts: now, weightedGrossMargin: 0.5, weightedMaterialCost: 0.3, weightedPackagingCost: 0.05, weightedLaborCost: 0.2 }, top: { trackingPoints: [snap('Départ', '2026-01-01', then)], ...extra } });
+    it('muettes sans point de référence (un seul suffit pour comparer à aujourd’hui)', () => {
+        const r = computeKeyFindings(ctx({ analysis: { activeProducts: [row('a', 5, 10, 100, 0.2)] }, top: { trackingPoints: [snap('Seul', '2026-01-01', [row('a', 5, 10, 100, 0.2)])] } }));
+        expect(r.all.filter(f => f.id.startsWith('history-') && f.id !== 'history-revenue')).toEqual([]);
+    });
+    it('revenus en hausse (force) et en baisse (faiblesse)', () => {
+        expect(find(computeKeyFindings(base([row('a', 5, 10, 150, 0.2)], [row('a', 5, 10, 100, 0.2)])), 'history-revenue').tone).toBe('force');
+        expect(find(computeKeyFindings(base([row('a', 5, 10, 50, 0.2)], [row('a', 5, 10, 100, 0.2)])), 'history-revenue').tone).toBe('faiblesse');
+    });
+    it('marge nette en baisse', () => {
+        const f = find(computeKeyFindings(base([row('a', 5, 10, 100, 0.1)], [row('a', 5, 10, 100, 0.2)])), 'history-net');
+        expect(f.tone).toBe('faiblesse');
+        expect(f.group).toBe('evolution');
+    });
+    it('coût de revient en hausse sans hausse de prix : érosion de marge', () => {
+        const r = computeKeyFindings(base([row('a', 6, 10, 100, 0.2)], [row('a', 5, 10, 100, 0.2)]));
+        expect(find(r, 'history-sku-cost-up').tone).toBe('faiblesse');
+        expect(find(r, 'history-erosion').detail).toContain('Plat a');
+        // le prix suit : plus d'érosion
+        expect(find(computeKeyFindings(base([row('a', 6, 12, 100, 0.2)], [row('a', 5, 10, 100, 0.2)])), 'history-erosion')).toBeUndefined();
+    });
+    it('coût de revient en baisse : force', () => {
+        expect(find(computeKeyFindings(base([row('a', 4, 10, 100, 0.2)], [row('a', 5, 10, 100, 0.2)])), 'history-sku-cost-down').tone).toBe('force');
+    });
+    it('hausse soutenue d\'un ingrédient (3 relevés) : faiblesse ; 2 relevés seulement : muette', () => {
+        const mk = (count) => ({ hasEnoughData: true, pointCount: count, list: [{ id: 1, name: 'Beurre', provider: 'X', count, trendPercent: 25 }], byName: {} });
+        const hit = computeKeyFindings(base([], [], { ingredientVolatilityRecent: mk(3) }));
+        expect(find(hit, 'history-price-up-ing').detail).toContain('Beurre');
+        expect(find(computeKeyFindings(base([], [], { ingredientVolatilityRecent: mk(2) })), 'history-price-up-ing')).toBeUndefined();
+    });
+    it('canal en croissance', () => {
+        const mk = (vol) => [{ id: 'a', displayName: 'Plat a', onMenu: true, costs: {}, channelBreakdown: [{ channelId: 'c2', netPrice: 10, volume: vol, margeNettePercent: 0.2 }] }];
+        expect(find(computeKeyFindings(base(mk(200), mk(100))), 'history-channel-up').title).toContain('Grandes surfaces');
+    });
+});
+
+describe('constats clés — séries et règles complémentaires', () => {
+    const point = (name, timestamp, gross) => ({ name, timestamp, productsWithCosts: [{ onMenu: true, salesMix: '100', prixVente: '10', costs: { margeBrutePercent: gross, costMatierePercent: 0.3, costPackagingPercent: 0, costLaborPercent: 0 }, channelBreakdown: [] }] });
+    it('une baisse constante sur trois valeurs est une tendance, qui remplace la variation simple', () => {
+        const r = computeKeyFindings(ctx({ analysis: { weightedGrossMargin: 0.40 }, top: { trackingPoints: [point('A', '2025-01-01', 0.46), point('B', '2025-06-01', 0.43)] } }));
+        expect(find(r, 'history-gross').title).toContain('constante');
+        expect(find(r, 'history-gross').tone).toBe('faiblesse');
+    });
+    it('pas de tendance si la mesure remonte entre deux relevés', () => {
+        const r = computeKeyFindings(ctx({ analysis: { weightedGrossMargin: 0.40 }, top: { trackingPoints: [point('A', '2025-01-01', 0.40), point('B', '2025-06-01', 0.46)] } }));
+        expect(find(r, 'history-gross').title).not.toContain('constante');
+    });
+    const seg = (o) => ({ channelId: 'c1', channelName: 'Direct', revenueTotal: 100000, margeBruteTotal: 40000, costLaborTotal: 10000, costAgingTotal: 0, totalIndirectTotal: 20000, totalDirectCostTotal: 60000, costMatiereTotal: 30000, costPackagingTotal: 5000, costIndirectChannelTotal: 0, margeNetteTotal: 20000, margeNettePercent: 0.2, ...o });
+    it('frais fixes : couverture, poids dans les revenus, main-d’œuvre dans les coûts', () => {
+        const r = computeKeyFindings(ctx({ top: { channelSummaries: [seg()] } }));
+        expect(find(r, 'fixed-cover').tone).toBe('force');
+        expect(find(r, 'fixed-share')).toBeUndefined();
+        const lourd = computeKeyFindings(ctx({ top: { channelSummaries: [seg({ totalIndirectTotal: 40000, costLaborTotal: 30000, margeBruteTotal: 20000 })] } }));
+        expect(find(lourd, 'fixed-share').tone).toBe('faiblesse');
+        expect(find(lourd, 'fixed-cover').tone).toBe('faiblesse');
+    });
+    it('sensibilité : le bénéfice résiste ou non à +5 % des intrants', () => {
+        const net = (v) => ({ rows: [{ label: 'Bénéfice net', theoretical: v, real: null, diffPercent: null }] });
+        expect(find(computeKeyFindings(ctx({ top: { channelSummaries: [seg()], reconciliation: net(20000) } })), 'sens-inputs').tone).toBe('force');
+        expect(find(computeKeyFindings(ctx({ top: { channelSummaries: [seg()], reconciliation: net(1000) } })), 'sens-inputs').tone).toBe('faiblesse');
+    });
+    it('canaux : écart de marge et frais de mise en marché', () => {
+        const rows = [seg({ channelId: 'a', channelName: 'A', margeNettePercent: 0.3, margeNetteTotal: 30000 }), seg({ channelId: 'b', channelName: 'B', margeNettePercent: 0.05, margeNetteTotal: 5000, costIndirectChannelTotal: 20000 })];
+        const r = computeKeyFindings(ctx({ top: { channelSummaries: rows } }));
+        expect(find(r, 'channel-gap').tone).toBe('faiblesse');
+        expect(find(r, 'channel-fees').detail).toBeTruthy();
+    });
+    it('main-d’œuvre : poste surchargé et poste sous-utilisé', () => {
+        const info = { productivityReport: { rows: [{ postName: 'Cuisine', actual: 10, expected: 8, utilization: 125 }, { postName: 'Emballage', actual: 3, expected: 10, utilization: 30 }], byActivity: [] } };
+        const r = computeKeyFindings(ctx({ info }));
+        expect(find(r, 'post-overloaded').title).toContain('1 poste');
+        expect(find(r, 'post-underused').detail).toContain('Emballage');
+    });
+    it('approvisionnement : un autre fournisseur moins cher pour le même ingrédient (perte incluse)', () => {
+        const used = { groupedByProvider: { X: { items: [{ id: 1, name: 'Beurre', unit: 'kg', unitPrice: 10, lossPercentage: 0, totalQuantity: 100, totalCost: 1000, purchaseCost: 1000 }] } }, grandTotal: { total: 1000, loss: 0 } };
+        const base = [{ id: 1, name: 'Beurre', unit: 'kg', unitPrice: 10, provider: 'X' }, { id: 2, name: 'beurre', unit: 'kg', unitPrice: 8, provider: 'Y', lossPercentage: 0 }];
+        const r = computeKeyFindings(ctx({ analysis: { purchasingReportData: used }, top: { baseIngredients: base } }));
+        expect(find(r, 'supplier-cheaper').detail).toContain('Y');
+    });
+});
+
+describe('constats clés — évolution : point identique à aujourd’hui, 12 mois, hiérarchie', () => {
+    const iso = (monthsAgo) => new Date(Date.now() - monthsAgo * 30.4 * 86400000).toISOString();
+    const point = (name, monthsAgo, gross) => ({ name, timestamp: iso(monthsAgo), productsWithCosts: [{ onMenu: true, salesMix: '100', prixVente: '10', costs: { margeBrutePercent: gross, costMatierePercent: 0.3, costPackagingPercent: 0, costLaborPercent: 0 }, channelBreakdown: [] }] });
+    it('un dernier point identique à la situation actuelle est écarté : on compare au précédent', () => {
+        const r = computeKeyFindings(ctx({ analysis: { weightedGrossMargin: 0.40, weightedMaterialCost: 0.3 }, top: { trackingPoints: [point('Avant', 2, 0.44), point('Situation actuelle', 0, 0.40)] } }));
+        expect(find(r, 'history-gross').title).toContain('Avant');
+    });
+    it('recul de 12 mois : le relevé d’il y a un an, quand il diffère du relevé récent', () => {
+        const r = computeKeyFindings(ctx({ analysis: { weightedGrossMargin: 0.40, weightedMaterialCost: 0.3 }, top: { trackingPoints: [point('Il y a un an', 12, 0.48), point('Récent', 1, 0.41)] } }));
+        expect(find(r, 'history-gross-12m').title).toContain('sur 12 mois');
+        expect(find(r, 'history-gross-12m').tone).toBe('faiblesse');
+    });
+    it('hiérarchie : la survie passe avant tout, puis l’impact en $ à l’intérieur d’un niveau', () => {
+        const r = computeKeyFindings(ctx({
+            analysis: { menuRevenue: 100000, globalBreakEven: 120000 },
+            top: { cascade: { payroll: 50000, unusedShare: 0.2, unusedPay: 10000 }, channelSummaries: [] },
+        }));
+        const ids = r.all.map(f => f.id);
+        expect(ids.indexOf('safety')).toBeLessThan(ids.indexOf('labor-unused'));
+        expect(find(r, 'safety').tier).toBe(1);
+        expect(find(r, 'labor-unused').tier).toBe(3);
+        expect(find(r, 'labor-unused').impact).toBe(10000);
+        for (let i = 1; i < r.all.length; i++) expect(r.all[i - 1].rank).toBeGreaterThanOrEqual(r.all[i].rank);
+    });
+    it('même niveau : le constat au plus grand impact en $ passe en premier', () => {
+        const mk = (name, loss) => ({ groupedByProvider: { X: { items: [{ id: 1, name, unit: 'kg', unitPrice: 10, lossPercentage: 0, totalQuantity: 100, totalCost: 1000, purchaseCost: 1000, lossCost: loss }] } }, grandTotal: { total: 1000, loss } });
+        const r = computeKeyFindings(ctx({ analysis: { menuRevenue: 100000, purchasingReportData: mk('Beurre', 900) }, top: { cascade: { payroll: 50000, unusedShare: 0.2, unusedPay: 500 } } }));
+        const ids = r.all.map(f => f.id);
+        expect(ids.indexOf('loss-high')).toBeLessThan(ids.indexOf('labor-unused'));
     });
 });

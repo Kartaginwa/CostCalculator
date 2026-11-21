@@ -1,4 +1,5 @@
-// Refonte de Rapport et suivi (21/11, lot 3) : constats clés (forces / faiblesses), cinq par colonne et une fenêtre pour les voir tous.
+// Refonte de Rapport et suivi (21/11, lot 3) : constats clés — test de présentation en trois groupes (Objectifs stratégiques, Amélioration / détérioration,
+// Forces et faiblesses), trois lignes chacun, avec un lien « Voir tout » par groupe.
 import { test, expect } from '@playwright/test';
 
 const startDemo = async (page) => {
@@ -12,44 +13,64 @@ const startDemo = async (page) => {
     return errors;
 };
 
-test('Vue d\'ensemble : cinq forces et cinq faiblesses au maximum, sous les tuiles et avant l\'évolution', async ({ page }) => {
+test('Vue d\'ensemble : trois groupes de constats, trois lignes au maximum chacun, sous la matrice Activité × Canal', async ({ page }) => {
     const errors = await startDemo(page);
     const block = page.locator('#tutorial-section-key-findings');
     await expect(block.getByRole('heading', { name: 'Constats clés' })).toBeVisible();
-    await expect(block.getByTestId('findings-force').locator('li')).toHaveCount(5);
-    await expect(block.getByTestId('findings-faiblesse').locator('li')).toHaveCount(5);
-    // Le démo a plus de constats que ce qui est montré : la fenêtre en donne le nombre.
-    await expect(block.getByRole('button', { name: /Voir tous les constats \(\d+\)/ })).toBeVisible();
-    await expect(block.getByTestId('findings-force')).toContainText('est rentable partout');
-    await expect(block.getByTestId('findings-faiblesse')).toContainText('58 % des revenus, 15 % du bénéfice net');
-    // Ordre : tuiles, constats, puis le graphique d'évolution.
+    for (const [id, title] of [['objectif', 'Objectifs stratégiques'], ['evolution', 'Amélioration / détérioration'], ['structure', 'Forces et faiblesses']]) {
+        const group = block.getByTestId(`findings-group-${id}`);
+        await expect(group.getByRole('heading', { name: title })).toBeVisible();
+        // Deux colonnes (positifs à gauche, négatifs à droite), trois lignes au maximum chacune.
+        await expect(group.getByTestId('preview-force')).toBeVisible();
+        await expect(group.getByTestId('preview-faiblesse')).toBeVisible();
+        for (const tone of ['force', 'faiblesse']) expect(await group.getByTestId(`preview-${tone}`).locator('li').count(), `${id} ${tone}`).toBeLessThanOrEqual(3);
+        expect(await group.locator('li').count(), id).toBeGreaterThan(0);
+        await expect(group.getByRole('button', { name: /Voir tout \(\d+\)/ })).toBeVisible();
+    }
+    // Le groupe « Forces et faiblesses » a plus de trois constats dans le démo : le lien en donne le nombre.
+    const structure = block.getByTestId('findings-group-structure');
+    const count = Number((await structure.getByRole('button', { name: /Voir tout/ }).innerText()).match(/\((\d+)\)/)[1]);
+    expect(count).toBeGreaterThan(3);
+    // Les blocs se suivent verticalement.
+    const ys = [];
+    for (const id of ['objectif', 'evolution', 'structure']) ys.push((await block.getByTestId(`findings-group-${id}`).boundingBox()).y);
+    expect(ys[0]).toBeLessThan(ys[1]);
+    expect(ys[1]).toBeLessThan(ys[2]);
+    await expect(structure).toContainText('58 % des revenus, 15 % du bénéfice net');
+    // Ordre : tuiles, graphique d'évolution, matrice Activité × Canal, constats.
     const y = async (sel) => (await page.locator(sel).first().boundingBox()).y;
-    expect(await y('[data-tour="kpi-tiles"]')).toBeLessThan(await y('#tutorial-section-key-findings'));
-    expect(await y('#tutorial-section-key-findings')).toBeLessThan(await y('#tutorial-section-tracking-global'));
+    expect(await y('[data-tour="kpi-tiles"]')).toBeLessThan(await y('#tutorial-section-tracking-global'));
+    expect(await y('#tutorial-section-tracking-global')).toBeLessThan(await y('#tutorial-section-key-findings'));
+    expect(await y('h2:has-text("Bénéfices / pertes des activités par canaux")')).toBeLessThan(await y('#tutorial-section-key-findings'));
     expect(errors, errors.join('\n')).toEqual([]);
 });
 
-test('La fenêtre « Voir tous les constats » les regroupe par thème et se ferme avec Échap', async ({ page }) => {
+test('« Voir tout » ouvre la fenêtre du groupe, séparée en constats positifs et négatifs, et se ferme avec Échap', async ({ page }) => {
     await startDemo(page);
-    const block = page.locator('#tutorial-section-key-findings');
-    const label = await block.getByRole('button', { name: /Voir tous les constats/ }).innerText();
-    const total = Number(label.match(/\((\d+)\)/)[1]);
-    await block.getByRole('button', { name: /Voir tous les constats/ }).click();
-    const dialog = page.getByRole('dialog', { name: 'Tous les constats' });
+    const structure = page.locator('#tutorial-section-key-findings').getByTestId('findings-group-structure');
+    const total = Number((await structure.getByRole('button', { name: /Voir tout/ }).innerText()).match(/\((\d+)\)/)[1]);
+    await structure.getByRole('button', { name: /Voir tout/ }).click();
+    const dialog = page.getByRole('dialog', { name: 'Forces et faiblesses' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('heading', { name: `Tous les constats (${total})` })).toBeVisible();
-    // Plus de cinq constats par colonne, regroupés sous des thèmes.
-    expect(await dialog.getByTestId('findings-force').locator('li').count()).toBeGreaterThan(5);
-    expect(await dialog.getByTestId('findings-faiblesse').locator('li').count()).toBeGreaterThan(5);
-    await expect(dialog.getByTestId('findings-force').getByText('Rentabilité', { exact: true })).toBeVisible();
-    await expect(dialog.getByTestId('findings-faiblesse').getByText('Approvisionnement', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: `Forces et faiblesses (${total})` })).toBeVisible();
+    await expect(dialog.getByTestId('findings-force').getByRole('heading', { name: 'Forces' })).toBeVisible();
+    await expect(dialog.getByTestId('findings-faiblesse').getByRole('heading', { name: 'Faiblesses' })).toBeVisible();
+    expect(await dialog.locator('li').count()).toBe(total);
+    await expect(dialog.getByTestId('findings-force').getByText('Rentabilité', { exact: true }).or(dialog.getByTestId('findings-force').getByText('Produits', { exact: true })).first()).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
+
+    // Le groupe des objectifs a ses propres intitulés.
+    const objectif = page.locator('#tutorial-section-key-findings').getByTestId('findings-group-objectif');
+    await objectif.getByRole('button', { name: /Voir tout/ }).click();
+    const dialog2 = page.getByRole('dialog', { name: 'Objectifs stratégiques' });
+    await expect(dialog2.getByRole('heading', { name: 'Objectifs atteints' })).toBeVisible();
+    await expect(dialog2.getByRole('heading', { name: 'Objectifs à atteindre' })).toBeVisible();
 });
 
 test('Le lien d\'un constat ouvre le bon sous-onglet', async ({ page }) => {
     await startDemo(page);
-    await page.locator('#tutorial-section-key-findings').getByTestId('findings-faiblesse').getByRole('button', { name: 'Voir Par Canal →' }).first().click();
+    await page.locator('#tutorial-section-key-findings').getByTestId('findings-group-structure').getByRole('button', { name: 'Voir Par Canal →' }).first().click();
     await expect(page.locator('[data-tour="subtab-byChannel"]')).toHaveAttribute('aria-current', 'page');
 });
 

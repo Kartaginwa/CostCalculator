@@ -397,7 +397,12 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <Tooltip tip="ing.perte" />
                             </div>
                         </th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('unitPrice')} className="flex items-center w-full">Prix unitaire ($) {getSortIcon('unitPrice')}</button></th>
+                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
+                                <div className="flex items-center">
+                                    <button onClick={() => requestSort('unitPrice')} className="flex items-center">Prix unitaire ($) {getSortIcon('unitPrice')}</button>
+                                    <Tooltip tip="ing.prixUnitaire" />
+                                </div>
+                            </th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
                                 <div className="flex items-center">
                                     <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière màj {getSortIcon('lastUpdated')}</button>
@@ -504,4 +509,4 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             )}
         </div>
     );
-};
+};

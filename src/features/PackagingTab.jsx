@@ -244,7 +244,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 </EmptyState>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                     <label htmlFor="filterPackagingName" className="block text-sm font-medium text-gray-700">Filtrer par emballage</label>
                     <input
@@ -414,6 +414,8 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 </td>
                                 <td className="px-4 py-2 text-center">
                                     <div className="flex items-center justify-center space-x-1">
+                                        {/* Même largeur que la colonne d'actions des ingrédients (qui porte l'icône des allergènes) : les deux onglets restent alignés. */}
+                                        <span aria-hidden="true" className="inline-block w-7" />
                                         <button onClick={() => duplicateRow(item.id)} title="Dupliquer l'emballage" className="text-blue-500 hover:text-blue-700 p-1 rounded-full"><Copy size={20} /></button>
                                         <button onClick={() => removeRow(item.id)} title="Supprimer l'emballage" className="text-red-500 hover:text-red-700 p-1 rounded-full"><Trash2 size={20} /></button>
                                     </div>

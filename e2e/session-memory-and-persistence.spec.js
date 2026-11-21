@@ -37,13 +37,13 @@ test('Les filtres et la sélection survivent à un changement d\'onglet, puis so
 test('Simulation : le choc configuré survit à l\'onglet et est enregistré dans le fichier du projet', async ({ page }) => {
     await openDemo(page);
     await page.locator('#tab-summary').click();
-    await page.getByRole('button', { name: 'Simulation' }).click();
+    await page.getByRole('button', { name: 'Simulation', exact: true }).click();
     await page.getByRole('button', { name: /Ajouter un choc/ }).click();
     await expect(page.getByRole('button', { name: 'Réinitialiser' })).toBeVisible();
 
     await page.locator('#tab-labor').click();
     await page.locator('#tab-summary').click();
-    await page.getByRole('button', { name: 'Simulation' }).click();
+    await page.getByRole('button', { name: 'Simulation', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Réinitialiser' })).toBeVisible();
 
     const download = page.waitForEvent('download');

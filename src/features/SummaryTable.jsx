@@ -95,7 +95,7 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
                     placeholder={filterPlaceholder}
                     className="p-2 border rounded-md text-sm w-56"
                 />
-                <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)} className="p-2 border rounded-md text-sm">
+                <select value={filterProvider} onChange={(e) => setFilterProvider(e.target.value)} className="p-2 border rounded-md text-sm w-56">
                     {providers.map(p => <option key={p} value={p}>{p === 'all' ? 'Tous les fournisseurs' : p}</option>)}
                 </select>
             </div>
@@ -813,8 +813,7 @@ const getMarginCellStyle = (marginPercent) => {
 };
 
 // --- COMPOSANT D'ANALYSE STRATÉGIQUE ---
-// `children` : affichés entre les tuiles et le graphique d'évolution (les constats clés).
-const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData, children }) => {
+const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
     // Tout est déjà prêt dans analysisData
     const {
         weightedGrossMargin,
@@ -889,7 +888,6 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData, children 
 
         </div>
 
-        {children}
 
         <div className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
             {/* Évolution des KPI globaux (ex-Suivi, fusionné le 24/10 — retour utilisateur,
@@ -1653,9 +1651,7 @@ export const SummaryTable = ({
                 (déplacée ici le 21/11 depuis l'État des résultats : les deux portent sur l'entreprise entière). */}
             {subTab === 'overview' && (
             <>
-            <StrategicAnalysis analysisData={analysisData} generalInfo={generalInfo} globalKpiData={globalKpiData}>
-                <KeyFindings />
-            </StrategicAnalysis>
+            <StrategicAnalysis analysisData={analysisData} generalInfo={generalInfo} globalKpiData={globalKpiData} />
 
             {/* 02/11, retour utilisateur : matrice Activité × Canal insérée au-dessus de la matrice
                 SKU × Canal — même principe (« — » si aucune vente), mais à l'échelle de l'activité
@@ -1754,6 +1750,9 @@ export const SummaryTable = ({
                     onItemsPerPageChange={onItemsPerPageChange}
                 />
             </div>
+
+            {/* Constats clés : sous la matrice Activité × Canal (déplacés le 21/11, demande de l'utilisateur). */}
+            <KeyFindings />
 
             <div className="mt-8">
                 <ReconciliationReport />
@@ -1881,7 +1880,7 @@ export const SummaryTable = ({
                         <select
                             value={selectedIngredientId || ''}
                             onChange={(e) => onSelectedIngredientIdChange(e.target.value)}
-                            className="p-2 border rounded-md"
+                            className="p-2 border rounded-md w-72"
                         >
                             {trackableIngredients.map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
                         </select>
@@ -1929,12 +1928,12 @@ export const SummaryTable = ({
                         <select
                             value={selectedPackagingId || ''}
                             onChange={(e) => onSelectedPackagingIdChange(e.target.value)}
-                            className="p-2 border rounded-md"
+                            className="p-2 border rounded-md w-72"
                         >
                             {trackablePackaging.map(pkg => <option key={pkg.id} value={pkg.id}>{pkg.name}</option>)}
                         </select>
                     </div>
-                    <p className="text-sm text-gray-500 mb-4">Sélectionnez un emballage pour voir comment son prix unitaire a évolué dans le temps.</p>
+                    <p className="text-sm text-gray-500 mb-4">Sélectionnez un emballage pour voir comment son prix unitaire a évolué dans le temps. C'est idéal pour suivre l'inflation et l'impact de vos négociations avec les fournisseurs.</p>
                     <SimpleLineChart
                         data={packagingPriceData}
                         lines={[
@@ -1946,7 +1945,7 @@ export const SummaryTable = ({
                     {/* Volatilité des prix d'achat — Emballage (Phase 6) : même analyse que les
                         ingrédients, poste SÉPARÉ (voir Phase 2). */}
                     <div className="mt-6 pt-4 border-t">
-                        <h3 className="text-lg font-semibold text-gray-700 mb-1">Volatilité des prix d'achat — Emballage</h3>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-1">Volatilité des prix d'achat</h3>
                         <p className="text-sm text-gray-500 mb-4">
                             Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
                             {packagingVolatility.hasEnoughData ? ` sur vos ${packagingVolatility.pointCount} points de référence` : ''}.

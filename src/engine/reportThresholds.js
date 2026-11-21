@@ -28,6 +28,43 @@ export const REPORT_THRESHOLDS = {
     // Variation minimale, en points de pourcentage, de la marge brute ou du coût matière depuis le premier point de référence.
     // Repère : un point de marge est déjà significatif dans un secteur à marges serrées.
     historyPoints: pct(1),
+    // Tendances (depuis le plus ancien point de référence)
+    revenueChange: pct(5),        // variation des revenus qui mérite d'être signalée
+    breakEvenChange: pct(5),      // variation du point mort
+    skuCostChange: pct(5),        // variation du coût de revient d'un produit
+    skuMarginPoints: pct(5),      // variation de la marge nette d'un produit, en points
+    channelChange: pct(10),       // variation des revenus d'un canal
+    priceTrend: pct(10),          // variation du prix d'un intrant (au moins 3 relevés)
+    providerTrend: pct(8),        // variation moyenne des prix chez un fournisseur
+    priceEffectShare: pct(1),     // effet des variations de prix sur les achats d'ingrédients (en part des achats)
+
+    // ── Compléments du catalogue (structure de l'entreprise) ──────────────────────────────────────────────────────────────────────────
+    // Repères de gestion courants, à valider avec un comptable ; une seule valeur à changer ici.
+    fixedCoverGood: 1.3,          // la marge de contribution couvre les frais fixes au moins 1,3 fois (30 % de coussin)
+    fixedShareHigh: pct(35),      // frais fixes lourds : au moins 35 % des revenus
+    fixedShareLow: pct(15),       // frais fixes légers : au plus 15 % des revenus
+    fixedTop3: pct(70),           // les 3 plus grosses lignes de frais fixes pèsent au moins 70 % du total (au moins 5 lignes)
+    agingShare: pct(5),           // le vieillissement pèse au moins 5 % des coûts
+    laborCostShare: pct(40),      // la main-d'œuvre pèse au moins 40 % des coûts
+    sensitivityShock: pct(5),     // choc testé sur les intrants et la main-d'œuvre
+    sensitivityItemShock: pct(10),// choc testé sur le premier intrant
+    sensitivityItemNetShare: pct(10), // ... signalé s'il coûte au moins 10 % du bénéfice net prévu
+    marginEdge: pct(5),           // marge au moins 5 points au-dessus de la moyenne : « forte marge »
+    underusedShare: pct(20),      // ... pour moins de 20 % des revenus : « peu exploité »
+    channelMarginGap: pct(20),    // écart de marge nette entre le meilleur et le pire canal, en points
+    channelFeesShare: pct(15),    // frais de mise en marché d'un canal : au moins 15 % de ses revenus
+    activityCoverGood: 1.3,       // une activité dont les revenus dépassent 1,3 fois son point mort
+    activityDominance: pct(60),   // une activité porte au moins 60 % des revenus
+    profitSpreadTop3: pct(50),    // les 3 premiers produits pèsent au plus 50 % du profit (au moins 5 produits)
+    formatMarginGap: pct(15),     // écart de marge nette entre deux formats d'un même produit, en points
+    subRecipeShare: pct(50),      // une sous-recette pèse au moins 50 % du coût matière d'un plat
+    resaleShare: pct(30),         // les produits de revente font au moins 30 % des revenus
+    hourHogShare: pct(15),        // un produit occupe au moins 15 % des heures pour la moitié (ou moins) de sa part du profit
+    providerSpread: pct(20),      // le premier fournisseur pèse moins de 20 % (au moins 4 fournisseurs)
+    top5Inputs: pct(70),          // les 5 premiers ingrédients pèsent au moins 70 % des achats (au moins 8 ingrédients)
+    altSupplierGap: pct(5),       // un autre fournisseur est au moins 5 % moins cher (prix efficace, perte incluse)
+    postUnderUsed: pct(50),       // un poste de production utilisé à moins de 50 %
+    hourCostGap: 1.25,            // l'heure productive coûte au moins 1,25 fois le taux moyen payé
 
     // ── Canaux et produits ────────────────────────────────────────────────────────────────────────────────────────────────────────
     // Un canal qui porte au moins cette part des revenus est une dépendance commerciale.

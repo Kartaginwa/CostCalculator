@@ -44,9 +44,9 @@ test('Rapport : Vue d\'ensemble (matrice de marges nettes par canal), Par SKU (c
     // Rapport : 3 sous-onglets, « Vue d'ensemble » actif par défaut.
     await page.locator('button:has-text("Rapport")').first().click();
     await page.waitForTimeout(500);
-    await expect(page.getByText('Par SKU')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Par SKU', exact: true })).toBeVisible();
     await expect(page.getByText("Vue d'ensemble")).toBeVisible();
-    await expect(page.getByText('Simulation')).toBeVisible();
+    await expect(page.locator('[data-tour="subtab-simulation"]')).toBeVisible();
 
     // « Vue d'ensemble » : dashboard + graphique de contribution + matrice de marges par canal
     // (déjà affiché, aucun clic nécessaire).
@@ -72,7 +72,7 @@ test('Rapport : Vue d\'ensemble (matrice de marges nettes par canal), Par SKU (c
     await expect(unrelatedRow.getByText('—')).toBeVisible();
 
     // « Par SKU » : sélectionne le SKU rattaché aux deux canaux, vérifie sa cascade.
-    await page.getByText('Par SKU').click();
+    await page.getByRole('button', { name: 'Par SKU', exact: true }).click();
     await page.waitForTimeout(300);
     const bySku = page.locator('#tutorial-section-summary-bysku');
     await bySku.locator('#summarySkuSelect').selectOption({ label: 'Poulet général Tao, riz et légumes' });
@@ -92,7 +92,7 @@ test("Rapport : Par SKU détaille les frais fixes par Général/Activité/Canal 
     await page.goto('/');
     await page.getByText('Explorer un projet démo').click();
     await page.locator('#tab-summary').click();
-    await page.getByText('Par SKU').click();
+    await page.getByRole('button', { name: 'Par SKU', exact: true }).click();
 
     // "Chili con carne mijoté" a un volume RÉEL saisi sur ses 3 canaux (contrairement à un SKU
     // encore en % manuel, dont Général/Activité/Canal resteraient absents à 0 $ — corrigé le

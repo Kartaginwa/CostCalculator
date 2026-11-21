@@ -13,17 +13,19 @@ test("Main-d'œuvre : rapport de productivité étendu par activité de producti
     await page.goto('/');
     await page.getByText('Explorer un projet démo').click();
     await page.waitForTimeout(500);
-    await page.locator('#tab-labor').click();
+    // Depuis le 21/11, les rapports de main-d'œuvre vivent dans Rapport et suivi → Main-d'œuvre.
+    await page.locator('#tab-summary').click();
+    await page.locator('[data-tour="subtab-labor"]').click();
 
     // Le rapport par poste existant reste inchangé.
     const byPostSection = page.locator('#tutorial-section-labor-rapport');
     await expect(byPostSection.getByRole('heading', { name: 'Rapport de productivité pour la période' })).toBeVisible();
 
-    // Nouveau tableau "Capacité de production par activité" : une ligne par activité du projet
+    // Tableau "Charge de travail par activité" (ex-« Capacité de production par activité ») : une ligne par activité du projet
     // démo (Mets principaux surgelés, Soupes et potages, Sauces et accompagnements), part du
     // total qui somme à 100 %.
-    const byActivitySection = page.locator('h2', { hasText: 'Capacité de production par activité' }).locator('xpath=..');
-    await expect(byActivitySection.getByRole('heading', { name: 'Capacité de production par activité' })).toBeVisible();
+    const byActivitySection = page.locator('h2', { hasText: 'Charge de travail par activité' }).locator('xpath=..');
+    await expect(byActivitySection.getByRole('heading', { name: 'Charge de travail par activité' })).toBeVisible();
     await expect(byActivitySection.locator('th', { hasText: 'Activité' })).toBeVisible();
     await expect(byActivitySection.locator('th', { hasText: 'Heures Productives Réelles' })).toBeVisible();
     await expect(byActivitySection.locator('th', { hasText: 'Part du total' })).toBeVisible();

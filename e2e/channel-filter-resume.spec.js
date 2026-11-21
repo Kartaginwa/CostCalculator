@@ -51,6 +51,8 @@ test('Rapport : Vue d\'ensemble (matrice de marges nettes par canal), Par SKU (c
     // « Vue d'ensemble » : dashboard + graphique de contribution + matrice de marges par canal
     // (déjà affiché, aucun clic nécessaire).
     await expect(page.getByText('Analyse stratégique et point mort global')).toBeVisible();
+    // Depuis le 21/11, le classement par contribution et la matrice SKU × canal vivent dans le sous-onglet Portefeuille.
+    await page.locator('[data-tour="subtab-portfolio"]').click();
     await expect(page.getByText('Classement par contribution totale au profit')).toBeVisible();
     await expect(page.getByText('Marges nettes des SKUs par canaux')).toBeVisible();
 

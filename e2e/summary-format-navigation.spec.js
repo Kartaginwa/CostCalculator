@@ -34,6 +34,9 @@ test('Rapport : lignes désambiguïsées par format + édition ouvre le bon ongl
     // nécessaire pour l'atteindre.
     await page.locator('button:has-text("Rapport")').first().click();
     await page.waitForTimeout(500);
+    // Depuis le 21/11, la matrice SKU × canal vit dans le sous-onglet Portefeuille.
+    await page.locator('[data-tour="subtab-portfolio"]').click();
+    await page.waitForTimeout(300);
     for (const s of await page.locator('select').all()) {
         if ((await s.locator('option').allTextContents()).includes('100')) { await s.selectOption('100'); break; }
     }

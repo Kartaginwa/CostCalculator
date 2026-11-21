@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowUpDown, Copy, PlusCircle, Trash2, Upload } from 'lucide-react';
-import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel, areUnitsCompatible } from '../utils.js';
+import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, unitLabel, areUnitsCompatible } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { findPackagingUsages, formatNameList } from '../engine/usage.js';
@@ -15,10 +15,8 @@ const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.j
 // assistant d'import (même composant générique que les ingrédients — voir
 // CatalogImportWizardModal.jsx). Sans allergènes (non pertinent pour un emballage).
 export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, requestConfirmation, products, analysisData, activeUnits } = useProject();
-    const { packagingPurchasingReportData, packagingAbcAnalysisData } = analysisData;
+    const { basePackaging, onUpdatePackagingList, showNotification, setNotification, requestConfirmation, products, activeUnits, goToReport } = useProject();
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
-    const [reportFilterProvider, setReportFilterProvider] = useSessionState('packaging.reportFilter', 'summary');
 
     const [isNameTouched, touchName] = useTouched();
     const [filterName, setFilterName] = useSessionState('packaging.filterName', '');
@@ -436,141 +434,11 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 />
             </div>
 
-            {/* Analyse ABC des emballages (Phase 2.3) — même méthode que les ingrédients (Pareto
-                70/20/10 sur la valeur de consommation), calculée dans analysisData.js une fois la
-                consommation par format connue (2.2). Pas de badge "volatile" ici : le suivi
-                historique des prix (Suivi) ne couvre pas encore le packaging. */}
-            <div className="mt-8 pt-6 border-t">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Analyse ABC des emballages</h2>
-                <p className="text-sm text-gray-500 mb-4">Cet outil classe vos emballages en trois catégories selon leur importance dans vos coûts totaux, vous aidant à concentrer vos efforts de gestion là où ils comptent le plus.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                        <h3 className="font-bold text-lg text-red-800 flex items-center">Catégorie A <span className="ml-auto text-sm font-normal">({formatNumber(packagingAbcAnalysisData.totals.A, 1)}% des coûts)</span></h3>
-                        <p className="text-xs text-gray-500 mb-2">Très importants. À contrôler de près.</p>
-                        <ul className="text-sm space-y-1">
-                            {packagingAbcAnalysisData.A.map(item => (
-                                <li key={item.name} className="flex justify-between items-center">
-                                    <span>{item.name}</span>
-                                    <span className="font-mono text-gray-600">{formatNumber(item.percent, 1)}%</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg">
-                        <h3 className="font-bold text-lg text-yellow-800 flex items-center">Catégorie B <span className="ml-auto text-sm font-normal">({formatNumber(packagingAbcAnalysisData.totals.B, 1)}% des coûts)</span></h3>
-                        <p className="text-xs text-gray-500 mb-2">Importance moyenne.</p>
-                        <ul className="text-sm space-y-1">
-                            {packagingAbcAnalysisData.B.map(item => (
-                                <li key={item.name} className="flex justify-between items-center">
-                                    <span>{item.name}</span>
-                                    <span className="font-mono text-gray-600">{formatNumber(item.percent, 1)}%</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
-                        <h3 className="font-bold text-lg text-green-800 flex items-center">Catégorie C <span className="ml-auto text-sm font-normal">({formatNumber(packagingAbcAnalysisData.totals.C, 1)}% des coûts)</span></h3>
-                        <p className="text-xs text-gray-500 mb-2">Faible importance. Contrôle souple.</p>
-                        <ul className="text-sm space-y-1">
-                            {packagingAbcAnalysisData.C.map(item => (
-                                <li key={item.name} className="flex justify-between items-center">
-                                    <span>{item.name}</span>
-                                    <span className="font-mono text-gray-600">{formatNumber(item.percent, 1)}%</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-                {packagingAbcAnalysisData.A.length === 0 && packagingAbcAnalysisData.B.length === 0 && packagingAbcAnalysisData.C.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-4">Aucun emballage consommé pour la période — rattachez des emballages à vos formats de vente (onglet Production) pour voir apparaître cette analyse.</p>
-                )}
-            </div>
-
-            {/* Rapport d'achats et pertes du packaging — même méthode que les ingrédients. */}
-            <div className="mt-8 pt-6 border-t">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800">Rapport d'achats et pertes pour la période</h2>
-                </div>
-                <p className="text-sm font-medium text-gray-500">Totaux — tous les fournisseurs</p>
-                <div className="mt-2 p-4 bg-blue-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                    <div>
-                        <h3 className="text-lg font-semibold text-blue-800">Coût net total (production)</h3>
-                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(packagingPurchasingReportData.grandTotal.purchase)} $</p>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-red-800">Coût total des pertes</h3>
-                        <p className="text-2xl font-bold text-red-900">{formatCurrency(packagingPurchasingReportData.grandTotal.loss)} $</p>
-                    </div>
-                    <div className="md:col-span-1">
-                        <h3 className="text-lg font-semibold text-gray-800">Coût d'Achat Total Requis</h3>
-                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(packagingPurchasingReportData.grandTotal.total)} $</p>
-                    </div>
-                </div>
-                    <div className="mt-6 max-w-xs">
-                        <label htmlFor="reportFilterProviderPackaging" className="block text-sm font-medium text-gray-700">Détail par fournisseur</label>
-                        <select
-                            id="reportFilterProviderPackaging"
-                            value={reportFilterProvider}
-                            onChange={e => setReportFilterProvider(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                        >
-                            <option value="summary">Totaux seulement</option>
-                            <option value="all">Tous les fournisseurs</option>
-                            {Object.keys(packagingPurchasingReportData.groupedByProvider).sort().map(provider => (
-                                <option key={provider} value={provider}>{provider}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                <div className="space-y-6">
-                    {Object.entries(packagingPurchasingReportData.groupedByProvider)
-                        .filter(([provider]) => {
-                            if (reportFilterProvider === 'summary') return false;
-                            if (reportFilterProvider === 'all') return true;
-                            return provider === reportFilterProvider;
-                        })
-                        .map(([provider, data]) => (
-                        <div key={provider} className="p-4 bg-gray-50 rounded-lg">
-                            <h3 className="text-lg font-semibold text-gray-700 mb-2">{provider}</h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Emballage</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qté nette (Production)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût net (Production)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qté perdue (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût perdu (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût d'achat requis</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {data.items.map(item => (
-                                            <tr key={item.id}>
-                                                <td className="px-4 py-2 font-medium">{item.name}</td>
-                                                <td className="px-4 py-2">{formatNumber(item.totalQuantity, 2)} {item.unit}</td>
-                                                <td className="px-4 py-2">{formatCurrency(item.purchaseCost)} $</td>
-                                                <td className="px-4 py-2">{formatNumber(item.lossQuantity, 2)} {item.unit}</td>
-                                                <td className="px-4 py-2 text-red-600">{formatCurrency(item.lossCost)} $</td>
-                                                <td className="px-4 py-2 font-bold">{formatCurrency(item.totalCost)} $</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                    <tfoot className="bg-gray-100 font-bold">
-                                        <tr>
-                                            <td colSpan="2" className="px-4 py-2 text-right text-gray-800">Sous-total</td>
-                                            <td className="px-4 py-2 text-gray-800">{formatCurrency(data.totalPurchase)} $</td>
-                                            <td className="px-4 py-2"></td>
-                                            <td className="px-4 py-2 text-red-600">{formatCurrency(data.totalLoss)} $</td>
-                                            <td className="px-4 py-2 text-gray-800">{formatCurrency(data.totalCost)} $</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
+            {/* L'analyse ABC, le rapport d'achats et perte stock, et l'évolution des prix vivent dans Rapport et suivi → Emballages (21/11) :
+                cet onglet ne garde que la saisie du catalogue. */}
+            <div className="mt-8 pt-4 border-t text-sm text-gray-600">
+                L'analyse ABC, le rapport d'achats et perte stock et l'évolution des prix de vos emballages se trouvent dans{' '}
+                <button type="button" onClick={() => goToReport('packaging')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Emballages</button>.
             </div>
 
             {isImportWizardOpen && (

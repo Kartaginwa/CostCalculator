@@ -1045,6 +1045,8 @@ const App = ({ tourMode = false } = {}) => {
         // sans quoi tous les onglets se re-rendraient à chaque rendu de App, quelle qu'en soit la cause.
         const projectContextValue = useMemo(() => ({
             goToTab: setActiveTab,
+            // Ouvre Rapport et suivi directement sur un sous-onglet (liens « Voir l'analyse → » des onglets de saisie, constats clés).
+            goToReport: (subTab) => { setReportActiveSubTab(subTab); setActiveTab('summary'); },
             openGuide,
             startTour: tourMode ? null : startTour,
             companyName, onUpdateCompanyName: setCompanyName,

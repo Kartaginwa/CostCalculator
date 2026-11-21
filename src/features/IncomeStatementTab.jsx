@@ -11,7 +11,7 @@ import { indirectCostMethodLabels } from '../state/initialState.js';
 // App.jsx (chunk séparé, chargé seulement à l'ouverture).
 const IncomeStatementImportWizardModal = lazy(() => import('./IncomeStatementImportWizardModal.jsx').then(m => ({ default: m.IncomeStatementImportWizardModal })));
 import {
-    computeChannelRevenueShareByActivity, computeRealVsTheoreticalReconciliation,
+    computeChannelRevenueShareByActivity,
     buildActivityBuckets, computeBucketTotalsFromAmounts, computeDirectCostLineAllocations,
     computeExpenseLineEffectiveAllocations, computeExpensePoolTotals,
     computeGrossProfitTotals,
@@ -341,7 +341,7 @@ export const IncomeStatementTab = () => {
         expenseLines, onUpdateExpenseLines, revenueLines, onUpdateRevenueLines,
         directCostLines, onUpdateDirectCostLines,
         repartitionKeys, onUpdateRepartitionKeys,
-        productionActivities, onUpdateProductionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification, openGuide,
+        productionActivities, onUpdateProductionActivities, salesChannels, analysisData, generalInfo, onUpdateGeneralInfo, showNotification, setNotification, openGuide, goToReport,
     } = useProject();
     // Rappel « main-d'œuvre de production déjà comptée dans les recettes » (voir looksLikeProductionLabor).
     const [ignoredLaborWarnings, setIgnoredLaborWarnings] = useSessionState('income.ignoredLaborWarnings', []);
@@ -634,16 +634,6 @@ export const IncomeStatementTab = () => {
     );
     const grossProfitTotal = totalRevenue - totalDirectCosts;
     const netProfitTotal = grossProfitTotal - parseLocaleNumber(generalInfo.totalIndirects);
-
-    // Phase 4.4 — Tableau de réconciliation réel/théorique, au niveau de l'entreprise entière.
-    const reconciliation = useMemo(
-        () => computeRealVsTheoreticalReconciliation({
-            totalRevenue, totalDirectCosts,
-            activeProducts: analysisData.activeProducts, unitsSoldById: analysisData.unitsSoldById,
-            menuRevenue: analysisData.menuRevenue, totalIndirects: generalInfo.totalIndirects,
-        }),
-        [totalRevenue, totalDirectCosts, analysisData.activeProducts, analysisData.unitsSoldById, analysisData.menuRevenue, generalInfo.totalIndirects]
-    );
 
     return (
         <div id="tutorial-section-income-statement" className="container mx-auto p-6 bg-white rounded-xl shadow-2xl max-w-[1600px] space-y-8">
@@ -1390,67 +1380,10 @@ export const IncomeStatementTab = () => {
                 </div>
             </div>
 
-            <div id="tutorial-section-reconciliation" className="p-4 bg-gray-100 rounded-lg">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                        Réconciliation réel / théorique
-                        <Tooltip tip="ff.reconciliation" />
-                    </h2>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-200">
-                            <tr>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
-                                    <span className="flex items-center justify-center">
-                                        Poste
-                                        <Tooltip tip="ff.recPoste" />
-                                    </span>
-                                </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
-                                    <span className="flex items-center justify-center">
-                                        Réel ($)
-                                        <Tooltip tip="ff.recReel" />
-                                    </span>
-                                </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
-                                    <span className="flex items-center justify-center">
-                                        Théorique ($)
-                                        <Tooltip tip="ff.recTheorique" />
-                                    </span>
-                                </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
-                                    <span className="flex items-center justify-center">
-                                        Écart ($)
-                                        <Tooltip tip="ff.recEcart" />
-                                    </span>
-                                </th>
-                                <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">
-                                    <span className="flex items-center justify-center">
-                                        Écart (%)
-                                        <Tooltip tip="ff.recEcartPct" />
-                                    </span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {reconciliation.rows.map((row) => {
-                                const isMarge = row.label === 'Bénéfice net';
-                                return (
-                                    <tr key={row.label} className={isMarge ? 'font-bold border-t-2 border-gray-300' : ''}>
-                                        <td className="px-4 py-2">{row.label}</td>
-                                        <td className="px-4 py-2 text-right">{formatCurrency(row.real)} $</td>
-                                        <td className="px-4 py-2 text-right">{formatCurrency(row.theoretical)} $</td>
-                                        <td className="px-4 py-2 text-right">{row.diff >= 0 ? '+' : ''}{formatCurrency(row.diff)} $</td>
-                                        <td className="px-4 py-2 text-right">
-                                            {row.diffPercent != null ? `${row.diffPercent >= 0 ? '+' : ''}${formatNumber((row.diffPercent * 100), 1)} %` : '—'}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+            {/* La Réconciliation réel / théorique vit dans Rapport et suivi → Vue d'ensemble (21/11) : cet onglet ne garde que la saisie. */}
+            <div className="p-4 bg-gray-100 rounded-lg text-sm text-gray-600">
+                La comparaison de ces chiffres réels avec ce que prévoit votre modèle de recettes se trouve dans{' '}
+                <button type="button" onClick={() => goToReport('overview')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Vue d'ensemble</button>.
             </div>
         </div>
     );

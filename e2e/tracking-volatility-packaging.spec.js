@@ -16,7 +16,7 @@ test('Rapport et suivi, Intrants : volatilité étendue à l\'emballage (Phase 6
     await page.getByText('Explorer un projet démo').click();
     await page.waitForTimeout(500);
     await page.locator('#tab-summary').click();
-    await page.getByText('Intrants', { exact: true }).click();
+    await page.locator('[data-tour="subtab-packaging"]').click();
     await page.waitForTimeout(300);
 
     // Volatilité — Emballage : tableau distinct de celui des ingrédients, colonnes Emballage/

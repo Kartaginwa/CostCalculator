@@ -43,7 +43,7 @@ test('section Emballage de Recette & Calcul : totaux complets (base, perte stock
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
 
-test('Rapport et suivi, Intrants : évolution du prix des emballages, séparée de celle des ingrédients', async ({ page }) => {
+test('Rapport et suivi, Ingrédients et Emballages : évolution du prix des emballages, séparée de celle des ingrédients', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -53,10 +53,12 @@ test('Rapport et suivi, Intrants : évolution du prix des emballages, séparée 
     await page.waitForTimeout(500);
 
     await page.locator('#tab-summary').click();
-    await page.getByText('Intrants', { exact: true }).click();
+    await page.locator('[data-tour="subtab-ingredients"]').click();
     await page.waitForTimeout(300);
-
     await expect(page.getByText("Évolution du prix des ingrédients")).toBeVisible();
+    // Les emballages ont leur propre sous-onglet (depuis le 21/11, ex-bloc du sous-onglet Intrants).
+    await page.locator('[data-tour="subtab-packaging"]').click();
+    await page.waitForTimeout(300);
     const packagingEvolution = page.locator('#tutorial-section-tracking-packaging');
     await expect(packagingEvolution.getByText("Évolution du prix des emballages")).toBeVisible();
 

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, XCircle, ChevronDown, Copy, Trash2 } from 'lucide-react';
-import { parseLocaleNumber, formatCurrency, formatNumber, loadedHourlyRate } from '../utils.js';
+import { parseLocaleNumber, formatCurrency, loadedHourlyRate } from '../utils.js';
 import { Tooltip, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 
 export const LaborDatabaseTab = ({ openPostIds, setOpenPostIds }) => {
-    const { laborDatabase, onUpdateLaborDatabase, generalInfo, showNotification, setNotification } = useProject();
-    const productivityReport = generalInfo.productivityReport;
+    const { laborDatabase, onUpdateLaborDatabase, showNotification, setNotification, goToReport } = useProject();
 
 const [newlyAddedPostId, setNewlyAddedPostId] = useState(null);
 const [newlyAddedEmployeeId, setNewlyAddedEmployeeId] = useState(null);
@@ -284,83 +283,12 @@ useEffect(() => {
                 </div>
             )})}
             </div>
-            <div id="tutorial-section-labor-rapport" className="mt-8 pt-6 border-t">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Rapport de productivité pour la période</h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Poste</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
-                                    <div className="flex items-center">Heures Productives Attendues<Tooltip tip="mo.attendues" /></div>
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
-                                    <div className="flex items-center">Heures Productives Réelles<Tooltip tip="mo.reelles" /></div>
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
-                                    <div className="flex items-center">Différence (h)<Tooltip tip="mo.difference" /></div>
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
-                                    <div className="flex items-center">Taux d'Utilisation (%)<Tooltip tip="mo.utilisation" /></div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {productivityReport.rows.map(row => (
-                                <tr key={row.postName}>
-                                    <td className="px-4 py-2 font-medium">{row.postName}</td>
-                                    <td className="px-4 py-2">{formatNumber(row.expected, 2)} h</td>
-                                    <td className="px-4 py-2">{formatNumber(row.actual, 2)} h</td>
-                                    <td className="px-4 py-2">{formatNumber(row.difference, 2)} h</td>
-                                    <td className="px-4 py-2">{formatNumber(row.utilization, 2)} %</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                        <tfoot className="bg-gray-100 font-bold">
-                            <tr>
-                                <td className="px-4 py-2 text-left">Total</td>
-                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.expected, 2)} h</td>
-                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.actual, 2)} h</td>
-                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.difference, 2)} h</td>
-                                <td className="px-4 py-2">{formatNumber(productivityReport.totals.utilization, 2)} %</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+            {/* Le rapport de productivité et la charge de travail par activité vivent dans Rapport et suivi → Main-d'œuvre (21/11) :
+                cet onglet ne garde que la saisie des postes et des employés. */}
+            <div id="tutorial-section-labor-rapport-lien" className="mt-8 pt-4 border-t text-sm text-gray-600">
+                Le rapport de productivité et la charge de travail par activité se trouvent dans{' '}
+                <button type="button" onClick={() => goToReport('labor')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Main-d'œuvre</button>.
             </div>
-
-            {/* Capacité de production par activité (Phase 6, 15/10) : pas de "heures attendues" par
-                activité — un poste/employé n'est pas rattaché à une seule activité, rien d'analogue
-                à comparer. Seulement la part des heures de MO réellement nécessaires que CHAQUE
-                activité consomme, du total du menu. */}
-            {productivityReport.byActivity && productivityReport.byActivity.length > 0 && (
-                <div className="mt-8 pt-6 border-t">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                        Capacité de production par activité
-                        <Tooltip tip="mo.capacite" />
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Activité</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500"><div className="flex items-center">Heures Productives Réelles<Tooltip tip="mo.capHeures" /></div></th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500"><div className="flex items-center">Part du total<Tooltip tip="mo.capPart" /></div></th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {productivityReport.byActivity.map(row => (
-                                    <tr key={row.activityId}>
-                                        <td className="px-4 py-2 font-medium">{row.activityName}</td>
-                                        <td className="px-4 py-2">{formatNumber(row.actual, 2)} h</td>
-                                        <td className="px-4 py-2">{formatNumber(row.sharePercent, 2)} %</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

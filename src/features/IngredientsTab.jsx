@@ -1,45 +1,16 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowUpDown, Upload, PlusCircle, AlertCircle, Copy, Trash2 } from 'lucide-react';
-import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel, areUnitsCompatible } from '../utils.js';
+import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, unitLabel, areUnitsCompatible } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { findIngredientUsages, formatNameList } from '../engine/usage.js';
-import { computeIngredientVolatility } from '../engine/priceVolatility.js';
 
 // Chargé à la demande : l'assistant d'import est volumineux et rarement ouvert.
 const CatalogImportWizardModal = lazy(() => import('./CatalogImportWizardModal.jsx').then(m => ({ default: m.CatalogImportWizardModal })));
 
-// Élément de la liste ABC, avec étiquette « volatile » si le prix de l'ingrédient est jugé volatil
-// d'après les points de référence (croisement ABC × volatilité : un item de forte valeur au prix
-// volatil est une priorité d'approvisionnement).
-const AbcItem = ({ item, volatilityByName }) => {
-    const v = volatilityByName[item.name];
-    return (
-        <li className="flex justify-between items-center">
-            <span className="flex items-center">
-                {item.name}
-                {v && v.isVolatile && (
-                    <span
-                        title={`Prix volatil : amplitude ${formatNumber(v.amplitudePercent, 0)} % entre son plus bas et son plus haut sur les points de référence.`}
-                        className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700"
-                    >
-                        volatile
-                    </span>
-                )}
-            </span>
-            <span className="font-mono text-gray-600">{formatNumber(item.percent, 1)}%</span>
-        </li>
-    );
-};
-
 export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
-    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, requestConfirmation, products, analysisData, trackingPoints, activeUnits } = useProject();
-    const priceVolatility = useMemo(() => computeIngredientVolatility(trackingPoints), [trackingPoints]);
-
-    // --- LOGIQUE CENTRALISÉE : ON EXTRAIT LES DONNÉES DU CERVEAU ---
-    // // you should modify this part : on récupère les données pré-calculées
-    const { purchasingReportData, abcAnalysisData } = analysisData;
+    const { ingredientsList, baseIngredients, onUpdateIngredientsList, showNotification, setNotification, requestConfirmation, products, activeUnits, goToReport } = useProject();
 
     const [isNameTouched, touchName] = useTouched();
     const [filterName, setFilterName] = useSessionState('ingredients.filterName', '');
@@ -51,11 +22,6 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     const [comparisonIngredient, setComparisonIngredient] = useSessionState('ingredients.comparison', '');
     const [isSortDisabled, setIsSortDisabled] = useState(false);
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
-    const [reportFilterProvider, setReportFilterProvider] = useSessionState('ingredients.reportFilter', 'summary');
-
-    // // IMPORTANT : Supprimez ici tout bloc useMemo ou fonction qui s'appelait 
-    // // 'purchasingReportData' ou 'abcAnalysisData' car ils sont maintenant fournis par la prop analysisData.
-    // // Ces anciens blocs utilisaient 'activeProducts', ce qui causait votre erreur.
 
     // --- LOGIQUE DE PRÉPARATION DES DONNÉES POUR L'AFFICHAGE ---
     // // add this logic here : Définition des variables nécessaires à l'interface
@@ -515,136 +481,11 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                     onItemsPerPageChange={onItemsPerPageChange}
                 />
             </div>
-            {/* NOUVEAU: Analyse ABC des Ingrédients */}
-                <div id="tutorial-section-ingredients-abc" className="mt-8 pt-6 border-t">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Analyse ABC des ingrédients</h2>
-                    <p className="text-sm text-gray-500 mb-4">Cet outil classe vos ingrédients en trois catégories selon leur importance dans vos coûts totaux, vous aidant à concentrer vos efforts de gestion là où ils comptent le plus.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Catégorie A */}
-                        <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                            <h3 className="font-bold text-lg text-red-800 flex items-center">Catégorie A <span className="ml-auto text-sm font-normal">({formatNumber(abcAnalysisData.totals.A, 1)}% des coûts)</span></h3>
-                            <p className="text-xs text-gray-500 mb-2">Très importants. À contrôler de près.</p>
-                            <ul className="text-sm space-y-1">
-                                {abcAnalysisData.A.map(item => <AbcItem key={item.name} item={item} volatilityByName={priceVolatility.byName} />)}
-                            </ul>
-                        </div>
-                        {/* Catégorie B */}
-                        <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg">
-                            <h3 className="font-bold text-lg text-yellow-800 flex items-center">Catégorie B <span className="ml-auto text-sm font-normal">({formatNumber(abcAnalysisData.totals.B, 1)}% des coûts)</span></h3>
-                            <p className="text-xs text-gray-500 mb-2">Importance moyenne.</p>
-                            <ul className="text-sm space-y-1">
-                                {abcAnalysisData.B.map(item => <AbcItem key={item.name} item={item} volatilityByName={priceVolatility.byName} />)}
-                            </ul>
-                        </div>
-                        {/* Catégorie C */}
-                        <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
-                            <h3 className="font-bold text-lg text-green-800 flex items-center">Catégorie C <span className="ml-auto text-sm font-normal">({formatNumber(abcAnalysisData.totals.C, 1)}% des coûts)</span></h3>
-                            <p className="text-xs text-gray-500 mb-2">Faible importance. Contrôle souple.</p>
-                            <ul className="text-sm space-y-1">
-                                {abcAnalysisData.C.map(item => <AbcItem key={item.name} item={item} volatilityByName={priceVolatility.byName} />)}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            <div id="tutorial-section-ingredients-rapport" className="mt-8 pt-6 border-t">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800">Rapport d'achats et pertes pour la période</h2>
-                </div>
-                <p className="text-sm font-medium text-gray-500">Totaux — tous les fournisseurs</p>
-                <div className="mt-2 p-4 bg-blue-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                    <div>
-                        <h3 className="text-lg font-semibold text-blue-800">Coût net total (production)</h3>
-                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(purchasingReportData.grandTotal.purchase)} $</p>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-red-800">Coût total des pertes</h3>
-                        <p className="text-2xl font-bold text-red-900">{formatCurrency(purchasingReportData.grandTotal.loss)} $</p>
-                    </div>
-                    <div className="md:col-span-1">
-                        <h3 className="text-lg font-semibold text-gray-800">Coût d'Achat Total Requis</h3>
-                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(purchasingReportData.grandTotal.total)} $</p>
-                    </div>
-                </div>
-                    <div className="mt-6 max-w-xs">
-                        <label htmlFor="reportFilterProvider" className="block text-sm font-medium text-gray-700">Détail par fournisseur</label>
-                        <select
-                            id="reportFilterProvider"
-                            value={reportFilterProvider}
-                            onChange={e => setReportFilterProvider(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                        >
-                            <option value="summary">Totaux seulement</option>
-                            <option value="all">Tous les fournisseurs</option>
-                            {Object.keys(purchasingReportData.groupedByProvider).sort().map(provider => (
-                                <option key={provider} value={provider}>{provider}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                <div className="space-y-6">
-                    {Object.entries(purchasingReportData.groupedByProvider)
-                        .filter(([provider]) => {
-                            if (reportFilterProvider === 'summary') return false;
-                            if (reportFilterProvider === 'all') return true;
-                            return provider === reportFilterProvider;
-                        })
-                        .map(([provider, data]) => (
-                        <div key={provider} className="p-4 bg-gray-50 rounded-lg">
-                            <h3 className="text-lg font-semibold text-gray-700 mb-2">{provider}</h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-100">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Ingrédient</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">
-                                                    Qté Nette (Production)
-                                                    <Tooltip tip="ing.qteNette" />
-                                                </div>
-                                            </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">
-                                                    Coût Net (Production)
-                                                    <Tooltip tip="ing.coutNet" />
-                                                </div>
-                                            </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Qté perdue (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Coût perdu (Stock)</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">
-                                                    Coût d'Achat Requis
-                                                    <Tooltip tip="ing.achatRequis" />
-                                                </div>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {data.items.map(item => (
-                                            <tr key={item.id} id={`ingredient-row-${item.id}`} className={item.id === newlyAddedId ? 'new-row' : ''}>
-                                                <td className="px-4 py-2 font-medium">{item.name}</td>
-                                                <td className="px-4 py-2">{formatNumber(item.totalQuantity, 2)} {item.unit}</td>
-                                                <td className="px-4 py-2">{formatCurrency(item.purchaseCost)} $</td>
-                                                <td className="px-4 py-2">{formatNumber(item.lossQuantity, 2)} {item.unit}</td>
-                                                <td className="px-4 py-2 text-red-600">{formatCurrency(item.lossCost)} $</td>
-                                                <td className="px-4 py-2 font-bold">{formatCurrency(item.totalCost)} $</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                    <tfoot className="bg-gray-100 font-bold">
-                                        <tr>
-                                            <td colSpan="2" className="px-4 py-2 text-right text-gray-800">Sous-total</td>
-                                            <td className="px-4 py-2 text-gray-800">{formatCurrency(data.totalPurchase)} $</td>
-                                            <td className="px-4 py-2"></td>
-                                            <td className="px-4 py-2 text-red-600">{formatCurrency(data.totalLoss)} $</td>
-                                            <td className="px-4 py-2 text-gray-800">{formatCurrency(data.totalCost)} $</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
+            {/* L'analyse ABC, le rapport d'achats et perte stock, et l'évolution des prix vivent dans Rapport et suivi → Ingrédients (21/11) :
+                cet onglet ne garde que la saisie du catalogue. */}
+            <div className="mt-8 pt-4 border-t text-sm text-gray-600">
+                L'analyse ABC, le rapport d'achats et perte stock et l'évolution des prix de vos ingrédients se trouvent dans{' '}
+                <button type="button" onClick={() => goToReport('ingredients')} className="text-blue-600 hover:text-blue-800 underline">Rapport et suivi → Ingrédients</button>.
             </div>
             <AllergenModal
                 isOpen={!!ingredientToEdit}

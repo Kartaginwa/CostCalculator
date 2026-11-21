@@ -145,16 +145,6 @@ export const SCENES = [
         ],
     },
     {
-        id: 'abc', chapter: 2, tab: 'ingredients', duration: 8500,
-        caption: 'L\'analyse **ABC** désigne les ingrédients qui pèsent le plus lourd dans vos coûts. Surveiller ceux-là rapporte le plus. Un prix qui bouge beaucoup ? Une **alerte** s\'affiche.',
-        steps: [
-            { at: 200, do: 'scroll', target: '#tutorial-section-ingredients-abc' },
-            { at: 1000, do: 'highlight', target: '#tutorial-section-ingredients-abc' },
-            { at: 1300, do: 'note', id: 'a', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 0 }, text: 'Catégorie A : les gros postes de dépense', side: 'top' },
-            { at: 4300, do: 'note', id: 'c', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 2 }, text: 'Catégorie C : les petits détails', side: 'top' },
-        ],
-    },
-    {
         id: 'emballage', chapter: 2, tab: 'packaging', duration: 8500,
         caption: 'L\'**emballage** suit la même logique que les ingrédients : contenants, étiquettes, cartons. Une longue liste dans un chiffrier ? **Importez-la** d\'un coup.',
         steps: [
@@ -174,16 +164,6 @@ export const SCENES = [
             { at: 1300, do: 'note', id: 'sal', target: { sel: '#tutorial-section-labor-db input', nth: 2 }, text: 'Salaire horaire de cet employé', side: 'top' },
             { at: 2000, do: 'type', target: { sel: '#tutorial-section-labor-db input', nth: 2 }, text: '36', rate: 260 },
             { at: 4300, do: 'note', id: 'cout', target: { text: 'Coût Moyen Pondéré du Poste' }, text: 'Coût du poste : {v}', side: 'top', read: { label: 'Coût Moyen Pondéré du Poste' } },
-        ],
-    },
-    {
-        id: 'productivite', chapter: 2, tab: 'labor', duration: 7000,
-        caption: 'Le **rapport de productivité** compare les heures payées aux heures vraiment nécessaires. L\'écart, c\'est de la **capacité inutilisée** que vous payez quand même.',
-        steps: [
-            { at: 200, do: 'scroll', target: '#tutorial-section-labor-rapport' },
-            { at: 1000, do: 'highlight', target: '#tutorial-section-labor-rapport' },
-            { at: 1500, do: 'note', id: 'ecart', target: { text: 'Taux d\'Utilisation', within: '#tutorial-section-labor-rapport' }, text: 'Sous 100 % : des heures payées, mais inutilisées', side: 'top' },
-            { at: 3600, do: 'point', target: { sel: '#tutorial-section-labor-rapport tbody tr', nth: 0 } },
         ],
     },
 
@@ -304,13 +284,14 @@ export const SCENES = [
     },
     {
         id: 'benefices', chapter: 4, tab: 'income-statement', duration: 7500,
-        caption: 'Le **bénéfice brut** (revenus moins charges directes) puis le **bénéfice net** (moins les frais fixes), et la **réconciliation** avec ce que le modèle calcule.',
+        caption: 'Le **bénéfice brut** (revenus moins charges directes) puis le **bénéfice net** (moins les frais fixes).',
         steps: [
             { at: 200, do: 'scroll', target: { sel: '[data-tour="profit-bar"]', nth: 0 } },
             { at: 900, do: 'highlight', target: { sel: '[data-tour="profit-bar"]', nth: 0 } },
-            { at: 3200, do: 'scroll', target: '#tutorial-section-reconciliation' },
-            { at: 4000, do: 'highlight', target: '#tutorial-section-reconciliation' },
-            { at: 4200, do: 'note', id: 'rec', target: '#tutorial-section-reconciliation', text: 'Réel contre théorique : l\'écart se lit ici', side: 'top' },
+            { at: 1200, do: 'note', id: 'bb', target: { sel: '[data-tour="profit-bar"]', nth: 0 }, text: 'Revenus moins charges directes', side: 'top' },
+            { at: 4000, do: 'unnote' },
+            { at: 4200, do: 'highlight', target: { sel: '[data-tour="profit-bar"]', nth: 1 } },
+            { at: 4500, do: 'note', id: 'bn', target: { sel: '[data-tour="profit-bar"]', nth: 1 }, text: 'Puis moins les frais fixes', side: 'top' },
         ],
     },
 
@@ -329,15 +310,15 @@ export const SCENES = [
         ],
     },
     {
-        id: 'matrice', chapter: 5, tab: 'summary', subtab: 'overview', duration: 13500,
+        id: 'matrice', chapter: 5, tab: 'summary', subtab: 'portfolio', duration: 13500,
         caption: 'La **matrice stratégique** classe chaque produit : **étoiles**, **vaches à lait**, **dilemmes**, **poids morts**. Changez de canal : le classement change aussi.',
         steps: [
             { at: 300, do: 'scroll', target: '[data-tour="bcg-title"]', block: 'start' },
-            { at: 1200, do: 'highlight', target: { text: 'Étoiles', within: '#strategic-analysis', up: 2 } },
-            { at: 1500, do: 'note', id: 'etoiles', target: { text: 'Étoiles', within: '#strategic-analysis', up: 2 }, text: 'À promouvoir', side: 'bottom' },
+            { at: 1200, do: 'highlight', target: { text: 'Étoiles', within: '[data-tour="bcg-matrix"]', up: 2 } },
+            { at: 1500, do: 'note', id: 'etoiles', target: { text: 'Étoiles', within: '[data-tour="bcg-matrix"]', up: 2 }, text: 'À promouvoir', side: 'bottom' },
             { at: 3400, do: 'unnote' },
-            { at: 3500, do: 'highlight', target: { text: 'Poids morts', within: '#strategic-analysis', up: 2 } },
-            { at: 3600, do: 'note', id: 'poids', target: { text: 'Poids morts', within: '#strategic-analysis', up: 2 }, text: 'À repenser ou retirer', side: 'bottom' },
+            { at: 3500, do: 'highlight', target: { text: 'Poids morts', within: '[data-tour="bcg-matrix"]', up: 2 } },
+            { at: 3600, do: 'note', id: 'poids', target: { text: 'Poids morts', within: '[data-tour="bcg-matrix"]', up: 2 }, text: 'À repenser ou retirer', side: 'bottom' },
             { at: 6000, do: 'unnote' },
             { at: 6200, do: 'pick', target: '#bcgChannelFilter', option: 'Épiceries' },
             { at: 8200, do: 'note', id: 'chg', target: '#bcgChannelFilter', text: 'Mêmes produits, autre canal : le classement bouge', side: 'right' },
@@ -407,8 +388,8 @@ export const SCENES = [
         ],
     },
     {
-        id: 'intrants', chapter: 5, tab: 'summary', subtab: 'intrants', duration: 15500,
-        caption: 'Le sous-onglet **Intrants** suit le **prix de chaque ingrédient** d\'un point de référence à l\'autre. Un prix qui s\'envole ? La **volatilité** le signale.',
+        id: 'intrants', chapter: 5, tab: 'summary', subtab: 'ingredients', duration: 15500,
+        caption: 'Le sous-onglet **Ingrédients** suit aussi le **prix de chaque ingrédient** d\'un point de référence à l\'autre. Un prix qui s\'envole ? La **volatilité** le signale.',
         steps: [
             { at: 300, do: 'scroll', target: '#tutorial-section-tracking-ingredient', block: 'start' },
             { at: 1200, do: 'highlight', target: '#tutorial-section-tracking-ingredient select' },
@@ -424,6 +405,26 @@ export const SCENES = [
             { at: 11600, do: 'scroll', target: { text: 'Volatilité des prix d\'achat' } },
             { at: 12300, do: 'highlight', target: { text: 'Volatilité des prix d\'achat', up: 1 } },
             { at: 12400, do: 'note', id: 'vol', target: { text: 'Volatilité des prix d\'achat' }, text: 'Les prix qui ont le plus bougé', side: 'right' },
+        ],
+    },
+    {
+        id: 'abc', chapter: 5, tab: 'summary', subtab: 'ingredients', duration: 8500,
+        caption: 'L\'analyse **ABC** désigne les ingrédients qui pèsent le plus lourd dans vos coûts. Surveiller ceux-là rapporte le plus. Un prix qui bouge beaucoup ? Une **alerte** s\'affiche.',
+        steps: [
+            { at: 200, do: 'scroll', target: '#tutorial-section-ingredients-abc' },
+            { at: 1000, do: 'highlight', target: '#tutorial-section-ingredients-abc' },
+            { at: 1300, do: 'note', id: 'a', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 0 }, text: 'Catégorie A : les gros postes de dépense', side: 'top' },
+            { at: 4300, do: 'note', id: 'c', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 2 }, text: 'Catégorie C : les petits détails', side: 'top' },
+        ],
+    },
+    {
+        id: 'productivite', chapter: 5, tab: 'summary', subtab: 'labor', duration: 7000,
+        caption: 'Le **rapport de productivité** compare les heures payées aux heures vraiment nécessaires. L\'écart, c\'est de la **capacité inutilisée** que vous payez quand même.',
+        steps: [
+            { at: 200, do: 'scroll', target: '#tutorial-section-labor-rapport' },
+            { at: 1000, do: 'highlight', target: '#tutorial-section-labor-rapport' },
+            { at: 1500, do: 'note', id: 'ecart', target: { text: 'Taux d\'Utilisation', within: '#tutorial-section-labor-rapport' }, text: 'Sous 100 % : des heures payées, mais inutilisées', side: 'top' },
+            { at: 3600, do: 'point', target: { sel: '#tutorial-section-labor-rapport tbody tr', nth: 0 } },
         ],
     },
 

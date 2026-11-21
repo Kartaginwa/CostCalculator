@@ -136,3 +136,10 @@ Source unique : `src/tooltips.js`. Règle : 1–2 phrases (≤ 150 caractères) 
 | vol.prixActuel | (nouveau) | — | Dernier prix unitaire connu (point de référence le plus récent). (64) | guide-intrants-prix-actuel |
 | vol.tendance | (nouveau) | — | Variation entre le premier et le dernier point de référence. (60) | guide-intrants-tendance |
 | vol.amplitude | (nouveau) | — | Écart entre le prix le plus bas et le plus haut, en % de la moyenne. (68) | guide-intrants-volatilite |
+| rapport.qteNette | PurchasingReport.jsx | (ex-`ing.qteNette`) Quantité de cet ingrédient réellement utilisée dans vos produits, d'après vos ventes de la période. | Quantité réellement utilisée dans vos produits, d'après vos ventes de la période. (82) | guide-ing-ra-qte-nette |
+| rapport.coutNet | PurchasingReport.jsx | (ex-`ing.coutNet`) Valeur de la matière transformée en produits vendus. | Valeur de ce qui est transformé en produits vendus. (50) | guide-ing-ra-cout-net |
+| rapport.achatRequis | PurchasingReport.jsx | (ex-`ing.achatRequis`) Coût net plus coût des pertes : ce qu'il faut réellement acheter et budgéter. | Coût net plus coût de la perte stock : ce qu'il faut réellement acheter et budgéter. (85) | guide-ing-ra-achat-requis |
+| rapport.qtePerteStock | PurchasingReport.jsx | (nouveau) | Quantité à acheter en plus pour compenser la perte au stockage (taux de perte du catalogue). Une prévision, pas une mesure. (124) | guide-ing-ra-qte-perdue |
+| rapport.coutPerteStock | PurchasingReport.jsx | (nouveau) | Ce que coûte la quantité achetée en plus pour compenser la perte stock prévue. (78) | guide-ing-ra-cout-perdu |
+| mo.charge | LaborReport.jsx | (ex-`mo.capacite`) Part des heures de main-d'œuvre requises que consomme chaque activité : révèle la ligne la plus exigeante en temps. | Part des heures de main-d'œuvre requises que consomme chaque activité : montre où part le temps de l'équipe. (108) | guide-mo-capacite |
+| mo.chargeHeures / mo.chargePart | LaborReport.jsx | (ex-`mo.capHeures` / `mo.capPart`) | Textes inchangés (clés renommées, infobulles « complètes »). | guide-mo-cap-heures / guide-mo-cap-part |

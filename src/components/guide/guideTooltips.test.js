@@ -22,7 +22,7 @@ const walk = (v) => {
 PARTS.forEach((p) => { anchors.add(p.id); p.chapters.forEach((c) => { anchors.add(c.id); walk(c.blocks); }); });
 
 const files = [];
-for (const dir of ['features', 'components']) {
+for (const dir of ['features', 'features/reports', 'components']) {
     for (const name of readdirSync(join(ROOT, 'src', dir)).filter((n) => n.endsWith('.jsx'))) {
         files.push([`${dir}/${name}`, readFileSync(join(ROOT, 'src', dir, name), 'utf-8')]);
     }

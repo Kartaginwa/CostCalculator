@@ -54,34 +54,8 @@ export const chapitreIngredients = {
         },
         { type: 'callout', kind: 'astuce', text: 'L\'assistant repère les doublons : il rapproche un ingrédient du fichier d\'un ingrédient existant par sa combinaison identifiant unique + fournisseur, ou à défaut nom + format + fournisseur. Importer le même fichier deux fois met donc à jour les prix au lieu de dupliquer les lignes.' },
 
-        { type: 'h', id: 'guide-ing-abc', text: 'L\'analyse ABC des ingrédients' },
-        { type: 'p', text: 'Sous le tableau, l\'analyse ABC classe vos ingrédients par importance financière (voir [[guide-concept-suivi|chapitre 11]] pour la méthode). Trois cartes présentent les catégories A, B et C, avec la part de chaque ingrédient dans le coût total consommé. Un badge {{volatile}} s\'ajoute aux ingrédients dont le prix bouge beaucoup (il faut au moins deux points de référence pour qu\'il apparaisse).' },
-        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la catégorie A compte quatre ingrédients (bœuf haché, poitrine de poulet, filet de saumon et riz basmati) pour ${d(DEMO.ingredients.abcA)} du coût total. Les trois premiers n'atteignent que 64,8 % : le riz basmati, qui franchit la barre des 70 %, est inclus dans la catégorie A.` },
-        { type: 'p', text: 'L\'analyse porte uniquement sur les ingrédients **réellement consommés** par vos produits actifs, compte tenu des volumes vendus : un ingrédient qui ne sert à aucune recette n\'y figure pas.' },
-
-        { type: 'h', id: 'guide-ing-rapport-achats', text: 'Le rapport d\'achats et pertes' },
-        { type: 'p', text: 'Ce rapport estime ce que vous devez acheter pour la période, en partant de vos recettes et de vos ventes : pour chaque ingrédient, la quantité requise est la quantité de la recette multipliée par le nombre de lots à produire, ce nombre se déduisant des volumes saisis dans Produits et SKUs. Trois totaux, pour tous les fournisseurs, s\'affichent en premier :' },
-        {
-            type: 'ul', items: [
-                { label: 'Coût net total (production).', text: 'La valeur de la matière réellement utilisée dans vos produits.' },
-                { label: 'Coût total des pertes.', text: 'La valeur de ce qui se perd en stock avant utilisation.' },
-                { label: 'Coût d\'achat total requis.', text: 'La somme des deux : ce qu\'il faut réellement acheter, et donc budgéter.' },
-            ],
-        },
-        { type: 'p', text: `Dans le projet démo : ${d(DEMO.ingredients.coutNet)} de coût net, ${d(DEMO.ingredients.pertes)} de pertes, soit ${d(DEMO.ingredients.achatRequis)} d'achats requis.` },
-        { type: 'p', text: 'La liste {{Détail par fournisseur}} sert uniquement à afficher, sous les totaux, le détail ligne par ligne : {{Totaux seulement}}, {{Tous les fournisseurs}}, ou un fournisseur précis. Le détail indique pour chaque ingrédient la quantité nette, le coût net, la quantité perdue et le coût perdu.' },
-        {
-            type: 'table', caption: 'Les colonnes du détail', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
-            rowIds: ['guide-ing-ra-qte-nette', 'guide-ing-ra-cout-net', 'guide-ing-ra-qte-perdue', 'guide-ing-ra-cout-perdu', 'guide-ing-ra-achat-requis'],
-            rows: [
-                ['{{Qté nette (Production)}}', 'La quantité de l\'ingrédient réellement utilisée dans vos produits, d\'après vos ventes de la période.'],
-                ['{{Coût net (Production)}}', 'Le coût de cette quantité : la valeur de la matière qui est transformée en produits vendus.'],
-                ['{{Qté perdue (Stock)}}', 'La quantité qui se perd en stock avant d\'être utilisée, selon le taux de perte de l\'ingrédient.'],
-                ['{{Coût perdu (Stock)}}', 'Le coût de cette quantité perdue.'],
-                ['{{Coût d\'achat requis}}', 'La somme du coût net et du coût perdu : ce qu\'il faut réellement acheter et budgéter pour cet ingrédient.'],
-            ],
-        },
-        { type: 'callout', kind: 'attention', text: 'Ce rapport n\'est aussi juste que vos volumes : si vous n\'avez saisi aucun volume de vente dans Produits et SKUs, il n\'a rien à calculer et affiche des zéros.' },
+        { type: 'h', id: 'guide-ing-analyses', text: 'L\'analyse ABC et le rapport d\'achats' },
+        { type: 'p', text: 'L\'analyse ABC de vos ingrédients, le rapport d\'achats et perte stock et l\'évolution des prix ne se trouvent plus sous ce tableau : ils sont dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Ingrédients}}. Voir le chapitre [[guide-rapport-intrants|Ingrédients et Emballages : vos achats]].' },
 
         { type: 'callout', kind: 'retenir', text: 'Chaque ligne est un ingrédient chez un fournisseur. Le prix unitaire se calcule seul. Le taux de perte ne concerne que ce qui se perd avant la production. Tenez les prix à jour : la date de dernière mise à jour et le point jaune vous y aident.' },
         { type: 'words', items: [
@@ -89,7 +63,7 @@ export const chapitreIngredients = {
             { term: 'Prix unitaire', def: 'le prix ramené à l\'unité de base.' },
             { term: 'Prix efficace', def: 'le prix unitaire corrigé de la perte en stock.' },
             { term: 'Analyse ABC', def: 'classement des ingrédients selon leur poids dans le coût total.' },
-            { term: 'Coût d\'achat requis', def: 'le coût net plus le coût des pertes.' },
+            { term: 'Coût d\'achat requis', def: 'le coût net plus le coût de la perte stock.' },
         ] },
     ],
 };
@@ -116,8 +90,8 @@ export const chapitreEmballage = {
         },
         { type: 'h', id: 'guide-emb-import', text: 'Importer une liste d\'emballages' },
         { type: 'p', text: 'C\'est le même assistant que pour les ingrédients (quatre étapes : téléverser, associer les colonnes, prévisualiser et valider, confirmer). Il reconnaît un emballage déjà présent (mise à jour) ou un nouveau (ajout).' },
-        { type: 'h', id: 'guide-emb-abc', text: 'Analyse ABC et rapport d\'achats' },
-        { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et pertes existent aussi pour l\'emballage, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 71,5 % des coûts.' },
+        { type: 'h', id: 'guide-emb-analyses', text: 'Analyse ABC et rapport d\'achats' },
+        { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et perte stock de l\'emballage sont dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Emballages}}. Voir le chapitre [[guide-rapport-intrants|Ingrédients et Emballages : vos achats]].' },
         { type: 'callout', kind: 'retenir', text: 'L\'emballage se saisit comme les ingrédients, mais seule la perte en stock s\'y applique. Il pèse souvent bien plus qu\'on le croit : regardez son pourcentage dans vos rapports.' },
         { type: 'words', items: [
             { term: 'Emballage', def: 'tout ce qui contient, protège ou présente le produit : pot, bouteille, couvercle, étiquette, boîte.' },
@@ -150,29 +124,8 @@ export const chapitreMainOeuvre = {
         { type: 'callout', kind: 'exemple', text: `Un cuisinier du projet démo gagne ${SALAIRE.taux} $/h, avec ${Math.round(SALAIRE.charges * 100)} % de charges et ${Math.round(SALAIRE.vacances * 100)} % de vacances : son coût horaire chargé est de ${SALAIRE.taux} × ${num(1 + SALAIRE.charges, 2)} × ${num(1 + SALAIRE.vacances, 2)} = ${money(SALAIRE.charge)}. Le poste « Cuisinier de production » compte trois personnes (22 $/h, 22 $/h et 21 $/h, pour 60, 60 et 55 heures) : son coût moyen pondéré est de ${d(DEMO.mo.coutCuisinier)}.` },
         { type: 'callout', kind: 'attention', text: 'Ne saisissez dans un poste que les personnes qui participent à la fabrication. Le gérant, l\'administration et le représentant des ventes sont des frais fixes : ils vont dans l\'État des résultats, pas ici. Voir le chapitre [[guide-ff-liste|Frais fixes]] pour la règle complète.' },
 
-        { type: 'h', id: 'guide-mo-productivite', text: 'Le rapport de productivité' },
-        { type: 'p', text: 'Sous les postes, ce rapport compare, **poste par poste**, les heures que vous payez à celles dont vos recettes ont réellement besoin pour produire ce que vous vendez :' },
-        {
-            type: 'ul', itemIds: ['guide-mo-prod-attendues', 'guide-mo-prod-reelles', 'guide-mo-prod-difference', 'guide-mo-prod-utilisation'], items: [
-                { label: 'Heures productives attendues.', text: 'Les heures travaillées de chaque employé multipliées par son % de temps productif.' },
-                { label: 'Heures productives réelles.', text: 'Le temps que les étapes de vos recettes mobilisent, multiplié par le nombre de lots que vos ventes demandent. Le temps de fabrication des sous-recettes est compté lui aussi, à hauteur de ce que vos produits en consomment, même si une sous-recette n\'est jamais vendue seule.' },
-                { label: 'Différence (h).', text: 'Les heures attendues moins les heures réelles : les heures productives payées mais non utilisées.' },
-                { label: 'Taux d\'utilisation (%).', text: 'Les heures réelles ÷ les heures attendues.' },
-            ],
-        },
-        { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 90,31 %, l'« Opérateur d'emballage » à 90,55 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
-        { type: 'callout', kind: 'pourquoi', text: 'Un taux d\'utilisation bas signale de la capacité payée et inutilisée : trop de personnel pour le volume vendu, des recettes qui ne reflètent pas le travail réel, ou des ventes qui n\'ont pas encore été saisies. C\'est un levier de rentabilité majeur, car **ce coût est réparti sur tous vos produits** (voir [[guide-concept-capacite|chapitre 10]]).' },
-        { type: 'callout', kind: 'attention', text: 'Une personne présente dans cet onglet mais affectée à aucune étape, comme le responsable de production du démo, fait baisser le taux d\'utilisation global. Son coût n\'est pas perdu : il est réparti sur toutes les recettes sous forme de coût indirect de main-d\'œuvre. Si cette personne ne fait pas de production, mieux vaut la retirer de l\'onglet et la saisir dans les frais fixes.' },
-
-        { type: 'h', id: 'guide-mo-capacite', text: 'Capacité de production par activité' },
-        { type: 'p', text: 'Ce deuxième tableau répartit les heures de main-d\'œuvre réellement requises entre vos **activités de production**, et indique la part de chaque activité dans le total. Il révèle quelle ligne de production est la plus exigeante en temps. Il n\'y a pas de « heures attendues » par activité : un poste ou un employé n\'est pas rattaché à une seule activité, donc rien n\'est comparable.' },
-        { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 126,81 heures (36,82 % du total), les soupes et potages 210,14 heures (61,01 %), et les sauces et accompagnements 7,47 heures (2,17 %). La sauce du Terroir est un produit de revente, sans étapes de production : seule la sauce à spaghetti maison demande du temps de cuisson et de mise en pot.' },
-        {
-            type: 'ul', itemIds: ['guide-mo-cap-heures', 'guide-mo-cap-part'], items: [
-                { label: 'Heures productives réelles.', text: 'Les heures de production de l\'activité, calculées à partir des étapes de vos recettes et de vos ventes de la période.' },
-                { label: 'Part du total.', text: 'La part de cette activité dans l\'ensemble des heures productives réelles.' },
-            ],
-        },
+        { type: 'h', id: 'guide-mo-analyses', text: 'Les rapports de productivité' },
+        { type: 'p', text: 'Le rapport de productivité et la charge de travail par activité sont dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Main-d\'œuvre}}. Voir le chapitre [[guide-rapport-main-oeuvre|Main-d\'œuvre : l\'utilisation de votre équipe]].' },
         { type: 'callout', kind: 'retenir', text: 'Un poste regroupe des employés du même métier. Le coût moyen d\'un poste est le coût horaire chargé de ses employés, pondéré par leurs heures. Le taux d\'utilisation mesure la capacité de production payée qui sert vraiment.' },
         { type: 'words', items: [
             { term: 'Poste', def: 'un groupe d\'employés qui font le même métier.' },

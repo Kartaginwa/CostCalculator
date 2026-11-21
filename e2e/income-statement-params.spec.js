@@ -201,14 +201,14 @@ test("Revenus : colonnes par contenant (Général + activités) avant les colonn
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });
 
-test("réconciliation réel/théorique dans l'onglet État des résultats (Phase 4.4)", async ({ page }) => {
+test("réconciliation réel/théorique dans Rapport et suivi, Vue d'ensemble (Phase 4.4, déplacée le 21/11)", async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
 
     await page.goto('/');
     await page.getByText('Explorer un projet démo').click();
-    await page.locator('#tab-income-statement').click();
+    await page.locator('#tab-summary').click();
 
     const section = page.locator('#tutorial-section-reconciliation');
     await expect(section).toBeVisible();

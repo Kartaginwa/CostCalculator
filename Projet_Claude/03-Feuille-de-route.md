@@ -4044,3 +4044,24 @@ Audit indépendant des calculs (dossier `audit/`, rapport `audit/RAPPORT_AUDIT.m
 
 **Canaux supprimés et commentaires (21/11)** : les ventes d'un canal qui n'existe plus ne comptent plus ni dans le volume qui répartit les frais fixes ni dans les heures de main-d'œuvre (`activeChannelPrices`, utils.js ; sans liste de canaux, rien n'est filtré). Commentaires de code corrigés (soupape de sécurité du repli « Général » ; plafond de la productivité, qui s'applique à l'usage et non à la valeur exposée). Annexes A2 et A3 de l'audit mises à jour. Reste ouvert : valeur de remplacement d'une quantité produite absente (1 aujourd'hui).
 
+## Refonte de Rapport et suivi (21/11)
+
+Sauvegarde avant le travail : tag `sauvegarde-avant-refonte-rapport` (sur c666bf5), poussé sur GitHub. Maquette validée avec l'utilisateur (page web privée, version 4) ; le catalogue des constats clés est dans `10-Constats-Cles.md`.
+
+**Décisions** :
+- Rapport et suivi passe à **neuf sous-onglets en quatre groupes** (une seule rangée, séparés par un trait ; pas de pastilles ni de second niveau) : Vue d'ensemble | Portefeuille · Par SKU · Par Activité · Par Canal | Ingrédients · Emballages · Main-d'œuvre | Simulation. L'ancien sous-onglet « Intrants » est scindé en Ingrédients et Emballages.
+- Les onglets de saisie (Ingrédients, Emballage, Main-d'œuvre, État des résultats) ne gardent que la saisie, plus une ligne « Voir l'analyse → » (`goToReport(sous-onglet)`, ProjectContext).
+- **Portefeuille** : ce qui porte sur l'ensemble des produits (matrice stratégique en vrai 2 × 2 avec axes nommés, classement par contribution paginé, marges des SKUs par canaux à lignes serrées). **Vue d'ensemble** : tuiles sur une ligne, évolution, matrice Activité × Canal, puis la **Réconciliation réel / théorique** (déplacée de l'État des résultats ; message « Saisissez vos chiffres réels » tant qu'aucun réel n'est saisi, jamais des zéros).
+- Vocabulaire : **« perte stock »** (colonnes, totaux, glossaire) : quantité à acheter en plus, **prévue**, pas mesurée. « Capacité de production par activité » devient **« Charge de travail par activité »** (le tableau ne compare aucune capacité disponible).
+- Les ancres du guide restent stables (le contenu se déplace) ; infobulles et guide font partie de chaque lot.
+- Refusé par l'utilisateur : réel vs théorique par nature de charge (ne fonctionne pas avec la méthode en place).
+- Les produits de revente (aucune main-d'œuvre) seront exclus des ratios par heure.
+
+**Lot 1 — rapatriement et navigation : FAIT (21/11)** :
+- Nouveaux composants `features/reports/` : `AbcAnalysis`, `PurchasingReport` (communs aux ingrédients et aux emballages, plus de duplication ; le doublon d'id `ingredient-row-…` disparaît), `LaborReport`, `ReconciliationReport`. `SummaryTable` : barre de sous-onglets groupée (`REPORT_SUBTAB_GROUPS`), `BcgMatrix` extraite, pagination du classement par contribution, valeur ancienne `intrants` traitée comme `ingredients`.
+- Infobulles : `ing.qteNette/coutNet/achatRequis` → `rapport.*` (+ `rapport.qtePerteStock`, `rapport.coutPerteStock`), `mo.capacite*` → `mo.charge*`. Le test des infobulles scanne aussi `features/reports`.
+- Guide : les sections d'ABC, d'achats, de productivité et de réconciliation passent dans la partie 3 (chapitres « Ingrédients et Emballages : vos achats », « Main-d'œuvre : l'utilisation de votre équipe », « Portefeuille », Vue d'ensemble), avec renvois dans les chapitres de saisie ; glossaire : « Perte stock », « Charge de travail » ; `guideNumbers.js` et `guide-demo-numbers.spec.js` suivent les nouveaux écrans.
+- Visite guidée : adaptation minimale seulement (scènes `abc` et `productivite` passées dans le chapitre « Analyser », scène `benefices` sans réconciliation) ; elle sera refaite à l'étape suivante, avec les exports PDF.
+- Tests : 383 unitaires, e2e adaptés + `report-restructure.spec.js` (5 tests).
+
+**Reste** : lot 2 (marge de sécurité, résumé par fournisseur, paie non utilisée, cascade de la paie, coût réel d'une heure productive, charge de travail enrichie, bénéfice brut par heure par activité et par produit, marge de croissance), lot 3 (constats clés), puis exports PDF/Excel, visite guidée et révision de la langue.

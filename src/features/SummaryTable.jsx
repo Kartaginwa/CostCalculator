@@ -10,6 +10,19 @@ import { computeSnapshotBreakEven, computeSnapshotMenuKpis, computeMenuEngineeri
 import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
 import { computeProjectChecks } from '../engine/projectChecks.js';
 import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
+import { AbcAnalysis } from './reports/AbcAnalysis.jsx';
+import { PurchasingReport } from './reports/PurchasingReport.jsx';
+import { LaborReport } from './reports/LaborReport.jsx';
+import { ReconciliationReport } from './reports/ReconciliationReport.jsx';
+
+// Sous-onglets de Rapport et suivi (refonte du 21/11), en quatre groupes séparés par un trait : Vue d'ensemble | produits et segments |
+// approvisionnement et équipe | simulation. L'ancien sous-onglet « Intrants » est scindé en Ingrédients et Emballages.
+const REPORT_SUBTAB_GROUPS = [
+    [{ id: 'overview', label: "Vue d'ensemble" }],
+    [{ id: 'portfolio', label: 'Portefeuille' }, { id: 'bySku', label: 'Par SKU' }, { id: 'byActivity', label: 'Par Activité' }, { id: 'byChannel', label: 'Par Canal' }],
+    [{ id: 'ingredients', label: 'Ingrédients' }, { id: 'packaging', label: 'Emballages' }, { id: 'labor', label: "Main-d'œuvre" }],
+    [{ id: 'simulation', label: 'Simulation' }],
+];
 
 // --- SECTION SUIVI (fusionnée dans Rapport le 24/10, retour utilisateur — voir
 // Projet_Claude/03-Feuille-de-route.md) : composants repris tels quels de l'ex-TrackingTab.jsx,
@@ -797,7 +810,7 @@ const getMarginCellStyle = (marginPercent) => {
 };
 
 // --- COMPOSANT D'ANALYSE STRATÉGIQUE ---
-const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpiData }) => {
+const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
     // Tout est déjà prêt dans analysisData
     const {
         weightedGrossMargin,
@@ -805,8 +818,87 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
         weightedMaterialCost,
         weightedPackagingCost,
         weightedLaborCost,
-        menuEngineeringData: blendedMenuEngineeringData,
         totalSalesMix,
+    } = analysisData;
+
+
+    if (!analysisData.activeProducts || analysisData.activeProducts.length === 0) return null;
+
+    return (
+        <div id="strategic-analysis" className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Analyse stratégique et point mort global</h2>
+
+            {/* flex + largeur fixe (plutôt que grid-cols-3) pour que la dernière ligne (2 tuiles sur
+                5) reste centrée au lieu de coller à gauche — un grid laisserait un trou à droite. */}
+            <div data-tour="kpi-tiles" className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 text-center">
+                <div className="p-4 bg-white rounded-lg shadow">
+                    <div className="text-sm text-gray-500 flex items-center justify-center">
+                        Coût Matière Moyen Pondéré
+                        <Tooltip tip="kpi.matiere" />
+                        {getCostTargetIndicator(weightedMaterialCost, generalInfo.foodCostTarget)}
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
+                </div>
+                <div className="p-4 bg-white rounded-lg shadow">
+                    <div className="text-sm text-gray-500 flex items-center justify-center">
+                        Coût Emballage Moyen Pondéré
+                        <Tooltip tip="kpi.emballage" />
+                        {getCostTargetIndicator(weightedPackagingCost, generalInfo.packagingCostTarget)}
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
+                </div>
+                <div className="p-4 bg-white rounded-lg shadow">
+                    <div className="text-sm text-gray-500 flex items-center justify-center">
+                        Coût Main-d'œuvre Moyen Pondéré
+                        <Tooltip tip="kpi.mo" />
+                        {getCostTargetIndicator(weightedLaborCost, generalInfo.laborCostTarget)}
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
+                </div>
+                <div className="p-4 bg-white rounded-lg shadow">
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /></div>
+                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
+                </div>
+                <div className="p-4 bg-white rounded-lg shadow">
+                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort des Produits Actifs <Tooltip tip="kpi.pointMort" /></div>
+                    <p className="text-3xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
+                </div>
+            </div>
+            {Math.round(totalSalesMix) !== 100 && totalSalesMix > 0 && (
+                 <div className="p-3 mb-4 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm">
+                    <AlertTriangle className="inline h-4 w-4 mr-2"/>
+                    Attention : Le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}%. Pour une analyse précise, il devrait être de 100%.
+                </div>
+            )}
+
+            {/* Évolution des KPI globaux (ex-Suivi, fusionné le 24/10 — retour utilisateur,
+                positionné au-dessus de la Matrice stratégique des produits). Données ABSENTES tant
+                qu'aucun point de référence n'existe : SimpleLineChart affiche alors son propre
+                message, jamais un graphique vide forcé. */}
+            <div id="tutorial-section-tracking-global" className="mb-8">
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Évolution des marges et coûts moyens</h3>
+                <p className="text-sm text-gray-500 mb-4">Ce graphique montre l'évolution de vos coûts moyens et de votre marge brute, d'un point de référence à l'autre, pour prendre des décisions éclairées sur vos produits.</p>
+                <SimpleLineChart
+                    data={globalKpiData}
+                    lines={[
+                        { dataKey: "Marge Brute Moyenne", color: "#82ca9d", unit: '%' },
+                        { dataKey: "Coût Matière Moyen", color: "#ffc658", unit: '%' },
+                        { dataKey: "Coût Emballage Moyen", color: "#db2777", unit: '%' },
+                        { dataKey: "Coût Main-d'œuvre Moyen", color: "#ff7300", unit: '%' },
+                    ]}
+                    yAxisLabel="Pourcentage (%)"
+                />
+            </div>
+
+        </div>
+    );
+};
+
+// Matrice stratégique des produits (BCG) — déplacée le 21/11 dans le sous-onglet Portefeuille, en vraie matrice 2 × 2 : popularité en colonnes
+// (élevée à gauche, faible à droite), rentabilité en lignes (élevée en haut). Les quatre quadrants sont ceux de l'application (Quadrant).
+const BcgMatrix = ({ analysisData, salesChannels }) => {
+    const {
+        menuEngineeringData: blendedMenuEngineeringData,
         activeProducts,
     } = analysisData;
 
@@ -842,73 +934,10 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
 
     if (!analysisData.activeProducts || analysisData.activeProducts.length === 0) return null;
 
+    const axisLabel = 'text-xs font-semibold text-gray-500';
     return (
-        <div id="strategic-analysis" className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Analyse stratégique et point mort global</h2>
-
-            {/* flex + largeur fixe (plutôt que grid-cols-3) pour que la dernière ligne (2 tuiles sur
-                5) reste centrée au lieu de coller à gauche — un grid laisserait un trou à droite. */}
-            <div data-tour="kpi-tiles" className="flex flex-wrap justify-center gap-6 mb-6 text-center">
-                <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
-                        Coût Matière Moyen Pondéré
-                        <Tooltip tip="kpi.matiere" />
-                        {getCostTargetIndicator(weightedMaterialCost, generalInfo.foodCostTarget)}
-                    </div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
-                </div>
-                <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
-                        Coût Emballage Moyen Pondéré
-                        <Tooltip tip="kpi.emballage" />
-                        {getCostTargetIndicator(weightedPackagingCost, generalInfo.packagingCostTarget)}
-                    </div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
-                </div>
-                <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">
-                        Coût Main-d'œuvre Moyen Pondéré
-                        <Tooltip tip="kpi.mo" />
-                        {getCostTargetIndicator(weightedLaborCost, generalInfo.laborCostTarget)}
-                    </div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
-                </div>
-                <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /></div>
-                    <p className="text-3xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
-                </div>
-                <div className="w-full md:w-[calc(33.333%-1rem)] p-4 bg-white rounded-lg shadow">
-                    <div className="text-sm text-gray-500 flex items-center justify-center">Point Mort des Produits Actifs <Tooltip tip="kpi.pointMort" /></div>
-                    <p className="text-3xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
-                </div>
-            </div>
-            {Math.round(totalSalesMix) !== 100 && totalSalesMix > 0 && (
-                 <div className="p-3 mb-4 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm">
-                    <AlertTriangle className="inline h-4 w-4 mr-2"/>
-                    Attention : Le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}%. Pour une analyse précise, il devrait être de 100%.
-                </div>
-            )}
-
-            {/* Évolution des KPI globaux (ex-Suivi, fusionné le 24/10 — retour utilisateur,
-                positionné au-dessus de la Matrice stratégique des produits). Données ABSENTES tant
-                qu'aucun point de référence n'existe : SimpleLineChart affiche alors son propre
-                message, jamais un graphique vide forcé. */}
-            <div id="tutorial-section-tracking-global" className="mb-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Évolution des marges et coûts moyens</h3>
-                <p className="text-sm text-gray-500 mb-4">Ce graphique montre l'évolution de vos coûts moyens et de votre marge brute, d'un point de référence à l'autre, pour prendre des décisions éclairées sur vos produits.</p>
-                <SimpleLineChart
-                    data={globalKpiData}
-                    lines={[
-                        { dataKey: "Marge Brute Moyenne", color: "#82ca9d", unit: '%' },
-                        { dataKey: "Coût Matière Moyen", color: "#ffc658", unit: '%' },
-                        { dataKey: "Coût Emballage Moyen", color: "#db2777", unit: '%' },
-                        { dataKey: "Coût Main-d'œuvre Moyen", color: "#ff7300", unit: '%' },
-                    ]}
-                    yAxisLabel="Pourcentage (%)"
-                />
-            </div>
-
-            <h3 data-tour="bcg-title" className="text-xl font-bold text-gray-800 mb-2">Matrice stratégique des produits</h3>
+        <div data-tour="bcg-matrix" className="p-6 bg-gray-50 rounded-xl shadow-inner">
+            <h2 data-tour="bcg-title" className="text-2xl font-bold text-gray-800 mb-2">Matrice stratégique des produits</h2>
             <p className="text-sm text-gray-500 mb-4">Classe chaque produit selon sa popularité et sa rentabilité (matrice de Boston Consulting Group).</p>
 
             <div className="flex items-center gap-2 mb-4">
@@ -925,7 +954,11 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                 <Tooltip tip="bcg.selecteur" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-3" style={{ gridTemplateColumns: 'auto 1fr 1fr' }}>
+                <div />
+                <div className={`text-center ${axisLabel}`}>Popularité élevée</div>
+                <div className={`text-center ${axisLabel}`}>Popularité faible</div>
+                <div className={`flex items-center justify-center ${axisLabel}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>Rentabilité élevée</div>
                 <Quadrant
                     title="Étoiles"
                     icon={<Star className="mr-2 text-yellow-500"/>}
@@ -942,6 +975,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, salesChannels, globalKpi
                     borderColor="border-orange-200"
                     tooltipText="bcg.dilemmes"
                 />
+                <div className={`flex items-center justify-center ${axisLabel}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>Rentabilité faible</div>
                 <Quadrant
                     title="Vaches à lait"
                     icon={<Milk className="mr-2 text-gray-500"/>}
@@ -978,8 +1012,10 @@ export const SummaryTable = ({
         products, generalInfo, laborDatabase, analysisData, salesChannels, productionActivities,
         trackingPoints, setTrackingPoints, baseIngredients, basePackaging, showNotification, setNotification, goToTab, indirectPools,
     } = useProject();
+    // Valeur d'un ancien sous-onglet (« intrants ») : traitée comme Ingrédients.
+    const subTab = activeSubTab === 'intrants' ? 'ingredients' : activeSubTab;
     const [sortConfig, setSortConfig] = useSessionState('summary.contributionSort', { key: 'costs.margeNettePercent', direction: 'descending' });
-    const [showAllContributions, setShowAllContributions] = useState(false);
+    const [contributionPage, setContributionPage] = useState(1);
     const [showChecks, setShowChecks] = useState(false);
     const projectChecks = useMemo(() => computeProjectChecks({
         products, baseIngredients, basePackaging, productionActivities, salesChannels, trackingPoints, fixedCosts: indirectPools?.meta,
@@ -1303,11 +1339,13 @@ export const SummaryTable = ({
     }, [sortedProducts, currentPage, itemsPerPage]);
 
     // On prépare les données pour le graphique de contribution
-    const displayedContributions = useMemo(() => {
-        return showAllContributions ? contributionData : contributionData.slice(0, 10);
-    }, [contributionData, showAllContributions]);
-
+    // Pagination du classement par contribution (21/11, à la place de « Voir tout ») : même réglage de lignes par page que les autres tableaux.
     const totalContributionsCount = contributionData.length;
+    const contributionPageClamped = Math.min(contributionPage, Math.max(1, Math.ceil(totalContributionsCount / itemsPerPage)));
+    const displayedContributions = useMemo(() => {
+        const start = (contributionPageClamped - 1) * itemsPerPage;
+        return contributionData.slice(start, start + itemsPerPage);
+    }, [contributionData, contributionPageClamped, itemsPerPage]);
 
     const requestSort = (key) => {
         let direction = 'ascending';
@@ -1481,46 +1519,28 @@ export const SummaryTable = ({
                 </div>
             )}
 
-            <div className="flex gap-1 border-b border-gray-200 mb-6">
-                <button
-                    data-tour="subtab-overview" aria-current={activeSubTab === 'overview' ? 'page' : undefined} onClick={() => onActiveSubTabChange('overview')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'overview' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                >
-                    Vue d'ensemble
-                </button>
-                <button
-                    data-tour="subtab-bySku" aria-current={activeSubTab === 'bySku' ? 'page' : undefined} onClick={() => onActiveSubTabChange('bySku')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'bySku' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                >
-                    Par SKU
-                </button>
-                <button
-                    data-tour="subtab-byActivity" aria-current={activeSubTab === 'byActivity' ? 'page' : undefined} onClick={() => onActiveSubTabChange('byActivity')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'byActivity' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                >
-                    Par Activité
-                </button>
-                <button
-                    data-tour="subtab-byChannel" aria-current={activeSubTab === 'byChannel' ? 'page' : undefined} onClick={() => onActiveSubTabChange('byChannel')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'byChannel' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                >
-                    Par Canal
-                </button>
-                <button
-                    data-tour="subtab-intrants" aria-current={activeSubTab === 'intrants' ? 'page' : undefined} onClick={() => onActiveSubTabChange('intrants')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'intrants' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                >
-                    Intrants
-                </button>
-                <button
-                    data-tour="subtab-simulation" aria-current={activeSubTab === 'simulation' ? 'page' : undefined} onClick={() => onActiveSubTabChange('simulation')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeSubTab === 'simulation' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                >
-                    Simulation
-                </button>
+            {/* Barre des sous-onglets (21/11, refonte de Rapport et suivi) : quatre groupes séparés par un trait — Vue d'ensemble | produits et
+                segments | approvisionnement et équipe | simulation. Voir Projet_Claude/03-Feuille-de-route.md. */}
+            <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
+                {REPORT_SUBTAB_GROUPS.map((group, groupIndex) => (
+                    <React.Fragment key={groupIndex}>
+                        {groupIndex > 0 && <span aria-hidden="true" className="mx-2 self-center h-5 w-px bg-gray-300 flex-shrink-0" />}
+                        {group.map(tab => (
+                            <button
+                                key={tab.id}
+                                data-tour={`subtab-${tab.id}`}
+                                aria-current={subTab === tab.id ? 'page' : undefined}
+                                onClick={() => onActiveSubTabChange(tab.id)}
+                                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${subTab === tab.id ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </React.Fragment>
+                ))}
             </div>
 
-            {activeSubTab === 'bySku' && (
+            {subTab === 'bySku' && (
             <div id="tutorial-section-summary-bysku">
                 <div className="flex items-center gap-2 mb-6">
                     <label htmlFor="summarySkuSelect" className="text-sm font-medium text-gray-700">SKU :</label>
@@ -1591,62 +1611,23 @@ export const SummaryTable = ({
                 liste entière est déjà visible (voir SegmentSummaryTable, computeActivitySummaries/
                 computeChannelSummaries, engine/analysisData.js, pour la méthodologie : $ sommés
                 jamais % moyennés, point mort en $ de revenu pas en unités). */}
-            {activeSubTab === 'byActivity' && (
+            {subTab === 'byActivity' && (
             <div id="tutorial-section-summary-byactivity">
                 <SegmentSummaryTable rows={activitySummaries} nameColumnLabel="Activité" idKey="activityId" nameKey="activityName" />
             </div>
             )}
 
-            {activeSubTab === 'byChannel' && (
+            {subTab === 'byChannel' && (
             <div id="tutorial-section-summary-bychannel">
                 <SegmentSummaryTable rows={channelSummaries} nameColumnLabel="Canal" idKey="channelId" nameKey="channelName" />
             </div>
             )}
 
-            {activeSubTab === 'overview' && (
+            {/* Vue d'ensemble : tuiles, évolution des marges et coûts moyens, matrice Activité × Canal, puis la Réconciliation réel / théorique
+                (déplacée ici le 21/11 depuis l'État des résultats : les deux portent sur l'entreprise entière). */}
+            {subTab === 'overview' && (
             <>
-            <StrategicAnalysis analysisData={analysisData} generalInfo={generalInfo} salesChannels={salesChannels} globalKpiData={globalKpiData} />
-            {/* Classement par Contribution Totale */}
-            <div id="tutorial-contribution-chart" className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Classement par contribution totale au profit</h2>
-                        <p className="text-sm text-gray-500 mb-4">Ce graphique montre les produits qui génèrent le plus de profit en dollars pour couvrir vos frais fixes.</p>
-                    </div>
-                    {totalContributionsCount > 10 && (
-                        <button
-                            onClick={() => setShowAllContributions(!showAllContributions)}
-                            className="text-sm text-blue-600 hover:text-blue-800 flex-shrink-0"
-                        >
-                            {showAllContributions ? 'Voir les 10 principaux' : `Voir tout (${totalContributionsCount})`}
-                        </button>
-                    )}
-                </div>
-                <div style={{ width: '100%', height: 30 + displayedContributions.length * 40 }}>
-                    <ResponsiveContainer>
-                        <BarChart
-                            layout="vertical"
-                            data={displayedContributions}
-                            margin={{ top: 5, right: 60, left: 100, bottom: 5 }}
-                        >
-
-                            <XAxis type="number" hide />
-                            <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} interval={0} />
-                            <RechartsTooltip
-                                formatter={(value) => `${formatCurrency(value)} $`}
-                                cursor={{ fill: 'rgba(243, 244, 246, 0.5)' }}
-                                contentStyle={{ borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                            />
-                            <Bar dataKey="totalContribution" radius={[0, 4, 4, 0]}>
-                                <LabelList dataKey="totalContribution" position="right" formatter={(value) => `${formatCurrency(value)} $`} style={{ fill: '#374151', fontSize: '12px' }}/>
-                                {contributionData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.totalContribution >= 0 ? '#10B981' : '#EF4444'} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
+            <StrategicAnalysis analysisData={analysisData} generalInfo={generalInfo} globalKpiData={globalKpiData} />
 
             {/* 02/11, retour utilisateur : matrice Activité × Canal insérée au-dessus de la matrice
                 SKU × Canal — même principe (« — » si aucune vente), mais à l'échelle de l'activité
@@ -1746,6 +1727,54 @@ export const SummaryTable = ({
                 />
             </div>
 
+            <div className="mt-8">
+                <ReconciliationReport />
+            </div>
+            </>
+            )}
+
+            {/* Portefeuille (21/11) : les analyses qui portent sur l'ensemble des produits — matrice stratégique, contribution au profit, marges
+                nettes des SKUs par canaux. */}
+            {subTab === 'portfolio' && (
+            <>
+            <BcgMatrix analysisData={analysisData} salesChannels={salesChannels} />
+
+            {/* Classement par contribution totale : pagination (comme les autres tableaux) à la place de « Voir tout », lignes plus serrées. */}
+            <div id="tutorial-contribution-chart" className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Classement par contribution totale au profit</h2>
+                <p className="text-sm text-gray-500 mb-4">Ce graphique montre les produits qui génèrent le plus de profit en dollars pour couvrir vos frais fixes.</p>
+                <div style={{ width: '100%', height: 20 + displayedContributions.length * 30 }}>
+                    <ResponsiveContainer>
+                        <BarChart
+                            layout="vertical"
+                            data={displayedContributions}
+                            margin={{ top: 5, right: 60, left: 10, bottom: 5 }}
+                        >
+                            <XAxis type="number" hide />
+                            <YAxis type="category" dataKey="name" width={240} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} interval={0} />
+                            <RechartsTooltip
+                                formatter={(value) => `${formatCurrency(value)} $`}
+                                cursor={{ fill: 'rgba(243, 244, 246, 0.5)' }}
+                                contentStyle={{ borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Bar dataKey="totalContribution" radius={[0, 4, 4, 0]}>
+                                <LabelList dataKey="totalContribution" position="right" formatter={(value) => `${formatCurrency(value)} $`} style={{ fill: '#374151', fontSize: '12px' }}/>
+                                {displayedContributions.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.totalContribution >= 0 ? '#10B981' : '#EF4444'} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <Pagination
+                    totalItems={totalContributionsCount}
+                    itemsPerPage={itemsPerPage}
+                    currentPage={contributionPageClamped}
+                    onPageChange={setContributionPage}
+                    onItemsPerPageChange={onItemsPerPageChange}
+                />
+            </div>
+
             {/* 06/10 : matrice SKU × canal inspirée de l'onglet « Rapport - Marges » du chiffrier
                 SymbiOse de l'utilisateur — remplace l'ancien tableau détaillé à un seul canal à la
                 fois (son filtre par canal n'a plus lieu d'être : tous les canaux sont déjà visibles
@@ -1757,37 +1786,37 @@ export const SummaryTable = ({
                 <p className="text-sm text-gray-500 mb-4">La marge nette (% du prix de vente) de chaque SKU, pour chacun de ses canaux de vente. « — » : ce SKU n'est pas vendu dans ce canal.</p>
             </div>
             <div id="tutorial-section-summary-table" className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
+                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
                                 <button onClick={() => requestSort('displayName')} className="flex items-center w-full">
                                     Produit {getSortIcon('displayName')}
                                 </button>
                             </th>
                             {salesChannels.map(c => (
-                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                                <th key={c.id} className="px-3 py-1 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
                                     <button onClick={() => requestSort(`channel:${c.id}`)} className="flex items-center justify-end w-full">
                                         {c.name || 'Sans nom'} {getSortIcon(`channel:${c.id}`)}
                                     </button>
                                 </th>
                             ))}
-                            <th className="relative px-3 py-1.5"></th>
+                            <th className="relative px-3 py-1"></th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {displayedProducts.map((product, index) => (
                             <tr key={product.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-3 py-1.5 whitespace-nowrap font-medium sticky left-0 bg-inherit">{product.displayName || product.platName || unnamedLabel(index)}</td>
+                                <td className="px-3 py-1 whitespace-nowrap font-medium sticky left-0 bg-inherit">{product.displayName || product.platName || unnamedLabel(index)}</td>
                                 {salesChannels.map(c => {
                                     const cb = (product.channelBreakdown || []).find(ch => ch.channelId === c.id);
                                     return (
-                                        <td key={c.id} className="px-3 py-1.5 text-right font-bold" style={cb ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
+                                        <td key={c.id} className="px-3 py-1 text-right font-bold" style={cb ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
                                             {cb ? `${formatPercent(cb.margeNettePercent)} %` : <span className="text-gray-400 font-normal" title="Non vendu dans ce canal">—</span>}
                                         </td>
                                     );
                                 })}
-                                <td className="px-3 py-1.5 text-right">
+                                <td className="px-3 py-1 text-right">
                                     <button
                                         onClick={() => onEditProduct(products.findIndex(p => p.id === product.productId), product.formatIndex || 0)}
                                         title="Éditer le produit"
@@ -1811,17 +1840,13 @@ export const SummaryTable = ({
             </>
             )}
 
-            {/* 06/10 : sous-onglet dédié — être dans cet onglet suffit, pas besoin de redéplier
-                le simulateur derrière un second clic (voir CostShockSimulator, prop collapsible). */}
-            {activeSubTab === 'simulation' && (
-                <CostShockSimulator collapsible={false} />
-            )}
-
-            {/* Intrants (nouveau sous-onglet, 24/10, retour utilisateur) : évolution des prix et
-                volatilité des ingrédients ET de l'emballage — contenu de l'ex-onglet Suivi, non lié
-                à un SKU précis (contrairement à « Par SKU » ci-dessus). */}
-            {activeSubTab === 'intrants' && (
+            {/* Ingrédients : analyse ABC, rapport d'achats et perte stock, puis évolution des prix et volatilité (ex-sous-onglet Intrants, bloc ingrédients). */}
+            {subTab === 'ingredients' && (
             <div className="space-y-8">
+                <AbcAnalysis id="tutorial-section-ingredients-abc" abc={analysisData.abcAnalysisData} volatilityByName={priceVolatility.byName} nounPlural="ingrédients" />
+                <div className="pt-6 border-t">
+                    <PurchasingReport id="tutorial-section-ingredients-rapport" report={analysisData.purchasingReportData} itemLabel="Ingrédient" selectId="reportFilterProvider" memoryKey="ingredients.reportFilter" />
+                </div>
                 <div id="tutorial-section-tracking-ingredient" className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-4 mb-4">
                         <h2 className="text-2xl font-bold text-gray-700">Évolution du prix des ingrédients</h2>
@@ -1848,7 +1873,7 @@ export const SummaryTable = ({
                         <p className="text-sm text-gray-500 mb-4">
                             Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
                             {priceVolatility.hasEnoughData ? ` sur vos ${priceVolatility.pointCount} points de référence` : ''}.
-                            À croiser avec la classe ABC (onglet Ingrédients) : un ingrédient de forte valeur au prix volatil est une priorité d'approvisionnement.
+                            À croiser avec la classe ABC (section Analyse ABC ci-dessus) : un ingrédient de forte valeur au prix volatil est une priorité d'approvisionnement.
                         </p>
                         <VolatilityTable
                             volatility={priceVolatility}
@@ -1859,7 +1884,16 @@ export const SummaryTable = ({
                         />
                     </div>
                 </div>
+            </div>
+            )}
 
+            {/* Emballages : même gabarit — poste SÉPARÉ des ingrédients (voir Phase 2), jamais fusionné. */}
+            {subTab === 'packaging' && (
+            <div className="space-y-8">
+                <AbcAnalysis id="tutorial-section-packaging-abc" abc={analysisData.packagingAbcAnalysisData} volatilityByName={packagingVolatility.byName} nounPlural="emballages" emptyMessage="Aucun emballage consommé pour la période — rattachez des emballages à vos formats de vente (onglet Production) pour voir apparaître cette analyse." />
+                <div className="pt-6 border-t">
+                    <PurchasingReport id="tutorial-section-packaging-rapport" report={analysisData.packagingPurchasingReportData} itemLabel="Emballage" selectId="reportFilterProviderPackaging" memoryKey="packaging.reportFilter" />
+                </div>
                 {/* Emballage — poste SÉPARÉ des ingrédients (voir Phase 2), jamais fusionné. */}
                 <div id="tutorial-section-tracking-packaging" className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-4 mb-4">
@@ -1888,7 +1922,7 @@ export const SummaryTable = ({
                         <p className="text-sm text-gray-500 mb-4">
                             Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
                             {packagingVolatility.hasEnoughData ? ` sur vos ${packagingVolatility.pointCount} points de référence` : ''}.
-                            À croiser avec la classe ABC (onglet Emballage) : un emballage de forte valeur au prix volatil est une priorité d'approvisionnement.
+                            À croiser avec la classe ABC (section Analyse ABC ci-dessus) : un emballage de forte valeur au prix volatil est une priorité d'approvisionnement.
                         </p>
                         <VolatilityTable
                             volatility={packagingVolatility}
@@ -1900,6 +1934,15 @@ export const SummaryTable = ({
                     </div>
                 </div>
             </div>
+            )}
+
+            {/* Main-d'œuvre : rapport de productivité et charge de travail par activité. */}
+            {subTab === 'labor' && <LaborReport />}
+
+            {/* 06/10 : sous-onglet dédié — être dans cet onglet suffit, pas besoin de redéplier
+                le simulateur derrière un second clic (voir CostShockSimulator, prop collapsible). */}
+            {subTab === 'simulation' && (
+                <CostShockSimulator collapsible={false} />
             )}
         </div>
     );

@@ -20,14 +20,16 @@ export const partie3 = {
             title: 'L\'onglet Rapport et suivi : vue générale',
             blocks: [
                 { type: 'callout', kind: 'pourquoi', text: 'Tout ce que vous avez saisi converge ici. Cet onglet répond aux questions qui comptent : mes produits sont-ils rentables ? Dans quel canal gagne-t-on, dans lequel perd-on ? Quelle hausse de coûts m\'est supportable ? Mes décisions ont-elles porté leurs fruits depuis six mois ?' },
-                { type: 'p', text: 'En haut, trois boutons : {{Exporter vers Excel}}, {{Générer un rapport PDF}} et {{Point de référence}} (voir [[guide-points-reference|plus bas]]). Dessous, six sous-onglets :' },
+                { type: 'p', text: 'En haut, trois boutons : {{Exporter vers Excel}}, {{Générer un rapport PDF}} et {{Point de référence}} (voir [[guide-points-reference|plus bas]]). Dessous, neuf sous-onglets, en quatre groupes séparés par un trait :' },
                 {
                     type: 'table', head: ['Sous-onglet', 'Question à laquelle il répond'], wrapCells: true, rows: [
-                        ['{{Vue d\'ensemble}}', 'Comment va mon entreprise dans son ensemble, et quels sont mes produits stratégiques ?'],
+                        ['{{Vue d\'ensemble}}', 'Comment va mon entreprise, et mes résultats réels suivent-ils mon modèle ?'],
+                        ['{{Portefeuille}}', 'Quels produits sont stratégiques, lesquels rapportent le plus, où perd-on ?'],
                         ['{{Par SKU}}', 'Comment un produit se comporte-t-il dans chacun de ses canaux ?'],
                         ['{{Par Activité}}', 'Quelle ligne de production est rentable ?'],
                         ['{{Par Canal}}', 'Quel circuit de vente est rentable ?'],
-                        ['{{Intrants}}', 'Quels prix d\'achat bougent, et lesquels comptent le plus ?'],
+                        ['{{Ingrédients}} et {{Emballages}}', 'Où va mon argent d\'achat, combien dois-je acheter, quels prix bougent ?'],
+                        ['{{Main-d\'œuvre}}', 'Mon équipe est-elle bien utilisée, et où part son temps ?'],
                         ['{{Simulation}}', 'Et si mes coûts augmentaient de 8 % ?'],
                     ],
                 },
@@ -81,8 +83,53 @@ export const partie3 = {
                 { type: 'h', id: 'guide-rapport-evolution', text: 'Évolution des marges et coûts moyens' },
                 { type: 'p', text: 'Un graphique montre l\'évolution de vos coûts moyens (matière, emballage, main-d\'œuvre) et de votre marge brute moyenne, d\'un point de référence à l\'autre. Chaque point est calculé comme les tuiles ci-dessus : une moyenne pondérée par le revenu de chaque produit à cette date, de sorte que le dernier point du graphique correspond à la tuile. Il sert à vérifier si vos décisions portent leurs fruits : un changement de fournisseur a-t-il fait baisser le coût matière ? Une hausse de prix a-t-elle amélioré la marge ? Le graphique est vide tant qu\'aucun point de référence n\'existe. Les 15 points les plus récents sont affichés par défaut ; la gestion des points permet de choisir lesquels alimentent les graphiques.' },
 
+
+                { type: 'h', id: 'guide-rapport-matrices', text: 'Bénéfices / pertes des activités par canaux' },
+                { type: 'p', text: 'Ce tableau croise vos activités de production avec vos canaux de vente : le bénéfice net, ou la perte, de chaque activité dans chacun de ses canaux, avec une ligne et une colonne {{Total}}. Un « — » signifie qu\'il n\'y a aucune vente dans ce canal : jamais un zéro inventé. Des codes de couleur permettent de repérer d\'un coup d\'œil les combinaisons qui font gagner ou perdre de l\'argent.' },
+                { type: 'callout', kind: 'pourquoi', text: 'Cette matrice montre où se cachent vos pertes. Une activité globalement rentable peut perdre de l\'argent dans un canal précis ; un canal qui fait beaucoup de chiffre d\'affaires peut ne rien rapporter.' },
+
+                { type: 'h', id: 'guide-ff-reconciliation', text: 'Réconciliation réel / théorique' },
+                { type: 'p', text: 'Compare, pour l\'entreprise entière, vos revenus et vos charges directes réels (saisis plus haut) à ce que prévoit votre modèle de recettes : le prix net et le volume réel saisis par canal pour chaque format (Paramètres → Produits et SKUs), multipliés par les coûts de vos recettes. Ce n\'est jamais un chiffre d\'affaires global déclaré.' },
+                { type: 'p', text: 'Pourquoi : un grand écart signale que le modèle ne reflète plus la réalité comptable. Les causes habituelles : des prix, des volumes ou des coûts de recette à mettre à jour, ou des ventes réelles dont le volume n\'a pas encore été saisi par canal. C\'est la même logique que le rapport de productivité de l\'onglet Main-d\'œuvre (heures attendues contre heures réelles).' },
+                {
+                    type: 'table', caption: 'Réconciliation du projet démo', head: ['Poste', 'Réel', 'Théorique', 'Écart'], rows: [
+                        ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+286,41 $ (+0,4 %)'],
+                        ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+2 643,65 $ (+5,8 %)'],
+                        ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '-2 357,24 $ (-6,9 %)'],
+                        ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '-2 299,48 $ (-36,5 %)'],
+                    ],
+                },
+                {
+                    type: 'table', caption: 'Les colonnes de la réconciliation', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
+                    rowIds: ['guide-ff-rec-poste', 'guide-ff-rec-reel', 'guide-ff-rec-theorique', 'guide-ff-rec-ecart', 'guide-ff-rec-ecart-pct'],
+                    rows: [
+                        ['{{Poste}}', 'Revenus, charges directes, bénéfice brut et bénéfice net. Le bénéfice brut est les revenus moins les charges directes ; le bénéfice net est le bénéfice brut moins le total des frais fixes (ce total, unique, est soustrait identiquement du réel et du théorique).'],
+                        ['{{Réel ($)}}', 'Le montant tel que saisi dans l\'État des résultats.'],
+                        ['{{Théorique ($)}}', 'Le montant que prédit votre modèle de recettes : le prix net et le volume réel par canal de chaque format, multipliés par leurs coûts. Une estimation fondée sur vos hypothèses, pas une donnée réelle.'],
+                        ['{{Écart ($)}}', 'Réel moins théorique. Positif : votre résultat réel dépasse ce que le modèle prévoyait. Négatif : il est en dessous.'],
+                        ['{{Écart (%)}}', 'Le même écart, exprimé en pourcentage du théorique, pour comparer l\'ampleur des écarts d\'une ligne à l\'autre.'],
+                    ],
+                },
+                { type: 'p', text: 'Lecture : le réel dépasse légèrement le théorique pour les revenus (+0,4 %), mais les charges directes réelles dépassent aussi celles du modèle (+5,8 %) : le bénéfice net réel (4 000,00 $) est inférieur de 36,5 % à celui du modèle (6 299,48 $). Un écart de charges directes de cet ordre signale en général des coûts que les recettes ne voient pas (rebuts, gaspillage, prix d\'achat plus élevés que ceux saisis). Regardez d\'abord les écarts en dollars : le pourcentage du bénéfice net est amplifié parce que ce bénéfice est une petite différence entre de grands montants.' },
+                { type: 'p', text: 'La comparaison se fait toujours à l\'échelle de l\'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Bénéfice brut = revenus moins charges directes ; bénéfice net = bénéfice brut moins le total des frais fixes (sous-total du tableau des dépenses). Ce total est soustrait identiquement du réel et du théorique : l\'écart entre les deux colonnes vient donc du bénéfice brut, auquel s\'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n\'existe pas dans les charges directes réelles).' },
+
+                { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : les tuiles (santé générale), l\'évolution (la tendance), la matrice Activité × Canal (où l\'on perd), puis la réconciliation (le modèle reflète-t-il la réalité ?). Pour l\'analyse produit par produit, passez au {{Portefeuille}}.' },
+                { type: 'words', items: [
+                    { term: 'Marge brute moyenne pondérée', def: 'la marge brute moyenne des produits actifs, chaque produit pesant selon son revenu.' },
+                    { term: 'Réconciliation', def: 'la comparaison entre le réel (État des résultats) et le théorique (modèle de recettes).' },
+                ] },
+            ],
+        },
+
+        // =====================================================================================
+        {
+            id: 'guide-rapport-portefeuille',
+            title: 'Portefeuille : l\'ensemble de vos produits',
+            blocks: [
+                { type: 'callout', kind: 'pourquoi', text: 'Le sous-onglet {{Portefeuille}} regroupe les analyses qui portent sur **tous vos produits à la fois** : lesquels sont stratégiques, lesquels rapportent le plus, et dans quels canaux chacun gagne ou perd.' },
                 { type: 'h', id: 'guide-rapport-bcg', text: 'La matrice stratégique des produits' },
                 { type: 'p', text: 'La matrice classe chaque produit en croisant sa popularité et sa rentabilité (voir [[guide-concept-menu|chapitre 12]]). Le sélecteur {{Analyse BCG pour :}} permet de la calculer pour tous les canaux (pondéré par volume), ou pour un canal à la fois : un produit peut être une étoile dans un canal et un poids mort dans un autre. Chaque ligne indique la popularité du produit et sa marge brute par unité.' },
+                { type: 'p', text: 'La matrice se lit comme un tableau de quatre cases : la **popularité** en colonnes (élevée à gauche, faible à droite) et la **rentabilité** en lignes (élevée en haut, faible en bas).' },
                 {
                     type: 'table', caption: 'Matrice du projet démo (tous canaux)', head: ['Catégorie', 'Produits'], wrapCells: true, rows: [
                         ['**Étoiles**', 'Poulet général Tao (9,1 % des ventes, marge 3,28 $) ; Saumon teriyaki (6,5 %, 4,24 $) ; Sauté de poulet thaï 350 g (7,1 %, 3,58 $)'],
@@ -103,25 +150,18 @@ export const partie3 = {
                 { type: 'callout', kind: 'attention', text: 'La marge utilisée ici est la marge **brute** en dollars par unité, avant les frais fixes. Un produit « rentable » dans la matrice peut quand même avoir une marge nette négative dans un canal coûteux : confirmez toujours dans le rapport Par SKU.' },
 
                 { type: 'h', id: 'guide-rapport-contribution', text: 'Classement par contribution totale au profit' },
-                { type: 'p', text: 'Ce graphique à barres classe vos produits non par leur pourcentage de marge, mais par le **montant total en dollars** qu\'ils génèrent pour payer vos frais fixes : marge brute par unité × unités vendues. Il révèle vos véritables piliers financiers : un produit à 20 % de marge qui se vend en très grandes quantités peut peser plus qu\'un produit à 50 % qui se vend peu. Le bouton {{Voir tout}} affiche tous les produits.' },
+                { type: 'p', text: 'Ce graphique à barres classe vos produits non par leur pourcentage de marge, mais par le **montant total en dollars** qu\'ils génèrent pour payer vos frais fixes : marge brute par unité × unités vendues. Il révèle vos véritables piliers financiers : un produit à 20 % de marge qui se vend en très grandes quantités peut peser plus qu\'un produit à 50 % qui se vend peu. Le nombre de produits affichés se règle en bas du graphique ({{Items par page}}, boutons {{Précédent}} et {{Suivant}}).' },
 
-                { type: 'h', id: 'guide-rapport-matrices', text: 'Les matrices par canal' },
-                { type: 'p', text: 'Deux tableaux croisent vos produits ou activités avec vos canaux de vente.' },
-                {
-                    type: 'ul', items: [
-                        { label: 'Bénéfices / pertes des activités par canaux.', text: 'Le bénéfice net, ou la perte, de chaque activité de production dans chacun de ses canaux, avec les totaux par activité et par canal.' },
-                        { label: 'Marges nettes des SKUs par canaux.', text: 'La marge nette, en % du prix de vente, de chaque produit dans chacun de ses canaux. Le bouton {{Éditer le produit}} d\'une ligne ouvre la fiche du produit dans l\'onglet Production.' },
-                    ],
-                },
-                { type: 'p', text: 'Un « — » signifie qu\'il n\'y a aucune vente dans ce canal : jamais un zéro inventé. Des codes de couleur permettent de repérer d\'un coup d\'œil les combinaisons qui font gagner ou perdre de l\'argent.' },
-                { type: 'callout', kind: 'pourquoi', text: 'Ces matrices montrent où se cachent vos pertes. Une activité globalement rentable peut perdre de l\'argent dans un canal précis ; un canal qui fait beaucoup de chiffre d\'affaires peut ne rien rapporter.' },
-                { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : les tuiles (santé générale), la matrice (quels produits), la contribution (qui paie les frais fixes), les matrices par canal (où l\'on perd).' },
+                { type: 'h', id: 'guide-rapport-matrice-sku', text: 'Marges nettes des SKUs par canaux' },
+                { type: 'p', text: 'Ce tableau donne la marge nette, en % du prix de vente, de chaque produit dans chacun de ses canaux. Le bouton {{Éditer le produit}} d\'une ligne ouvre la fiche du produit dans l\'onglet Production. Un « — » signifie que ce produit n\'est pas vendu dans ce canal : jamais un zéro inventé. Des codes de couleur permettent de repérer d\'un coup d\'œil les combinaisons qui font gagner ou perdre de l\'argent.' },
+                { type: 'callout', kind: 'pourquoi', text: 'Un produit peut être rentable dans un canal et perdre de l\'argent dans un autre. Cette matrice montre où se cachent vos pertes.' },
+                { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : la matrice (quels produits sont stratégiques), la contribution (qui paie les frais fixes), les marges par canal (où l\'on perd).' },
                 { type: 'words', items: [
-                    { term: 'Marge brute moyenne pondérée', def: 'la marge brute moyenne des produits actifs, chaque produit pesant selon son revenu.' },
                     { term: 'Contribution totale', def: 'marge brute par unité × unités vendues : l\'argent qu\'un produit apporte pour payer les frais fixes.' },
                 ] },
             ],
         },
+
 
         // =====================================================================================
         {
@@ -251,9 +291,44 @@ export const partie3 = {
         // =====================================================================================
         {
             id: 'guide-rapport-intrants',
-            title: 'Intrants : l\'évolution des prix d\'achat',
+            title: 'Ingrédients et Emballages : vos achats',
             blocks: [
-                { type: 'p', text: 'Ce sous-onglet suit le prix de vos ingrédients et de vos emballages dans le temps, d\'un point de référence à l\'autre. Il se compose, pour chacune des deux familles, de deux éléments :' },
+                { type: 'callout', kind: 'pourquoi', text: 'Les sous-onglets {{Ingrédients}} et {{Emballages}} ont le même gabarit, et ils restent séparés : l\'emballage n\'est jamais fusionné avec la matière. Chacun répond à trois questions : où va l\'argent (analyse ABC), combien faut-il acheter (rapport d\'achats et perte stock), et les prix bougent-ils (évolution et volatilité).' },
+                { type: 'h', id: 'guide-ing-abc', text: 'L\'analyse ABC des ingrédients' },
+                { type: 'p', text: 'L\'analyse ABC classe vos ingrédients par importance financière (voir [[guide-concept-suivi|chapitre 11]] pour la méthode). Trois cartes présentent les catégories A, B et C, avec la part de chaque ingrédient dans le coût total consommé. Un badge {{volatile}} s\'ajoute aux ingrédients dont le prix bouge beaucoup (il faut au moins deux points de référence pour qu\'il apparaisse).' },
+                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la catégorie A compte quatre ingrédients (bœuf haché, poitrine de poulet, filet de saumon et riz basmati) pour ${d(DEMO.ingredients.abcA)} du coût total. Les trois premiers n'atteignent que 64,8 % : le riz basmati, qui franchit la barre des 70 %, est inclus dans la catégorie A.` },
+                { type: 'p', text: 'L\'analyse porte uniquement sur les ingrédients **réellement consommés** par vos produits actifs, compte tenu des volumes vendus : un ingrédient qui ne sert à aucune recette n\'y figure pas.' },
+
+                { type: 'h', id: 'guide-ing-rapport-achats', text: 'Le rapport d\'achats et perte stock' },
+                { type: 'p', text: 'Ce rapport estime ce que vous devez acheter pour la période, en partant de vos recettes et de vos ventes : pour chaque ingrédient, la quantité requise est la quantité de la recette multipliée par le nombre de lots à produire, ce nombre se déduisant des volumes saisis dans Produits et SKUs. Trois totaux, pour tous les fournisseurs, s\'affichent en premier :' },
+                {
+                    type: 'ul', items: [
+                        { label: 'Coût net total (production).', text: 'La valeur de la matière réellement utilisée dans vos produits.' },
+                        { label: 'Coût total de la perte stock.', text: 'La valeur de ce qui se perd en stock avant utilisation.' },
+                        { label: 'Coût d\'achat total requis.', text: 'La somme des deux : ce qu\'il faut réellement acheter, et donc budgéter.' },
+                    ],
+                },
+                { type: 'callout', kind: 'attention', text: 'La {{perte stock}} est **prévue**, pas mesurée : c\'est le taux de perte saisi dans le catalogue, appliqué aux quantités que vos ventes requièrent. La perte réellement constatée se lit dans la {{Réconciliation réel / théorique}} de la Vue d\'ensemble.' },
+                { type: 'p', text: `Dans le projet démo : ${d(DEMO.ingredients.coutNet)} de coût net, ${d(DEMO.ingredients.pertes)} de perte stock, soit ${d(DEMO.ingredients.achatRequis)} d'achats requis.` },
+                { type: 'p', text: 'La liste {{Détail par fournisseur}} sert uniquement à afficher, sous les totaux, le détail ligne par ligne : {{Totaux seulement}}, {{Tous les fournisseurs}}, ou un fournisseur précis. Le détail indique pour chaque ingrédient la quantité nette, le coût net, la quantité de perte stock et son coût.' },
+                {
+                    type: 'table', caption: 'Les colonnes du détail', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
+                    rowIds: ['guide-ing-ra-qte-nette', 'guide-ing-ra-cout-net', 'guide-ing-ra-qte-perdue', 'guide-ing-ra-cout-perdu', 'guide-ing-ra-achat-requis'],
+                    rows: [
+                        ['{{Qté nette (Production)}}', 'La quantité de l\'ingrédient réellement utilisée dans vos produits, d\'après vos ventes de la période.'],
+                        ['{{Coût net (Production)}}', 'Le coût de cette quantité : la valeur de la matière qui est transformée en produits vendus.'],
+                        ['{{Qté perte stock}}', 'La quantité à acheter en plus pour compenser ce qui se perd en stock avant d\'être utilisé, selon le taux de perte de l\'ingrédient.'],
+                        ['{{Coût perte stock}}', 'Le coût de cette perte stock.'],
+                        ['{{Coût d\'achat requis}}', 'La somme du coût net et du coût de la perte stock : ce qu\'il faut réellement acheter et budgéter pour cet ingrédient.'],
+                    ],
+                },
+                { type: 'callout', kind: 'attention', text: 'Ce rapport n\'est aussi juste que vos volumes : si vous n\'avez saisi aucun volume de vente dans Produits et SKUs, il n\'a rien à calculer et affiche des zéros.' },
+
+                { type: 'h', id: 'guide-emb-abc', text: 'Emballages : analyse ABC et rapport d\'achats' },
+                { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et perte stock existent aussi pour l\'emballage, dans le sous-onglet {{Emballages}}, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 71,5 % des coûts.' },
+
+                { type: 'h', id: 'guide-rapport-prix', text: 'Évolution des prix et volatilité' },
+                { type: 'p', text: 'Chacun de ces sous-onglets suit aussi le prix de vos ingrédients (ou de vos emballages) dans le temps, d\'un point de référence à l\'autre. Il se compose de deux éléments :' },
                 {
                     type: 'ul', items: [
                         { label: 'Évolution du prix.', text: 'Choisissez un ingrédient (ou un emballage) dans la liste : un graphique montre l\'évolution de son prix unitaire. C\'est idéal pour suivre l\'inflation et l\'effet de vos négociations.' },
@@ -267,11 +342,44 @@ export const partie3 = {
                         { id: 'guide-intrants-volatilite', term: 'Volatilité (amplitude)', def: 'L\'écart entre la valeur la plus basse et la plus haute du prix, en % de la moyenne, avec son palier (faible sous 10 %, modéré de 10 % à moins de 20 %, élevé à partir de 20 %).' },
                     ],
                 },
-                { type: 'p', text: 'Ces mesures existent dès deux points de référence ; le projet démo en compte dix-neuf, ce qui donne des séries longues. Le tableau se croise avec l\'analyse ABC de l\'onglet Ingrédients : un ingrédient de catégorie A dont le prix est volatil est une priorité d\'approvisionnement.' },
+                { type: 'p', text: 'Ces mesures existent dès deux points de référence ; le projet démo en compte dix-neuf, ce qui donne des séries longues. Le tableau se croise avec l\'analyse ABC ci-dessus : un ingrédient de catégorie A dont le prix est volatil est une priorité d\'approvisionnement.' },
                 { type: 'callout', kind: 'astuce', text: 'Le tableau est trié par amplitude décroissante : les prix les plus capricieux sont en haut. Regardez d\'abord la colonne de tendance : un prix volatil mais sans tendance fluctue autour d\'une moyenne ; un prix à tendance haussière régulière appelle une action (contrat, second fournisseur, révision de prix).' },
-                { type: 'p', text: 'Les emballages, un poste séparé, ont leur propre section : jamais fusionnés avec les ingrédients.' },
+                { type: 'p', text: 'Les emballages, un poste séparé, ont leur propre sous-onglet : jamais fusionnés avec les ingrédients.' },
             ],
         },
+
+        // =====================================================================================
+        {
+            id: 'guide-rapport-main-oeuvre',
+            title: 'Main-d\'œuvre : l\'utilisation de votre équipe',
+            blocks: [
+                { type: 'callout', kind: 'pourquoi', text: 'Le sous-onglet {{Main-d\'œuvre}} de Rapport et suivi ne sert pas à saisir vos employés (c\'est l\'onglet du même nom) : il montre ce que leur temps produit, et ce qu\'il vous coûte quand il n\'est pas utilisé.' },
+                { type: 'h', id: 'guide-mo-productivite', text: 'Le rapport de productivité' },
+                { type: 'p', text: 'Dans le sous-onglet {{Main-d\'œuvre}}, ce rapport compare, **poste par poste**, les heures que vous payez à celles dont vos recettes ont réellement besoin pour produire ce que vous vendez :' },
+                {
+                    type: 'ul', itemIds: ['guide-mo-prod-attendues', 'guide-mo-prod-reelles', 'guide-mo-prod-difference', 'guide-mo-prod-utilisation'], items: [
+                        { label: 'Heures productives attendues.', text: 'Les heures travaillées de chaque employé multipliées par son % de temps productif.' },
+                        { label: 'Heures productives réelles.', text: 'Le temps que les étapes de vos recettes mobilisent, multiplié par le nombre de lots que vos ventes demandent. Le temps de fabrication des sous-recettes est compté lui aussi, à hauteur de ce que vos produits en consomment, même si une sous-recette n\'est jamais vendue seule.' },
+                        { label: 'Différence (h).', text: 'Les heures attendues moins les heures réelles : les heures productives payées mais non utilisées.' },
+                        { label: 'Taux d\'utilisation (%).', text: 'Les heures réelles ÷ les heures attendues.' },
+                    ],
+                },
+                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 90,31 %, l'« Opérateur d'emballage » à 90,55 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
+                { type: 'callout', kind: 'pourquoi', text: 'Un taux d\'utilisation bas signale de la capacité payée et inutilisée : trop de personnel pour le volume vendu, des recettes qui ne reflètent pas le travail réel, ou des ventes qui n\'ont pas encore été saisies. C\'est un levier de rentabilité majeur, car **ce coût est réparti sur tous vos produits** (voir [[guide-concept-capacite|chapitre 10]]).' },
+                { type: 'callout', kind: 'attention', text: 'Une personne présente dans cet onglet mais affectée à aucune étape, comme le responsable de production du démo, fait baisser le taux d\'utilisation global. Son coût n\'est pas perdu : il est réparti sur toutes les recettes sous forme de coût indirect de main-d\'œuvre. Si cette personne ne fait pas de production, mieux vaut la retirer de l\'onglet et la saisir dans les frais fixes.' },
+
+                { type: 'h', id: 'guide-mo-capacite', text: 'Charge de travail par activité' },
+                { type: 'p', text: 'Ce deuxième tableau, nommé autrefois « Capacité de production par activité », répartit les heures de main-d\'œuvre réellement requises entre vos **activités de production**, et indique la part de chaque activité dans le total. Il montre où part le temps de votre équipe, donc quelle ligne de production est la plus exigeante. Ce n\'est pas une capacité : le tableau ne compare pas ces heures à une quantité disponible. Il n\'y a pas de « heures attendues » par activité : un poste ou un employé n\'est pas rattaché à une seule activité, donc rien n\'est comparable.' },
+                { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 126,81 heures (36,82 % du total), les soupes et potages 210,14 heures (61,01 %), et les sauces et accompagnements 7,47 heures (2,17 %). La sauce du Terroir est un produit de revente, sans étapes de production : seule la sauce à spaghetti maison demande du temps de cuisson et de mise en pot.' },
+                {
+                    type: 'ul', itemIds: ['guide-mo-cap-heures', 'guide-mo-cap-part'], items: [
+                        { label: 'Heures productives réelles.', text: 'Les heures de production de l\'activité, calculées à partir des étapes de vos recettes et de vos ventes de la période.' },
+                        { label: 'Part du total.', text: 'La part de cette activité dans l\'ensemble des heures productives réelles.' },
+                    ],
+                },
+            ],
+        },
+
 
         // =====================================================================================
         {
@@ -352,15 +460,15 @@ export const partie3 = {
                 { type: 'p', text: 'Aucun rapport ne décide à votre place. Mais certains constats reviennent souvent, et les pistes d\'action aussi. Ce tableau les rassemble : pour chaque symptôme, il indique l\'endroit de l\'application où l\'investiguer.' },
                 {
                     type: 'table', head: ['Ce que vous constatez', 'Causes probables', 'Où regarder', 'Actions possibles'], wrapCells: true, rows: [
-                        ['Coût matière au-dessus de la cible', 'Hausse de prix d\'un ingrédient ; recette trop généreuse ; pertes ou rendement mal estimés', 'Ingrédients (ABC, comparaison) ; Production (rendement) ; Rapport → Intrants', 'Comparer les fournisseurs ; ajuster la recette ; viser les ingrédients de catégorie A ; relever le prix (tester avec la simulation de prix)'],
+                        ['Coût matière au-dessus de la cible', 'Hausse de prix d\'un ingrédient ; recette trop généreuse ; pertes ou rendement mal estimés', 'Ingrédients (comparaison) ; Production (rendement) ; Rapport → Ingrédients (ABC, achats)', 'Comparer les fournisseurs ; ajuster la recette ; viser les ingrédients de catégorie A ; relever le prix (tester avec la simulation de prix)'],
                         ['Marge brute correcte, marge nette négative', 'Frais fixes lourds pour le volume vendu ; volumes plus faibles que prévu', 'Rapport → Par SKU (section Répartition des charges fixes) ; État des résultats', 'Augmenter le volume ; réduire les frais fixes ; relever le prix ; vérifier la règle de répartition (CICI)'],
                         ['Marge nette négative dans un seul canal', 'Maillons qui prélèvent trop ; frais propres au canal', 'Rapport → Par SKU, Par Canal ; Paramètres → Canaux de vente', 'Renégocier la marge d\'un intermédiaire ; ajuster le prix net ; retirer le produit de ce canal'],
                         ['Point mort supérieur à ce que vous pouvez vendre', 'Marge unitaire trop faible ; frais fixes trop élevés', 'Rapport → Par SKU (point mort), Vue d\'ensemble', 'Relever la marge (prix, coût) ; réduire les frais fixes ; simplifier la liste de produits'],
-                        ['Taux d\'utilisation de la main-d\'œuvre bas', 'Trop de personnel pour le volume ; étapes sans personnel affecté ; ventes non saisies', 'Main-d\'œuvre → rapport de productivité', 'Vérifier les recettes ; réaffecter ou réduire des heures ; vendre plus avec la même équipe'],
-                        ['Grand écart entre réel et théorique', 'Fiches périmées ; volumes non saisis ; classement différent des coûts', 'État des résultats → Réconciliation', 'Mettre à jour prix et volumes ; vérifier le double comptage de la main-d\'œuvre ; revoir les recettes'],
-                        ['Ingrédient de catégorie A au prix volatil', 'Marché instable ; dépendance à un fournisseur', 'Ingrédients (ABC) ; Rapport → Intrants', 'Contrat à prix fixe ; second fournisseur ; clause d\'indexation ; ajuster le prix de vente'],
-                        ['Vache à lait (très vendu, peu rentable)', 'Prix trop bas pour son coût', 'Rapport → matrice stratégique des produits', 'Réduire le coût ; relever légèrement le prix ; tester avec la simulation'],
-                        ['Poids mort (peu vendu, peu rentable)', 'Produit en fin de vie ; mauvaise place parmi les produits', 'Rapport → matrice stratégique des produits', 'Le repenser ; le retirer, après avoir vérifié qu\'il n\'est pas sous-recette d\'un autre'],
+                        ['Taux d\'utilisation de la main-d\'œuvre bas', 'Trop de personnel pour le volume ; étapes sans personnel affecté ; ventes non saisies', 'Rapport → Main-d\'œuvre (rapport de productivité)', 'Vérifier les recettes ; réaffecter ou réduire des heures ; vendre plus avec la même équipe'],
+                        ['Grand écart entre réel et théorique', 'Fiches périmées ; volumes non saisis ; classement différent des coûts', 'Rapport → Vue d\'ensemble (Réconciliation) ; État des résultats', 'Mettre à jour prix et volumes ; vérifier le double comptage de la main-d\'œuvre ; revoir les recettes'],
+                        ['Ingrédient de catégorie A au prix volatil', 'Marché instable ; dépendance à un fournisseur', 'Rapport → Ingrédients (ABC, évolution des prix)', 'Contrat à prix fixe ; second fournisseur ; clause d\'indexation ; ajuster le prix de vente'],
+                        ['Vache à lait (très vendu, peu rentable)', 'Prix trop bas pour son coût', 'Rapport → Portefeuille (matrice stratégique)', 'Réduire le coût ; relever légèrement le prix ; tester avec la simulation'],
+                        ['Poids mort (peu vendu, peu rentable)', 'Produit en fin de vie ; mauvaise place parmi les produits', 'Rapport → Portefeuille (matrice stratégique)', 'Le repenser ; le retirer, après avoir vérifié qu\'il n\'est pas sous-recette d\'un autre'],
                         ['Un produit paraît trop rentable pour être vrai', 'Ingrédients ou emballages sans prix ; étapes sans personnel ; quantités pour une portion', 'Panneau « points à vérifier » ; Production', 'Compléter les prix ; affecter le personnel ; saisir les quantités du lot entier'],
                     ],
                 },

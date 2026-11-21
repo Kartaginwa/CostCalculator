@@ -103,10 +103,9 @@ test.describe('Projet démo', () => {
         // Volatilité des prix (dérivée des points de référence du projet démo).
         // Rapport et suivi, sous-onglet Intrants (fusion du 24/10) : le tableau de volatilité
         // s'affiche avec des données.
-        await page.getByText('Intrants', { exact: true }).click();
+        await page.locator('[data-tour="subtab-ingredients"]').click();
         await expect(page.getByRole('heading', { name: 'Volatilité des prix d\'achat', exact: true })).toBeVisible();
-        // Onglet Ingrédients : au moins un ingrédient (le saumon, prix variable) est marqué « volatile ».
-        await page.locator('#tab-ingredients').click();
+        // Sous-onglet Ingrédients (depuis le 21/11) : au moins un ingrédient (le saumon, prix variable) est marqué « volatile » dans l'analyse ABC.
         await expect(page.getByText('volatile').first()).toBeVisible();
 
         // Simulateur de choc (sous-onglet « Simulation » de Résumé, 06/10 : s'affiche directement,

@@ -272,17 +272,23 @@ export const DEMO_SCREEN_CHECKS = {
         DEMO.bySku.fraisFixesGeneral, DEMO.bySku.fraisFixesActivite, DEMO.bySku.fraisFixesCanalDirecte,
         DEMO.bySku.pointMortDirecte, DEMO.bySku.pointMortEpiceries, DEMO.bySku.pointMortGrandesSurfaces,
     ],
+    // Les chiffres saisis restent sur l'écran de saisie ; la réconciliation (théorique et écarts) vit maintenant dans Rapport et suivi → Vue d'ensemble.
     'income-statement': [
         DEMO.etat.revenus, DEMO.etat.chargesDirectes, DEMO.etat.beneficeBrut, DEMO.etat.fraisFixes, DEMO.etat.beneficeNet,
-        DEMO.etat.revenusTheorique, DEMO.etat.chargesDirectesTheorique, DEMO.etat.beneficeBrutTheorique, DEMO.etat.beneficeNetTheorique,
-        '1 723.98 $', '739.45 $', '536.56 $', '+286.41 $', '+0.4 %', '+2 643.65 $', '+5.8 %', '-2 357.24 $', '-6.9 %', '-2 299.48 $', '-36.5 %',
     ],
-    labor: [
-        DEMO.mo.coutCuisinier, DEMO.mo.utilisation, DEMO.mo.heuresAttendues, DEMO.mo.heuresReelles,
+    labor: [DEMO.mo.coutCuisinier],
+    // Rapports déplacés dans Rapport et suivi (21/11) : productivité et charge de travail, achats et perte stock, réconciliation.
+    "summary:Main-d'œuvre": [
+        DEMO.mo.utilisation, DEMO.mo.heuresAttendues, DEMO.mo.heuresReelles,
         '92.21 %', '89.88 %', '88.47 %', '126.81 h', '36.82 %', '210.14 h', '61.01 %',
     ],
-    ingredients: [DEMO.ingredients.abcA, DEMO.ingredients.coutNet, DEMO.ingredients.pertes, DEMO.ingredients.achatRequis],
-    "summary:Vue d'ensemble": [DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute, DEMO.apercu.pointMortMenu],
+    "summary:Ingrédients": [DEMO.ingredients.abcA, DEMO.ingredients.coutNet, DEMO.ingredients.pertes, DEMO.ingredients.achatRequis],
+    "summary:Vue d'ensemble": [
+        DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute, DEMO.apercu.pointMortMenu,
+        DEMO.etat.revenus, DEMO.etat.chargesDirectes, DEMO.etat.beneficeBrut, DEMO.etat.beneficeNet,
+        DEMO.etat.revenusTheorique, DEMO.etat.chargesDirectesTheorique, DEMO.etat.beneficeBrutTheorique, DEMO.etat.beneficeNetTheorique,
+        '+286.41 $', '+0.4 %', '+2 643.65 $', '+5.8 %', '-2 357.24 $', '-6.9 %', '-2 299.48 $', '-36.5 %',
+    ],
 };
 
 // --- Chiffres supplémentaires du projet démo cités dans la Partie 3 (rapports) ----------------------
@@ -318,4 +324,4 @@ const R = DEMO_RAPPORT;
 DEMO_SCREEN_CHECKS['summary:Par SKU'].push(...Object.values(R.bySkuDetail));
 DEMO_SCREEN_CHECKS['summary:Par Activité'] = Object.values(R.activites).flatMap((o) => Object.values(o));
 DEMO_SCREEN_CHECKS['summary:Par Canal'] = Object.values(R.canaux).flatMap((o) => Object.values(o));
-DEMO_SCREEN_CHECKS['summary:Vue d\'ensemble'].push(...Object.values(R.bcg));
+DEMO_SCREEN_CHECKS['summary:Portefeuille'] = Object.values(R.bcg); // matrice stratégique : sous-onglet Portefeuille (21/11)

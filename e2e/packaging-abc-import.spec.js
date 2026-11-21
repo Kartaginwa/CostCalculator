@@ -26,13 +26,15 @@ test('analyse ABC et rapport d\'achats du Packaging reflètent un emballage rée
     await newRow.locator('input[inputmode="decimal"]').first().fill('1');
     await page.waitForTimeout(300);
 
-    await page.locator('#tab-packaging').click();
+    // Depuis le 21/11, l'analyse ABC et le rapport d'achats vivent dans Rapport et suivi → Emballages.
+    await page.locator('#tab-summary').click();
+    await page.locator('[data-tour="subtab-packaging"]').click();
     await page.waitForTimeout(300);
 
     await expect(page.getByText('Analyse ABC des emballages')).toBeVisible();
     await expect(page.getByText('Pot de verre 500 ml').first()).toBeVisible();
 
-    await expect(page.getByText('Rapport d\'achats et pertes pour la période')).toBeVisible();
+    await expect(page.getByText('Rapport d\'achats et perte stock pour la période')).toBeVisible();
     await page.locator('#reportFilterProviderPackaging').selectOption('all');
     await page.waitForTimeout(200);
     await expect(page.getByText('Coût d\'Achat Total Requis')).toBeVisible();

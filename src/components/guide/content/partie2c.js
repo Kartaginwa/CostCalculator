@@ -147,30 +147,8 @@ export const chapitreEtatResultats = {
         { type: 'callout', kind: 'exemple', text: 'Un bassin de 10 000 $ réparti entre deux produits dont les coûts directs totalisent 6 000 $ et 4 000 $ donne 6 000 $ de frais fixes au premier et 4 000 $ au second.' },
         { type: 'p', text: '« Général » se répartit sur l\'ensemble des produits actifs ; chaque activité seulement entre ses propres produits. Les canaux n\'ont pas de CICI : leur coût indirect est toujours un % d\'imputation sur le coût direct (Paramètres → Canaux de vente), jamais une règle au choix.' },
 
-        { type: 'h', id: 'guide-ff-reconciliation', text: 'Réconciliation réel / théorique' },
-        { type: 'p', text: 'Compare, pour l\'entreprise entière, vos revenus et vos charges directes réels (saisis plus haut) à ce que prévoit votre modèle de recettes : le prix net et le volume réel saisis par canal pour chaque format (Paramètres → Produits et SKUs), multipliés par les coûts de vos recettes. Ce n\'est jamais un chiffre d\'affaires global déclaré.' },
-        { type: 'p', text: 'Pourquoi : un grand écart signale que le modèle ne reflète plus la réalité comptable. Les causes habituelles : des prix, des volumes ou des coûts de recette à mettre à jour, ou des ventes réelles dont le volume n\'a pas encore été saisi par canal. C\'est la même logique que le rapport de productivité de l\'onglet Main-d\'œuvre (heures attendues contre heures réelles).' },
-        {
-            type: 'table', caption: 'Réconciliation du projet démo', head: ['Poste', 'Réel', 'Théorique', 'Écart'], rows: [
-                ['Revenus', d(DEMO.etat.revenus), d(DEMO.etat.revenusTheorique), '+286,41 $ (+0,4 %)'],
-                ['Charges directes', d(DEMO.etat.chargesDirectes), d(DEMO.etat.chargesDirectesTheorique), '+2 643,65 $ (+5,8 %)'],
-                ['Bénéfice brut', d(DEMO.etat.beneficeBrut), d(DEMO.etat.beneficeBrutTheorique), '-2 357,24 $ (-6,9 %)'],
-                ['Bénéfice net', d(DEMO.etat.beneficeNet), d(DEMO.etat.beneficeNetTheorique), '-2 299,48 $ (-36,5 %)'],
-            ],
-        },
-        {
-            type: 'table', caption: 'Les colonnes de la réconciliation', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
-            rowIds: ['guide-ff-rec-poste', 'guide-ff-rec-reel', 'guide-ff-rec-theorique', 'guide-ff-rec-ecart', 'guide-ff-rec-ecart-pct'],
-            rows: [
-                ['{{Poste}}', 'Revenus, charges directes, bénéfice brut et bénéfice net. Le bénéfice brut est les revenus moins les charges directes ; le bénéfice net est le bénéfice brut moins le total des frais fixes (ce total, unique, est soustrait identiquement du réel et du théorique).'],
-                ['{{Réel ($)}}', 'Le montant tel que saisi dans les tableaux ci-dessus.'],
-                ['{{Théorique ($)}}', 'Le montant que prédit votre modèle de recettes : le prix net et le volume réel par canal de chaque format, multipliés par leurs coûts. Une estimation fondée sur vos hypothèses, pas une donnée réelle.'],
-                ['{{Écart ($)}}', 'Réel moins théorique. Positif : votre résultat réel dépasse ce que le modèle prévoyait. Négatif : il est en dessous.'],
-                ['{{Écart (%)}}', 'Le même écart, exprimé en pourcentage du théorique, pour comparer l\'ampleur des écarts d\'une ligne à l\'autre.'],
-            ],
-        },
-        { type: 'p', text: 'Lecture : le réel dépasse légèrement le théorique pour les revenus (+0,4 %), mais les charges directes réelles dépassent aussi celles du modèle (+5,8 %) : le bénéfice net réel (4 000,00 $) est inférieur de 36,5 % à celui du modèle (6 299,48 $). Un écart de charges directes de cet ordre signale en général des coûts que les recettes ne voient pas (rebuts, gaspillage, prix d\'achat plus élevés que ceux saisis). Regardez d\'abord les écarts en dollars : le pourcentage du bénéfice net est amplifié parce que ce bénéfice est une petite différence entre de grands montants.' },
-        { type: 'p', text: 'La comparaison se fait toujours à l\'échelle de l\'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Bénéfice brut = revenus moins charges directes ; bénéfice net = bénéfice brut moins le total des frais fixes (sous-total du tableau des dépenses). Ce total est soustrait identiquement du réel et du théorique : l\'écart entre les deux colonnes vient donc du bénéfice brut, auquel s\'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n\'existe pas dans les charges directes réelles).' },
+        { type: 'h', id: 'guide-ff-rec-lien', text: 'La réconciliation réel / théorique' },
+        { type: 'p', text: 'La comparaison de ces chiffres réels avec ce que prévoit votre modèle de recettes se trouve maintenant dans l\'onglet {{Rapport et suivi}}, sous-onglet {{Vue d\'ensemble}}. Voir [[guide-ff-reconciliation|Réconciliation réel / théorique]].' },
 
         { type: 'h', id: 'guide-ff-import', text: 'Importer l\'état des résultats' },
         { type: 'p', text: 'Le bouton {{Importer l\'état des résultats}} remplit les tableaux **Revenus** et **Frais fixes** à partir d\'un fichier : le plus souvent un **PDF textuel** exporté par votre comptable ou votre logiciel comptable (pas une image numérisée), ou un export structuré (QuickBooks, Odoo…) en .csv, .xls ou .xlsx. Les charges directes ne sont pas importées : saisissez-les à la main.' },

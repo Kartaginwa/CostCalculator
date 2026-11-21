@@ -23,7 +23,9 @@ const SCREENS = {
     "summary:Vue d'ensemble": async (page) => { await page.locator('#tab-summary').click(); await page.getByRole('button', { name: "Vue d'ensemble", exact: true }).click(); },
     'income-statement': async (page) => { await page.locator('#tab-income-statement').click(); },
     labor: async (page) => { await page.locator('#tab-labor').click(); },
-    ingredients: async (page) => { await page.locator('#tab-ingredients').click(); },
+    "summary:Ingrédients": async (page) => { await page.locator('#tab-summary').click(); await page.locator('[data-tour="subtab-ingredients"]').click(); },
+    "summary:Portefeuille": async (page) => { await page.locator('#tab-summary').click(); await page.locator('[data-tour="subtab-portfolio"]').click(); },
+    "summary:Main-d'œuvre": async (page) => { await page.locator('#tab-summary').click(); await page.locator('[data-tour="subtab-labor"]').click(); },
 };
 
 for (const [screen, strings] of Object.entries(DEMO_SCREEN_CHECKS)) {

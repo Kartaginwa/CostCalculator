@@ -89,6 +89,9 @@ test('Les mots et les chiffres se tapent vraiment dans l\'application jouée, av
 test('La visite se joue en entier sur une copie du démo, se ferme d\'elle-même, et le projet de l\'utilisateur, ses filtres et son onglet ne bougent pas', async ({ page }) => {
     test.setTimeout(600000);
     const errors = collectErrors(page);
+    // Les voix (src/tour/audio) jouent en temps réel et retiennent la scène jusqu'à leur fin : sous l'horloge simulée de ce test,
+    // elles ne finiraient jamais. On joue donc la visite muette ; le pacing avec voix se mesure à part (voir LISEZMOI.md du dossier audio).
+    await page.addInitScript(() => { window.Audio = undefined; });
     await page.clock.install();
     await page.goto('/');
     await page.getByText('Créer un nouveau projet').click();

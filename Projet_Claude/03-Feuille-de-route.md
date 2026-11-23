@@ -4195,3 +4195,10 @@ Dans l'écran Production, la main-d'œuvre « indirecte » n'était pas un frais
 
 ### Document de relecture des textes régénéré (23/11)
 - `15-Revue-Textes-Constats.md` refait à partir du modèle du rapport : constats rangés par adresse (les trois blocs de la Vue d'ensemble, constats complémentaires du chapitre 2, bandeau de chaque sous-onglet, fiche de chaque produit), avec gravité, portée, ton, titre et détail, plus les phrases « Ce que cela veut dire ». **100 constats** sur le démo (95 auparavant ; les objectifs stratégiques en ont ajouté) : 91 affichés, 9 écartés comme redondants. La relecture elle-même est gardée pour plus tard, avec la révision de la langue.
+
+
+**Visite guidée, version 5 (23/11) : prise en compte des dernières améliorations.**
+(1) *Nouvelles scènes* (36 → 40 scènes, 9 → 10 chapitres, environ 7 min 30 s à 1×) : `objectifs` (fenêtre « Gérer les objectifs » : neuf objectifs par défaut, saisie de la marge nette qui passe au vert, objectifs sur mesure), `constats-onglet` (bandeau de constats de fin de sous-onglet, ici Par Canal, et fenêtre « Voir tout »), `export-pdf` (fenêtre d'export : chapitres, commentaire de la direction, salaires individuels décochés par défaut ; refermée par Échap, rien n'est généré) et `export-excel` (le bouton et le classeur en base de données, sans téléchargement). Nouveau chapitre « Pour le dire aux autres » (exports) avant « Jamais perdu ».
+(2) *Scène modifiée* : `etapes` montre le total « Coût du temps non productif (absorbé) », lu en direct, et la narration en parle (vocabulaire du 24/11).
+(3) *Narration* : mêmes règles de style (phrases courtes, aucune consigne procédurale, aucun sigle ni symbole à épeler : « rapport complet », pas « rapport PDF »). Texte à enregistrer régénéré dans `Projet_Claude/11-Narration-Visite.md` ; durée annoncée « environ sept minutes et demie » (carte d'accueil, fenêtre « nouveau projet », guide).
+(4) *Tests* : `tourScript.test.js` (20 tests, dont la présence des nouveautés ; plage de durée portée à 8 min), `e2e/guided-tour.spec.js` (40 scènes).

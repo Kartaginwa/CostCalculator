@@ -1,7 +1,7 @@
 # Narration de la visite guidée
 
 Texte lu à l'écran (sous-titres) et, le jour venu, par une voix humaine. Document généré à partir de `src/tour/tourScript.js` (une seule source :
-si une phrase change dans le scénario, régénérer ce fichier). Durée à vitesse normale, sans voix : **6 min 35 s**, 36 scènes, 9 chapitres.
+si une phrase change dans le scénario, régénérer ce fichier). Durée à vitesse normale, sans voix : **7 min 31 s**, 40 scènes, 10 chapitres.
 
 ## Pour enregistrer une voix
 
@@ -25,6 +25,7 @@ si une phrase change dans le scénario, régénérer ce fichier). Durée à vite
 | Fichier | Mots | Texte |
 |---|---|---|
 | `entreprise.mp3` | 32 | Commençons par vous. Le nom de l'entreprise, d'abord. Puis vos cibles : la part du prix de vente que vous acceptez de consacrer aux ingrédients. Chaque résultat sera comparé à ces objectifs. |
+| `objectifs.mp3` | 37 | Vos cibles ne se limitent pas aux coûts. Neuf objectifs sont déjà prêts : marge nette, paie non utilisée, frais fixes… Fixez une valeur, et chaque résultat dira s'il est atteint. Vous pouvez aussi créer les vôtres. |
 | `activites.mp3` | 29 | Vous fabriquez plusieurs familles de produits ? Ce sont vos activités : mets surgelés, soupes, sauces. Elles servent à répartir les frais, et chaque produit appartient à l'une d'elles. |
 | `canaux.mp3` | 32 | Entre vous et le client, il y a parfois des intermédiaires. Chaque canal de vente a sa chaîne, et chaque maillon prend sa part. Regardez : le prix s'ajuste à chaque étape. |
 | `produits.mp3` | 28 | Voici vos produits, chacun avec ses formats, son prix et sa part des ventes. Une longue liste ? Tapez quelques lettres, et le produit que vous cherchez apparaît. |
@@ -44,7 +45,7 @@ si une phrase change dans le scénario, régénérer ce fichier). Durée à vite
 |---|---|---|
 | `recette.mp3` | 26 | Place à la recette. Choisissez un produit : la quantité produite, les ingrédients, l'emballage et les étapes apparaissent. Ici, un lot de vingt unités de chili. |
 | `recette-direct.mp3` | 24 | Et tout se recalcule en direct. Un peu plus de bœuf dans la recette ? Regardez le coût matière grimper… et la marge fondre. |
-| `etapes.mp3` | 23 | Les étapes disent qui travaille, quand, et pendant combien de temps. C'est de là que vient le coût de main-d'œuvre de chaque unité. |
+| `etapes.mp3` | 32 | Les étapes disent qui travaille, quand, et pendant combien de temps. C'est de là que vient le coût de main-d'œuvre, y compris celui des heures payées qui ne servent pas à produire. |
 | `cascade.mp3` | 26 | Tout en bas, le récapitulatif : du coût de revient complet jusqu'au point mort. Et selon le canal de vente, la marge change. Essayez les épiceries. |
 | `simulation-prix.mp3` | 31 | Et si vous changiez le prix de vente ? Testez-le sans toucher au vrai prix : les marges et le point mort se recalculent. Descendez trop bas, et la marge s'effondre. |
 
@@ -75,6 +76,7 @@ si une phrase change dans le scénario, régénérer ce fichier). Durée à vite
 | `par-sku.mp3` | 31 | Un produit à la fois, maintenant. Du prix de vente jusqu'au point mort, voyez ce qu'il rapporte vraiment dans chacun de ses canaux. Choisissez-en un autre, et le tableau se refait. |
 | `par-activite.mp3` | 23 | Reculez d'un cran : une colonne par activité. Laquelle porte l'entreprise, laquelle rapporte le moins ? Tout se lit d'un seul coup d'œil. |
 | `par-canal.mp3` | 20 | Et la même chose par canal. Quel circuit de vente rapporte vraiment, et lequel coûte presque autant qu'il rapporte ? |
+| `constats-onglet.mp3` | 30 | Chaque sous-onglet se termine par ses propres constats. Ici, ceux des canaux : les forces à gauche, les faiblesses à droite, les plus graves en premier. Voilà par où commencer. |
 
 ## 8. Les coulisses — Vos achats, votre équipe, vos « et si »
 
@@ -86,7 +88,14 @@ si une phrase change dans le scénario, régénérer ce fichier). Durée à vite
 | `main-oeuvre-rapport.mp3` | 31 | Reste votre équipe. Combien d'heures payées servent vraiment ? L'écart, c'est de la paie non utilisée. Et ces heures libres sont des ventes possibles en plus : votre marge de croissance. |
 | `simulation.mp3` | 32 | Et si vos prix d'achat montaient de huit pour cent ? Puis de quinze ? Le simulateur montre l'effet sur la marge, le point mort et chaque activité, avant que ça n'arrive. |
 
-## 9. Jamais perdu — Où trouver l'aide quand on en a besoin
+## 9. Pour le dire aux autres — Un rapport PDF, un classeur Excel
+
+| Fichier | Mots | Texte |
+|---|---|---|
+| `export-pdf.mp3` | 34 | Un banquier, un partenaire, votre équipe veulent voir vos résultats ? Le rapport complet les met en page, prêt à imprimer. Choisissez les chapitres, ajoutez votre commentaire, et décidez si les salaires y figurent. |
+| `export-excel.mp3` | 31 | Pour aller plus loin avec vos propres outils, le classeur Excel : toutes vos données, une feuille par sujet, avec un dictionnaire des colonnes. Votre comptable s'y retrouvera tout de suite. |
+
+## 10. Jamais perdu — Où trouver l'aide quand on en a besoin
 
 | Fichier | Mots | Texte |
 |---|---|---|

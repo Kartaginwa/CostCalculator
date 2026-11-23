@@ -7,21 +7,21 @@ import { TOUR_AUDIO } from './tourAudio.js';
 const KNOWN = new Set(['tab', 'subtab', 'scroll', 'scrollTop', 'highlight', 'point', 'click', 'press', 'hover', 'unhover', 'select', 'type', 'note', 'unnote', 'hoverAt', 'escape', 'guideOpen', 'guideClose']);
 // Sous-onglets de Rapport et suivi (REPORT_SUBTAB_GROUPS, SummaryTable.jsx) : la visite doit tous les montrer.
 const REPORT_SUBTABS = ['overview', 'portfolio', 'bySku', 'byActivity', 'byChannel', 'ingredients', 'packaging', 'labor', 'simulation'];
-const SCENE_COUNT = 36;
+const SCENE_COUNT = 40;
 
 describe('Visite guidée : scénario', () => {
-    it('dure entre 5 et 7 minutes 30 à vitesse normale (plus vite à 1,5×)', () => {
+    it('dure entre 5 et 8 minutes à vitesse normale (plus vite à 1,5×)', () => {
         expect(TOTAL_DURATION).toBeGreaterThanOrEqual(300000);
-        expect(TOTAL_DURATION).toBeLessThanOrEqual(450000);
+        expect(TOTAL_DURATION).toBeLessThanOrEqual(480000);
     });
     it('laisse le temps de lire : chaque scène dure au moins le temps de lecture de son sous-titre, et chaque titre de chapitre au moins 2,5 s', () => {
         SCENES.forEach((sc) => expect(sc.duration, sc.id).toBeGreaterThanOrEqual(readingMs(sc.caption)));
         expect(INTRO_MS).toBeGreaterThanOrEqual(2500);
     });
-    it(`compte ${SCENE_COUNT} scènes aux identifiants uniques, réparties en ${9} chapitres existants et dans l'ordre`, () => {
+    it(`compte ${SCENE_COUNT} scènes aux identifiants uniques, réparties en ${10} chapitres existants et dans l'ordre`, () => {
         expect(SCENES).toHaveLength(SCENE_COUNT);
         expect(new Set(SCENES.map((s) => s.id)).size).toBe(SCENE_COUNT);
-        expect(CHAPTERS).toHaveLength(9);
+        expect(CHAPTERS).toHaveLength(10);
         SCENES.forEach((s) => expect(s.chapter).toBeGreaterThanOrEqual(0) && expect(s.chapter).toBeLessThan(CHAPTERS.length));
         const chapters = SCENES.map((s) => s.chapter);
         expect([...chapters].sort((a, b) => a - b)).toEqual(chapters);
@@ -69,6 +69,18 @@ describe('Visite guidée : scénario', () => {
         expect(sceneOf('matrice').subtab).toBe('portfolio');
         // la réconciliation n'est plus présentée dans l'État des résultats
         SCENES.filter((s) => s.tab === 'income-statement').forEach((s) => expect(JSON.stringify(s.steps), s.id).not.toContain('reconciliation'));
+    });
+    it('présente les dernières améliorations : objectifs stratégiques, constats de fin de sous-onglet, temps non productif, exports PDF et Excel', () => {
+        const sceneOf = (id) => SCENES.find((s) => s.id === id);
+        expect(sceneOf('objectifs').tab).toBe('info');
+        expect(JSON.stringify(sceneOf('objectifs').steps)).toContain('Gérer les objectifs');
+        expect(sceneOf('constats-onglet').tab).toBe('summary');
+        expect(JSON.stringify(sceneOf('etapes').steps)).toContain('temps non productif');
+        const partage = CHAPTERS.findIndex((c) => c.id === 'partage');
+        expect(sceneOf('export-pdf').chapter).toBe(partage);
+        expect(sceneOf('export-excel').chapter).toBe(partage);
+        expect(JSON.stringify(sceneOf('export-pdf').steps)).toContain('Générer un rapport PDF');
+        expect(JSON.stringify(sceneOf('export-excel').steps)).toContain('Exporter vers Excel');
     });
     it("aucune scène ne remonte la page en haut d'elle-même : seul un changement d'onglet le fait", () => {
         // seule exception : « depart » revient sur Paramètres, que l'application rouvre là où on l'avait laissé

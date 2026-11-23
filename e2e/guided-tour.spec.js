@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // Étape 7 de la Phase 7 : la visite guidée est une démonstration qui se joue seule, sur une COPIE du projet
 // démo (saisie lettre à lettre, étiquettes, valeurs lues en direct), sans jamais toucher au projet de l'utilisateur.
 // À la fin, elle se ferme d'elle-même : l'utilisateur retrouve ce qu'il avait (un projet, ou l'accueil).
-const SCENES = 36;
+const SCENES = 40;
 const collectErrors = (page) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(`pageerror : ${e.message}`));
@@ -80,14 +80,14 @@ test('Les mots et les chiffres se tapent vraiment dans l\'application jouée, av
     await expect(page.getByTestId('tour-note').first()).toBeVisible();
 
     // un ingrédient se saisit : le coût unitaire est lu en direct dans l'étiquette
-    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Scène suivante' }).click();
+    for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Scène suivante' }).click();
     await expect(page.getByTestId('tour-layer')).toHaveAttribute('data-scene', 'ingredient-saisie');
     await expect(page.getByTestId('tour-app').locator('[id^="ingredient-row-manual_"] input').first()).toHaveValue('Farine de blé', { timeout: 15000 });
     await expect(page.getByTestId('tour-note').filter({ hasText: 'Coût unitaire : 1,85' })).toBeVisible({ timeout: 20000 });
 });
 
 test('La visite se joue en entier sur une copie du démo, se ferme d\'elle-même, et le projet de l\'utilisateur, ses filtres et son onglet ne bougent pas', async ({ page }) => {
-    test.setTimeout(300000);
+    test.setTimeout(600000);
     const errors = collectErrors(page);
     await page.clock.install();
     await page.goto('/');

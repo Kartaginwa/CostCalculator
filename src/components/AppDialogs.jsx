@@ -74,7 +74,7 @@ export const WelcomeModal = ({ onNew, onOpen, onExample, onTour }) => {
                         <PlayCircle className="h-9 w-9 text-amber-500 group-hover:text-amber-600 shrink-0" />
                         <div className="text-left">
                             <h2 className="text-base font-semibold text-gray-700">Voir la visite guidée</h2>
-                            <p className="text-xs text-gray-500 mt-1">Une démonstration d'environ sept minutes qui se joue toute seule : de la saisie jusqu'aux résultats.</p>
+                            <p className="text-xs text-gray-500 mt-1">Une démonstration d'environ sept minutes et demie qui se joue toute seule : de la saisie jusqu'aux résultats.</p>
                         </div>
                     </button>
                 )}
@@ -92,7 +92,7 @@ export const OnboardingModal = ({ isOpen, onStart, onSkip }) => {
             <div className="bg-white rounded-lg p-8 shadow-xl max-w-md w-full text-center">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Bienvenue dans votre nouveau projet !</h2>
                 <p className="text-gray-600 mb-8">
-                    Souhaitez-vous voir une visite guidée d'environ sept minutes, qui se joue toute seule, pour vous familiariser avec l'application ?
+                    Souhaitez-vous voir une visite guidée d'environ sept minutes et demie, qui se joue toute seule, pour vous familiariser avec l'application ?
                 </p>
                 <div className="flex justify-center space-x-4">
                     <button

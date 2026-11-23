@@ -27,6 +27,7 @@ export const CHAPTERS = [
     { id: 'portrait', title: 'Le portrait de votre entreprise', sub: 'Où vous en êtes, et ce qui change' },
     { id: 'detail', title: 'Zoom sur vos produits', sub: 'Par produit, par activité, par canal' },
     { id: 'coulisses', title: 'Les coulisses', sub: 'Vos achats, votre équipe, vos « et si »' },
+    { id: 'partage', title: 'Pour le dire aux autres', sub: 'Un rapport PDF, un classeur Excel' },
     { id: 'aide', title: 'Jamais perdu', sub: 'Où trouver l\'aide quand on en a besoin' },
 ];
 
@@ -45,6 +46,7 @@ const FIND_OBJ = '#tutorial-section-findings-objectif';
 const FIND_EVO = '#tutorial-section-findings-evolution';
 const FINDINGS = '#tutorial-section-key-findings';
 const RECON = '#tutorial-section-reconciliation';
+const NON_PRODUCTIF = { text: 'Total Coût du temps non productif', within: '#tutorial-section-recipe-labor' };
 const CHART = '#tutorial-section-tracking-global .recharts-wrapper';
 const MODAL = '.fixed.inset-0.z-50';
 const tabNote = (i, to, text) => ({ at: 700 + i * 1250, do: 'note', id: `tab-${to}`, target: `#tab-${to}`, text, side: 'bottom' });
@@ -55,7 +57,7 @@ const PRODUCT = { at: 0, do: 'pick', target: 'select', option: 'Chili con carne 
 export const SCENES = [
     // --- 0. Bienvenue ---------------------------------------------------------------------------------------
     {
-        id: 'accueil', chapter: 0, tab: 'info', introTitle: 'Le vrai coût de chaque produit', introSub: 'Visite guidée · environ sept minutes',
+        id: 'accueil', chapter: 0, tab: 'info', introTitle: 'Le vrai coût de chaque produit', introSub: 'Visite guidée · environ sept minutes et demie',
         caption: `Imaginez une petite entreprise qui fabrique des repas surgelés. Chaque mois, la même question la ronge : **combien** coûte vraiment chaque produit, et **lesquels** rapportent de l'argent ? Cette visite y répond.`,
         steps: [
             { at: 400, do: 'highlight', target: 'img[alt^="Logo"]' },
@@ -89,6 +91,23 @@ export const SCENES = [
             { at: 4800, do: 'note', id: 'cible', target: '#foodCostTarget', text: 'Votre cible : le coût des ingrédients ne devrait pas dépasser ce %', side: 'top' },
             { at: 5400, do: 'type', target: '#foodCostTarget', text: '30', rate: 220 },
             { at: 8400, do: 'highlight', target: '#tutorial-section-info-objectifs' },
+        ],
+    },
+    {
+        id: 'objectifs', chapter: 1, tab: 'info',
+        caption: `Vos cibles ne se limitent pas aux coûts. Neuf objectifs sont déjà prêts : marge nette, paie non utilisée, frais fixes… Fixez une valeur, et chaque résultat dira s'il est atteint. Vous pouvez aussi créer les vôtres.`,
+        steps: [
+            { at: 200, do: 'scroll', target: '#tutorial-section-info-objectifs' },
+            { at: 800, do: 'click', target: { btn: 'Gérer les objectifs' } },
+            { at: 3000, do: 'note', id: 'ob1', target: { sel: '[data-testid="objectives-default"]' }, text: 'Neuf objectifs prêts à l\'emploi', side: 'top' },
+            { at: 5400, do: 'unnote' },
+            { at: 5500, do: 'note', id: 'ob2', target: { sel: '[data-testid="objective-margeNette"] > div:nth-child(2)' }, text: 'Fixez une valeur : la ligne passe au vert quand elle est atteinte', side: 'right' },
+            { at: 5800, do: 'type', target: { sel: '[data-testid="objective-margeNette"] input[inputmode="decimal"]' }, text: '5', rate: 300 },
+            { at: 7000, do: 'unnote' },
+            { at: 7100, do: 'note', id: 'ob3', target: { text: 'Objectifs sur mesure', within: MODAL }, text: 'Et vos propres objectifs, jusqu\'à vingt', side: 'right' },
+            { at: 7300, do: 'point', target: { btn: 'Ajouter un objectif sur mesure' } },
+            { at: 9200, do: 'unnote' },
+            { at: 9400, do: 'click', target: { btn: 'Terminé' } },
         ],
     },
     {
@@ -212,13 +231,17 @@ export const SCENES = [
     },
     {
         id: 'etapes', chapter: 3, tab: 'recipe',
-        caption: `Les **étapes** disent qui travaille, quand, et pendant combien de temps. C'est de là que vient le coût de main-d'œuvre de chaque unité.`,
+        caption: `Les **étapes** disent qui travaille, quand, et pendant combien de temps. C'est de là que vient le coût de main-d'œuvre, y compris celui des heures payées qui ne servent pas à produire.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#tutorial-section-recipe-labor', block: 'start' },
             { at: 1200, do: 'highlight', target: '#tutorial-section-recipe-labor' },
             { at: 1500, do: 'note', id: 'pers', target: { text: 'Personnel', within: '#tutorial-section-recipe-labor' }, text: 'Qui fait quoi', side: 'top' },
             { at: 4200, do: 'note', id: 'diag', target: { text: 'Diagramme de production', within: '#tutorial-section-recipe-labor' }, text: 'La chronologie, poste par poste', side: 'top' },
+            { at: 6800, do: 'unnote' },
+            { at: 6900, do: 'scroll', target: NON_PRODUCTIF },
+            { at: 7700, do: 'highlight', target: NON_PRODUCTIF },
+            { at: 7900, do: 'note', id: 'np', target: NON_PRODUCTIF, text: 'Heures payées mais non productives : {v}', side: 'top', read: { label: 'Total Coût du temps non productif (absorbé)', within: '#tutorial-section-recipe-labor' } },
         ],
     },
     {
@@ -433,6 +456,19 @@ export const SCENES = [
         ],
     },
 
+    {
+        id: 'constats-onglet', chapter: 6, tab: 'summary', subtab: 'byChannel',
+        caption: `Chaque sous-onglet se termine par ses propres constats. Ici, ceux des canaux : les forces à gauche, les faiblesses à droite, les plus graves en premier. Voilà par où commencer.`,
+        steps: [
+            { at: 300, do: 'scroll', target: '#tutorial-section-findings-byChannel', block: 'start' },
+            { at: 1100, do: 'highlight', target: '#tutorial-section-findings-byChannel' },
+            { at: 1400, do: 'note', id: 'cb', target: { text: 'Constats : Par Canal', within: '#tutorial-section-findings-byChannel' }, text: 'Les constats propres à ce sous-onglet', side: 'right' },
+            { at: 4600, do: 'unnote' },
+            { at: 4800, do: 'click', target: { btn: 'Voir tout', contains: true, within: '#tutorial-section-findings-byChannel' } },
+            { at: 8600, do: 'escape' },
+        ],
+    },
+
     // --- 7. Les coulisses (Ingrédients, Emballages, Main-d'œuvre, Simulation) -------------------------------------------
     {
         id: 'achats-ingredients', chapter: 7, tab: 'summary', subtab: 'ingredients',
@@ -510,9 +546,39 @@ export const SCENES = [
         ],
     },
 
-    // --- 8. Jamais perdu ---------------------------------------------------------------------------------------------------
+    // --- 8. Pour le dire aux autres (exports) -------------------------------------------------------------------------------
     {
-        id: 'infobulles', chapter: 8, tab: 'summary', subtab: 'overview',
+        id: 'export-pdf', chapter: 8, tab: 'summary', subtab: 'overview',
+        caption: `Un banquier, un partenaire, votre équipe veulent voir vos résultats ? Le rapport complet les met en page, prêt à imprimer. Choisissez les chapitres, ajoutez votre commentaire, et décidez si les salaires y figurent.`,
+        steps: [
+            { at: 300, do: 'scroll', target: { btn: 'Générer un rapport PDF' } },
+            { at: 1000, do: 'click', target: { btn: 'Générer un rapport PDF' } },
+            { at: 4300, do: 'note', id: 'ch', target: { sel: `${MODAL} ul[aria-label="Chapitres du rapport"]` }, text: 'Huit chapitres, à cocher ou à décocher', side: 'right' },
+            { at: 6500, do: 'unnote' },
+            { at: 6600, do: 'note', id: 'cm', target: '#reportComment', text: 'Votre lecture, imprimée à la fin du chapitre', side: 'top' },
+            { at: 6900, do: 'type', target: '#reportComment', text: 'Le prix de la viande monte.', rate: 70 },
+            { at: 9900, do: 'unnote' },
+            { at: 10000, do: 'click', target: { btn: 'Annexes', contains: true, within: MODAL } },
+            { at: 11400, do: 'note', id: 'sal', target: { text: 'Inclure les salaires individuels', within: MODAL }, text: 'Décoché : aucun salaire dans le rapport', side: 'top' },
+            { at: 13800, do: 'unnote' },
+            { at: 14300, do: 'escape' },
+        ],
+    },
+    {
+        id: 'export-excel', chapter: 8, tab: 'summary', subtab: 'overview',
+        caption: `Pour aller plus loin avec vos propres outils, le classeur Excel : toutes vos données, une feuille par sujet, avec un dictionnaire des colonnes. Votre comptable s'y retrouvera tout de suite.`,
+        steps: [
+            { at: 300, do: 'scroll', target: { btn: 'Exporter vers Excel' } },
+            { at: 900, do: 'highlight', target: { btn: 'Exporter vers Excel' } },
+            { at: 1100, do: 'note', id: 'xl', target: { btn: 'Exporter vers Excel' }, text: 'Toutes les données de votre projet', side: 'bottom' },
+            { at: 3600, do: 'unnote' },
+            { at: 3700, do: 'note', id: 'xl2', target: { btn: 'Exporter vers Excel' }, text: 'À retravailler dans Excel ou n\'importe quel outil', side: 'bottom' },
+        ],
+    },
+
+    // --- 9. Jamais perdu ---------------------------------------------------------------------------------------------------
+    {
+        id: 'infobulles', chapter: 9, tab: 'summary', subtab: 'overview',
         caption: `Un mot vous échappe ? Passez la souris sur le point d'interrogation : une courte explication s'affiche, avec un lien « En savoir plus ».`,
         steps: [
             { at: 300, do: 'scroll', target: KPI },
@@ -523,7 +589,7 @@ export const SCENES = [
         ],
     },
     {
-        id: 'guide', chapter: 8, tab: 'summary', subtab: 'overview',
+        id: 'guide', chapter: 9, tab: 'summary', subtab: 'overview',
         caption: `Pour aller plus loin, le **guide** : chaque écran, chaque calcul, avec les chiffres du projet d'exemple. Cherchez un mot, et toutes ses occurrences sont surlignées.`,
         steps: [
             { at: 300, do: 'guideOpen', unless: '[aria-label="Fermer le guide"]' },
@@ -537,7 +603,7 @@ export const SCENES = [
         ],
     },
     {
-        id: 'depart', chapter: 8, tab: 'info',
+        id: 'depart', chapter: 9, tab: 'info',
         caption: `À vous de jouer ! Commencez par **Paramètres** : nommez votre entreprise, puis passez aux ingrédients. Avancez de gauche à droite, le reste suivra tout seul.`,
         steps: [
             { at: 0, do: 'guideClose' },

@@ -7,6 +7,7 @@ import {
 import { getCostTargetIndicator, useValueFlash, useSessionState } from '../ui-utils.jsx';
 import { Tooltip, EmptyState, CostNatureBadge, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
+import { computeFormatAllergens } from '../engine/allergens.js';
 import { computeYieldUnits } from '../engine/yieldCalculator.js';
 import { wouldCreateRecipeLoop } from '../engine/usage.js';
 import { useProject } from '../state/ProjectContext.jsx';
@@ -66,22 +67,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
     // Tous les hooks ci-dessous doivent s'exécuter dans le même ordre à chaque rendu : on ne
     // peut pas les placer après un retour anticipé, sinon React plante dès qu'on passe de 0 à
     // 1 produit (nombre de hooks incohérent entre deux rendus du même composant monté).
-    const recipeAllergens = useMemo(() => {
-        if (!format) return [];
-        // SI c'est un produit de revente, on utilise sa liste manuelle
-        if (format.isResaleProduct) {
-            return format.manualAllergens || [];
-        }
-        // SINON, on calcule à partir des ingrédients
-        const allergens = new Set();
-        (format.ingredients || []).forEach(item => {
-            const baseIngredient = ingredientsList.find(ing => ing.id === item.id);
-            if (baseIngredient && baseIngredient.allergens) {
-                baseIngredient.allergens.forEach(allergen => allergens.add(allergen));
-            }
-        });
-        return Array.from(allergens);
-    }, [format, ingredientsList]);
+    const recipeAllergens = useMemo(() => computeFormatAllergens(format, ingredientsList), [format, ingredientsList]);
 
     // Coûts du FORMAT sélectionné : calculé directement (memo local, vide à chaque rendu — cet
     // écran ne calcule qu'un seul produit à la fois) plutôt que réutilisé depuis

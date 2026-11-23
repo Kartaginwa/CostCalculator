@@ -1,0 +1,719 @@
+{
+ "ing": {
+  "gkeys": [
+   "items",
+   "totalPurchase",
+   "totalLoss",
+   "totalCost"
+  ],
+  "ikeys": [
+   "id",
+   "name",
+   "provider",
+   "purchaseFormat",
+   "unit",
+   "purchasePrice",
+   "unitPrice",
+   "isRecipe",
+   "lossPercentage",
+   "lastUpdated",
+   "allergens",
+   "totalQuantity",
+   "purchaseCost",
+   "lossQuantity",
+   "lossCost",
+   "totalCost"
+  ],
+  "items": [
+   {
+    "n": "Poitrine de poulet désossée",
+    "loss": 252.16046407864087,
+    "total": 4202.674401310676,
+    "prov": "Boucherie Nordique"
+   },
+   {
+    "n": "Bœuf haché mi-maigre",
+    "loss": 459.21652173913026,
+    "total": 5740.20652173913,
+    "prov": "Boucherie Nordique"
+   },
+   {
+    "n": "Filet de saumon surgelé IQF",
+    "loss": 98.51250000000027,
+    "total": 2462.8125000000005,
+    "prov": "Poissonnerie Boréale"
+   },
+   {
+    "n": "Carottes en dés surgelées",
+    "loss": 0,
+    "total": 229.10950094323442,
+    "prov": "Maraîcher du Nord"
+   },
+   {
+    "n": "Brocoli en bouquets surgelé",
+    "loss": 0,
+    "total": 481.598,
+    "prov": "Maraîcher du Nord"
+   },
+   {
+    "n": "Petits pois surgelés",
+    "loss": 0,
+    "total": 178.10871720116617,
+    "prov": "Maraîcher du Nord"
+   },
+   {
+    "n": "Oignon jaune haché",
+    "loss": 9.090203522010313,
+    "total": 181.80407044020617,
+    "prov": "Maraîcher du Nord"
+   },
+   {
+    "n": "Maïs en grains surgelé",
+    "loss": 0,
+    "total": 293.93999999999994,
+    "prov": "Maraîcher du Nord"
+   },
+   {
+    "n": "Courge musquée en dés surgelée",
+    "loss": 0,
+    "total": 569.905,
+    "prov": "Maraîcher du Nord"
+   },
+   {
+    "n": "Pommes de terre en flocons",
+    "loss": 0,
+    "total": 361,
+    "prov": "Épicerie Grossiste Boréal"
+   },
+   {
+    "n": "Riz basmati",
+    "loss": 0,
+    "total": 943.7280000000001,
+    "prov": "Épicerie Grossiste Boréal"
+   },
+   {
+    "n": "Farine tout usage",
+    "loss": 0,
+    "total": 14.783249999999999,
+    "prov": "Épicerie Grossiste Boréal"
+   },
+   {
+    "n": "Tomates broyées en conserve",
+    "loss": 0,
+    "total": 820.0500000000001,
+    "prov": "Épicerie Grossiste Boréal"
+   },
+   {
+    "n": "Haricots rouges en conserve",
+    "loss": 0,
+    "total": 490.98,
+    "prov": "Épicerie Grossiste Boréal"
+   },
+   {
+    "n": "Prémélange gingembre-ail-soya",
+    "loss": 0,
+    "total": 787.4075,
+    "prov": "Épicerie Grossiste Boréal"
+   },
+   {
+    "n": "Épices et assaisonnements maison",
+    "loss": 0,
+    "total": 363.0558669181959,
+    "prov": "Épicerie Grossiste Boréal"
+   },
+   {
+    "n": "Crème 35 %",
+    "loss": 0,
+    "total": 1449.525,
+    "prov": "Fromagerie du Lac"
+   },
+   {
+    "n": "Beurre non salé",
+    "loss": 0,
+    "total": 252.35600000000002,
+    "prov": "Fromagerie du Lac"
+   }
+  ],
+  "abc": {
+   "totals": {
+    "A": 73.61086800540099,
+    "B": 16.575088328738047,
+    "C": 9.814043665860979
+   },
+   "A": [
+    [
+     "Bœuf haché mi-maigre",
+     27.78873941053247
+    ],
+    [
+     "Poitrine de poulet désossée",
+     20.7877315312882
+    ],
+    [
+     "Filet de saumon surgelé IQF",
+     12.441022722694406
+    ],
+    [
+     "Crème 35 %",
+     7.627447219944003
+    ],
+    [
+     "Riz basmati",
+     4.965927120941905
+    ]
+   ],
+   "B": [
+    [
+     "Tomates broyées en conserve",
+     4.315129502916528
+    ],
+    [
+     "Prémélange gingembre-ail-soya",
+     4.143363616935243
+    ],
+    [
+     "Courge musquée en dés surgelée",
+     2.998858459069134
+    ],
+    [
+     "Haricots rouges en conserve",
+     2.5835525679433653
+    ],
+    [
+     "Brocoli en bouquets surgelé",
+     2.5341841818737807
+    ]
+   ],
+   "C": [
+    [
+     "Épices et assaisonnements maison",
+     1.9104116609299966
+    ],
+    [
+     "Pommes de terre en flocons",
+     1.8995936230142876
+    ],
+    [
+     "Maïs en grains surgelé",
+     1.5467217439025471
+    ],
+    [
+     "Beurre non salé",
+     1.3279053970343313
+    ],
+    [
+     "Carottes en dés surgelées",
+     1.2055815705367148
+    ],
+    [
+     "Petits pois surgelés",
+     0.9372138044282283
+    ],
+    [
+     "Oignon jaune haché",
+     0.9088259285427789
+    ],
+    [
+     "Farine tout usage",
+     0.07778993747209408
+    ]
+   ]
+  }
+ },
+ "pkg": {
+  "gkeys": [
+   "items",
+   "totalPurchase",
+   "totalLoss",
+   "totalCost"
+  ],
+  "ikeys": [
+   "id",
+   "name",
+   "provider",
+   "purchaseFormat",
+   "unit",
+   "purchasePrice",
+   "unitPrice",
+   "lossPercentage",
+   "lastUpdated",
+   "totalQuantity",
+   "purchaseCost",
+   "lossQuantity",
+   "lossCost",
+   "totalCost"
+  ],
+  "items": [
+   {
+    "n": "Barquette operable 340 ml",
+    "loss": 21.738181818182056,
+    "total": 2173.818181818182,
+    "prov": "Emballages Boréal"
+   },
+   {
+    "n": "Barquette operable 900 ml (familiale)",
+    "loss": 5.742222222222267,
+    "total": 574.2222222222223,
+    "prov": "Emballages Boréal"
+   },
+   {
+    "n": "Pellicule scellante operable",
+    "loss": 9.73061224489794,
+    "total": 486.53061224489795,
+    "prov": "Emballages Boréal"
+   },
+   {
+    "n": "Sac sous-vide pour soupe 750 ml",
+    "loss": 9.848246831200072,
+    "total": 984.8246831200012,
+    "prov": "Emballages Boréal"
+   },
+   {
+    "n": "Pot de verre 500 ml",
+    "loss": 6.285714285714278,
+    "total": 314.2857142857143,
+    "prov": "Emballages Boréal"
+   },
+   {
+    "n": "Couvercle twist-off 70 mm",
+    "loss": 0.39595959595959584,
+    "total": 39.5959595959596,
+    "prov": "Emballages Boréal"
+   },
+   {
+    "n": "Manchon de carton imprimé",
+    "loss": 4.644444444444446,
+    "total": 464.44444444444446,
+    "prov": "Cartons Pro-Nord"
+   },
+   {
+    "n": "Étiquette nutritionnelle / code-barres",
+    "loss": 13.557030648994328,
+    "total": 677.8515324497147,
+    "prov": "Impression Boréale"
+   }
+  ],
+  "abc": {
+   "totals": {
+    "A": 77.25223328592442,
+    "B": 16.595698944074776,
+    "C": 6.152067770000814
+   },
+   "A": [
+    [
+     "Barquette operable 340 ml",
+     38.13289748405343
+    ],
+    [
+     "Sac sous-vide pour soupe 750 ml",
+     17.27569444182772
+    ],
+    [
+     "Étiquette nutritionnelle / code-barres",
+     11.77069353201889
+    ],
+    [
+     "Barquette operable 900 ml (familiale)",
+     10.072947828024374
+    ]
+   ],
+   "B": [
+    [
+     "Pellicule scellante operable",
+     8.448461730231532
+    ],
+    [
+     "Manchon de carton imprimé",
+     8.147237213843244
+    ]
+   ],
+   "C": [
+    [
+     "Pot de verre 500 ml",
+     5.457479473387819
+    ],
+    [
+     "Couvercle twist-off 70 mm",
+     0.6945882966129951
+    ]
+   ]
+  }
+ },
+ "volIng": [
+  {
+   "id": "ing_saumon",
+   "name": "Filet de saumon surgelé IQF",
+   "provider": "Poissonnerie Boréale",
+   "count": 19,
+   "currentPrice": 18.5,
+   "trendPercent": 2.7207107162687247,
+   "amplitudePercent": 24.648293357933568,
+   "tier": "elevee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_boeuf",
+   "name": "Bœuf haché mi-maigre",
+   "provider": "Boucherie Nordique",
+   "count": 19,
+   "currentPrice": 9.75,
+   "trendPercent": 0.8273009307135492,
+   "amplitudePercent": 21.961656015559882,
+   "tier": "elevee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_tomates",
+   "name": "Tomates broyées en conserve",
+   "provider": "Épicerie Grossiste Boréal",
+   "count": 19,
+   "currentPrice": 3,
+   "trendPercent": -4.458598726114647,
+   "amplitudePercent": 19.363907924793526,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_courge",
+   "name": "Courge musquée en dés surgelée",
+   "provider": "Maraîcher du Nord",
+   "count": 19,
+   "currentPrice": 1.9,
+   "trendPercent": -2.56410256410256,
+   "amplitudePercent": 18.1155356141335,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_brocoli",
+   "name": "Brocoli en bouquets surgelé",
+   "provider": "Maraîcher du Nord",
+   "count": 19,
+   "currentPrice": 2.6,
+   "trendPercent": -3.3457249070632056,
+   "amplitudePercent": 15.503875968992256,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_beurre",
+   "name": "Beurre non salé",
+   "provider": "Fromagerie du Lac",
+   "count": 19,
+   "currentPrice": 10.4,
+   "trendPercent": 1.4634146341463325,
+   "amplitudePercent": 15.45359749739311,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_carotte",
+   "name": "Carottes en dés surgelées",
+   "provider": "Maraîcher du Nord",
+   "count": 19,
+   "currentPrice": 1.8,
+   "trendPercent": 9.75609756097561,
+   "amplitudePercent": 14.615384615384617,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_epices_asiat",
+   "name": "Prémélange gingembre-ail-soya",
+   "provider": "Épicerie Grossiste Boréal",
+   "count": 19,
+   "currentPrice": 9.5,
+   "trendPercent": 12.559241706161139,
+   "amplitudePercent": 14.586078487539378,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_oignon",
+   "name": "Oignon jaune haché",
+   "provider": "Maraîcher du Nord",
+   "count": 19,
+   "currentPrice": 1.2,
+   "trendPercent": 5.263157894736837,
+   "amplitudePercent": 12.588339222614836,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_pois",
+   "name": "Petits pois surgelés",
+   "provider": "Maraîcher du Nord",
+   "count": 19,
+   "currentPrice": 1.7,
+   "trendPercent": 8.974358974358971,
+   "amplitudePercent": 12.539283469516036,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_poulet",
+   "name": "Poitrine de poulet désossée",
+   "provider": "Boucherie Nordique",
+   "count": 19,
+   "currentPrice": 6.2,
+   "trendPercent": 5.263157894736849,
+   "amplitudePercent": 11.977547495682222,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_mais",
+   "name": "Maïs en grains surgelé",
+   "provider": "Maraîcher du Nord",
+   "count": 19,
+   "currentPrice": 1.5,
+   "trendPercent": 0,
+   "amplitudePercent": 11.417462000706966,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_riz",
+   "name": "Riz basmati",
+   "provider": "Épicerie Grossiste Boréal",
+   "count": 19,
+   "currentPrice": 2.4,
+   "trendPercent": 8.597285067873287,
+   "amplitudePercent": 11.06630824372761,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "ing_pdt_flocons",
+   "name": "Pommes de terre en flocons",
+   "provider": "Épicerie Grossiste Boréal",
+   "count": 19,
+   "currentPrice": 3.8,
+   "trendPercent": 2.425876010781678,
+   "amplitudePercent": 7.456201822004213,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "ing_haricots",
+   "name": "Haricots rouges en conserve",
+   "provider": "Épicerie Grossiste Boréal",
+   "count": 19,
+   "currentPrice": 3.5,
+   "trendPercent": 3.5502958579881754,
+   "amplitudePercent": 7.229832572298332,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "ing_farine",
+   "name": "Farine tout usage",
+   "provider": "Épicerie Grossiste Boréal",
+   "count": 19,
+   "currentPrice": 1.15,
+   "trendPercent": 4.545454545454537,
+   "amplitudePercent": 6.226591760299622,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "ing_creme",
+   "name": "Crème 35 %",
+   "provider": "Fromagerie du Lac",
+   "count": 19,
+   "currentPrice": 10.5,
+   "trendPercent": 4.79041916167666,
+   "amplitudePercent": 6.140665880059495,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "ing_epices",
+   "name": "Épices et assaisonnements maison",
+   "provider": "Épicerie Grossiste Boréal",
+   "count": 19,
+   "currentPrice": 20,
+   "trendPercent": 2.880658436213981,
+   "amplitudePercent": 5.3741060945672,
+   "tier": "faible",
+   "isVolatile": false
+  }
+ ],
+ "volPkg": [
+  {
+   "id": "pkg_boite",
+   "name": "Manchon de carton imprimé",
+   "provider": "Cartons Pro-Nord",
+   "count": 19,
+   "currentPrice": 0.55,
+   "trendPercent": 2.268501301599126,
+   "amplitudePercent": 13.380545268300361,
+   "tier": "moderee",
+   "isVolatile": true
+  },
+  {
+   "id": "pkg_etiquette",
+   "name": "Étiquette nutritionnelle / code-barres",
+   "provider": "Impression Boréale",
+   "count": 19,
+   "currentPrice": 0.07,
+   "trendPercent": 7.692307692307699,
+   "amplitudePercent": 8.642356024978803,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "pkg_barq_f",
+   "name": "Barquette operable 900 ml (familiale)",
+   "provider": "Emballages Boréal",
+   "count": 19,
+   "currentPrice": 0.68,
+   "trendPercent": 2.73455204713703,
+   "amplitudePercent": 8.34124347413384,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "pkg_sac_soupe",
+   "name": "Sac sous-vide pour soupe 750 ml",
+   "provider": "Emballages Boréal",
+   "count": 19,
+   "currentPrice": 0.3,
+   "trendPercent": 3.3769813921433403,
+   "amplitudePercent": 8.239109789094577,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "pkg_barq_s",
+   "name": "Barquette operable 340 ml",
+   "provider": "Emballages Boréal",
+   "count": 19,
+   "currentPrice": 0.42,
+   "trendPercent": 4.347826086956511,
+   "amplitudePercent": 8.145427554964048,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "pkg_pot_verre",
+   "name": "Pot de verre 500 ml",
+   "provider": "Emballages Boréal",
+   "count": 19,
+   "currentPrice": 1.1,
+   "trendPercent": 2.803738317757012,
+   "amplitudePercent": 7.3607748184019215,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "pkg_couvercle",
+   "name": "Couvercle twist-off 70 mm",
+   "provider": "Emballages Boréal",
+   "count": 19,
+   "currentPrice": 0.14,
+   "trendPercent": 4.39970171513797,
+   "amplitudePercent": 5.725511138236184,
+   "tier": "faible",
+   "isVolatile": false
+  },
+  {
+   "id": "pkg_pellicule",
+   "name": "Pellicule scellante operable",
+   "provider": "Emballages Boréal",
+   "count": 19,
+   "currentPrice": 0.08,
+   "trendPercent": 3.6269430051813427,
+   "amplitudePercent": 5.197144572686645,
+   "tier": "faible",
+   "isVolatile": false
+  }
+ ],
+ "tpKeys": [
+  "id",
+  "name",
+  "note",
+  "timestamp",
+  "generalInfo",
+  "baseIngredients",
+  "basePackaging",
+  "productsWithCosts"
+ ],
+ "pkgSeries": [
+  {
+   "id": "pkg_boite",
+   "name": "Manchon de carton imprimé",
+   "series": [
+    0.5378,
+    0.5382,
+    0.5337,
+    0.5256,
+    0.5158,
+    0.5067,
+    0.5004,
+    0.4985,
+    0.5018,
+    0.5101,
+    0.5222,
+    0.5363,
+    0.55,
+    0.5612,
+    0.5682,
+    0.57,
+    0.5668,
+    0.5595,
+    0.55
+   ]
+  },
+  {
+   "id": "pkg_etiquette",
+   "name": "Étiquette nutritionnelle / code-barres",
+   "series": [
+    0.065,
+    0.0658,
+    0.0668,
+    0.0678,
+    0.0684,
+    0.0686,
+    0.0684,
+    0.0678,
+    0.0672,
+    0.0669,
+    0.0669,
+    0.0674,
+    0.0683,
+    0.0693,
+    0.0702,
+    0.0708,
+    0.0709,
+    0.0706,
+    0.07
+   ]
+  },
+  {
+   "id": "pkg_barq_f",
+   "name": "Barquette operable 900 ml (familiale)",
+   "series": [
+    0.6619,
+    0.6657,
+    0.6653,
+    0.6612,
+    0.6546,
+    0.6474,
+    0.6414,
+    0.6384,
+    0.6393,
+    0.6445,
+    0.6532,
+    0.6641,
+    0.6754,
+    0.685,
+    0.6915,
+    0.6939,
+    0.6922,
+    0.687,
+    0.68
+   ]
+  }
+ ]
+}

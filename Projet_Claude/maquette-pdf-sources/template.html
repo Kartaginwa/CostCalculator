@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette du rapport PDF</title>
+<style>
+:root{
+  --primary:#2563EB; --dark:#1F2937; --secondary:#4B5563; --gray:#6B7280; --line:#E5E7EB; --soft:#F3F4F6; --softer:#F9FAFB;
+  --green:#10B981; --yellow:#F59E0B; --purple:#8B5CF6; --red:#EF4444; --pink:#DB2777;
+  --green-t:#047857; --red-t:#B91C1C; --amber-t:#B45309; --blue-t:#1D4ED8;
+  --green-bg:#D1FAE5; --red-bg:#FEE2E2; --amber-bg:#FEF3C7; --blue-bg:#DBEAFE; --pink-bg:#FCE7F3; --purple-bg:#EDE9FE;
+  --bg:#E5E7EB; --paper:#fff; --ink:#1F2937;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Helvetica,Arial,"Segoe UI",sans-serif;font-size:14px;line-height:1.45}
+/* ---------- barre et navigation de la maquette (hors PDF) ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:#111827;color:#fff;display:flex;gap:16px;align-items:center;padding:8px 18px;font-size:13px}
+.topbar b{font-weight:700}
+.topbar label{display:flex;gap:6px;align-items:center;cursor:pointer;margin-left:auto}
+.topbar a{color:#BFDBFE;text-decoration:none}
+.layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:0;max-width:1480px;margin:0 auto}
+nav.side{position:sticky;top:42px;align-self:start;height:calc(100vh - 42px);overflow:auto;padding:18px 12px 30px 18px;font-size:12.5px}
+nav.side h4{margin:0 0 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray)}
+nav.side a{display:block;color:var(--secondary);text-decoration:none;padding:3px 0}
+nav.side a:hover{color:var(--primary)}
+nav.side .grp{margin-top:12px}
+main{padding:22px 18px 80px}
+.intro{max-width:1020px;margin:0 auto 36px;background:#fff;border-radius:12px;padding:28px 34px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.intro h1{margin:0 0 4px;font-size:26px}
+.intro h2{margin:26px 0 8px;font-size:17px;color:var(--primary)}
+.intro p,.intro li{font-size:14px;color:#374151}
+.intro ul{padding-left:20px;margin:6px 0}
+.intro table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}
+.intro th,.intro td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+.intro th{background:var(--soft)}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700}
+.pill.new{background:var(--green-bg);color:var(--green-t)} .pill.rich{background:var(--blue-bg);color:var(--blue-t)} .pill.old{background:var(--soft);color:var(--secondary)}
+.principles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.principles div{background:var(--softer);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px}
+.principles b{display:block;margin-bottom:2px;color:var(--dark)}
+/* ---------- feuille = page + note ---------- */
+.sheet{display:grid;grid-template-columns:210mm 250px;gap:22px;justify-content:center;margin:0 auto 34px;align-items:start}
+body.hide-notes .sheet{grid-template-columns:210mm}
+body.hide-notes .note{display:none}
+.note{background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#78350F;position:sticky;top:56px}
+.note h5{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.note p{margin:4px 0}
+.note .pill{margin-bottom:6px}
+@media (max-width:1250px){.sheet{grid-template-columns:210mm}.note{position:static}}
+/* ---------- LA PAGE A4 ---------- */
+.page{width:210mm;height:297mm;background:var(--paper);position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.25);font-size:9.4pt;line-height:1.4;color:var(--dark)}
+.phead{position:absolute;left:14mm;right:14mm;top:0;height:35mm;border-bottom:.35mm solid var(--primary)}
+.phead .co{position:absolute;left:0;top:11mm;font-size:19pt;font-weight:700;line-height:1}
+.phead .sub{position:absolute;left:0;top:21mm;font-size:10.5pt;color:var(--gray)}
+.phead .sub b{color:var(--primary);font-weight:700}
+.phead img{position:absolute;right:0;top:9mm;height:21mm}
+.pfoot{position:absolute;left:14mm;right:14mm;bottom:5.5mm;display:flex;justify-content:space-between;font-size:7pt;color:var(--gray)}
+.pbody.dense{--pad:1.1mm}
+.pbody{position:absolute;left:14mm;right:14mm;top:40mm;bottom:14mm;overflow:hidden}
+.pbody.full{top:0;left:0;right:0;bottom:0}
+/* bandeau de chapitre */
+.chap{background:var(--primary);color:#fff;border-radius:2mm;padding:3.4mm 5mm;display:flex;gap:5mm;align-items:center;margin-bottom:3.5mm}
+.chap .num{font-size:30pt;font-weight:700;line-height:1;opacity:.95;min-width:11mm}
+.chap .t{font-size:14pt;font-weight:700;line-height:1.15}
+.chap .q{font-size:8.6pt;opacity:.92;margin-top:1mm}
+.chap.cont{padding:2mm 5mm}.chap.cont .num{font-size:15pt}.chap.cont .t{font-size:11pt}
+h3.s{font-size:11pt;color:var(--primary);margin:3.5mm 0 1.8mm;font-weight:700;display:flex;justify-content:space-between;align-items:baseline}
+h3.s small{font-size:7.5pt;color:var(--gray);font-weight:400}
+.verdict{border-left:1.4mm solid var(--amber-t);background:var(--amber-bg);border-radius:0 2mm 2mm 0;padding:2.6mm 4mm;margin-bottom:3mm}
+.verdict b.big{font-size:11.5pt;display:block;margin-bottom:.6mm}
+.retain{border:.3mm solid var(--primary);border-radius:2mm;padding:2.4mm 4mm;background:#EFF6FF;margin-top:3mm}
+.retain h6{margin:0 0 1mm;font-size:8pt;color:var(--blue-t);text-transform:uppercase;letter-spacing:.05em}
+.retain ul{margin:0;padding-left:4mm}.retain li{margin:.3mm 0}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:2.4mm}
+.tile{background:var(--softer);border:.25mm solid var(--line);border-radius:2mm;padding:2.4mm 3mm;display:flex;flex-direction:column;justify-content:space-between;min-height:21mm}
+.tile .l{font-size:7.6pt;color:var(--secondary)}
+.tile .v{font-size:17pt;font-weight:700;line-height:1.1;margin-top:1mm}
+.tile .c{font-size:7.2pt;margin-top:.8mm}
+.ok{color:var(--green-t)}.bad{color:var(--red-t)}.warn{color:var(--amber-t)}.mut{color:var(--gray)}
+table.tb{width:100%;border-collapse:collapse;font-size:8.3pt}
+table.tb th{background:var(--secondary);color:#fff;font-weight:700;text-align:right;padding:1.3mm 1.8mm}
+table.tb th:first-child,table.tb td:first-child{text-align:left}
+table.tb td{padding:var(--pad,1.7mm) 1.8mm;border-bottom:.2mm solid var(--line);text-align:right}
+table.tb tr:nth-child(even) td{background:var(--softer)}
+table.tb tfoot td{font-weight:700;background:var(--soft)!important;border-top:.3mm solid var(--secondary)}
+table.tb.green th{background:var(--green)} table.tb.yellow th{background:var(--yellow);color:var(--dark)} table.tb.pink th{background:var(--pink)} table.tb.blue th{background:var(--primary)}
+table.tb td.l{text-align:left}
+.heat{font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+.card{border:.25mm solid var(--line);border-radius:2mm;padding:2.6mm 3.2mm;background:#fff}
+.card h4{margin:0 0 1.4mm;font-size:8.6pt}
+.fcol{border-left:1mm solid;border-radius:0 1.6mm 1.6mm 0;padding:2mm 3mm}
+.fcol.f{background:#ECFDF5;border-color:var(--green)} .fcol.w{background:#FEF2F2;border-color:var(--red)}
+.fcol h5{margin:0 0 1mm;font-size:8.2pt}.fcol.f h5{color:var(--green-t)}.fcol.w h5{color:var(--red-t)}
+.fcol ul{list-style:none;margin:0;padding:0}.fcol li{margin:0 0 1.4mm;font-size:8.2pt;line-height:1.3}
+.fcol li b{display:block;font-size:7.9pt}.fcol li span{color:var(--secondary)} .fcol li i{color:var(--gray);font-style:normal;font-size:7pt}
+.grpt{font-size:8.4pt;font-weight:700;color:var(--secondary);margin:2mm 0 1mm}
+.hb{display:grid;grid-template-columns:50mm 1fr 20mm;gap:2mm;align-items:center;font-size:8.3pt;margin:.9mm 0}
+.hb .tr{background:var(--soft);border-radius:.8mm;height:4.2mm;position:relative}
+.hb .fi{position:absolute;left:0;top:0;bottom:0;border-radius:0 1mm 1mm 0}
+.hb .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .vl{text-align:right;font-weight:700}
+.stack{display:flex;height:7mm;border-radius:1.4mm;overflow:hidden;gap:.5mm}
+.stack div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:7pt;font-weight:700;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:1mm 4mm;font-size:7.3pt;color:var(--secondary);margin-top:1.4mm}
+.legend i{display:inline-block;width:2.6mm;height:2.6mm;border-radius:.5mm;margin-right:1.2mm;vertical-align:-.4mm}
+.mx{display:grid;grid-template-columns:7mm 1fr 1fr;grid-template-rows:auto 1fr 1fr 6mm;gap:1.6mm;height:108mm}
+.mx .q{border-radius:2mm;padding:2.4mm 3mm;border:.3mm solid}
+.mx .q h4{margin:0;font-size:9.5pt}.mx .q small{display:block;font-size:7.2pt;color:var(--secondary);margin:.4mm 0 1.2mm}
+.mx .q ul{margin:0;padding-left:3.6mm;font-size:7.7pt}
+.mx .ax{font-size:7.2pt;color:var(--gray);display:flex;align-items:center;justify-content:center}
+.mx .axy{writing-mode:vertical-rl;transform:rotate(180deg)}
+.q.star{background:#DBEFFF;border-color:#93C5FD}.q.que{background:#FEF3E2;border-color:#FDE047}.q.cow{background:#F3F4F6;border-color:#D1D5DB}.q.dog{background:#FEE2E2;border-color:#FCA5A5}
+.mt{display:grid;grid-template-columns:34mm repeat(3,1fr);gap:1.2mm;font-size:7.6pt}
+.mt .h{font-weight:700;color:var(--secondary);padding:1mm}.mt .c{border-radius:1.4mm;padding:1.4mm 2mm;text-align:center}
+.mt .c small{display:block;font-weight:400;font-size:7pt}
+.cover{display:flex;flex-direction:column;align-items:center}
+.cover .frame{position:absolute;left:10mm;top:10mm;right:10mm;bottom:10mm;border:.5mm solid var(--gray)}
+.src{font-size:6.8pt;color:var(--gray);margin-top:1.4mm}
+.fiche-head{display:flex;justify-content:space-between;align-items:flex-start;gap:4mm;margin-bottom:2.6mm}
+.badge{display:inline-block;padding:.6mm 2.4mm;border-radius:99px;font-size:7.6pt;font-weight:700}
+.badge.cow{background:#E5E7EB;color:#374151}.badge.star{background:#DBEFFF;color:#1E40AF}.badge.que{background:#FEF3E2;color:#92400E}.badge.dog{background:#FEE2E2;color:#991B1B}
+.toc{list-style:none;margin:0;padding:0}
+.toc li{display:grid;grid-template-columns:9mm 1fr 10mm;gap:2mm;align-items:baseline;padding:2mm 0;border-bottom:.2mm dotted #9CA3AF}
+.toc .n{font-size:16pt;font-weight:700;color:var(--primary)}
+.toc .t{font-size:10.5pt;font-weight:700}.toc .q{font-size:7.8pt;color:var(--gray)}.toc .p{text-align:right;font-weight:700;color:var(--primary);font-size:10.5pt}
+.toc .tab{display:inline-block;font-size:6.8pt;background:var(--soft);border-radius:1mm;padding:0 1.4mm;margin-left:1.4mm;color:var(--secondary)}
+.ell{width:210mm;border:2px dashed #9CA3AF;border-radius:8px;padding:22px;text-align:center;color:#4B5563;background:#F9FAFB;font-size:14px}
+svg text{font-family:Helvetica,Arial,sans-serif}
+@media print{
+  body{background:#fff}.topbar,nav.side,.note,.intro,.ell{display:none!important}.layout{display:block}main{padding:0}
+  .sheet{display:block;margin:0;break-after:page}.page{box-shadow:none}@page{size:A4;margin:0}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <b>Maquette — rapport PDF optimal</b>
+  <a href="#intro">La réflexion</a><a href="#p1">Couverture</a><a href="#p3">Synthèse</a><a href="#p14">Fiches</a><a href="#p22">Exemple de fiche</a><a href="#p27">Annexes</a>
+  <label><input type="checkbox" id="tgl" checked> Afficher les notes du consultant</label>
+</div>
+<div class="layout">
+<nav class="side" id="nav"></nav>
+<main id="main"></main>
+</div>
+
+<script>
+const D = __DATA__;
+const APP_LOGO = "__APP_LOGO__";
+const CO_LOGO = "__CO_LOGO__";
+const TOTAL = 29;
+const NBSP = ' ';
+/* ---------- formats ---------- */
+const f = (n, d = 0) => { if (n == null || isNaN(n)) return '—'; const s = Math.abs(n).toFixed(d); const [i, dec] = s.split('.'); const w = i.replace(/\B(?=(\d{3})+(?!\d))/g, NBSP); return (n < 0 ? '−' : '') + w + (dec ? ',' + dec : ''); };
+const usd = (n, d = 0) => f(n, d) + NBSP + '$';
+const sgn = (n, d = 0) => (n > 0 ? '+' : '') + f(n, d);
+const pc = (r, d = 1) => f(r * 100, d) + NBSP + '%';
+const pcs = (r, d = 1) => (r > 0 ? '+' : '') + pc(r, d);
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const CO = D.company;
+const REV = D.kpis.menuRevenue;
+const CH = D.channels, AC = D.activities;
+const sum = (a, g) => a.reduce((s, x) => s + g(x), 0);
+const mat = sum(CH, c => c.costMatiereTotal), pkg = sum(CH, c => c.costPackagingTotal), mo = sum(CH, c => c.costLaborTotal), st = sum(CH, c => c.costSubcontractingTotal), aging = sum(CH, c => c.costAgingTotal);
+const gross = sum(CH, c => c.margeBruteTotal), net = sum(CH, c => c.margeNetteTotal), fixed = 28000;
+const BE = D.kpis.globalBreakEven, SAFE = (REV - BE) / REV;
+const PAGE_OF = { "Vue d'ensemble": 5, 'Simulation': 6, 'Portefeuille': 7, 'Par SKU': 8, 'Par Canal': 9, 'Par Activité': 9, 'Ingrédients': 10, 'Emballages': 11, "Main-d'œuvre": 12 };
+const CHAPS = [
+  { n: 1, t: 'Synthèse de direction', q: 'Où en est l’entreprise, et que faire en premier ?', p: 3, tab: "Vue d’ensemble" },
+  { n: 2, t: 'Résultats : prévu, réel et tendance', q: 'Combien gagne-t-on vraiment, et dans quelle direction va-t-on ?', p: 5, tab: 'Vue d’ensemble · Simulation' },
+  { n: 3, t: 'Produits : où l’argent se fait et se perd', q: 'Quels produits protéger, corriger ou abandonner ?', p: 7, tab: 'Portefeuille · Par SKU' },
+  { n: 4, t: 'Canaux et activités', q: 'Quels circuits de vente et quelles lignes de production paient les frais fixes ?', p: 9, tab: 'Par Canal · Par Activité' },
+  { n: 5, t: 'Approvisionnement', q: 'Où achète-t-on, à quel prix, avec quels risques ?', p: 10, tab: 'Ingrédients · Emballages' },
+  { n: 6, t: 'Main-d’œuvre', q: 'L’équipe est-elle bien utilisée, et que rapporte une heure ?', p: 12, tab: 'Main-d’œuvre' },
+  { n: 7, t: 'Fiches produits', q: 'Quel est le détail d’un produit, canal par canal ?', p: 14, tab: 'Recette et calcul · Par SKU' },
+  { n: 'A', t: 'Annexes et méthodes', q: 'Les listes de référence et la façon dont les chiffres sont calculés.', p: 27, tab: 'Ingrédients · Emballage · Main-d’œuvre' },
+];
+/* ---------- briques de page ---------- */
+function head(chapLabel) {
+  return `<div class="phead"><div class="co">${esc(CO)}</div><div class="sub">${chapLabel}</div><img src="${CO_LOGO}" alt=""></div>`;
+}
+function foot(n, chapShort) {
+  return `<div class="pfoot"><span>Rapport généré le 21 novembre 2026</span><span>Page ${n} sur ${TOTAL}</span><span>${chapShort || ''}</span></div>`;
+}
+function chap(c, cont) {
+  const C = CHAPS.find(x => x.n === c);
+  return `<div class="chap ${cont ? 'cont' : ''}"><div class="num">${C.n}</div><div><div class="t">${C.t}${cont ? ' (suite)' : ''}</div>${cont ? '' : `<div class="q">Question : ${C.q}</div>`}</div></div>`;
+}
+let SHEETS = [];
+function sheet(n, { c, chapLabel, body, note, tag, full, dense }) {
+  const C = c ? CHAPS.find(x => x.n === c) : null;
+  const sub = chapLabel || (C ? `<b>Chapitre ${C.n}</b> · ${C.t}` : '');
+  const inner = full ? `<div class="pbody full">${body}</div>` : `${head(sub)}<div class="pbody ${dense ? 'dense' : ''}">${body}</div>${foot(n, C ? 'Chap. ' + C.n : '')}`;
+  const tags = { new: ['new', 'Nouveau'], rich: ['rich', 'Enrichi'], old: ['old', 'Repris du PDF actuel'] }[tag] || ['old', ''];
+  SHEETS.push(`<section class="sheet" id="p${n}"><div class="page">${inner}</div><aside class="note"><span class="pill ${tags[0]}">${tags[1]}</span>${note}</aside></section>`);
+}
+/* ---------- graphiques ---------- */
+function hbars(rows, { max, color = 'var(--primary)', fmt = usd, nameW }) {
+  const m = max || Math.max(...rows.map(r => r.v));
+  return rows.map(r => `<div class="hb" ${nameW ? `style="grid-template-columns:${nameW}mm 1fr 20mm"` : ''}><div class="nm">${esc(r.n)}</div><div class="tr"><div class="fi" style="width:${Math.max(0, r.v) / m * 100}%;background:${r.color || color}"></div>${r.mark != null ? `<div style="position:absolute;top:-.8mm;bottom:-.8mm;left:${r.mark / m * 100}%;border-left:.4mm solid var(--dark)"></div>` : ''}</div><div class="vl">${fmt(r.v)}</div></div>`).join('');
+}
+function lineChart({ w = 640, h = 190, labels, series, ymin, ymax, ystep, yfmt = v => v, xEvery = 3, marks = [], padR = 92 }) {
+  const P = { l: 34, r: padR, t: 12, b: 24 }, W = w - P.l - P.r, H = h - P.t - P.b;
+  const X = i => P.l + (labels.length === 1 ? 0 : i / (labels.length - 1) * W), Y = v => P.t + H - (v - ymin) / (ymax - ymin) * H;
+  let g = '';
+  for (let v = ymin; v <= ymax + 1e-9; v += ystep) g += `<line x1="${P.l}" x2="${P.l + W}" y1="${Y(v)}" y2="${Y(v)}" stroke="#E5E7EB" stroke-width="1"/><text x="${P.l - 5}" y="${Y(v) + 3}" font-size="9" fill="#6B7280" text-anchor="end">${yfmt(v)}</text>`;
+  labels.forEach((l, i) => { if (i % xEvery === 0 || i === labels.length - 1) g += `<text x="${X(i)}" y="${h - 8}" font-size="8.5" fill="#6B7280" text-anchor="middle">${l}</text>`; });
+  series.forEach(s => {
+    const pts = s.vals.map((v, i) => v == null ? null : [X(i), Y(v)]).filter(Boolean);
+    g += `<polyline fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ${s.dash ? 'stroke-dasharray="4 3"' : ''} points="${pts.map(p => p.join(',')).join(' ')}"/>`;
+    const last = pts[pts.length - 1];
+    g += `<circle cx="${last[0]}" cy="${last[1]}" r="3.2" fill="${s.color}" stroke="#fff" stroke-width="1.5"/>`;
+    g += `<text x="${last[0] + 7}" y="${last[1] - 2 + (s.ly || 0)}" font-size="9" font-weight="700" fill="#1F2937">${s.name}</text><text x="${last[0] + 7}" y="${last[1] + 9 + (s.ly || 0)}" font-size="9" fill="#4B5563">${s.endLabel || ''}</text>`;
+  });
+  marks.forEach(m => { const s = series[m.s]; const x = X(m.i), y = Y(s.vals[m.i]); g += `<circle cx="${x}" cy="${y}" r="3" fill="#fff" stroke="${s.color}" stroke-width="2"/><text x="${x}" y="${y + (m.below ? 13 : -7)}" font-size="8.5" font-weight="700" fill="#1F2937" text-anchor="middle">${m.t}</text>`; });
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block">${g}</svg>`;
+}
+function waterfall(steps, { w = 650, h = 215 }) {
+  const P = { l: 6, r: 6, t: 20, b: 34 }, W = w - P.l - P.r, H = h - P.t - P.b, max = steps[0].v, bw = W / steps.length * 0.64;
+  const Y = v => P.t + H - v / max * H; let run = 0, g = `<line x1="${P.l}" x2="${w - P.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="#9CA3AF"/>`;
+  steps.forEach((s, i) => {
+    const x = P.l + W / steps.length * i + (W / steps.length - bw) / 2; let top, bot;
+    if (s.total) { top = s.v; bot = 0; run = s.v; } else { top = run; bot = run - s.v; run = bot; }
+    g += `<rect x="${x}" y="${Y(top)}" width="${bw}" height="${Math.max(1.5, Y(bot) - Y(top))}" rx="2" fill="${s.color}"/>`;
+    g += `<text x="${x + bw / 2}" y="${Y(top) - 4}" font-size="9" font-weight="700" fill="#1F2937" text-anchor="middle">${s.total ? '' : '−'}${f(s.v)}</text>`;
+    const words = s.l.split(' ');
+    g += `<text x="${x + bw / 2}" y="${h - 20}" font-size="8.5" fill="#374151" text-anchor="middle">${words[0]}</text>` + (words[1] ? `<text x="${x + bw / 2}" y="${h - 9}" font-size="8.5" fill="#374151" text-anchor="middle">${words.slice(1).join(' ')}</text>` : '');
+    if (i < steps.length - 1) g += `<line x1="${x + bw}" x2="${x + W / steps.length}" y1="${Y(run)}" y2="${Y(run)}" stroke="#9CA3AF" stroke-dasharray="2 2"/>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="display:block">${g}</svg>`;
+}
+const heat = (r) => r < 0 ? ['var(--red-bg)', 'var(--red-t)'] : r < 0.10 ? ['var(--amber-bg)', 'var(--amber-t)'] : ['var(--green-bg)', 'var(--green-t)'];
+const SHORT = { 'Vente directe (boutique en ligne)': 'Vente directe', 'Épiceries indépendantes': 'Épiceries', 'Grandes surfaces': 'Grandes surfaces' };
+const CLS = {}; Object.entries(D.bcg).forEach(([k, v]) => v.forEach(n => CLS[n] = k));
+const CLSNAME = { stars: ['star', 'Étoile'], questions: ['que', 'Dilemme'], cows: ['cow', 'Vache à lait'], dogs: ['dog', 'Poids mort'] };
+const FP = {}; // pages des fiches
+D.products.forEach((p, i) => FP[p.name] = 15 + i);
+
+/* =========================== PAGE 1 : COUVERTURE (page actuelle reprise) =========================== */
+sheet(1, { full: true, tag: 'old',
+  note: `<h5>Reprise de la page actuelle</h5><p>La page de garde est conservée telle quelle : cadre, logo de l’application au centre, titre, « présenté à », date.</p><p>Seul ajout suggéré (facultatif) : le nom de l’entreprise au-dessus du titre, pour qu’un rapport envoyé par courriel soit reconnaissable sans ouvrir le fichier.</p>`,
+  body: `<div class="cover"><div class="frame"></div>
+   <img src="${APP_LOGO}" alt="" style="position:absolute;top:80mm;width:120mm;left:45mm">
+   <div style="position:absolute;top:140mm;left:20mm;right:20mm;text-align:center;font-size:28pt;font-weight:700;line-height:1.15">Rapport d’analyse du coût de revient</div>
+   <div style="position:absolute;top:196mm;left:20mm;right:20mm;text-align:center;font-size:18pt;color:var(--secondary)">Préparer à l’attention des gestionnaires de ${esc(CO)}</div>
+   <div style="position:absolute;bottom:30mm;left:0;right:0;text-align:center;font-size:12pt;color:var(--gray)">Date : 21 novembre 2026</div></div>` });
+
+/* =========================== PAGE 2 : SOMMAIRE + À PROPOS =========================== */
+sheet(2, { dense: true, chapLabel: '<b>Sommaire</b> et guide de lecture', tag: 'new',
+  note: `<h5>Pourquoi cette page</h5><p>Le PDF actuel n’a ni sommaire ni chapitres : on passe de la couverture directement aux tableaux. Un banquier, un comptable ou un associé doit pouvoir aller droit au chapitre qui le concerne.</p><p>Chaque chapitre est rattaché à une <b>question de gestion</b> (et non à un onglet), mais la colonne grise rappelle l’onglet de l’application pour s’y retrouver.</p><p>L’encadré « À propos » dit sur quoi reposent les chiffres (période, cibles, relevés) : c’est la première question d’un lecteur extérieur.</p>`,
+  body: `<h3 class="s" style="margin-top:0">Sommaire</h3>
+   <ul class="toc">${CHAPS.map(c => `<li><span class="n">${c.n}</span><span><span class="t">${c.t}</span><span class="tab">${c.tab}</span><br><span class="q">${c.q}</span></span><span class="p">${c.p}</span></li>`).join('')}</ul>
+   <div class="two" style="margin-top:5mm">
+    <div class="card"><h4>À propos de ce rapport</h4>
+      <table class="tb" style="font-size:7.6pt"><tbody>
+       <tr><td class="l">Période analysée</td><td>celle de l’État des résultats</td></tr>
+       <tr><td class="l">Portée</td><td>12 produits · 3 canaux · 3 activités</td></tr>
+       <tr><td class="l">Intrants suivis</td><td>18 ingrédients · 8 emballages</td></tr>
+       <tr><td class="l">Équipe</td><td>4 postes · 8 employés</td></tr>
+       <tr><td class="l">Points de référence</td><td>19 (mai 2025 à nov. 2026)</td></tr>
+       <tr><td class="l">Cibles de coûts saisies</td><td>matière 32 % · emballage 8 % · MO 22 %</td></tr>
+       <tr><td class="l">Chiffres réels saisis</td><td>oui (revenus, charges directes, frais fixes)</td></tr>
+      </tbody></table></div>
+    <div class="card"><h4>Comment lire les chiffres</h4>
+      <p style="margin:0 0 1.4mm"><b>Prévu</b> : calculé à partir de vos recettes, prix et volumes de ventes.<br><b>Réel</b> : ce que vous avez saisi dans l’État des résultats.<br><b>Marge de contribution</b> : prix − coûts variables.<br><b>Marge nette</b> : après frais fixes.</p>
+      <div class="legend"><span><i style="background:var(--green)"></i>Matières</span><span><i style="background:var(--pink)"></i>Emballage</span><span><i style="background:var(--yellow)"></i>Main-d’œuvre</span><span><i style="background:var(--purple)"></i>Frais fixes</span><span><i style="background:var(--primary)"></i>Marge / bénéfice</span></div>
+      <p style="margin:1.6mm 0 0;color:var(--gray)">Les couleurs ne portent jamais seules l’information : un mot ou un signe (+ / −) les accompagne toujours, pour une lecture en noir et blanc.</p></div>
+   </div>
+   <div class="card" style="margin-top:4mm;background:var(--softer)"><h4>Pour qui lire quoi</h4>
+    <table class="tb" style="font-size:7.6pt"><tbody>
+     <tr><td class="l"><b>Dirigeant</b></td><td class="l">Chapitres 1 et 2 (4 pages), puis le chapitre de son choix</td></tr>
+     <tr><td class="l"><b>Banquier, comptable, investisseur</b></td><td class="l">Chapitres 1, 2 et 4 ; annexe A (méthodes)</td></tr>
+     <tr><td class="l"><b>Production, achats, vente</b></td><td class="l">Chapitres 3 à 7 selon le rôle ; fiches produits</td></tr>
+    </tbody></table></div>` });
+
+const T = D.tracking, lab = T.map(t => { const [m, y] = t.n.split(' '); return m.slice(0, 4) + (m.length > 4 ? '.' : '') + ' ' + y.slice(2); });
+/* =========================== PAGE 3 : SYNTHÈSE (1/2) =========================== */
+const cm = D.kpis.weightedMaterialCost, cp = D.kpis.weightedPackagingCost, cl = D.kpis.weightedLaborCost;
+const oneDollar = [['Matières', mat, 'var(--green)'], ['Emballage', pkg, 'var(--pink)'], ['Main-d’œuvre', mo, 'var(--yellow)'], ['Sous-traitance', st, '#9CA3AF'], ['Frais fixes', fixed + aging, 'var(--purple)'], ['Bénéfice net', net, 'var(--primary)']];
+sheet(3, { c: 1, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>C’est la seule page que certains liront. Elle répond en dix secondes : <b>est-ce rentable, est-ce solide, qu’est-ce qui cloche ?</b></p><p>Le verdict est une phrase de gestion rédigée par règles (mêmes seuils que les constats clés). Chaque tuile du bloc « Indicateurs clés de rentabilité » est accompagnée de son <b>repère</b> (cible, seuil) : un chiffre seul ne dit rien.</p><p>« Sur chaque dollar de vente » est le graphique le plus parlant pour un non-comptable : il montre que <b>35 ¢ partent en frais fixes</b>.</p><p class="mut">Nouveau : verdict, « Sur 1 $ », « À retenir ». Repris de l’onglet : les six tuiles.</p>`,
+  body: `${chap(1)}
+   <div class="verdict"><b class="big">Rentable, mais avec peu de marge de manœuvre.</b>
+     Bénéfice net prévu de <b>${usd(net)}</b> (${pc(net / REV)} des ventes). Les ventes peuvent reculer de <b>${pc(SAFE)}</b> avant la perte, sous le repère confortable de 20 %. Vos chiffres réels (<b>4${NBSP}000${NBSP}$</b>) sont <b>36,5${NBSP}% sous le modèle</b>.</div>
+   <h3 class="s" style="margin-top:2mm">Indicateurs clés de rentabilité <small>moyennes pondérées par le mix de ventes</small></h3>
+   <div class="tiles">
+    <div class="tile"><div class="l">Coût matière</div><div><div class="v">${pc(cm, 2)}</div><div class="c bad">▲ Au-dessus de la cible (32 %)</div></div></div>
+    <div class="tile"><div class="l">Coût d’emballage</div><div><div class="v">${pc(cp, 2)}</div><div class="c ok">▼ Sous la cible (8 %)</div></div></div>
+    <div class="tile"><div class="l">Coût de main-d’œuvre</div><div><div class="v">${pc(cl, 2)}</div><div class="c ok">▼ Sous la cible (22 %)</div></div></div>
+    <div class="tile"><div class="l">Marge brute</div><div><div class="v">${pc(D.kpis.weightedGrossMargin, 2)}</div><div class="c mut">après matières, emballage, main-d’œuvre</div></div></div>
+    <div class="tile"><div class="l">Point mort</div><div><div class="v">${usd(BE)}</div><div class="c mut">ventes prévues : ${usd(REV)}</div></div></div>
+    <div class="tile"><div class="l">Marge de sécurité</div><div><div class="v">${pc(SAFE, 2)}</div><div class="c warn">● Entre le seuil mince (10 %) et confortable (20 %)</div></div></div>
+   </div>
+   <h3 class="s">Sur chaque dollar de vente, où va l’argent ? <small>ventes prévues : ${usd(REV)}</small></h3>
+   <div class="stack">${oneDollar.map(([n, v, c]) => `<div style="flex:${v};background:${c}">${v / REV > 0.06 ? f(v / REV * 100, 0) + ' ¢' : ''}</div>`).join('')}</div>
+   <div class="legend">${oneDollar.map(([n, v, c]) => `<span><i style="background:${c}"></i>${n} ${f(v / REV * 100, 1)} ¢</span>`).join('')}</div>
+   <h3 class="s">Direction prise <small>marge brute, 19 points de référence</small></h3>${lineChart({ h: 130, labels: lab, series: [{ name: 'Marge brute', color: '#2563EB', vals: T.map(t => t.gm), endLabel: f(T[18].gm, 1) + ' %' }], ymin: 40, ymax: 48, ystep: 4, yfmt: v => v + ' %', xEvery: 3 })}
+   <div class="retain"><h6>À retenir</h6><ul>
+    <li><b>Les frais fixes pèsent 35 % des ventes</b> : la rentabilité dépend du volume bien plus que de la recette.</li>
+    <li>Le coût matière dépasse sa cible de ${f((cm - 0.32) * 100, 1)} points : le ramener à 32 % vaudrait <b>≈ ${usd((cm - 0.32) * REV, -2 === 0 ? 0 : 0)}</b> par période, à ventes égales.</li>
+    <li>Les grandes surfaces font <b>58 % des revenus</b> mais seulement <b>15 % du bénéfice net</b> (chapitre 4).</li>
+   </ul></div>` });
+
+/* =========================== PAGE 4 : SYNTHÈSE (2/2) =========================== */
+const FG = [['objectif', 'Objectifs stratégiques', 'Atteints', 'À atteindre'], ['evolution', 'Amélioration / détérioration', 'Améliorations', 'Détériorations'], ['structure', 'Forces et faiblesses', 'Forces', 'Faiblesses']];
+const findList = (g, tone) => D.findings.filter(x => x.group === g && x.tone === tone).slice(0, 3);
+const fli = x => `<li><b>${esc(x.title)}</b><span>${esc(x.detail)}</span> <i>→ p. ${PAGE_OF[x.link]}</i></li>`;
+sheet(4, { dense: true, c: 1, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p><b>Constats clés</b> : le bloc de la Vue d’ensemble, en trois groupes (objectifs, évolution, forces/faiblesses), 3 lignes par colonne ; le « Voir tout » pourrait devenir une annexe si l’on veut tous les constats (une quarantaine dans le démo).</p><p>Dans l’application, un constat est un lien cliquable. Sur papier, il devient <b>« → p. 9 »</b> : le renvoi de page remplace le clic.</p><p><b>Plan d’action : l’élément nouveau.</b> Un entrepreneur ne veut pas seulement un diagnostic. Les six pistes sont classées par gravité (mêmes niveaux que les constats), chacune avec son <b>gain en dollars</b> à volumes constants. Les montants ne sont pas cumulables (ils se recoupent) ; le tableau le dit.</p><p class="mut">Les textes des pistes seraient des gabarits calculés par le moteur, comme les constats.</p>`,
+  body: `${chap(1, true)}
+   <h3 class="s" style="margin-top:0">Constats clés</h3>
+   ${FG.map(([g, label, fl, wl]) => `<div class="grpt">${label}</div><div class="two" style="gap:2.4mm">
+     <div class="fcol f"><h5>${fl}</h5><ul>${findList(g, 'force').map(fli).join('') || '<li class="mut">Aucun constat pour l’instant.</li>'}</ul></div>
+     <div class="fcol w"><h5>${wl}</h5><ul>${findList(g, 'faiblesse').map(fli).join('') || '<li class="mut">Aucun constat pour l’instant.</li>'}</ul></div></div>`).join('')}
+   <h3 class="s">Plan d’action priorisé <small>gains estimés à volumes constants ; non cumulables</small></h3>
+   <table class="tb blue"><thead><tr><th>#</th><th style="text-align:left">Action</th><th style="text-align:left">Pourquoi</th><th>Gain estimé</th><th>Voir</th></tr></thead><tbody>
+    <tr><td>1</td><td class="l"><b>Revoir prix et conditions en grandes surfaces</b></td><td class="l">58 % des revenus, 2,0 % de marge nette, 3,7 % de marge de sécurité</td><td><b>≈ ${usd(CH[2].revenueTotal * 0.01)}</b> par point de prix net</td><td>p. 9</td></tr>
+    <tr><td>2</td><td class="l"><b>Ramener le coût matière à la cible de 32 %</b></td><td class="l">34,57 % aujourd’hui ; bœuf et saumon à prix volatil</td><td><b>≈ ${usd((cm - 0.32) * REV)}</b></td><td>p. 10</td></tr>
+    <tr><td>3</td><td class="l"><b>Expliquer l’écart réel / modèle des charges directes</b></td><td class="l">+2${NBSP}644${NBSP}$ (+5,8 %) : pertes, rendements ou prix payés</td><td><b>≈ 264 $</b> par tranche de 10 % résorbée</td><td>p. 5</td></tr>
+    <tr><td>4</td><td class="l"><b>Corriger ou retirer les produits déficitaires</b></td><td class="l">5 produits sur 12 perdent dans au moins un canal ; le Chili seul : −425 $</td><td><b>≈ 425 $</b> (Chili seulement)</td><td>p. 8</td></tr>
+    <tr><td>5</td><td class="l"><b>Remplir la capacité libre de l’équipe</b></td><td class="l">32 h libres ; 2${NBSP}411${NBSP}$ de paie non utilisée (21,8 %)</td><td><b>≈ 6${NBSP}500${NBSP}$</b> de ventes, 2${NBSP}800${NBSP}$ de bénéfice brut</td><td>p. 12</td></tr>
+    <tr><td>6</td><td class="l"><b>Sécuriser l’approvisionnement en bœuf</b></td><td class="l">Boucherie Nordique : 50 % des achats ; prix du bœuf ±22 %</td><td><b>459 $</b> de perte stock en jeu</td><td>p. 10</td></tr>
+   </tbody></table>` });
+
+/* =========================== PAGE 5 : RÉSULTATS =========================== */
+const wf = [{ l: 'Ventes prévues', v: REV, total: 1, color: 'var(--primary)' }, { l: 'Matières', v: mat, color: 'var(--green)' }, { l: 'Emballage', v: pkg, color: 'var(--pink)' }, { l: 'Main-d’œuvre', v: mo, color: 'var(--yellow)' }, { l: 'Sous-traitance', v: st, color: '#9CA3AF' }, { l: 'Bénéfice brut', v: gross, total: 1, color: '#1E40AF' }, { l: 'Frais fixes', v: fixed, color: 'var(--purple)' }, { l: 'Vieillis- sement', v: aging, color: '#C4B5FD' }, { l: 'Bénéfice net', v: net, total: 1, color: '#047857' }];
+wf.forEach(s => s.color = s.color.replace('var(--primary)', '#2563EB').replace('var(--green)', '#10B981').replace('var(--pink)', '#DB2777').replace('var(--yellow)', '#F59E0B').replace('var(--purple)', '#8B5CF6'));
+const rc = D.recon.rows;
+sheet(5, { c: 2, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>Le PDF actuel montre trois KPI en tableau texte. Ici, la <b>cascade du revenu au bénéfice</b> raconte le modèle en une image : on voit où chaque dollar disparaît.</p><p>La <b>réconciliation prévu / réel</b> (déplacée de l’État des résultats dans la refonte, jamais exportée jusqu’ici) est la page la plus utile à un comptable : elle dit si le modèle de coûts est fiable.</p><p>Règle respectée : sans chiffres réels saisis, le tableau est remplacé par « Saisissez vos chiffres réels », jamais par des zéros.</p>`,
+  body: `${chap(2)}
+   <h3 class="s" style="margin-top:0">Du revenu au bénéfice net <small>période, ventes prévues</small></h3>
+   ${waterfall(wf, { w: 650, h: 262 })}
+   <p style="margin:1mm 0 0">Les ventes doivent atteindre <b>${usd(BE)}</b> (point mort) pour couvrir ${usd(fixed + aging)} de frais fixes et de vieillissement ; le modèle en prévoit ${usd(REV)}, soit ${pc(SAFE)} de marge de sécurité.</p>
+   <h3 class="s">Prévu et réel : le modèle est-il fiable ?</h3>
+   <table class="tb blue"><thead><tr><th style="text-align:left">Poste</th><th>Réel</th><th>Prévu (modèle)</th><th>Écart $</th><th>Écart %</th><th style="text-align:left">Lecture</th></tr></thead><tbody>
+    ${rc.map(r => { const good = (r.label === 'Charges directes') ? r.diff <= 0 : r.diff >= 0; const small = Math.abs(r.diffPercent) < 0.05; return `<tr><td class="l"><b>${r.label}</b></td><td>${usd(r.real)}</td><td>${usd(r.theoretical)}</td><td class="${small ? '' : good ? 'ok' : 'bad'}">${sgn(r.diff)}${NBSP}$</td><td class="${small ? '' : good ? 'ok' : 'bad'}"><b>${pcs(r.diffPercent)}</b></td><td class="l ${small ? 'ok' : good ? 'ok' : 'bad'}">${small ? '● Aligné' : good ? '▲ Favorable' : '▼ Défavorable'}</td></tr>`; }).join('')}
+   </tbody></table>
+   <div class="card" style="margin-top:3mm;background:var(--softer)"><h4>Ce que disent ces chiffres</h4>
+    <p style="margin:0">Les revenus réels collent au modèle (+0,4 %), mais les <b>charges directes réelles dépassent le modèle de 2${NBSP}644${NBSP}$ (+5,8 %)</b> : c’est ce qui explique l’essentiel des 2${NBSP}299${NBSP}$ de bénéfice net manquant. Le modèle sous-estime donc les pertes, les rendements ou les prix payés. <b>À faire :</b> comparer, ingrédient par ingrédient, les quantités achetées aux quantités théoriques (chapitre 5) avant de toucher aux prix de vente.</p></div>
+   <p class="src">Sources : Rapport et suivi → Vue d’ensemble (réconciliation). Le bénéfice net prévu inclut ${usd(aging)} de coût de vieillissement, absent du réel saisi.</p>` });
+
+/* =========================== PAGE 6 : TENDANCE + SENSIBILITÉ =========================== */
+const tr = (name, key) => { const now = T[T.length - 1][key], q = T[T.length - 4][key], y = T[T.length - 13][key]; return { name, now, q, y }; };
+const trows = [tr('Marge brute', 'gm'), tr('Coût matière', 'mc'), tr('Coût main-d’œuvre', 'lc')];
+sheet(6, { c: 2, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>Le graphique d’évolution actuel existe déjà ; il est <b>complété par une lecture</b> : sommet, creux, direction récente, comparaison à l’an dernier. Les comparaisons sur 3 relevés et sur 12 mois sont celles des constats clés « amélioration / détérioration ».</p><p>La <b>sensibilité</b> (onglet Simulation) répond à la question du banquier : « et si les coûts montent ? ». Un seul choc de 5 % sur les intrants retire plus du quart du bénéfice.</p><p>Si moins de 2 points de référence existent, la moitié haute de la page est omise (on n’invente pas de tendance).</p>`,
+  body: `${chap(2, true)}
+   <h3 class="s" style="margin-top:0">Évolution sur 19 points de référence <small>mai 2025 → novembre 2026</small></h3>
+   ${lineChart({ labels: lab, series: [{ name: 'Marge brute', color: '#2563EB', vals: T.map(t => t.gm), endLabel: f(T[18].gm, 1) + ' %' }, { name: 'Coût matière', color: '#10B981', vals: T.map(t => t.mc), endLabel: f(T[18].mc, 1) + ' %' }], ymin: 30, ymax: 48, ystep: 6, yfmt: v => v + ' %', xEvery: 3, marks: [{ i: 8, s: 0, t: '46,0 % (janv. 26)' }, { i: 15, s: 0, t: '41,5 % (août 26)', below: true }] })}
+   <div class="legend"><span><i style="background:#2563EB"></i>Marge brute moyenne pondérée</span><span><i style="background:#10B981"></i>Coût matière moyen pondéré</span><span class="mut">Axe vertical tronqué (30 % à 48 %). Coût de main-d’œuvre : stable à 13,9 %.</span></div>
+   <table class="tb" style="margin-top:2.4mm"><thead><tr><th style="text-align:left">Indicateur</th><th>Aujourd’hui</th><th>Il y a 3 relevés (août 26)</th><th>Il y a 12 mois (nov. 25)</th><th style="text-align:left">Lecture</th></tr></thead><tbody>
+    ${trows.map(r => { const lowerBetter = r.name !== 'Marge brute'; const dq = r.now - r.q, dy = r.now - r.y; const gd = (d) => (lowerBetter ? d <= 0 : d >= 0); return `<tr><td class="l"><b>${r.name}</b></td><td><b>${f(r.now, 1)} %</b></td><td>${f(r.q, 1)} % <span class="${Math.abs(dq) < .05 ? 'mut' : gd(dq) ? 'ok' : 'bad'}">(${sgn(dq, 1)} pt)</span></td><td>${f(r.y, 1)} % <span class="${Math.abs(dy) < .05 ? 'mut' : gd(dy) ? 'ok' : 'bad'}">(${sgn(dy, 1)} pt)</span></td><td class="l">${Math.abs(dq) < .05 && Math.abs(dy) < .05 ? '● Stable' : gd(dq) && !gd(dy) ? '▲ Remonte, sans retrouver le niveau d’il y a un an' : gd(dq) ? '▲ Favorable' : '▼ Défavorable'}</td></tr>`; }).join('')}
+    <tr><td class="l"><b>Marge nette</b></td><td><b>7,9 %</b></td><td>6,3 % <span class="ok">(+1,6 pt)</span></td><td>10,1 % <span class="bad">(−2,2 pt)</span></td><td class="l">▲ Remonte, sans retrouver le niveau d’il y a un an</td></tr>
+   </tbody></table>
+   <p style="margin:1.6mm 0 0"><b>Lecture :</b> la marge suit les prix des matières. Sommet en janvier 2026 (46,0 %), creux en août (41,5 %). Depuis, elle se redresse de 1,6 point ; l’an dernier à pareille date elle était 2,1 points plus haute.</p>
+   <h3 class="s">Et si les coûts montent ? <small>bénéfice net prévu : ${usd(net)}</small></h3>
+   <div class="two">
+    <div class="card"><h4>Intrants : +5 %</h4><div style="font-size:15pt;font-weight:700">${usd(4636)} <span style="font-size:9pt" class="bad">−${usd(net - 4636)} (−${f((net - 4636) / net * 100, 0)} %)</span></div><div class="src" style="margin:0">Le bénéfice résiste, mais un seul choc de 5 % en retire plus du quart.</div></div>
+    <div class="card"><h4>Main-d’œuvre : +5 %</h4><div style="font-size:15pt;font-weight:700">${usd(5747)} <span style="font-size:9pt" class="warn">−${usd(net - 5747)} (−${f((net - 5747) / net * 100, 0)} %)</span></div><div class="src" style="margin:0">Impact plus faible : la main-d’œuvre pèse 14 % des ventes, les intrants 42 %.</div></div>
+   </div>` });
+
+/* =========================== PAGE 7 : PORTEFEUILLE =========================== */
+const contrib = D.contribution, ctot = sum(contrib, x => x.total);
+const li = (arr) => arr.map(n => `<li>${esc(n)}</li>`).join('');
+sheet(7, { c: 3, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>Dans le PDF actuel, la matrice est une <b>liste de quatre boîtes</b>, et le classement par contribution est limité aux 5 premiers. Ici : la <b>vraie matrice 2 × 2 avec axes nommés</b> (comme à l’écran) et le <b>classement complet</b> des 12 produits.</p><p>Chaque quadrant porte sa <b>consigne de gestion</b> en une ligne ; c’est ce que l’entrepreneur retient.</p><p>Remarque d’analyse : les 3 premiers produits font 39 % du profit : aucune dépendance excessive à un seul produit (seuil : 30 % pour le n° 1).</p>`,
+  body: `${chap(3)}
+   <h3 class="s" style="margin-top:0">Matrice stratégique <small>popularité (part des ventes) × marge</small></h3>
+   <div class="mx">
+    <div class="ax axy" style="grid-row:2/4">Marge →</div>
+    <div class="q que" style="grid-column:2;grid-row:2"><h4>Dilemmes</h4><small>Rentables, peu vendus : à promouvoir ou abandonner.</small><ul>${li(D.bcg.questions)}</ul></div>
+    <div class="q star" style="grid-column:3;grid-row:2"><h4>Étoiles</h4><small>Très vendus et très rentables : à protéger.</small><ul>${li(D.bcg.stars)}</ul></div>
+    <div class="q dog" style="grid-column:2;grid-row:3"><h4>Poids morts</h4><small>Peu vendus et peu rentables : à repenser ou retirer.</small><ul>${li(D.bcg.dogs)}</ul></div>
+    <div class="q cow" style="grid-column:3;grid-row:3"><h4>Vaches à lait</h4><small>Très vendues, marge faible : à optimiser.</small><ul>${li(D.bcg.cows)}</ul></div>
+    <div class="ax" style="grid-column:2;grid-row:4">← Popularité plus faible</div><div class="ax" style="grid-column:3;grid-row:4">Popularité plus forte →</div>
+   </div>
+   <h3 class="s">Contribution de chaque produit au profit <small>bénéfice brut total : ${usd(ctot)}</small></h3>
+   ${hbars(contrib.map(c => ({ n: c.name, v: c.total, color: CLS && D.bcg.stars.includes(c.name) ? '#2563EB' : D.bcg.dogs.includes(c.name) ? '#FCA5A5' : '#93C5FD' })), { nameW: 62, fmt: v => usd(v) + ' · ' + f(v / ctot * 100, 0) + '%' }).replace(/grid-template-columns:62mm 1fr 20mm/g, 'grid-template-columns:62mm 1fr 27mm')}
+   <div class="legend"><span><i style="background:#2563EB"></i>Étoile</span><span><i style="background:#93C5FD"></i>Autre</span><span><i style="background:#FCA5A5"></i>Poids mort</span><span class="mut">Les 3 premiers produits : ${f((contrib[0].total + contrib[1].total + contrib[2].total) / ctot * 100, 0)} % du profit. La Sauce artisanale du Terroir est un produit de revente.</span></div>` });
+
+/* =========================== PAGE 8 : SKU × CANAL =========================== */
+sheet(8, { c: 3, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>C’est probablement <b>la page qui vaut le plus d’argent</b>. Le PDF actuel ne montre la marge nette que « tous canaux confondus » : un produit en apparence correct (le Chili : +19,8 %) perd de l’argent dans deux canaux sur trois.</p><p>Chaque cellule affiche son chiffre <b>et</b> sa couleur (rouge : négatif, jaune : sous 10 %, vert : 10 % et plus) : la page reste lisible en noir et blanc grâce au signe « − ».</p><p>La colonne « Constat » dit en une ligne où le produit perd de l’argent ; la page de sa fiche est indiquée.</p>`,
+  body: `${chap(3, true)}
+   <h3 class="s" style="margin-top:0">Marge nette de chaque produit, canal par canal <small>après tous les frais fixes alloués</small></h3>
+   <table class="tb"><thead><tr><th style="text-align:left">Produit</th><th>Coût de revient</th>${CH.map(c => `<th>${SHORT[c.channelName]}</th>`).join('')}<th style="text-align:left">Constat</th><th>Fiche</th></tr></thead><tbody>
+   ${D.products.map(p => { const neg = p.channels.filter(c => c.net < 0).map(c => SHORT[c.n]); const cl = CLSNAME[CLS[p.name]]; return `<tr><td class="l"><b>${esc(p.name)}</b></td><td>${usd(p.cost, 2)}</td>${p.channels.map(c => { const [bg, fg] = heat(c.net); return `<td class="heat" style="background:${bg};color:${fg}">${pcs(c.net, 1).replace('+', '')}</td>`; }).join('')}<td class="l">${neg.length === 0 ? '<span class="ok">Rentable partout</span>' : neg.length === 3 ? '<span class="bad">Déficitaire partout</span>' : '<span class="bad">Perd en ' + neg.join(' et ').toLowerCase() + '</span>'}</td><td>p. ${FP[p.name]}</td></tr>`; }).join('')}
+   </tbody></table>
+   <div class="legend"><span><i style="background:var(--red-bg);border:.2mm solid var(--red-t)"></i>Négative</span><span><i style="background:var(--amber-bg);border:.2mm solid var(--amber-t)"></i>0 à 10 %</span><span><i style="background:var(--green-bg);border:.2mm solid var(--green-t)"></i>10 % et plus</span></div>
+   <div class="two" style="margin-top:3mm">
+    <div class="card"><h4>Ce qu’il faut voir</h4><ul style="margin:0;padding-left:4mm"><li><b>7 produits sur 12</b> sont rentables dans tous leurs canaux.</li><li><b>5 perdent de l’argent</b> dans au moins un canal, toujours les grandes surfaces ; le pire : la Sauce à spaghetti (−15,7 %).</li><li>Le Sauté de poulet thaï est <b>rentable partout</b> en format 350 g (de 22,6 % à 42,3 %), mais perd de l’argent en grandes surfaces en format 900 g (−1,3 %).</li></ul></div>
+    <div class="card"><h4>Que faire ?</h4><ul style="margin:0;padding-left:4mm"><li>Pour chaque produit déficitaire : <b>prix net d’équilibre</b> (fiche), puis choisir entre hausse de prix, recette ou retrait du canal.</li><li>Écart de format : Sauté de poulet thaï : 27,4 % de marge nette en 350 g contre 4,0 % en 900 g ; comprendre cet écart de 23 points (prix, perte, emballage).</li></ul></div>
+   </div>` });
+
+/* =========================== PAGE 9 : CANAUX ET ACTIVITÉS =========================== */
+const tot = sum(CH, c => c.revenueTotal);
+sheet(9, { c: 4, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>Canaux et activités sont deux découpages du même chiffre d’affaires : une seule page les présente côte à côte pour qu’on lise le lien (les grandes surfaces tirent surtout les sauces et les soupes vers le bas).</p><p>Nouveau par rapport au PDF actuel : <b>part du bénéfice net</b> à côté de la part des revenus, et <b>marge de sécurité par canal</b> (les grandes surfaces ne sont qu’à 3,7 % de la perte).</p><p>La matrice 3 × 3 vient de la Vue d’ensemble ; la cellule la plus rouge (sauces × grandes surfaces) est un bon point de départ.</p>`,
+  body: `${chap(4)}
+   <h3 class="s" style="margin-top:0">Les trois canaux de vente</h3>
+   <table class="tb blue"><thead><tr><th style="text-align:left">Canal</th><th>Revenus</th><th>Part</th><th>Marge brute</th><th>Bénéfice net</th><th>Marge nette</th><th>Point mort</th><th>Marge de sécurité</th></tr></thead><tbody>
+   ${CH.map(c => { const sm = (c.revenueTotal - c.breakEvenRevenue) / c.revenueTotal; return `<tr><td class="l"><b>${SHORT[c.channelName]}</b></td><td>${usd(c.revenueTotal)}</td><td>${pc(c.revenueTotal / tot, 0)}</td><td>${pc(c.margeBrutePercent)}</td><td><b>${usd(c.margeNetteTotal)}</b></td><td class="heat" style="color:${heat(c.margeNettePercent)[1]}">${pc(c.margeNettePercent)}</td><td>${usd(c.breakEvenRevenue)}</td><td class="${sm < .1 ? 'bad' : 'ok'}"><b>${pc(sm)}</b></td></tr>`; }).join('')}
+   </tbody></table>
+   <div class="two" style="margin-top:2.4mm"><div><div class="grpt">Part des revenus</div>${hbars(CH.map(c => ({ n: SHORT[c.channelName], v: c.revenueTotal / tot * 100 })), { max: 70, nameW: 24, fmt: v => f(v, 0) + ' %', color: '#93C5FD' })}</div>
+   <div><div class="grpt">Part du bénéfice net</div>${hbars(CH.map(c => ({ n: SHORT[c.channelName], v: c.margeNetteTotal / net * 100 })), { max: 70, nameW: 24, fmt: v => f(v, 0) + ' %', color: '#2563EB' })}</div></div>
+   <p style="margin:1mm 0 0"><b>Lecture :</b> les grandes surfaces font 58 % des revenus pour 15 % du bénéfice ; la vente directe, 16 % des revenus pour 55 % du bénéfice. Un point de croissance en vente directe vaut beaucoup plus qu’en grandes surfaces.</p>
+   <h3 class="s">Les trois activités de production</h3>
+   <table class="tb blue"><thead><tr><th style="text-align:left">Activité</th><th>Revenus</th><th>Part</th><th>Marge brute</th><th>Bénéfice net</th><th>Marge nette</th><th>Point mort</th><th>Marge de sécurité</th></tr></thead><tbody>
+   ${AC.map(c => { const sm = (c.revenueTotal - c.breakEvenRevenue) / c.revenueTotal; return `<tr><td class="l"><b>${esc(c.activityName)}</b></td><td>${usd(c.revenueTotal)}</td><td>${pc(c.revenueTotal / tot, 0)}</td><td>${pc(c.margeBrutePercent)}</td><td><b>${usd(c.margeNetteTotal)}</b></td><td class="heat" style="color:${heat(c.margeNettePercent)[1]}">${pc(c.margeNettePercent)}</td><td>${usd(c.breakEvenRevenue)}</td><td class="${sm < .1 ? 'bad' : 'ok'}"><b>${pc(sm)}</b></td></tr>`; }).join('')}
+   </tbody></table>
+   <h3 class="s">Marge nette par activité et par canal</h3>
+   <div class="mt"><div></div>${CH.map(c => `<div class="h">${SHORT[c.channelName]}</div>`).join('')}
+   ${AC.map(a => `<div class="h">${esc(a.activityName)}</div>` + CH.map(c => { const m = D.matrix[a.activityId][c.channelId]; const [bg, fg] = heat(m.margeNettePercent); return `<div class="c" style="background:${bg};color:${fg}"><b>${pc(m.margeNettePercent)}</b><small>${sgn(m.margeNetteTotal)}${NBSP}$</small></div>`; }).join('')).join('')}</div>
+   <p class="src">Seules deux cases perdent de l’argent : les soupes et les sauces vendues en grandes surfaces (−187 $ et −393 $).</p>` });
+
+/* =========================== PAGE 10 : INGRÉDIENTS =========================== */
+const ip = D.ingShares.rows, vol = D.vol.ing.filter(v => v.isVolatile).slice(0, 4);
+sheet(10, { c: 5, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>Le PDF actuel exporte l’analyse ABC (listes de noms) et <b>trois totaux</b> d’achats. Il omet l’essentiel de ce que l’application calcule depuis la refonte : achats <b>par fournisseur</b>, alerte de dépendance, <b>perte stock</b> par ingrédient, volatilité.</p><p>Le repère vertical noir sur les barres de fournisseurs marque le seuil de dépendance (30 %).</p><p>Prix efficace du bœuf = 9,75 $/kg ÷ (1 − 8 %) = 10,60 $/kg : le prix payé n’est pas le prix qui compte.</p>`,
+  body: `${chap(5)}
+   <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+    <div class="tile" style="min-height:17mm"><div class="l">Achats nets</div><div class="v" style="font-size:13pt">${usd(D.purchasing.net)}</div></div>
+    <div class="tile" style="min-height:17mm"><div class="l">Perte stock prévue</div><div><div class="v" style="font-size:13pt">${usd(D.purchasing.loss)}</div><div class="c warn">${pc(D.purchasing.loss / D.purchasing.total)} des achats</div></div></div>
+    <div class="tile" style="min-height:17mm"><div class="l">Achat total requis</div><div class="v" style="font-size:13pt">${usd(D.purchasing.total)}</div></div>
+    <div class="tile" style="min-height:17mm"><div class="l">Effet des prix (3 relevés)</div><div><div class="v ok" style="font-size:13pt">−918 $</div><div class="c mut">4,8 % des achats</div></div></div>
+   </div>
+   <h3 class="s">Achats par fournisseur <small>repère noir : seuil de dépendance (30 %)</small></h3>
+   ${hbars(ip.map(r => ({ n: r.provider, v: r.share * 100, color: r.isDependent ? '#F59E0B' : '#93C5FD', mark: 30 })), { max: 60, nameW: 52, fmt: v => f(v, 0) + ' %' })}
+   <p style="margin:1mm 0 0"><b>Boucherie Nordique pèse 50 % des achats</b> (${usd(ip[0].total)}) : un arrêt de livraison ou une hausse de prix touche la moitié du coût matière.</p>
+   <div class="two" style="margin-top:2mm"><div>
+   <h3 class="s">Classement ABC <small>${D.abc.A.length} + ${D.abc.nB} + ${D.abc.nC} ingrédients</small></h3>
+   <table class="tb" style="font-size:7.4pt"><thead><tr><th>Classe</th><th>Part de la valeur</th><th style="text-align:left">Ingrédients</th></tr></thead><tbody>
+    <tr><td style="background:var(--red-bg)"><b>A</b></td><td>73,6 %</td><td class="l">${D.abc.A.join(', ')}</td></tr>
+    <tr><td style="background:var(--amber-bg)"><b>B</b></td><td rowspan="2">26,4 % à eux deux</td><td class="l">${D.abc.nB} ingrédients (liste en annexe)</td></tr>
+    <tr><td style="background:var(--green-bg)"><b>C</b></td><td class="l">${D.abc.nC} ingrédients (liste en annexe)</td></tr></tbody></table>
+   <div class="src">Cinq ingrédients pèsent 74 % des achats : c’est là que se négocie le coût matière.</div></div>
+   <div><h3 class="s">Perte stock : où se perd l’argent</h3><div class="card"><div style="font-size:15pt;font-weight:700">${usd(D.purchasing.loss)} <span style="font-size:8.5pt" class="warn">${pc(D.purchasing.loss / D.purchasing.total)} des achats</span></div><p style="margin:1mm 0 0">Le <b>bœuf haché</b> en représente <b>459 $</b> (56 %), à cause de son taux de perte de 8 % (poulet : 6 %, saumon : 4 %).</p><p style="margin:1mm 0 0" class="mut">Prix payé : 9,75 $/kg ; <b>prix efficace : 10,60 $/kg</b>.</p></div></div></div>
+   <h3 class="s">Prix volatils <small>amplitude sur 19 relevés (classe A en premier)</small></h3>
+   <table class="tb yellow"><thead><tr><th style="text-align:left">Ingrédient</th><th style="text-align:left">Fournisseur</th><th>Prix actuel</th><th>Amplitude</th><th>Tendance</th><th style="text-align:left">Niveau</th></tr></thead><tbody>
+   ${vol.map(v => `<tr><td class="l"><b>${esc(v.name)}</b></td><td class="l">${esc(v.provider)}</td><td>${usd(v.currentPrice, 2)}</td><td><b>${f(v.amplitudePercent, 0)} %</b></td><td>${sgn(v.trendPercent, 1)} %</td><td class="l ${v.tier === 'elevee' ? 'bad' : 'warn'}">${v.tier === 'elevee' ? '▲ Élevée' : '● Modérée'}</td></tr>`).join('')}</tbody></table>` });
+
+/* =========================== PAGE 11 : EMBALLAGES + CYCLE DES PRIX =========================== */
+const pr = D.prices, idx = (s) => s.map(v => v / s[0] * 100);
+sheet(11, { c: 5, tag: 'new',
+  note: `<h5>Pourquoi cette page</h5><p>Les emballages (<b>5 716 $</b>, 7 % des ventes) sont exportés nulle part aujourd’hui, hormis dans les fiches produits. L’onglet Emballages existe depuis la refonte.</p><p>Le graphique d’indice (premier relevé = 100) met le bœuf et le saumon <b>sur le même axe</b> sans les additionner : c’est la façon honnête de comparer deux prix d’échelles différentes.</p><p>Les deux prix suivent la même vague (creux en janvier, sommet en août). La piste d’achat (contrats saisonniers, stock au creux) est une <b>suggestion de gestion</b> à valider avec l’acheteur.</p>`,
+  body: `${chap(5, true)}
+   <h3 class="s" style="margin-top:0">Emballages <small>achats : ${usd(sum(D.pkgShares.rows, r => r.total))}</small></h3>
+   <div class="two"><div>
+   ${hbars(D.pkgShares.rows.map(r => ({ n: r.provider, v: r.share * 100, color: r.isDependent ? '#F59E0B' : '#93C5FD', mark: 30 })), { max: 100, nameW: 36, fmt: v => f(v, 0) + ' %' })}
+   <p style="margin:1.2mm 0 0"><b>Emballages Boréal : 80 % des achats</b> d’emballage (dépendance).</p></div>
+   <div class="card"><h4>Classe A : 4 éléments, 77,3 % de la valeur</h4><p style="margin:0">Aucun n’est volatil : les emballages de classe A ont des <b>prix stables</b>. Risque principal : la dépendance à un fournisseur, non le prix.</p></div></div>
+   <table class="tb pink" style="margin-top:2.4mm;font-size:7.4pt"><thead><tr><th style="text-align:left">Emballage</th><th style="text-align:left">Fournisseur</th><th>Format d’achat</th><th>Prix d’achat</th><th>Perte</th><th>Prix unitaire</th></tr></thead><tbody>
+   ${D.pk.slice(0, 5).map(p => `<tr><td class="l">${esc(p.n)}</td><td class="l">${esc(p.p)}</td><td>${p.f} ${p.u}s</td><td>${usd(p.pr, 2)}</td><td>${p.l} %</td><td>${usd(p.up, 2)}</td></tr>`).join('')}</tbody></table>
+   <div class="src" style="margin-top:.6mm">Liste complète en annexe.</div>
+   <h3 class="s">Le cycle des prix : bœuf et saumon <small>indice, premier relevé (mai 2025) = 100</small></h3>
+   ${lineChart({ h: 200, labels: lab, series: [{ name: 'Saumon', ly: -10, color: '#2563EB', vals: idx(pr[1].series), endLabel: f(idx(pr[1].series)[18], 0) }, { name: 'Bœuf haché', ly: 10, color: '#8B5CF6', vals: idx(pr[0].series), endLabel: f(idx(pr[0].series)[18], 0) }], ymin: 80, ymax: 115, ystep: 10, yfmt: v => v, xEvery: 3 })}
+   <div class="card" style="margin-top:2mm;background:var(--softer)"><h4>Ce que cela veut dire pour les achats</h4>
+    <p style="margin:0">Les deux prix montent et descendent ensemble, <b>avec un creux en janvier et un sommet en août</b> (bœuf : de 8,39 $ à 10,47 $/kg, soit 25 %). Le prix de vente des produits à base de bœuf et de saumon devrait suivre ce rythme, ou les achats être étalés : <b>stock ou contrat à prix fixé au creux</b> (à évaluer avec la capacité de congélation).</p></div>` });
+
+/* =========================== PAGE 12 : MAIN-D'ŒUVRE (1/2) =========================== */
+const cs = D.cascade, prod = D.productivity;
+sheet(12, { c: 6, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>Dans le PDF actuel : un seul tableau (« Rapport de productivité »). Depuis la refonte, l’application sait dire <b>combien de la paie n’est pas utilisée</b> (2 411 $, 21,8 %) et <b>ce que coûte réellement une heure productive</b> (32,11 $ contre 25,78 $ de taux moyen).</p><p>Le Responsable de production a 17 h attendues mais aucune étape de recette : ces 17 h ne peuvent pas servir à produire et sont soustraites de la marge de croissance (49,3 − 17,0 = 32,3 h).</p><p>Le tableau ne désigne personne : les salaires individuels n’apparaissent qu’en annexe, et seulement si l’on coche l’option.</p>`,
+  body: `${chap(6)}
+   <h3 class="s" style="margin-top:0">Utilisation de l’équipe par poste</h3>
+   <table class="tb yellow"><thead><tr><th style="text-align:left">Poste</th><th>Heures attendues</th><th>Heures réelles</th><th>Différence</th><th>Utilisation</th></tr></thead><tbody>
+   ${prod.map(r => `<tr><td class="l"><b>${esc(r.postName)}</b></td><td>${f(r.expected, 2)} h</td><td>${f(r.actual, 2)} h</td><td>${f(r.difference, 2)} h</td><td class="${r.utilization >= 85 ? 'ok' : 'bad'}"><b>${f(r.utilization, 2)} %</b> ${r.utilization >= 85 ? '▲' : '▼'}</td></tr>`).join('')}</tbody>
+   <tfoot><tr><td class="l">Total</td><td>393,72 h</td><td>344,42 h</td><td>49,30 h</td><td>87,48 %</td></tr></tfoot></table>
+   <div class="src">Heures attendues = heures payées × temps productif attendu. Le Responsable de production n’a aucune étape de recette (17 h).</div>
+   <h3 class="s">Utilisation de la masse salariale <small>${usd(cs.payroll)} payés</small></h3>
+   <div class="stack"><div style="flex:${cs.costUsed};background:#047857">Production réelle ${pc(cs.costUsed / cs.payroll, 0)}</div><div style="flex:${cs.costIdle};background:var(--yellow);color:var(--dark)">Inutilisée ${pc(cs.costIdle / cs.payroll, 0)}</div><div style="flex:${cs.costNonProductive};background:#9CA3AF">Non prod.</div></div>
+   <div class="legend"><span><i style="background:#047857"></i>Production réelle : ${usd(cs.costUsed)} (${f(cs.usedHours, 1)} h)</span><span><i style="background:var(--yellow)"></i>Capacité inutilisée : ${usd(cs.costIdle)}</span><span><i style="background:#9CA3AF"></i>Temps non productif : ${usd(cs.costNonProductive)}</span></div>
+   <div class="tiles" style="margin-top:2.4mm">
+    <div class="tile" style="min-height:20mm"><div class="l">Paie non utilisée</div><div><div class="v bad">${usd(cs.unusedPay)}</div><div class="c mut">${pc(cs.unusedShare)} de la paie, absorbée dans le coût des produits</div></div></div>
+    <div class="tile" style="min-height:20mm"><div class="l">Coût réel d’une heure productive</div><div><div class="v">${usd(cs.effectiveHourlyCost, 2)}/h</div><div class="c mut">taux moyen payé : ${usd(cs.averageLoadedRate, 2)}/h</div></div></div>
+    <div class="tile" style="min-height:20mm"><div class="l">Marge de croissance</div><div><div class="v ok">32,3 h</div><div class="c mut">≈ 6 500 $ de ventes sans embauche (estimation)</div></div></div>
+   </div>
+   <div class="card" style="margin-top:3mm;background:var(--softer)"><h4>Ce que cela veut dire</h4><p style="margin:0">L’équipe est <b>bien occupée là où elle produit</b> (88 % à 92 % pour trois postes), mais <b>1 paie sur 5 ne produit pas de marchandise</b>. L’heure productive coûte 25 % de plus que le taux affiché parce qu’elle porte aussi les heures non productives. <b>Avant d’embaucher :</b> remplir les 32 heures libres, soit environ 6${NBSP}500${NBSP}$ de ventes ou 2${NBSP}800${NBSP}$ de bénéfice brut.</p></div>` });
+
+/* =========================== PAGE 13 : MAIN-D'ŒUVRE (2/2) =========================== */
+const hr = D.hourRows, HAVG = 87.39;
+sheet(13, { c: 6, tag: 'new',
+  note: `<h5>Pourquoi cette page</h5><p>Une heure d’équipe ne rapporte pas la même chose selon le produit : de <b>256 $/h</b> pour le Pâté chinois à <b>53 $/h</b> pour la Soupe-repas. Cet écart ne se voit nulle part dans le PDF actuel.</p><p>Ce classement est <b>la lecture à l’heure de la matrice stratégique</b> : un produit « vache à lait » très demandé peut aussi être celui qui monopolise les cuisiniers.</p><p>Les produits de revente (aucune main-d’œuvre) sont exclus des ratios par heure, comme dans l’application.</p>`,
+  body: `${chap(6, true)}
+   <h3 class="s" style="margin-top:0">Bénéfice brut par heure de production <small>par activité</small></h3>
+   ${hbars([{ n: 'Mets principaux surgelés', v: 164.46, color: '#10B981' }, { n: 'Sauces et accompagnements', v: 86.47, color: '#F59E0B' }, { n: 'Soupes et potages', v: 40.92, color: '#EF4444' }].map(x => ({ ...x, mark: HAVG })), { max: 180, nameW: 52, fmt: v => usd(v, 2) + '/h' })}
+   <div class="src">Repère noir : moyenne de l’équipe, ${usd(HAVG, 2)}/h (toutes les heures de production, sous-recettes comprises).</div>
+   <h3 class="s">Classement des produits <small>bénéfice brut par heure</small></h3>
+   ${hbars(hr.map(r => ({ n: r.n, v: r.gph, color: r.gph >= HAVG ? '#10B981' : '#F59E0B', mark: HAVG })), { max: 280, nameW: 62, fmt: v => usd(v, 0) + '/h' })}
+   <div class="legend"><span><i style="background:#10B981"></i>Au-dessus de la moyenne</span><span><i style="background:#F59E0B"></i>Sous la moyenne</span></div>
+   <div class="two" style="margin-top:3mm">
+    <div class="card"><h4>Le cas de la Soupe-repas</h4><p style="margin:0">Elle occupe <b>115 h, soit 41 % des heures</b> de production des produits, pour <b>20 % du bénéfice brut</b> (hors revente). Elle est pourtant <b>1<sup>er</sup> contributeur en dollars</b> : c’est la plus grosse vache à lait de l’entreprise. Un gain de temps sur ce produit libère plus d’heures que tout autre levier.</p></div>
+    <div class="card"><h4>Que faire ?</h4><ul style="margin:0;padding-left:4mm"><li>Soupes : <b>4 fois moins</b> rentables à l’heure que les plats (41 $ contre 164 $).</li><li>Tester une hausse de prix sur la Soupe-repas, ou raccourcir l’étape la plus longue de sa recette (fiche produit).</li><li>Réaffecter les heures libérées aux produits à plus de 180 $/h.</li></ul></div>
+   </div>` });
+
+/* =========================== PAGE 14 : INDEX DES FICHES =========================== */
+sheet(14, { dense: true, c: 7, tag: 'rich',
+  note: `<h5>Pourquoi cette page</h5><p>Le PDF actuel consacre <b>2 pages par produit (24 pages)</b> précédées d’une page de titre presque vide. Proposition : <b>1 page par produit</b>, précédée de cet <b>index-tableau</b> qui reprend l’Annexe A actuelle (tableau récapitulatif) en y ajoutant la classe et les canaux déficitaires.</p><p>L’index est trié par bénéfice brut décroissant et renvoie à la page de chaque fiche.</p>`,
+  body: `${chap(7)}
+   <h3 class="s" style="margin-top:0">Tableau récapitulatif des produits <small>12 fiches, p. 15 à 26</small></h3>
+   <table class="tb"><thead><tr><th style="text-align:left">Produit</th><th>Classe</th><th>Coût de revient</th><th>Marge brute</th><th>Marge nette (tous canaux)</th><th>Canaux déficitaires</th><th>Fiche</th></tr></thead><tbody>
+   ${D.products.map(p => { const cl = CLSNAME[CLS[p.name]]; const neg = p.channels.filter(c => c.net < 0).length; return `<tr><td class="l"><b>${esc(p.name)}</b></td><td><span class="badge ${cl[0]}" style="font-size:6.8pt">${cl[1]}</span></td><td>${usd(p.cost, 2)}</td><td>${pc(p.brute)}</td><td class="heat" style="color:${heat(p.nette)[1]}">${pc(p.nette)}</td><td class="${neg ? 'bad' : 'ok'}"><b>${neg} / 3</b></td><td>p. ${FP[p.name]}</td></tr>`; }).join('')}
+   </tbody></table>
+   <div class="card" style="margin-top:4mm"><h4>Comment lire une fiche</h4>
+    <ol style="margin:0;padding-left:4.4mm">
+     <li><b>Bandeau</b> : classe stratégique, format, verdict d’une phrase.</li>
+     <li><b>Où va le prix de vente</b> : barre empilée (matières, emballage, main-d’œuvre, frais fixes, marge) pour le canal principal.</li>
+     <li><b>Canal par canal</b> : prix net, coût complet, marge, <b>prix net d’équilibre</b> et point mort en unités.</li>
+     <li><b>Recette</b> : ingrédients, emballage et étapes de main-d’œuvre, avec le coût de chaque ligne.</li>
+     <li><b>Tendance</b> : marge nette du produit sur les relevés.</li></ol></div>
+   <div class="ell" style="width:auto;margin-top:4mm;padding:10px;font-size:11px">Les pages d’un produit « sous-recette » ou « produit de revente » omettent la section Recette (ou la remplacent par le prix d’achat).</div>` });
+
+/* =========================== PAGE 15 : FICHE CHILI =========================== */
+const ch = D.chili, ci = ch.ings;
+const lossC = (i) => { const l = (i.loss || 0) / 100; return l > 0 ? i.c / (1 - l) - i.c : 0; };
+const chanRows = [['Vente directe', 8.09, 6.61, 1.48, 0.1825, 575], ['Épiceries', 6.29, 6.34, -0.05, -0.0076, 946], ['Grandes surfaces', 5.46, 5.98, -0.52, -0.0961, 1365]];
+const ct = D.chiliTrack.map(x => x.net);
+sheet(22, { c: 7, chapLabel: '<b>Chapitre 7</b> · Fiche — Chili con carne mijoté', tag: 'rich',
+  note: `<h5>Pourquoi cette fiche</h5><p>Les deux pages actuelles (coûts, puis analyse visuelle) tiennent sur une seule. Les trois camemberts, qui répétaient trois fois la même information, sont remplacés par <b>une barre empilée</b>.</p><p><b>Nouveau et décisif : le prix net d’équilibre</b> par canal. Pour le Chili, il manque 0,05 $ (+0,8 %) en épiceries et 0,52 $ (+9,5 %) en grandes surfaces : la décision se lit directement.</p><p>Les tableaux de recette reprennent ceux du PDF actuel (coût de base, perte, total) sur trois colonnes de plus petite taille.</p><p class="mut">Exemple tiré du projet démo ; les 11 autres fiches suivent le même gabarit.</p>`,
+  body: `<div class="fiche-head"><div><div style="font-size:14pt;font-weight:700">Chili con carne mijoté</div><div class="mut">Lot de 20 portions de 400 g · activité « Mets principaux surgelés »</div></div><span class="badge cow">Vache à lait</span></div>
+   <div class="verdict" style="border-color:var(--red-t);background:var(--red-bg);margin-bottom:2.6mm"><b>Rentable en vente directe seulement.</b> Marge nette de 18,3 % en vente directe, mais <b>−0,8 %</b> en épiceries et <b>−9,6 %</b> en grandes surfaces : un volume de 785 unités en grandes surfaces y perd 412 $.</div>
+   <h3 class="s" style="margin-top:0">Où va le prix de vente <small>vente directe, 8,09 $ par unité</small></h3>
+   <div class="stack"><div style="flex:2.66;background:var(--green)">2,66</div><div style="flex:.58;background:var(--pink)"></div><div style="flex:.56;background:var(--yellow)"></div><div style="flex:2.81;background:var(--purple)">2,81</div><div style="flex:1.48;background:var(--primary)">1,48</div></div>
+   <div class="legend"><span><i style="background:var(--green)"></i>Matières 2,66 $</span><span><i style="background:var(--pink)"></i>Emballage 0,58 $</span><span><i style="background:var(--yellow)"></i>Main-d’œuvre 0,56 $</span><span><i style="background:var(--purple)"></i>Frais fixes 2,81 $</span><span><i style="background:var(--primary)"></i>Marge nette 1,48 $</span></div>
+   <h3 class="s">Canal par canal</h3>
+   <table class="tb blue"><thead><tr><th style="text-align:left">Canal</th><th>Prix net</th><th>Coût complet</th><th>Marge nette $</th><th>Marge nette %</th><th>Prix net d’équilibre</th><th>Point mort</th></tr></thead><tbody>
+   ${chanRows.map(r => { const [bg, fg] = heat(r[4]); return `<tr><td class="l"><b>${r[0]}</b></td><td>${usd(r[1], 2)}</td><td>${usd(r[2], 2)}</td><td style="color:${fg}"><b>${sgn(r[3], 2)}${NBSP}$</b></td><td class="heat" style="background:${bg};color:${fg}">${pcs(r[4], 2).replace('+', '')}</td><td><b>${usd(r[2], 2)}</b>${r[3] < 0 ? ` <span class="bad">(+${f(-r[3] / r[1] * 100, 1)} %)</span>` : ''}</td><td>${f(r[5])} unités</td></tr>`; }).join('')}</tbody></table>
+   <div class="two" style="margin-top:2.6mm;gap:3mm"><div>
+    <h3 class="s" style="margin-top:0">Matières premières</h3>
+    <table class="tb green" style="font-size:7.1pt"><thead><tr><th style="text-align:left">Ingrédient</th><th>Qté</th><th>Base</th><th>Perte</th><th>Total</th></tr></thead><tbody>
+    ${ci.map(i => `<tr><td class="l">${esc(i.n)}</td><td>${f(i.q)} g</td><td>${f(i.c, 2)}</td><td>${f(lossC(i), 2)}</td><td>${f(i.c + lossC(i), 2)}</td></tr>`).join('')}</tbody><tfoot><tr><td class="l" colspan="2">Lot de 20</td><td>50,52</td><td>2,75</td><td>53,27 $</td></tr></tfoot></table></div>
+   <div><h3 class="s" style="margin-top:0">Emballage et main-d’œuvre</h3>
+    <table class="tb pink" style="font-size:7.1pt"><thead><tr><th style="text-align:left">Emballage (20 unités)</th><th>Base</th><th>Perte</th><th>Total</th></tr></thead><tbody><tr><td class="l">Barquette, pellicule, étiquette</td><td>11,40</td><td>0,15</td><td>11,55 $</td></tr></tbody></table>
+    <table class="tb yellow" style="font-size:7.1pt;margin-top:1.6mm"><thead><tr><th style="text-align:left">Main-d’œuvre</th><th>Durée</th></tr></thead><tbody><tr><td class="l">Mijotage (cuisinier de production)</td><td>11,2 min</td></tr><tr><td class="l">Portionnement (opérateur d’emballage)</td><td>10,5 min</td></tr></tbody><tfoot><tr><td class="l">Lot de 20 : 8,81 $ direct + 2,46 $ indirect</td><td>11,27 $</td></tr></tfoot></table></div></div>
+   <h3 class="s">Marge nette du produit sur 19 relevés <small>tous canaux</small></h3>
+   ${lineChart({ h: 120, labels: lab, series: [{ name: 'Marge nette', color: '#2563EB', vals: ct, endLabel: f(ct[18], 1) + ' %' }], ymin: 14, ymax: 26, ystep: 4, yfmt: v => v + ' %', xEvery: 3, marks: [{ i: 8, s: 0, t: '25,2 %' }, { i: 15, s: 0, t: '16,9 %', below: true }] })}` });
+
+/* =========================== ELLIPSE =========================== */
+SHEETS.push(`<section class="sheet" id="p23"><div class="ell">Pages 15 à 21 et 23 à 26 : les 11 autres fiches produits, même gabarit (1 page chacune, dans l’ordre de l’index de la page 14). La fiche ci-dessus, celle du Chili, est la page 22.</div></section>`);
+
+/* =========================== PAGE 27 : ANNEXE A INGRÉDIENTS =========================== */
+sheet(27, { c: 'A', chapLabel: '<b>Annexe A</b> · Liste des ingrédients', tag: 'rich',
+  note: `<h5>Reprise de l’Annexe B actuelle</h5><p>La liste des ingrédients est conservée, avec deux colonnes de plus : <b>classe ABC</b> et <b>prix efficace</b> (prix unitaire ÷ (1 − perte)), qui est le vrai coût d’un kilo utilisable.</p><p>Triée par classe puis fournisseur, elle sert de bordereau aux achats.</p>`,
+  body: `<h3 class="s" style="margin-top:0">Ingrédients <small>18 lignes, classés A, B, C</small></h3>
+   <table class="tb" style="font-size:7.4pt"><thead><tr><th style="text-align:left">Ingrédient</th><th>Classe</th><th style="text-align:left">Fournisseur</th><th>Format d’achat</th><th>Prix d’achat</th><th>Perte</th><th>Prix unitaire</th><th>Prix efficace</th></tr></thead><tbody>
+   ${[...D.ingr].sort((a, b) => (a.cls > b.cls ? 1 : -1)).map(i => `<tr><td class="l"><b>${esc(i.n)}</b></td><td style="background:${{ A: 'var(--red-bg)', B: 'var(--amber-bg)', C: 'var(--green-bg)' }[i.cls]}"><b>${i.cls}</b></td><td class="l">${esc(i.p)}</td><td>${i.f} ${i.u}</td><td>${usd(i.pr, 2)}</td><td>${i.l} %</td><td>${usd(i.up, 2)}/${i.u}</td><td><b>${usd(i.up / (1 - i.l / 100), 2)}</b></td></tr>`).join('')}</tbody></table>
+   <p class="src">Classe A : 70 % de la valeur des achats ; B : 20 % suivants ; C : 10 % restants (valeur = coût net des achats de la période).</p>` });
+
+/* =========================== PAGE 28 : EMBALLAGES + ÉQUIPE =========================== */
+const emps = D.labor;
+sheet(28, { c: 'A', chapLabel: '<b>Annexe B</b> · Emballages · <b>Annexe C</b> · Équipe', tag: 'rich',
+  note: `<h5>Annexe B : nouveau. Annexe C : reprise, mais optionnelle</h5><p>La liste des emballages manquait. L’<b>annexe Équipe</b> (employés, salaire horaire, heures) expose des <b>données personnelles</b> dans un document qui peut être transmis à un banquier ou un investisseur.</p><p>Proposition : dans la fenêtre d’export, une case <b>« Inclure les salaires individuels »</b>, décochée par défaut. Décochée, l’annexe C est omise ; le rapport reste complet (le chapitre 6 ne nomme personne).</p>`,
+  body: `<h3 class="s" style="margin-top:0">Annexe B — Emballages</h3>
+   <table class="tb pink" style="font-size:7.4pt"><thead><tr><th style="text-align:left">Emballage</th><th style="text-align:left">Fournisseur</th><th>Format d’achat</th><th>Prix d’achat</th><th>Perte</th><th>Prix unitaire</th></tr></thead><tbody>
+   ${D.pk.map(p => `<tr><td class="l"><b>${esc(p.n)}</b></td><td class="l">${esc(p.p)}</td><td>${p.f}</td><td>${usd(p.pr, 2)}</td><td>${p.l} %</td><td>${usd(p.up, 2)}</td></tr>`).join('')}</tbody></table>
+   <h3 class="s" style="margin-top:5mm">Annexe C — Équipe <span class="pill old" style="font-size:7pt">Option : salaires individuels</span></h3>
+   <table class="tb" style="font-size:7.4pt"><thead><tr><th style="text-align:left">Employé</th><th>Salaire horaire</th><th>Charges</th><th>Vacances</th><th>Heures payées</th><th>Coût chargé</th></tr></thead><tbody>
+   ${emps.map(p => `<tr><td class="l" colspan="6" style="background:#E5E7EB;font-weight:700">${esc(p.post)}</td></tr>` + p.emps.map(e => `<tr><td class="l">${esc(e.n)}</td><td>${usd(e.r, 2)}</td><td>${e.c} %</td><td>${e.v} %</td><td>${e.h} h</td><td>${usd(e.r * (1 + e.c / 100) * (1 + e.v / 100) * e.h)}</td></tr>`).join('')).join('')}</tbody></table>` });
+
+/* =========================== PAGE 29 : MÉTHODES =========================== */
+const DEF = [
+ ['Point mort', 'Ventes à réaliser pour couvrir les frais fixes (y compris la main-d’œuvre, traitée comme fixe pour la période).', 'frais fixes ÷ taux de marge de contribution'],
+ ['Marge de sécurité', 'De combien les ventes peuvent baisser avant la perte.', '(ventes prévues − point mort) ÷ ventes prévues'],
+ ['Marge brute', 'Ce qui reste du prix après matières, emballage, main-d’œuvre et sous-traitance.', 'prix − coûts directs'],
+ ['Marge nette', 'Ce qui reste après la part des frais fixes alloués au produit, au canal ou à l’activité.', 'marge brute − frais fixes alloués'],
+ ['Perte stock', 'Quantité à acheter en plus de la quantité utilisée, selon le taux de perte saisi. Prévue, non mesurée.', 'coût de base ÷ (1 − perte) − coût de base'],
+ ['Classes ABC', 'A : ingrédients qui font les 70 % premiers de la valeur ; B : les 20 % suivants ; C : les 10 % derniers.', 'valeur = coût net des achats'],
+ ['Étoile, dilemme, vache à lait, poids mort', 'Classement d’un produit selon sa popularité (part des ventes) et sa marge, comparées à la moyenne.', 'matrice 2 × 2'],
+ ['Taux d’utilisation', 'Heures réellement requises par les recettes sur les heures productives attendues d’un poste.', 'heures réelles ÷ heures attendues'],
+ ['Paie non utilisée', 'Part de la masse salariale qui ne produit pas : capacité inutilisée et temps non productif.', 'paie − coût des heures utilisées'],
+ ['Coût réel d’une heure productive', 'Ce que coûte une heure qui produit, en répartissant toute la paie sur les heures utilisées.', 'masse salariale ÷ heures utilisées'],
+ ['Prix net d’équilibre', 'Prix net reçu par le producteur pour lequel la marge nette du produit, dans un canal, est nulle.', 'coût complet dans ce canal'],
+];
+sheet(29, { dense: true, c: 'A', chapLabel: '<b>Annexe D</b> · Méthodes et définitions', tag: 'new',
+  note: `<h5>Pourquoi cette page</h5><p>Le premier réflexe d’un banquier ou d’un comptable devant un rapport de gestion : « comment avez-vous calculé ça ? ». Cette page y répond une fois pour toutes (et évite d’alourdir les chapitres avec des notes).</p><p>Les <b>repères</b> (dépendance fournisseur à 30 %, canal à 40 %, marge de sécurité 10 % et 20 %…) viennent du fichier unique des seuils de l’application ; ce sont des ordres de grandeur de gestion, <b>non des normes</b>. Les afficher dans le rapport évite de les présenter comme des vérités.</p>`,
+  body: `<h3 class="s" style="margin-top:0">Définitions et formules</h3>
+   <table class="tb" style="font-size:7.4pt"><thead><tr><th style="text-align:left">Terme</th><th style="text-align:left">Ce que cela veut dire</th><th style="text-align:left">Comment c’est calculé</th></tr></thead><tbody>
+   ${DEF.map(d => `<tr><td class="l"><b>${d[0]}</b></td><td class="l">${d[1]}</td><td class="l mut">${d[2]}</td></tr>`).join('')}</tbody></table>
+   <h3 class="s">Repères utilisés pour les constats <small>à valider avec votre comptable</small></h3>
+   <table class="tb" style="font-size:7.4pt"><thead><tr><th style="text-align:left">Repère</th><th>Seuil</th><th style="text-align:left">Constat déclenché</th></tr></thead><tbody>
+    <tr><td class="l">Marge de sécurité</td><td>≥ 20 % · < 10 %</td><td class="l">Confortable · mince</td></tr>
+    <tr><td class="l">Dépendance à un fournisseur</td><td>≥ 30 % des achats</td><td class="l">Dépendance</td></tr>
+    <tr><td class="l">Dépendance à un canal</td><td>≥ 40 % des revenus</td><td class="l">Dépendance commerciale</td></tr>
+    <tr><td class="l">Perte stock</td><td>≥ 3 % · < 1 % des achats</td><td class="l">Élevée · faible</td></tr>
+    <tr><td class="l">Paie non utilisée</td><td>≥ 15 % · ≤ 10 %</td><td class="l">Élevée · faible</td></tr>
+    <tr><td class="l">Marge nette très faible</td><td>< 3 %</td><td class="l">Activité ou canal à très faible marge</td></tr></tbody></table>
+   <p class="src">Les chiffres de ce rapport sont des prévisions fondées sur vos recettes, prix et volumes saisis. Ils ne remplacent pas des états financiers vérifiés.</p>` });
+
+/* ---------- montage ---------- */
+const INTRO = `<div class="intro" id="intro">
+<h1>Rapport PDF : la maquette</h1>
+<p style="margin-top:0;color:#6B7280">Données du projet démo (${esc(CO)}), calculées par le moteur de l’application. Aucun fichier de l’application n’a été modifié.</p>
+
+<h2>1. Ce que le PDF actuel fait, et ce qu’il ne fait plus</h2>
+<p>Il a été conçu avant la refonte de Rapport et suivi : une trentaine de pages, toujours dans le même ordre, sans sommaire, ni chapitres.</p>
+<table><tr><th>Déjà exporté</th><th>Calculé par l’application, mais absent du PDF</th></tr>
+<tr><td>3 paramètres, 6 KPI en texte, top 5 de la contribution, matrice en liste de boîtes, ABC des ingrédients, 3 totaux d’achats, productivité par poste, évolution globale, 2 pages par produit (camemberts), 3 annexes.</td>
+<td>Marge de sécurité · constats clés · réconciliation réel / prévu · marges par canal et par activité · achats par fournisseur et dépendance · perte stock par ingrédient · emballages (ABC, volatilité) · paie non utilisée · coût réel d’une heure · rentabilité à l’heure · marge de croissance · sensibilité.</td></tr></table>
+
+<h2>2. Parti pris : un rapport de décision, pas un export de tableaux</h2>
+<div class="principles">
+<div><b>Un chapitre = une question de gestion</b>Chaque chapitre s’ouvre sur sa question, pas sur le nom d’un onglet. Le sommaire garde l’onglet en repère.</div>
+<div><b>Un chiffre ne vient jamais seul</b>Toujours une cible, une moyenne ou une période de comparaison à côté (« 34,6 % contre une cible de 32 % »).</div>
+<div><b>Du diagnostic au geste</b>Le plan d’action de la page 4 met un montant en dollars sur chaque piste, et chaque constat renvoie à la page à lire.</div>
+<div><b>Une page = une idée</b>Pas de tableau coupé en deux : les pages à forte densité sont pensées pour tenir sur une feuille, avec une ligne « ce que cela veut dire ».</div>
+<div><b>Lisible en noir et blanc</b>Les couleurs ne portent jamais seules l’information : signe, mot ou symbole (▲ ▼ ●) toujours présent. Les couleurs de coûts du PDF actuel sont conservées.</div>
+<div><b>Une donnée absente reste absente</b>Pas de relevés : pas de courbe. Pas de chiffres réels : pas de réconciliation (message au lieu de zéros). Le sommaire se renumérote.</div>
+<div><b>Un public à la fois</b>Dirigeant : chapitres 1-2. Banquier : 1, 2, 4 et annexes. Production et achats : 3 à 7.</div>
+<div><b>Confidentialité par défaut</b>Salaires individuels en annexe optionnelle, décochée par défaut.</div></div>
+
+<h2>3. Correspondance avec l’application</h2>
+<table><tr><th>Chapitre</th><th>Pages</th><th>Onglets de Rapport et suivi</th><th>Statut</th></tr>
+<tr><td>1 Synthèse de direction</td><td>3-4</td><td>Vue d’ensemble</td><td><span class="pill rich">Enrichi</span> + plan d’action <span class="pill new">Nouveau</span></td></tr>
+<tr><td>2 Résultats</td><td>5-6</td><td>Vue d’ensemble, Simulation</td><td><span class="pill rich">Enrichi</span></td></tr>
+<tr><td>3 Produits</td><td>7-8</td><td>Portefeuille, Par SKU</td><td><span class="pill rich">Enrichi</span> (2 × 2, classement complet, SKU × canal)</td></tr>
+<tr><td>4 Canaux et activités</td><td>9</td><td>Par Canal, Par Activité</td><td><span class="pill rich">Enrichi</span></td></tr>
+<tr><td>5 Approvisionnement</td><td>10-11</td><td>Ingrédients, Emballages</td><td><span class="pill rich">Enrichi</span> + cycle des prix <span class="pill new">Nouveau</span></td></tr>
+<tr><td>6 Main-d’œuvre</td><td>12-13</td><td>Main-d’œuvre</td><td><span class="pill rich">Enrichi</span> + rentabilité à l’heure <span class="pill new">Nouveau</span></td></tr>
+<tr><td>7 Fiches produits</td><td>14-26</td><td>Recette et calcul, Par SKU</td><td>1 page par produit au lieu de 2 <span class="pill rich">Enrichi</span></td></tr>
+<tr><td>Annexes</td><td>27-29</td><td>Ingrédients, Emballage, Main-d’œuvre</td><td><span class="pill old">Repris</span> + méthodes <span class="pill new">Nouveau</span></td></tr></table>
+<p><b>Résultat :</b> 29 pages au lieu d’une trentaine, dont 2 de synthèse lisibles seules ; la page de titre vide de la « partie 2 » disparaît.</p>
+
+<h2>4. Fenêtre d’export proposée <span style="font-weight:400;font-size:13px;color:#6B7280">(non réalisée)</span></h2>
+<ul><li>Titre et « présenté à » (inchangés).</li><li>Chapitres à inclure : tous cochés ; un chapitre sans donnée est grisé avec la raison.</li><li><b>Inclure les salaires individuels</b> : décoché.</li><li>Langue des gabarits : français (déjà le cas).</li></ul>
+<p style="color:#6B7280;font-size:13px">Les pages ci-dessous sont à l’échelle (A4). Imprimer cette page depuis le navigateur donne le rendu papier, sans les notes.</p>
+</div>`;
+document.getElementById('main').innerHTML = INTRO + SHEETS.join('');
+document.getElementById('nav').innerHTML = `<h4>Navigation</h4><a href="#intro">La réflexion</a><div class="grp"><a href="#p1">1 · Couverture</a><a href="#p2">2 · Sommaire</a></div>` + CHAPS.map(c => `<div class="grp"><a href="#p${c.p}"><b>${c.n}</b> · ${c.t}</a></div>`).join('');
+document.getElementById('tgl').addEventListener('change', e => document.body.classList.toggle('hide-notes', !e.target.checked));
+</script>
+</body>
+</html>

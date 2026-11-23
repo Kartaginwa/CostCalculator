@@ -1,0 +1,1613 @@
+{
+ "company": "Boréal Mets Préparés inc.",
+ "generalInfoKeys": [
+  "period",
+  "totalIndirects",
+  "totalRevenue",
+  "foodCostTarget",
+  "packagingCostTarget",
+  "laborCostTarget",
+  "menuRevenuePercentage",
+  "indirectCostMethod"
+ ],
+ "generalInfo": {
+  "period": "custom",
+  "totalIndirects": 28000,
+  "totalRevenue": 80000,
+  "foodCostTarget": 32,
+  "packagingCostTarget": 8,
+  "laborCostTarget": 22,
+  "menuRevenuePercentage": 100,
+  "indirectCostMethod": "directCost"
+ },
+ "analysisKeys": [
+  "productsWithCosts",
+  "activeProducts",
+  "totalSalesMix",
+  "weightedGrossMargin",
+  "globalBreakEven",
+  "weightedMaterialCost",
+  "weightedPackagingCost",
+  "weightedLaborCost",
+  "menuEngineeringData",
+  "purchasingReportData",
+  "abcAnalysisData",
+  "packagingPurchasingReportData",
+  "packagingAbcAnalysisData",
+  "contributionData",
+  "productivityReport",
+  "menuRevenue",
+  "unitsSoldById"
+ ],
+ "kpis": {
+  "weightedGrossMargin": 0.4310085092742313,
+  "weightedMaterialCost": 0.3457471612434165,
+  "weightedPackagingCost": 0.07170136673283861,
+  "weightedLaborCost": 0.13872457130584637,
+  "globalBreakEven": 68642.60918464827,
+  "menuRevenue": 79713.59,
+  "totalSalesMix": 100
+ },
+ "contribution": [
+  {
+   "name": "Soupe-repas aux légumes et poulet",
+   "total": 6056.140658996004
+  },
+  {
+   "name": "Sauce artisanale du Terroir",
+   "total": 4257
+  },
+  {
+   "name": "Poulet général Tao, riz et légumes",
+   "total": 3256.322780655418
+  },
+  {
+   "name": "Pâté chinois traditionnel (340 g)",
+   "total": 3083.8286032569986
+  },
+  {
+   "name": "Saumon teriyaki, riz et légumes",
+   "total": 3008.9030078322235
+  },
+  {
+   "name": "Pâté chinois traditionnel (900 g)",
+   "total": 2884.3174684909854
+  },
+  {
+   "name": "Sauté de poulet thaï, riz et légumes (350 g)",
+   "total": 2794.9568433686736
+  },
+  {
+   "name": "Potage à la courge musquée",
+   "total": 2543.3754079851187
+  },
+  {
+   "name": "Sauté de poulet thaï, riz et légumes (900 g)",
+   "total": 2509.1799128729335
+  },
+  {
+   "name": "Chili con carne mijoté",
+   "total": 2459.3433734168393
+  },
+  {
+   "name": "Purée de pommes de terre maison",
+   "total": 858.2034464891799
+  },
+  {
+   "name": "Sauce à spaghetti maison",
+   "total": 645.664091432897
+  }
+ ],
+ "bcg": {
+  "stars": [
+   "Poulet général Tao, riz et légumes",
+   "Saumon teriyaki, riz et légumes",
+   "Sauté de poulet thaï, riz et légumes (350 g)"
+  ],
+  "cows": [
+   "Pâté chinois traditionnel (340 g)",
+   "Chili con carne mijoté",
+   "Soupe-repas aux légumes et poulet",
+   "Potage à la courge musquée",
+   "Sauce artisanale du Terroir"
+  ],
+  "questions": [
+   "Pâté chinois traditionnel (900 g)",
+   "Sauté de poulet thaï, riz et légumes (900 g)"
+  ],
+  "dogs": [
+   "Purée de pommes de terre maison",
+   "Sauce à spaghetti maison"
+  ]
+ },
+ "abc": {
+  "A": [
+   "Bœuf haché mi-maigre",
+   "Poitrine de poulet désossée",
+   "Filet de saumon surgelé IQF",
+   "Crème 35 %",
+   "Riz basmati"
+  ],
+  "B": 5,
+  "C": 8
+ },
+ "purchasing": {
+  "totalNet": 19004.06463921283,
+  "totalLoss": 818.9796893397818,
+  "totalPurchase": 19823.044328552613,
+  "keys": [
+   "totalNetCost",
+   "totalLossCost",
+   "totalPurchaseCost",
+   "groupedByProvider",
+   "grandTotal"
+  ],
+  "grand": {
+   "purchase": 19004.06463921283,
+   "loss": 818.9796893397818,
+   "total": 19823.044328552613
+  }
+ },
+ "productivity": [
+  {
+   "postName": "Responsable de production",
+   "expected": 17,
+   "actual": 0,
+   "difference": 17,
+   "utilization": 0
+  },
+  {
+   "postName": "Cuisinier de production",
+   "expected": 253.84000000000003,
+   "actual": 234.0660097832784,
+   "difference": 19.773990216721643,
+   "utilization": 92.2100574311686
+  },
+  {
+   "postName": "Opérateur d'emballage",
+   "expected": 116.58,
+   "actual": 104.77943071276128,
+   "difference": 11.800569287238716,
+   "utilization": 89.8777069074981
+  },
+  {
+   "postName": "Contrôleur qualité",
+   "expected": 6.3,
+   "actual": 5.573333333333332,
+   "difference": 0.7266666666666675,
+   "utilization": 88.46560846560845
+  }
+ ],
+ "products": [
+  {
+   "name": "Purée de pommes de terre maison",
+   "price": 4.94,
+   "cost": 3.358584457090666,
+   "mat": 0.24008097165991898,
+   "mo": 0.06315249109866425,
+   "brute": 0.579903450453518,
+   "nette": 0.3201246038278004,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.3075459867346923,
+     "be": 184
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.14636506225511395,
+     "be": 282
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": 0.07251817280446475,
+     "be": 380
+    }
+   ]
+  },
+  {
+   "name": "Pâté chinois traditionnel (340 g)",
+   "price": 8.09,
+   "cost": 5.206359193574865,
+   "mat": 0.27246792237216894,
+   "mo": 0.054503369793491234,
+   "brute": 0.6016685534793065,
+   "nette": 0.3564450935012527,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.34402416521918405,
+     "be": 348
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.191507161904523,
+     "be": 530
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": 0.1198784790485417,
+     "be": 718
+    }
+   ]
+  },
+  {
+   "name": "Pâté chinois traditionnel (900 g)",
+   "price": 19.79,
+   "cost": 13.89519089203404,
+   "mat": 0.29657753320621677,
+   "mo": 0.06662120816806598,
+   "brute": 0.5662865811666955,
+   "nette": 0.2978680701347124,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.2751949275155241,
+     "be": 180
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.10665571221758612,
+     "be": 284
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": 0.02737791850718422,
+     "be": 395
+    }
+   ]
+  },
+  {
+   "name": "Poulet général Tao, riz et légumes",
+   "price": 8.54,
+   "cost": 5.315790904662955,
+   "mat": 0.22350515720763367,
+   "mo": 0.0953750317133343,
+   "brute": 0.6135198522110905,
+   "nette": 0.37754204863431434,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.36176889530820455,
+     "be": 367
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.21339079010564369,
+     "be": 542
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": 0.14460170718199164,
+     "be": 715
+    }
+   ]
+  },
+  {
+   "name": "Saumon teriyaki, riz et légumes",
+   "price": 12.59,
+   "cost": 8.908102429456696,
+   "mat": 0.3235305798252582,
+   "mo": 0.06739127874435326,
+   "brute": 0.5632239993547554,
+   "nette": 0.2924461930534793,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.26690627419127816,
+     "be": 301
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.09656339328047484,
+     "be": 469
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": 0.01695401377505214,
+     "be": 639
+    }
+   ]
+  },
+  {
+   "name": "Sauté de poulet thaï, riz et légumes (350 g)",
+   "price": 8.36,
+   "cost": 4.72002846564066,
+   "mat": 0.2130713631273542,
+   "mo": 0.06740746011828971,
+   "brute": 0.6504657163796885,
+   "nette": 0.43540329358365304,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.4234025133970256,
+     "be": 240
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.28934858221573184,
+     "be": 353
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": 0.22610574828274696,
+     "be": 460
+    }
+   ]
+  },
+  {
+   "name": "Sauté de poulet thaï, riz et légumes (900 g)",
+   "price": 20.69,
+   "cost": 15.09902798606386,
+   "mat": 0.21892835474018696,
+   "mo": 0.03959093567310527,
+   "brute": 0.5483687972177355,
+   "nette": 0.27022581024340947,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.2447222640292302,
+     "be": 160
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.06915070198036266,
+     "be": 262
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": -0.013195928394019125,
+     "be": 383
+    }
+   ]
+  },
+  {
+   "name": "Chili con carne mijoté",
+   "price": 7.64,
+   "cost": 6.12769034886648,
+   "mat": 0.34863179460145927,
+   "mo": 0.07375999562681963,
+   "brute": 0.5020449049638389,
+   "nette": 0.19794628941538217,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.18250027750957734,
+     "be": 575
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": -0.007590432432665701,
+     "be": 946
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": -0.09613212299304784,
+     "be": 1365
+    }
+   ]
+  },
+  {
+   "name": "Soupe-repas aux légumes et poulet",
+   "price": 6.74,
+   "cost": 5.566886623328,
+   "mat": 0.1194145128229357,
+   "mo": 0.3348199814178777,
+   "brute": 0.4897885777914106,
+   "nette": 0.17405242977329377,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.26019117689457827,
+     "be": 1352
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.08811954292262571,
+     "be": 1862
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": 0.007917360700573216,
+     "be": 2263
+    }
+   ]
+  },
+  {
+   "name": "Potage à la courge musquée",
+   "price": 6.74,
+   "cost": 7.689457970815784,
+   "mat": 0.39557864955257005,
+   "mo": 0.2523051311820375,
+   "brute": 0.296558522758141,
+   "nette": -0.14086913513587299,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.20195885235529237,
+     "be": 473
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.01641861659297974,
+     "be": 706
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": -0.0699484775476047,
+     "be": 913
+    }
+   ]
+  },
+  {
+   "name": "Sauce à spaghetti maison",
+   "price": 7.19,
+   "cost": 7.245440549596593,
+   "mat": 0.3143684178699757,
+   "mo": 0.1180050346858703,
+   "brute": 0.3819114302766228,
+   "nette": -0.00771078575752325,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.1371348288028486,
+     "be": 160
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": -0.06365525183139059,
+     "be": 261
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": -0.1569615130770558,
+     "be": 362
+    }
+   ]
+  },
+  {
+   "name": "Sauce artisanale du Terroir",
+   "price": 7.19,
+   "cost": 6.833508210467178,
+   "mat": 0.5841446453407511,
+   "mo": 0,
+   "brute": 0.41585535465924894,
+   "nette": 0.04958161189608099,
+   "channels": [
+    {
+     "n": "Vente directe (boutique en ligne)",
+     "net": 0.2233947456063777,
+     "be": 597
+    },
+    {
+     "n": "Épiceries indépendantes",
+     "net": 0.042691990932354214,
+     "be": 1033
+    },
+    {
+     "n": "Grandes surfaces",
+     "net": -0.04192835876207913,
+     "be": 1542
+    }
+   ]
+  }
+ ],
+ "channelSummaries": [
+  {
+   "channelId": "channel_direct",
+   "channelName": "Vente directe (boutique en ligne)",
+   "revenueTotal": 12886.240000000002,
+   "volumeTotal": 1328,
+   "costMatiereTotal": 3329.2766221922643,
+   "costPackagingTotal": 667.6610015682216,
+   "costLaborTotal": 1323.9499450159087,
+   "costSubcontractingTotal": 98.8,
+   "costAgingTotal": 5.596634590224863,
+   "totalDirectCostTotal": 5419.687568776395,
+   "margeBruteTotal": 7466.552431223607,
+   "margeBrutePercent": 0.5794205626485,
+   "costIndirectGeneralTotal": 1015.6756410148138,
+   "costIndirectActivityTotal": 1434.839248371099,
+   "costIndirectChannelTotal": 1561.75,
+   "totalIndirectTotal": 4012.2648893859127,
+   "margeNetteTotal": 3448.690907247469,
+   "margeNettePercent": 0.267625847977957,
+   "breakEvenRevenue": 7827.488088079626
+  },
+  {
+   "channelId": "channel_epiceries",
+   "channelName": "Épiceries indépendantes",
+   "revenueTotal": 20463.6,
+   "volumeTotal": 2694,
+   "costMatiereTotal": 6759.748906995338,
+   "costPackagingTotal": 1368.0769574372732,
+   "costLaborTotal": 2753.1753969139845,
+   "costSubcontractingTotal": 221,
+   "costAgingTotal": 12.805364754025739,
+   "totalDirectCostTotal": 11102.001261346595,
+   "margeBruteTotal": 9361.598738653403,
+   "margeBrutePercent": 0.4574756513347311,
+   "costIndirectGeneralTotal": 2080.568686768649,
+   "costIndirectActivityTotal": 2938.986700690212,
+   "costIndirectChannelTotal": 2394.2499999999995,
+   "totalIndirectTotal": 7413.80538745886,
+   "margeNetteTotal": 1934.9879864405173,
+   "margeNettePercent": 0.09455755519266001,
+   "breakEvenRevenue": 17191.667894637038
+  },
+  {
+   "channelId": "channel_gs",
+   "channelName": "Grandes surfaces",
+   "revenueTotal": 46363.75,
+   "volumeTotal": 6950,
+   "costMatiereTotal": 17471.72192583399,
+   "costPackagingTotal": 3679.8353911756412,
+   "costLaborTotal": 6981.1082580701095,
+   "costSubcontractingTotal": 702,
+   "costAgingTotal": 39.35051922063372,
+   "totalDirectCostTotal": 28834.665575079744,
+   "margeBruteTotal": 17529.084424920256,
+   "margeBrutePercent": 0.3780773648576799,
+   "costIndirectGeneralTotal": 5403.755672216537,
+   "costIndirectActivityTotal": 7626.164050938687,
+   "costIndirectChannelTotal": 3544,
+   "totalIndirectTotal": 16573.919723155224,
+   "margeNetteTotal": 915.8141825443984,
+   "margeNettePercent": 0.019752806503882846,
+   "breakEvenRevenue": 44628.60008068877
+  }
+ ],
+ "activitySummaries": [
+  {
+   "activityId": "act_plats",
+   "activityName": "Mets principaux surgelés",
+   "revenueTotal": 46436.66,
+   "volumeTotal": 5960,
+   "costMatiereTotal": 16431.399658180046,
+   "costPackagingTotal": 4124.729746444033,
+   "costLaborTotal": 4003.675158992668,
+   "costSubcontractingTotal": 1021.8,
+   "costAgingTotal": 57.75251856488432,
+   "totalDirectCostTotal": 25581.604563616747,
+   "margeBruteTotal": 20855.055436383256,
+   "margeBrutePercent": 0.4491075679513396,
+   "costIndirectGeneralTotal": 4794.116318259474,
+   "costIndirectActivityTotal": 6723.979999999999,
+   "costIndirectChannelTotal": 4166.436642345564,
+   "totalIndirectTotal": 15684.532960605036,
+   "margeNetteTotal": 5112.769957213335,
+   "margeNettePercent": 0.11010201761309567,
+   "breakEvenRevenue": 36863.65205547388
+  },
+  {
+   "activityId": "act_soupes",
+   "activityName": "Soupes et potages",
+   "revenueTotal": 20829.93,
+   "volumeTotal": 3232,
+   "costMatiereTotal": 4196.461297985708,
+   "costPackagingTotal": 1216.96192985543,
+   "costLaborTotal": 6816.990705177739,
+   "costSubcontractingTotal": 0,
+   "costAgingTotal": 0,
+   "totalDirectCostTotal": 12230.413933018877,
+   "margeBruteTotal": 8599.516066981123,
+   "margeBrutePercent": 0.4128442134458024,
+   "costIndirectGeneralTotal": 2292.038674491343,
+   "costIndirectActivityTotal": 3239.45,
+   "costIndirectChannelTotal": 2049.318603882909,
+   "totalIndirectTotal": 7580.807278374252,
+   "margeNetteTotal": 1018.7087886068712,
+   "margeNettePercent": 0.0489060111391095,
+   "breakEvenRevenue": 19453.50711311183
+  },
+  {
+   "activityId": "act_sauces",
+   "activityName": "Sauces et accompagnements",
+   "revenueTotal": 12447,
+   "volumeTotal": 1780,
+   "costMatiereTotal": 6932.886498855835,
+   "costPackagingTotal": 373.8816738816739,
+   "costLaborTotal": 237.56773582959408,
+   "costSubcontractingTotal": 0,
+   "costAgingTotal": 0,
+   "totalDirectCostTotal": 7544.335908567104,
+   "margeBruteTotal": 4902.664091432896,
+   "margeBrutePercent": 0.39388319204891914,
+   "costIndirectGeneralTotal": 1413.8450072491833,
+   "costIndirectActivityTotal": 2036.56,
+   "costIndirectChannelTotal": 1284.2447537715266,
+   "totalIndirectTotal": 4734.64976102071,
+   "margeNetteTotal": 168.0143304121866,
+   "margeNettePercent": 0.013498379562319161,
+   "breakEvenRevenue": 12040.155631707328
+  }
+ ],
+ "ingredientShares": {
+  "rows": [
+   {
+    "provider": "Boucherie Nordique",
+    "total": 9942.880923049806,
+    "share": 0.5015819345532277,
+    "isDependent": true
+   },
+   {
+    "provider": "Épicerie Grossiste Boréal",
+    "total": 3781.0046169181965,
+    "share": 0.1907378379551991,
+    "isDependent": false
+   },
+   {
+    "provider": "Poissonnerie Boréale",
+    "total": 2462.8125000000005,
+    "share": 0.12423987250296505,
+    "isDependent": false
+   },
+   {
+    "provider": "Maraîcher du Nord",
+    "total": 1934.465288584607,
+    "share": 0.09758669034494627,
+    "isDependent": false
+   },
+   {
+    "provider": "Fromagerie du Lac",
+    "total": 1701.881,
+    "share": 0.08585366464366193,
+    "isDependent": false
+   }
+  ],
+  "total": 19823.04432855261
+ },
+ "packagingShares": {
+  "rows": [
+   {
+    "provider": "Emballages Boréal",
+    "total": 4573.277373286977,
+    "share": 0.8001432390229131,
+    "isDependent": true
+   },
+   {
+    "provider": "Impression Boréale",
+    "total": 677.8515324497147,
+    "share": 0.11859729390547186,
+    "isDependent": false
+   },
+   {
+    "provider": "Cartons Pro-Nord",
+    "total": 464.44444444444446,
+    "share": 0.08125946707161504,
+    "isDependent": false
+   }
+  ],
+  "total": 5715.573350181136
+ },
+ "cascade": {
+  "paidHours": 429,
+  "expectedHours": 393.72,
+  "usedHours": 344.418773829373,
+  "idleHours": 49.301226170627,
+  "nonProductiveHours": 35.28,
+  "overloadHours": 0,
+  "freeProductionHours": 32.301226170627,
+  "noRecipeIdleHours": 17,
+  "payroll": 11058.2336,
+  "costUsed": 8647.24920860385,
+  "costIdle": 1473.2754296955236,
+  "costNonProductive": 937.7089617006266,
+  "unusedPay": 2410.9843913961504,
+  "unusedShare": 0.21802617656730913,
+  "effectiveHourlyCost": 32.10694201436973,
+  "averageLoadedRate": 25.776768298368296
+ },
+ "growth": {
+  "freeHours": 32.301226170627,
+  "revenuePerHour": 248.37304693763048,
+  "grossProfitPerHour": 108.1037574036013,
+  "additionalRevenue": 8022.753963820157,
+  "additionalGrossProfit": 3491.8839177883183
+ },
+ "productRows": [
+  {
+   "id": "fmt_sub_puree",
+   "name": "Purée de pommes de terre maison",
+   "activityId": "act_plats",
+   "hours": 4.717013888888889,
+   "revenue": 1843.96,
+   "grossProfit": 858.2034464891799,
+   "isResale": false,
+   "grossProfitPerHour": 181.937867198295
+  },
+  {
+   "id": "fmt_pate_s",
+   "name": "Pâté chinois traditionnel (340 g)",
+   "activityId": "act_plats",
+   "hours": 12.035,
+   "revenue": 6293.44,
+   "grossProfit": 3083.8286032569986,
+   "isResale": false,
+   "grossProfitPerHour": 256.23835506913156
+  },
+  {
+   "id": "fmt_pate_f",
+   "name": "Pâté chinois traditionnel (900 g)",
+   "activityId": "act_plats",
+   "hours": 15.751111111111111,
+   "revenue": 6686.67,
+   "grossProfit": 2884.3174684909854,
+   "isResale": false,
+   "grossProfitPerHour": 183.1183494386207
+  },
+  {
+   "id": "fmt_tao",
+   "name": "Poulet général Tao, riz et légumes",
+   "activityId": "act_plats",
+   "hours": 25.40222222222222,
+   "revenue": 6537.06,
+   "grossProfit": 3256.322780655418,
+   "isResale": false,
+   "grossProfitPerHour": 128.1904690136417
+  },
+  {
+   "id": "fmt_saumon",
+   "name": "Saumon teriyaki, riz et légumes",
+   "activityId": "act_plats",
+   "hours": 18.933333333333337,
+   "revenue": 6913.200000000001,
+   "grossProfit": 3008.9030078322235,
+   "isResale": false,
+   "grossProfitPerHour": 158.9209335122653
+  },
+  {
+   "id": "fmt_thai_s",
+   "name": "Sauté de poulet thaï, riz et légumes (350 g)",
+   "activityId": "act_plats",
+   "hours": 14.083333333333332,
+   "revenue": 5074.2,
+   "grossProfit": 2794.9568433686736,
+   "isResale": false,
+   "grossProfitPerHour": 198.45847408534962
+  },
+  {
+   "id": "fmt_thai_f",
+   "name": "Sauté de poulet thaï, riz et légumes (900 g)",
+   "activityId": "act_plats",
+   "hours": 10.425416666666665,
+   "revenue": 6181.469999999999,
+   "grossProfit": 2509.1799128729335,
+   "isResale": false,
+   "grossProfitPerHour": 240.6791011908014
+  },
+  {
+   "id": "fmt_chili",
+   "name": "Chili con carne mijoté",
+   "activityId": "act_plats",
+   "hours": 21.106944444444444,
+   "revenue": 6906.66,
+   "grossProfit": 2459.3433734168393,
+   "isResale": false,
+   "grossProfitPerHour": 116.51820944002924
+  },
+  {
+   "id": "fmt_soupe",
+   "name": "Soupe-repas aux légumes et poulet",
+   "activityId": "act_soupes",
+   "hours": 114.55475047161721,
+   "revenue": 14223.35,
+   "grossProfit": 6056.140658996004,
+   "isResale": false,
+   "grossProfitPerHour": 52.866778846474034
+  },
+  {
+   "id": "fmt_potage",
+   "name": "Potage à la courge musquée",
+   "activityId": "act_soupes",
+   "hours": 33.96259259259259,
+   "revenue": 6606.58,
+   "grossProfit": 2543.3754079851187,
+   "isResale": false,
+   "grossProfitPerHour": 74.88755168060524
+  },
+  {
+   "id": "fmt_sauce_spag",
+   "name": "Sauce à spaghetti maison",
+   "activityId": "act_sauces",
+   "hours": 7.466666666666667,
+   "revenue": 1890,
+   "grossProfit": 645.664091432897,
+   "isResale": false,
+   "grossProfitPerHour": 86.47286938833442
+  },
+  {
+   "id": "fmt_sauce_terroir",
+   "name": "Sauce artisanale du Terroir",
+   "activityId": "act_sauces",
+   "hours": 0,
+   "revenue": 10557,
+   "grossProfit": 4257,
+   "isResale": true,
+   "grossProfitPerHour": null
+  }
+ ],
+ "reconciliation": {
+  "rows": [
+   {
+    "label": "Revenus",
+    "real": 80000,
+    "theoretical": 79713.59,
+    "diff": 286.4100000000035,
+    "diffPercent": 0.0035929883474073053
+   },
+   {
+    "label": "Charges directes",
+    "real": 48000,
+    "theoretical": 45356.35440520273,
+    "diff": 2643.6455947972718,
+    "diffPercent": 0.058286112926527994
+   },
+   {
+    "label": "Bénéfice brut",
+    "real": 32000,
+    "theoretical": 34357.23559479727,
+    "diff": -2357.2355947972683,
+    "diffPercent": -0.06860958263924545
+   },
+   {
+    "label": "Bénéfice net",
+    "real": 4000,
+    "theoretical": 6299.483076232384,
+    "diff": -2299.4830762323836,
+    "diffPercent": -0.36502726468275015
+   }
+  ]
+ },
+ "hasRealData": true,
+ "tracking": [
+  {
+   "t": "2025-05-15T16:00:00.000Z",
+   "n": "Relevé mai 2025"
+  },
+  {
+   "t": "2025-06-15T16:00:00.000Z",
+   "n": "Relevé juin 2025"
+  },
+  {
+   "t": "2025-07-15T16:00:00.000Z",
+   "n": "Relevé juillet 2025"
+  },
+  {
+   "t": "2025-08-15T16:00:00.000Z",
+   "n": "Relevé août 2025"
+  },
+  {
+   "t": "2025-09-15T16:00:00.000Z",
+   "n": "Relevé septembre 2025"
+  },
+  {
+   "t": "2025-10-15T16:00:00.000Z",
+   "n": "Relevé octobre 2025"
+  },
+  {
+   "t": "2025-11-15T17:00:00.000Z",
+   "n": "Relevé novembre 2025"
+  },
+  {
+   "t": "2025-12-15T17:00:00.000Z",
+   "n": "Relevé décembre 2025"
+  },
+  {
+   "t": "2026-01-15T17:00:00.000Z",
+   "n": "Relevé janvier 2026"
+  },
+  {
+   "t": "2026-02-15T17:00:00.000Z",
+   "n": "Relevé février 2026"
+  },
+  {
+   "t": "2026-03-15T16:00:00.000Z",
+   "n": "Relevé mars 2026"
+  },
+  {
+   "t": "2026-04-15T16:00:00.000Z",
+   "n": "Relevé avril 2026"
+  },
+  {
+   "t": "2026-05-15T16:00:00.000Z",
+   "n": "Relevé mai 2026"
+  },
+  {
+   "t": "2026-06-15T16:00:00.000Z",
+   "n": "Relevé juin 2026"
+  },
+  {
+   "t": "2026-07-15T16:00:00.000Z",
+   "n": "Relevé juillet 2026"
+  },
+  {
+   "t": "2026-08-15T16:00:00.000Z",
+   "n": "Relevé août 2026"
+  },
+  {
+   "t": "2026-09-15T16:00:00.000Z",
+   "n": "Relevé septembre 2026"
+  },
+  {
+   "t": "2026-10-15T16:00:00.000Z",
+   "n": "Relevé octobre 2026"
+  },
+  {
+   "t": "2026-11-15T17:00:00.000Z",
+   "n": "Relevé novembre 2026"
+  }
+ ],
+ "findings": [
+  {
+   "id": "net-theoretical",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Rentabilité",
+   "title": "Bénéfice net prévu de 6 299 $",
+   "detail": "Soit 7,9 % des ventes prévues, tous coûts et frais fixes déduits.",
+   "link": "Vue d'ensemble",
+   "impact": 6299.483076232384,
+   "tier": 1
+  },
+  {
+   "id": "sens-inputs",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Rentabilité",
+   "title": "Votre bénéfice résiste à une hausse de 5 % des intrants",
+   "detail": "Il passerait de 6 299 $ à 4 636 $.",
+   "link": "Simulation",
+   "impact": null,
+   "tier": 1
+  },
+  {
+   "id": "sens-labor",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Main-d'œuvre",
+   "title": "Votre bénéfice résiste à une hausse de 5 % de la main-d'œuvre",
+   "detail": "Il passerait de 6 299 $ à 5 747 $.",
+   "link": "Simulation",
+   "impact": null,
+   "tier": 1
+  },
+  {
+   "id": "rec-net",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Réel vs théorique",
+   "title": "Bénéfice net réel sous le modèle (-36,5 %)",
+   "detail": "4 000 $ réels contre 6 299 $ prévus.",
+   "link": "Vue d'ensemble",
+   "impact": 2299.4830762323836,
+   "tier": 1
+  },
+  {
+   "id": "channel-dependency",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Canaux",
+   "title": "Grandes surfaces : 58 % des revenus, 15 % du bénéfice net",
+   "detail": "916 $ de bénéfice net sur 6 299 $ : le canal qui pèse le plus rapporte proportionnellement le moins.",
+   "link": "Par Canal",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "sku-losers",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "5 produits sur 12 perdent de l'argent dans au moins un canal",
+   "detail": "Le pire : « Sauce à spaghetti maison », -15,7 % de marge nette (Grandes surfaces).",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "cost-matiere",
+   "tone": "faiblesse",
+   "group": "objectif",
+   "theme": "Coûts",
+   "title": "Coût matière au-dessus de la cible",
+   "detail": "À 34,57 % contre une cible de 32 %.",
+   "link": "Ingrédients",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "sku-best",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "« Sauté de poulet thaï, riz et légumes (350 g) » est rentable partout",
+   "detail": "Marge nette positive dans ses 3 canaux, de 22,6 % à 42,3 %.",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "history-net",
+   "tone": "force",
+   "group": "evolution",
+   "theme": "Évolution",
+   "title": "Marge nette en hausse constante depuis 3 relevés (+1,6 point)",
+   "detail": "De 6,3 % (« Relevé août 2026 ») à 7,9 % aujourd'hui.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "history-gross",
+   "tone": "force",
+   "group": "evolution",
+   "theme": "Évolution",
+   "title": "Marge brute en hausse constante depuis 3 relevés (+1,6 point)",
+   "detail": "De 41,5 % (« Relevé août 2026 ») à 43,1 % aujourd'hui.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "history-material",
+   "tone": "force",
+   "group": "evolution",
+   "theme": "Évolution",
+   "title": "Coût matière en baisse constante depuis 3 relevés (−1,5 point)",
+   "detail": "De 36,0 % (« Relevé août 2026 ») à 34,6 % aujourd'hui.",
+   "link": "Ingrédients",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "history-net-12m",
+   "tone": "faiblesse",
+   "group": "evolution",
+   "theme": "Évolution",
+   "title": "Marge nette en baisse sur 12 mois (−2,2 points)",
+   "detail": "De 10,1 % (« Relevé novembre 2025 ») à 7,9 % aujourd'hui.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "sku-positive",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "7 produits sur 12 rentables dans tous leurs canaux",
+   "detail": "Marge nette positive partout où ils sont vendus.",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "fixed-share",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Rentabilité",
+   "title": "Les frais fixes pèsent 35 % des revenus",
+   "detail": "Une structure de frais lourde exige un volume élevé pour être rentable.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "history-gross-12m",
+   "tone": "faiblesse",
+   "group": "evolution",
+   "theme": "Évolution",
+   "title": "Marge brute en baisse sur 12 mois (−2,1 points)",
+   "detail": "De 45,2 % (« Relevé novembre 2025 ») à 43,1 % aujourd'hui.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "history-material-12m",
+   "tone": "faiblesse",
+   "group": "evolution",
+   "theme": "Évolution",
+   "title": "Coût matière en hausse sur 12 mois (+1,8 point)",
+   "detail": "De 32,8 % (« Relevé novembre 2025 ») à 34,6 % aujourd'hui.",
+   "link": "Ingrédients",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "cost-matiere-products",
+   "tone": "faiblesse",
+   "group": "objectif",
+   "theme": "Coûts",
+   "title": "4 produits sur 12 dépassent la cible de coût matière",
+   "detail": "Saumon teriyaki, riz et légumes, Chili con carne mijoté, Potage à la courge musquée, 1 autre",
+   "link": "Par SKU",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "channel-underused",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Canaux",
+   "title": "Vente directe (boutique en ligne) : forte marge, encore peu exploité",
+   "detail": "26,8 % de marge nette (moyenne : 7,9 %) pour 16 % des revenus : un canal à développer.",
+   "link": "Par Canal",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "rec-revenue",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Réel vs théorique",
+   "title": "Revenus réels alignés sur votre modèle (+0,4 %)",
+   "detail": "80 000 $ réels contre 79 714 $ prévus.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "bcg-dogs",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "2 poids morts : à repenser ou retirer",
+   "detail": "« Purée de pommes de terre maison », « Sauce à spaghetti maison »",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "cost-emballage",
+   "tone": "force",
+   "group": "objectif",
+   "theme": "Coûts",
+   "title": "Coût emballage sous sa cible",
+   "detail": "À 7,17 % contre une cible de 8 %.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "cost-mo",
+   "tone": "force",
+   "group": "objectif",
+   "theme": "Coûts",
+   "title": "Coût main-d'œuvre sous sa cible",
+   "detail": "À 13,87 % contre une cible de 22 %.",
+   "link": "Vue d'ensemble",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "channel-gap",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Canaux",
+   "title": "Grand écart de marge entre vos canaux : 24,8 points",
+   "detail": "De 2,0 % (Grandes surfaces) à 26,8 % (Vente directe (boutique en ligne)).",
+   "link": "Par Canal",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "format-gap",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "1 produit aux marges très différentes selon le format",
+   "detail": "Le plus marqué : « Sauté de poulet thaï, riz et légumes (350 g) » à 27,4 % contre « Sauté de poulet thaï, riz et légumes (900 g) » à 4,0 %.",
+   "link": "Par SKU",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "bcg-cows",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "5 vaches à lait à optimiser",
+   "detail": "Très vendus mais peu rentables : « Pâté chinois traditionnel (340 g) », « Chili con carne mijoté », « Soupe-repas aux légumes et poulet », 2 autres.",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "bcg-questions",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "2 dilemmes : rentables, mais peu vendus",
+   "detail": "À promouvoir ou à abandonner : « Pâté chinois traditionnel (900 g) », « Sauté de poulet thaï, riz et légumes (900 g) ».",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 2
+  },
+  {
+   "id": "rec-direct",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Réel vs théorique",
+   "title": "Charges directes réelles au-dessus du modèle (+5,8 %)",
+   "detail": "+2 644 $ : pertes, rendements ou prix payés plus élevés que prévu.",
+   "link": "Vue d'ensemble",
+   "impact": 2643.6455947972718,
+   "tier": 2
+  },
+  {
+   "id": "history-price-effect",
+   "tone": "force",
+   "group": "evolution",
+   "theme": "Évolution",
+   "title": "Les baisses de prix font économiser 918 $ sur vos achats d'ingrédients",
+   "detail": "Aux volumes prévus, sur les 3 derniers relevés (4,8 % des achats).",
+   "link": "Ingrédients",
+   "impact": 917.6409564963132,
+   "tier": 2
+  },
+  {
+   "id": "supplier-ing",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Approvisionnement",
+   "title": "Boucherie Nordique : 50 % des achats d'ingrédients",
+   "detail": "Une dépendance à un seul fournisseur.",
+   "link": "Ingrédients",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "volatile-a-ing",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Approvisionnement",
+   "title": "4 ingrédients de classe A à prix volatil",
+   "detail": "Bœuf haché mi-maigre (22 %), Poitrine de poulet désossée (12 %), Filet de saumon surgelé IQF (25 %), 1 autre : amplitudes de prix sur 19 relevés.",
+   "link": "Ingrédients",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "product-best-hour",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Main-d'œuvre",
+   "title": "« Pâté chinois traditionnel (340 g) » : le meilleur usage du temps",
+   "detail": "256 $ de bénéfice brut par heure de main-d'œuvre (moyenne : 108 $).",
+   "link": "Main-d'œuvre",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "labor-growth",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Main-d'œuvre",
+   "title": "Marge de croissance : 32 h libres",
+   "detail": "Environ 8 000 $ de ventes de plus possibles sans embauche (estimation).",
+   "link": "Main-d'œuvre",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "supplier-pkg",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Approvisionnement",
+   "title": "Emballages Boréal : 80 % des achats d'emballages",
+   "detail": "Une dépendance à un seul fournisseur.",
+   "link": "Emballages",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "hours-vs-profit",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Main-d'œuvre",
+   "title": "« Soupe-repas aux légumes et poulet » : 41 % des heures, 20 % du bénéfice brut",
+   "detail": "Un produit qui occupe beaucoup de temps pour peu de profit : à repenser (prix, recette, processus).",
+   "link": "Main-d'œuvre",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "activity-low-act_sauces",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Activités",
+   "title": "Sauces et accompagnements : marge nette de 1,3 %",
+   "detail": "168 $ de bénéfice net sur 12 447 $ de revenus.",
+   "link": "Par Activité",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "product-worst-hour",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Main-d'œuvre",
+   "title": "« Soupe-repas aux légumes et poulet » rapporte peu à l'heure",
+   "detail": "53 $ par heure, contre 108 $ en moyenne.",
+   "link": "Main-d'œuvre",
+   "impact": null,
+   "tier": 3
+  },
+  {
+   "id": "labor-unused",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Main-d'œuvre",
+   "title": "21,8 % de la paie n'est pas utilisée",
+   "detail": "Soit 2 411 $ payés sans produire, absorbés dans le coût de vos produits.",
+   "link": "Main-d'œuvre",
+   "impact": 2410.9843913961504,
+   "tier": 3
+  },
+  {
+   "id": "loss-high",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Approvisionnement",
+   "title": "Perte stock prévue : 819 $ (4,1 % des achats)",
+   "detail": "La plus coûteuse : Bœuf haché mi-maigre, 459 $.",
+   "link": "Ingrédients",
+   "impact": 818.9796893397818,
+   "tier": 3
+  },
+  {
+   "id": "channel-best",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Canaux",
+   "title": "Vente directe (boutique en ligne) : la meilleure marge nette",
+   "detail": "26,8 % de marge nette pour 16 % des revenus.",
+   "link": "Par Canal",
+   "impact": null,
+   "tier": 4
+  },
+  {
+   "id": "activities-positive",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Activités",
+   "title": "Les 3 activités sont bénéficiaires",
+   "detail": "Bénéfice net positif pour chacune : 5 113 $, 1 019 $, 168 $.",
+   "link": "Par Activité",
+   "impact": null,
+   "tier": 4
+  },
+  {
+   "id": "bcg-stars",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "3 étoiles : à protéger",
+   "detail": "« Poulet général Tao, riz et légumes », « Saumon teriyaki, riz et légumes », « Sauté de poulet thaï, riz et légumes (350 g) »",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 4
+  },
+  {
+   "id": "post-used",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Main-d'œuvre",
+   "title": "Cuisinier de production à 92 % d'utilisation",
+   "detail": "Le poste de production le plus sollicité est bien occupé.",
+   "link": "Main-d'œuvre",
+   "impact": null,
+   "tier": 4
+  },
+  {
+   "id": "inputs-top5",
+   "tone": "faiblesse",
+   "group": "structure",
+   "theme": "Approvisionnement",
+   "title": "Cinq ingrédients pèsent 74 % de vos achats",
+   "detail": "Sur 18 ingrédients : surveillez en priorité Bœuf haché mi-maigre, Poitrine de poulet désossée, Filet de saumon surgelé IQF, Crème 35 %, Riz basmati.",
+   "link": "Ingrédients",
+   "impact": null,
+   "tier": 4
+  },
+  {
+   "id": "profit-spread",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Produits",
+   "title": "Profit bien réparti : les 3 premiers produits pèsent 39 %",
+   "detail": "Sur 12 produits contributifs : aucun ne porte à lui seul l'entreprise.",
+   "link": "Portefeuille",
+   "impact": null,
+   "tier": 4
+  },
+  {
+   "id": "stable-a-pkg",
+   "tone": "force",
+   "group": "structure",
+   "theme": "Approvisionnement",
+   "title": "Les emballages de classe A ont des prix stables",
+   "detail": "Aucun des 4 éléments de classe A n'a un prix volatil.",
+   "link": "Emballages",
+   "impact": null,
+   "tier": 4
+  }
+ ],
+ "volatility": {
+  "ing": [
+   {
+    "id": "ing_saumon",
+    "name": "Filet de saumon surgelé IQF",
+    "provider": "Poissonnerie Boréale",
+    "count": 19,
+    "currentPrice": 18.5,
+    "trendPercent": 2.7207107162687247,
+    "amplitudePercent": 24.648293357933568,
+    "tier": "elevee",
+    "isVolatile": true
+   },
+   {
+    "id": "ing_boeuf",
+    "name": "Bœuf haché mi-maigre",
+    "provider": "Boucherie Nordique",
+    "count": 19,
+    "currentPrice": 9.75,
+    "trendPercent": 0.8273009307135492,
+    "amplitudePercent": 21.961656015559882,
+    "tier": "elevee",
+    "isVolatile": true
+   },
+   {
+    "id": "ing_tomates",
+    "name": "Tomates broyées en conserve",
+    "provider": "Épicerie Grossiste Boréal",
+    "count": 19,
+    "currentPrice": 3,
+    "trendPercent": -4.458598726114647,
+    "amplitudePercent": 19.363907924793526,
+    "tier": "moderee",
+    "isVolatile": true
+   },
+   {
+    "id": "ing_courge",
+    "name": "Courge musquée en dés surgelée",
+    "provider": "Maraîcher du Nord",
+    "count": 19,
+    "currentPrice": 1.9,
+    "trendPercent": -2.56410256410256,
+    "amplitudePercent": 18.1155356141335,
+    "tier": "moderee",
+    "isVolatile": true
+   },
+   {
+    "id": "ing_brocoli",
+    "name": "Brocoli en bouquets surgelé",
+    "provider": "Maraîcher du Nord",
+    "count": 19,
+    "currentPrice": 2.6,
+    "trendPercent": -3.3457249070632056,
+    "amplitudePercent": 15.503875968992256,
+    "tier": "moderee",
+    "isVolatile": true
+   },
+   {
+    "id": "ing_beurre",
+    "name": "Beurre non salé",
+    "provider": "Fromagerie du Lac",
+    "count": 19,
+    "currentPrice": 10.4,
+    "trendPercent": 1.4634146341463325,
+    "amplitudePercent": 15.45359749739311,
+    "tier": "moderee",
+    "isVolatile": true
+   }
+  ],
+  "pkg": [
+   {
+    "id": "pkg_boite",
+    "name": "Manchon de carton imprimé",
+    "provider": "Cartons Pro-Nord",
+    "count": 19,
+    "currentPrice": 0.55,
+    "trendPercent": 2.268501301599126,
+    "amplitudePercent": 13.380545268300361,
+    "tier": "moderee",
+    "isVolatile": true
+   },
+   {
+    "id": "pkg_etiquette",
+    "name": "Étiquette nutritionnelle / code-barres",
+    "provider": "Impression Boréale",
+    "count": 19,
+    "currentPrice": 0.07,
+    "trendPercent": 7.692307692307699,
+    "amplitudePercent": 8.642356024978803,
+    "tier": "faible",
+    "isVolatile": false
+   },
+   {
+    "id": "pkg_barq_f",
+    "name": "Barquette operable 900 ml (familiale)",
+    "provider": "Emballages Boréal",
+    "count": 19,
+    "currentPrice": 0.68,
+    "trendPercent": 2.73455204713703,
+    "amplitudePercent": 8.34124347413384,
+    "tier": "faible",
+    "isVolatile": false
+   }
+  ]
+ },
+ "expenseLines": [
+  {
+   "name": "Loyer (espace de production)",
+   "amount": 9000,
+   "cat": "Frais généraux de production"
+  },
+  {
+   "name": "Électricité et chauffage",
+   "amount": 3000,
+   "cat": "Frais généraux de production"
+  },
+  {
+   "name": "Marketing et promotion",
+   "amount": 4000,
+   "cat": "Frais de vente / mise en marché"
+  },
+  {
+   "name": "Commissions et frais de distribution",
+   "amount": 3500,
+   "cat": "Frais de vente / mise en marché"
+  },
+  {
+   "name": "Salaire de direction",
+   "amount": 3000,
+   "cat": "Frais d'administration"
+  },
+  {
+   "name": "Assurances",
+   "amount": 2500,
+   "cat": "Frais d'administration"
+  },
+  {
+   "name": "Comptabilité et services professionnels",
+   "amount": 2000,
+   "cat": "Frais d'administration"
+  },
+  {
+   "name": "Frais bancaires et intérêts",
+   "amount": 1000,
+   "cat": "Frais financiers"
+  }
+ ],
+ "channels": [
+  {
+   "id": "channel_direct",
+   "name": "Vente directe (boutique en ligne)"
+  },
+  {
+   "id": "channel_epiceries",
+   "name": "Épiceries indépendantes"
+  },
+  {
+   "id": "channel_gs",
+   "name": "Grandes surfaces"
+  }
+ ],
+ "activities": [
+  {
+   "id": "act_plats",
+   "name": "Mets principaux surgelés"
+  },
+  {
+   "id": "act_soupes",
+   "name": "Soupes et potages"
+  },
+  {
+   "id": "act_sauces",
+   "name": "Sauces et accompagnements"
+  }
+ ]
+}

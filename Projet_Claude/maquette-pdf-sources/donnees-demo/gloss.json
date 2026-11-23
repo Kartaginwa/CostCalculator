@@ -1,0 +1,302 @@
+[
+ {
+  "term": "Actif",
+  "def": "Case qui indique si un format entre dans les analyses (moyennes, point mort des produits actifs, rapports d'achats, classements)."
+ },
+ {
+  "term": "Activité de production",
+  "def": "Un groupe de produits qui partagent un même procédé de fabrication (ex. surgélation, mise en conserve). Sert à répartir les frais fixes et à lire la rentabilité par ligne de production."
+ },
+ {
+  "term": "Allergène",
+  "def": "L'une des 14 substances de déclaration courante (gluten, lait, arachides…). Se coche sur chaque ingrédient ; la recette affiche la liste de ceux qu'elle contient."
+ },
+ {
+  "term": "Amplitude",
+  "def": "L'écart entre le prix le plus haut et le plus bas d'un ingrédient, divisé par son prix moyen. Mesure à quel point un prix bouge."
+ },
+ {
+  "term": "Analyse ABC",
+  "def": "Classement des ingrédients (ou des emballages) par importance financière, selon le principe de Pareto : A jusqu'à 70 % du coût cumulé, B jusqu'à 90 %, C le reste."
+ },
+ {
+  "term": "Bassin (« pool »)",
+  "def": "Un ensemble de frais fixes destiné à être réparti : bassin Général, bassin d'une activité ou bassin d'un canal."
+ },
+ {
+  "term": "Bénéfice brut / bénéfice net (État des résultats)",
+  "def": "Bénéfice brut : revenus moins charges directes réelles. Bénéfice net : bénéfice brut moins frais fixes. À distinguer de la marge brute et de la marge nette d'un produit, calculées par unité."
+ },
+ {
+  "term": "Canal de vente",
+  "def": "La chaîne d'intermédiaires entre votre entreprise et le consommateur (vente directe, distributeur, détaillant…)."
+ },
+ {
+  "term": "Capacité de production",
+  "def": "Ce que votre équipe peut produire pendant la période, mesuré en heures productives."
+ },
+ {
+  "term": "Charge de travail",
+  "def": "Les heures de main-d'œuvre que chaque activité consomme, d'après vos recettes et vos ventes. Montre où part le temps de l'équipe."
+ },
+ {
+  "term": "Charge directe",
+  "def": "Un coût qu'on rattache à un produit précis : matières, emballage, main-d'œuvre de production, sous-traitance."
+ },
+ {
+  "term": "Charge financière",
+  "def": "Le coût de l'argent immobilisé ; dans l'application, le vieillissement d'un produit qui doit mûrir avant d'être vendu."
+ },
+ {
+  "term": "Charge indirecte",
+  "def": "Un coût qu'on ne peut pas rattacher à un produit précis et qu'on répartit entre les produits : synonyme de frais fixes dans l'application."
+ },
+ {
+  "term": "CICI",
+  "def": "Coefficient d'imputation des charges indirectes : la règle qui répartit le bassin de frais fixes d'une activité entre ses produits (au prorata des coûts directs, du temps de production ou du volume physique)."
+ },
+ {
+  "term": "Clé de répartition",
+  "def": "La façon de ventiler un frais fixe entre Général, activités et canaux : manuelle, selon les ventes, selon les charges directes, un élément précis ou une clé personnalisée."
+ },
+ {
+  "term": "Constat clé",
+  "def": "Une force ou une faiblesse de votre entreprise, calculée par une règle fixe à partir de vos chiffres, avec un lien vers l'endroit où agir. Affichée dans la Vue d'ensemble de Rapport et suivi."
+ },
+ {
+  "term": "Contribution totale",
+  "def": "Marge brute par unité multipliée par les unités vendues : l'argent qu'un produit apporte pour payer les frais fixes."
+ },
+ {
+  "term": "Coût d'achat requis",
+  "def": "Le coût net d'un ingrédient plus le coût de ses pertes en stock : ce qu'il faut réellement acheter et budgéter."
+ },
+ {
+  "term": "Coût de portage",
+  "def": "L'intérêt sur l'argent immobilisé dans un stock qui doit mûrir. Voir vieillissement."
+ },
+ {
+  "term": "Coût de production",
+  "def": "La somme des coûts directs d'une unité : matière, emballage, main-d'œuvre et sous-traitance, avant les frais fixes."
+ },
+ {
+  "term": "Coût de revient (complet)",
+  "def": "Tout ce qu'il en coûte pour fabriquer et vendre une unité : les coûts directs plus la part des frais fixes (et du vieillissement, s'il y a lieu)."
+ },
+ {
+  "term": "Coût fixe",
+  "def": "Un coût qui ne change pas avec le volume produit, pour la période considérée (loyer, assurances)."
+ },
+ {
+  "term": "Coût horaire chargé",
+  "def": "Le coût réel d'une heure de travail pour l'employeur : salaire × (1 + charges) × (1 + vacances)."
+ },
+ {
+  "term": "Coût matière",
+  "def": "Le coût des ingrédients d'un produit, souvent exprimé en pourcentage de son prix de vente : la part du prix qui sert à acheter la matière."
+ },
+ {
+  "term": "Coût réel d'une heure productive",
+  "def": "La paie totale de l'équipe divisée par les heures réellement utilisées à produire. Plus élevé que le taux horaire moyen chargé quand des heures sont payées sans servir. Affiché dans Rapport et suivi → Main-d'œuvre."
+ },
+ {
+  "term": "Coût variable",
+  "def": "Un coût qui augmente avec le volume produit (matières, emballage)."
+ },
+ {
+  "term": "Dépendance (fournisseur)",
+  "def": "Un fournisseur qui pèse 30 % ou plus de vos achats : s'il fait défaut ou augmente ses prix, une grande part de vos achats est touchée. Signalée par une barre orange dans Rapport et suivi → Ingrédients ou Emballages."
+ },
+ {
+  "term": "Économie d'échelle",
+  "def": "La baisse du coût par unité quand le volume augmente, parce que les frais fixes se répartissent sur plus d'unités."
+ },
+ {
+  "term": "Format",
+  "def": "L'emballage et la quantité sous lesquels un produit est vendu (ex. 340 g, 900 g). Chaque format a sa propre recette, son prix et sa part des ventes."
+ },
+ {
+  "term": "Format d'achat",
+  "def": "La quantité contenue dans l'unité que vous achetez (ex. 25 kg par sac)."
+ },
+ {
+  "term": "Frais de structure",
+  "def": "Les frais fixes qui servent à toute l'entreprise et qu'on ne peut attribuer à aucune activité ni à aucun canal (salaire de direction, assurance générale). Ils sont saisis dans la colonne « Général »."
+ },
+ {
+  "term": "Frais fixes",
+  "def": "Les dépenses de l'entreprise qui ne sont pas liées à un produit précis et qui ne varient pas avec le volume : loyer, électricité, assurances, administration, marketing."
+ },
+ {
+  "term": "Grille de rendement",
+  "def": "Un calcul de la quantité produite à partir d'une quantité de départ, d'étapes de transformation (pertes ou gains en %) et d'un taux de rejet."
+ },
+ {
+  "term": "Intensité de main-d'œuvre",
+  "def": "Le temps de personnel divisé par la durée du processus. Au-dessus de 1, plusieurs personnes travaillent en même temps."
+ },
+ {
+  "term": "Lot",
+  "def": "Une production d'un seul tenant. Dans l'application, une recette est saisie pour un lot."
+ },
+ {
+  "term": "Maillon",
+  "def": "Un intermédiaire d'un canal de vente (distributeur, grossiste, détaillant) qui applique une marge ou une majoration."
+ },
+ {
+  "term": "Majoration",
+  "def": "Le profit exprimé en pourcentage du coût (profit ÷ coût), contrairement à la marge, calculée sur le prix de vente."
+ },
+ {
+  "term": "Marge brute",
+  "def": "Prix de vente moins les coûts directs (matière, emballage, main-d'œuvre, sous-traitance). En % : part du prix de vente."
+ },
+ {
+  "term": "Marge de contribution",
+  "def": "Prix de vente moins le coût matière seul. En % : part du prix de vente."
+ },
+ {
+  "term": "Marge de croissance",
+  "def": "Estimation de ce que les heures productives libres des postes de production pourraient produire de plus sans embauche, au même mix de produits. Indicative : elle suppose une demande suffisante."
+ },
+ {
+  "term": "Marge de sécurité",
+  "def": "De combien les ventes prévues peuvent baisser avant d'atteindre le point mort : (ventes prévues − point mort) ÷ ventes prévues. Négative, elle signifie que les ventes prévues sont déjà sous le point mort."
+ },
+ {
+  "term": "Marge nette",
+  "def": "Prix de vente moins le coût de revient complet. C'est le profit réel par unité. En % : part du prix de vente."
+ },
+ {
+  "term": "Marge ou majoration ?",
+  "def": "Une marge est un pourcentage du prix de vente (profit ÷ prix) ; une majoration est un pourcentage du coût (profit ÷ coût). Pour le même profit, la majoration est plus élevée : un produit coûtant 1,20 $ vendu 1,50 $ a 20 % de marge et 25 % de majoration."
+ },
+ {
+  "term": "Masse salariale",
+  "def": "La paie totale chargée de l'équipe : salaires, charges sociales et vacances. Rapport et suivi → Main-d'œuvre en montre l'utilisation."
+ },
+ {
+  "term": "Matrice stratégique (matrice BCG)",
+  "def": "Méthode qui classe les produits en étoiles, vaches à lait, dilemmes et poids morts selon leur popularité et leur rentabilité."
+ },
+ {
+  "term": "Moyenne pondérée",
+  "def": "Une moyenne où chaque élément compte selon son poids. Dans l'application, les moyennes des produits actifs sont pondérées par le revenu de chaque produit."
+ },
+ {
+  "term": "Paie non utilisée",
+  "def": "La paie versée pour des heures qui ne servent pas à produire : le temps non productif prévu et la capacité productive inutilisée. Elle est absorbée dans le coût de revient des produits."
+ },
+ {
+  "term": "Palier de volatilité",
+  "def": "La classe de volatilité d'un prix : faible (amplitude sous 10 %), modéré (10 % à moins de 20 %) ou élevé (20 % et plus)."
+ },
+ {
+  "term": "Part des ventes",
+  "def": "La part de chaque produit (ou format) dans les ventes, en pourcentage. La somme des produits actifs devrait être de 100 %."
+ },
+ {
+  "term": "PDS (prix de détail suggéré)",
+  "def": "Le prix proposé au consommateur final. Sert à calculer le prix net de chaque canal."
+ },
+ {
+  "term": "Perte stock",
+  "def": "Quantité à acheter en plus pour compenser ce qui se perd en stock avant utilisation (péremption, casse, déclassement), selon le taux de perte du catalogue. Elle est prévue, pas mesurée."
+ },
+ {
+  "term": "Point de référence",
+  "def": "Une « photo » de votre projet à une date donnée, à laquelle on compare l'évolution plus tard."
+ },
+ {
+  "term": "Point mort (seuil de rentabilité)",
+  "def": "Le volume de ventes à partir duquel l'entreprise ne perd plus d'argent : frais fixes ÷ marge de contribution unitaire. Dans l'application, la main-d'œuvre de production est comptée parmi les coûts fixes."
+ },
+ {
+  "term": "Popularité",
+  "def": "La part d'un produit dans les ventes. Dans la matrice, un produit est populaire s'il atteint 70 % de la part moyenne."
+ },
+ {
+  "term": "Prix efficace",
+  "def": "Le prix unitaire corrigé du taux de perte en stock : prix unitaire ÷ (1 − perte). Ce que coûte vraiment un kilo utilisable."
+ },
+ {
+  "term": "Prix net",
+  "def": "Ce qui revient au producteur par unité dans un canal donné, une fois les maillons payés."
+ },
+ {
+  "term": "Prix unitaire",
+  "def": "Le prix d'achat ramené à l'unité de base : prix d'achat ÷ format d'achat."
+ },
+ {
+  "term": "Produit de revente",
+  "def": "Un format acheté et revendu tel quel, sans transformation. Sa fiche se réduit à un coût d'achat."
+ },
+ {
+  "term": "Produit, format, SKU",
+  "def": "Le produit est la recette ; le format, sa version vendue (taille et emballage) ; le SKU, la référence de ce format."
+ },
+ {
+  "term": "Quantité produite",
+  "def": "Le nombre d'unités que la recette complète (le lot) permet de produire."
+ },
+ {
+  "term": "Réconciliation",
+  "def": "La comparaison, à l'échelle de l'entreprise, du réel (comptabilité) et du théorique (modèle de recettes)."
+ },
+ {
+  "term": "Réel",
+  "def": "Les chiffres de votre comptabilité pour la période, saisis dans l'État des résultats."
+ },
+ {
+  "term": "Rendement",
+  "def": "La part d'un ingrédient qui reste après la transformation (épluchage, parage, cuisson). Un rendement de 80 % exige d'acheter 25 % de plus."
+ },
+ {
+  "term": "SKU",
+  "def": "Stock keeping unit : le numéro de référence d'un format, déduit du produit et du format, modifiable."
+ },
+ {
+  "term": "Sous-recette",
+  "def": "Une recette de base (sauce, bouillon, garniture) utilisée comme ingrédient dans d'autres recettes. N'apporte que son coût direct."
+ },
+ {
+  "term": "Sous-traitance",
+  "def": "Une opération de fabrication confiée à un tiers. C'est une charge directe."
+ },
+ {
+  "term": "Taux d'utilisation",
+  "def": "Les heures de production réellement nécessaires divisées par les heures productives payées. Un taux bas signale de la capacité inutilisée."
+ },
+ {
+  "term": "Taux de perte",
+  "def": "La part d'un ingrédient ou d'un emballage qui se perd avant la production (péremption, casse, déclassement)."
+ },
+ {
+  "term": "Taux de rejet",
+  "def": "La part des produits finis retirés après la production (contrôle qualité). Distinct d'une perte de procédé."
+ },
+ {
+  "term": "Temps productif (%)",
+  "def": "La part des heures travaillées qu'un employé est censé consacrer à la production."
+ },
+ {
+  "term": "Tendance",
+  "def": "La variation d'un prix entre son premier et son dernier relevé."
+ },
+ {
+  "term": "Théorique",
+  "def": "Les chiffres que prévoit le modèle de recettes, à partir de vos fiches, prix et volumes."
+ },
+ {
+  "term": "Vieillissement",
+  "def": "Le coût de portage d'un produit qui doit mûrir avant d'être vendu : charges directes × taux annuel ÷ 12 × durée en mois. Réduit la marge nette, pas la marge brute."
+ },
+ {
+  "term": "Volatilité",
+  "def": "À quel point le prix d'un ingrédient ou d'un emballage varie d'un relevé à l'autre."
+ },
+ {
+  "term": "Volume",
+  "def": "Le nombre d'unités vendues dans un canal pendant la période de référence."
+ }
+]

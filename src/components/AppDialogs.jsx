@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { CheckCircle, AlertTriangle, Info, X, FilePlus, FolderOpen, FileText, PlayCircle } from 'lucide-react';
-import { useEscapeKey } from '../ui-utils.jsx';
 
 // Composant de notification (Version améliorée avec option Annuler)
 export const Notification = ({ message, type, onClose, onUndo }) => {
@@ -79,73 +78,6 @@ export const WelcomeModal = ({ onNew, onOpen, onExample, onTour }) => {
                         </div>
                     </button>
                 )}
-            </div>
-        </div>
-    );
-};
-
-// --- NOUVEAU: MODAL POUR LES OPTIONS PDF ---
-export const PdfOptionsModal = ({ isOpen, onClose, onConfirm, initialData }) => {
-    useEscapeKey(isOpen, onClose);
-    const [title, setTitle] = useState('');
-    const [subtitle, setSubtitle] = useState('');
-
-    useEffect(() => {
-        if (isOpen && initialData) {
-            setTitle(initialData.title);
-            setSubtitle(initialData.subtitle);
-        }
-    }, [isOpen, initialData]);
-
-    if (!isOpen) return null;
-
-    const handleConfirm = () => {
-        onConfirm({ title, subtitle });
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-            <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Options du Rapport PDF</h3>
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="pdfTitle" className="block text-sm font-medium text-gray-700">Titre du rapport</label>
-                        <input
-                            type="text"
-                            id="pdfTitle"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="mt-1 w-full p-2 border rounded-md border-gray-300"
-                            autoFocus
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="pdfSubtitle" className="block text-sm font-medium text-gray-700">Présenté à</label>
-                        <input
-                            type="text"
-                            id="pdfSubtitle"
-                            value={subtitle}
-                            onChange={(e) => setSubtitle(e.target.value)}
-                            className="mt-1 w-full p-2 border rounded-md border-gray-300"
-                        />
-                    </div>
-                </div>
-                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                    <button
-                        type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-xs font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-xs"
-                        onClick={handleConfirm}
-                    >
-                        Générer le PDF
-                    </button>
-                    <button
-                        type="button"
-                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm"
-                        onClick={onClose}
-                    >
-                        Annuler
-                    </button>
-                </div>
             </div>
         </div>
     );

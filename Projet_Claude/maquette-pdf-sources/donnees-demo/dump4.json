@@ -1,0 +1,185 @@
+{
+ "cls": {
+  "Bœuf haché mi-maigre": "A",
+  "Poitrine de poulet désossée": "A",
+  "Filet de saumon surgelé IQF": "A",
+  "Crème 35 %": "A",
+  "Riz basmati": "A",
+  "Tomates broyées en conserve": "B",
+  "Prémélange gingembre-ail-soya": "B",
+  "Courge musquée en dés surgelée": "B",
+  "Haricots rouges en conserve": "B",
+  "Brocoli en bouquets surgelé": "B",
+  "Épices et assaisonnements maison": "C",
+  "Pommes de terre en flocons": "C",
+  "Maïs en grains surgelé": "C",
+  "Beurre non salé": "C",
+  "Carottes en dés surgelées": "C",
+  "Petits pois surgelés": "C",
+  "Oignon jaune haché": "C",
+  "Farine tout usage": "C"
+ },
+ "abcKeys": [
+  "A",
+  "B",
+  "C",
+  "totals"
+ ],
+ "sample": {
+  "name": "Bœuf haché mi-maigre",
+  "value": 5280.99,
+  "percent": 27.78873941053247
+ },
+ "pk": [
+  {
+   "n": "Barquette operable 340 ml",
+   "p": "Emballages Boréal",
+   "pr": 84,
+   "f": 200,
+   "u": "unité",
+   "l": 1,
+   "up": 0.42
+  },
+  {
+   "n": "Barquette operable 900 ml (familiale)",
+   "p": "Emballages Boréal",
+   "pr": 102,
+   "f": 150,
+   "u": "unité",
+   "l": 1,
+   "up": 0.68
+  },
+  {
+   "n": "Pellicule scellante operable",
+   "p": "Emballages Boréal",
+   "pr": 40,
+   "f": 500,
+   "u": "unité",
+   "l": 2,
+   "up": 0.08
+  },
+  {
+   "n": "Manchon de carton imprimé",
+   "p": "Cartons Pro-Nord",
+   "pr": 55,
+   "f": 100,
+   "u": "unité",
+   "l": 1,
+   "up": 0.55
+  },
+  {
+   "n": "Étiquette nutritionnelle / code-barres",
+   "p": "Impression Boréale",
+   "pr": 70,
+   "f": 1000,
+   "u": "unité",
+   "l": 2,
+   "up": 0.07
+  },
+  {
+   "n": "Sac sous-vide pour soupe 750 ml",
+   "p": "Emballages Boréal",
+   "pr": 90,
+   "f": 300,
+   "u": "unité",
+   "l": 1,
+   "up": 0.3
+  },
+  {
+   "n": "Pot de verre 500 ml",
+   "p": "Emballages Boréal",
+   "pr": 26.4,
+   "f": 24,
+   "u": "unité",
+   "l": 2,
+   "up": 1.1
+  },
+  {
+   "n": "Couvercle twist-off 70 mm",
+   "p": "Emballages Boréal",
+   "pr": 14,
+   "f": 100,
+   "u": "unité",
+   "l": 1,
+   "up": 0.14
+  }
+ ],
+ "labor": [
+  {
+   "post": "Responsable de production",
+   "emps": [
+    {
+     "n": "Mireille",
+     "r": 32,
+     "c": 16,
+     "v": 6,
+     "h": 20
+    }
+   ]
+  },
+  {
+   "post": "Cuisinier de production",
+   "emps": [
+    {
+     "n": "Hugo",
+     "r": 22,
+     "c": 16,
+     "v": 4,
+     "h": 96
+    },
+    {
+     "n": "Félix",
+     "r": 22,
+     "c": 16,
+     "v": 4,
+     "h": 96
+    },
+    {
+     "n": "Sarah",
+     "r": 21,
+     "c": 16,
+     "v": 4,
+     "h": 86
+    }
+   ]
+  },
+  {
+   "post": "Opérateur d'emballage",
+   "emps": [
+    {
+     "n": "Chantal",
+     "r": 19,
+     "c": 16,
+     "v": 4,
+     "h": 42
+    },
+    {
+     "n": "Nadia",
+     "r": 19,
+     "c": 16,
+     "v": 4,
+     "h": 42
+    },
+    {
+     "n": "Patrick",
+     "r": 18,
+     "c": 16,
+     "v": 4,
+     "h": 40
+    }
+   ]
+  },
+  {
+   "post": "Contrôleur qualité",
+   "emps": [
+    {
+     "n": "David",
+     "r": 24,
+     "c": 16,
+     "v": 4,
+     "h": 7
+    }
+   ]
+  }
+ ]
+}

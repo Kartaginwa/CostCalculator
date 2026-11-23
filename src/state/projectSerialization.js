@@ -5,6 +5,7 @@
 // effets de bord (Blob/download, FileReader, setters d'état).
 
 import { buildDefaultFormat, stripFormatOwnedFields } from './initialState.js';
+import { normalizeReportOptions } from './reportOptions.js';
 import { todayLocalISO, EXPENSE_CATEGORIES, sumLineAmounts, parseLocaleNumber } from '../utils.js';
 
 // Un contenant ('general' ou l'id d'une activité) revalidé contre les activités réellement
@@ -59,6 +60,8 @@ export function parseProjectData(data, emptyState) {
     generalInfo.totalIndirects = sumLineAmounts(expenseLinesRaw);
 
     const uiSettings = { ...emptyState.uiSettings, ...data.uiSettings };
+    // Options d'export du rapport PDF (phase 6, 22/11) : un projet antérieur n'en a pas (valeurs par défaut) ; celles d'un fichier sont toujours revalidées.
+    uiSettings.reportOptions = normalizeReportOptions(uiSettings.reportOptions);
 
     const trackingPoints = (data.trackingPoints || []).map(point => ({
         ...point,

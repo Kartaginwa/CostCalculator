@@ -1,4 +1,4 @@
-import { fromApp } from '../guideFormat.js';
+import { fromApp, pct } from '../guideFormat.js';
 import { DEMO, DEMO_RAPPORT } from '../guideNumbers.js';
 
 // Partie 3 — Lire vos résultats et décider (onglet Rapport et suivi).
@@ -8,6 +8,8 @@ const d = fromApp;
 const S = DEMO_RAPPORT.bySkuDetail;
 const A = DEMO_RAPPORT.activites;
 const C = DEMO_RAPPORT.canaux;
+// Les trois ratios de coûts et la marge brute de la Vue d'ensemble (valeurs lues à l'écran) : leur somme est calculée, jamais recopiée.
+const APERCU_SOMME = [DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute].reduce((total, v) => total + parseFloat(v), 0);
 
 export const partie3 = {
     id: 'guide-partie-3',
@@ -26,7 +28,7 @@ export const partie3 = {
                         ['{{Vue d\'ensemble}}', 'Comment va mon entreprise, et mes résultats réels suivent-ils mon modèle ?'],
                         ['{{Portefeuille}}', 'Quels produits sont stratégiques, lesquels rapportent le plus, où perd-on ?'],
                         ['{{Par SKU}}', 'Comment un produit se comporte-t-il dans chacun de ses canaux ?'],
-                        ['{{Par Activité}}', 'Quelle ligne de production est rentable ?'],
+                        ['{{Par Activité}}', 'Quelle activité de production est rentable ?'],
                         ['{{Par Canal}}', 'Quel circuit de vente est rentable ?'],
                         ['{{Ingrédients}} et {{Emballages}}', 'Où va mon argent d\'achat, combien dois-je acheter, quels prix bougent ?'],
                         ['{{Main-d\'œuvre}}', 'Mon équipe est-elle bien utilisée, et où part son temps ?'],
@@ -34,29 +36,40 @@ export const partie3 = {
                     ],
                 },
                 { type: 'h', id: 'guide-rapport-verifications', text: 'Le panneau « points à vérifier »' },
-                { type: 'p', text: 'Un rapport n\'est fiable que si les données dont il dépend sont complètes. Quand l\'application repère un problème qui fausse les résultats, un bandeau ambre apparaît en haut de l\'onglet ; il disparaît quand tout est cohérent. Cliquez dessus pour le déplier : chaque point comporte un lien {{Corriger dans…}} qui vous amène à l\'onglet concerné.' },
+                { type: 'p', text: `Un rapport n'est fiable que si les données dont il dépend sont complètes et cohérentes. Quand l'application repère un problème qui fausse les résultats, un bandeau ambre apparaît en haut de l'onglet ; il disparaît quand tout est cohérent. Cliquez dessus pour le déplier : chaque point comporte un lien {{Corriger dans…}} qui vous amène à l'onglet concerné. Les points se rangent en trois familles.` },
+                { type: 'h', id: 'guide-verif-manquantes', text: 'Des données manquantes', level: 5 },
                 {
                     type: 'ul', items: [
-                        'Des **produits sans nom**.',
-                        'Des **formats actifs sans prix de vente** : leurs marges ne peuvent pas être calculées.',
-                        'Un **répartition des ventes** qui ne totalise pas 100 % (ou qui n\'est pas renseigné) : les moyennes pondérées sont faussées.',
-                        'Des **ingrédients ou des emballages sans prix d\'achat**.',
-                        'Des **prix non mis à jour depuis plus de 30 jours**.',
-                        'Des **lignes de recette orphelines** : un ingrédient, un emballage ou une sous-recette supprimé alors qu\'une recette l\'utilisait encore. La ligne est comptée à 0 $, ce qui fait baisser le coût sans bruit.',
-                        'Une **unité d\'une autre famille** que celle de l\'ingrédient (des grammes pour un ingrédient acheté au litre) : l\'application suppose alors une densité de 1.',
-                        'Un **pourcentage de perte de 100 % ou plus**, ignoré dans le calcul.',
-                        'Un format **rattaché deux fois au même canal**, ou à un canal supprimé, et un produit lié à une **activité qui n\'existe plus**.',
-                        'Une **quantité de format nulle**, remplacée par 1 dans certains calculs.',
-                        'Un format **sans quantité produite par lot** (le coût du lot entier serait attribué à une seule portion), ou une **quantité négative** dans une recette.',
-                        'Une **boucle de sous-recettes** (A utilise B qui utilise A) : le coût de ces recettes n\'est pas défini.',
-                        'Un format **vendu à un prix net de 0 $** (compté comme offert, à confirmer) ou **sans aucun volume vendu** (aucun frais fixe ne lui est réparti : son coût complet est incomplet).',
-                        'Des **points de référence anciens**, enregistrés sans le détail par canal : leur point mort est approximatif.',
-                        'Des **frais fixes non répartis**, ou répartis en trop.',
+                        `Des **produits sans nom**.`,
+                        `Des **formats actifs sans prix de vente** : leurs marges ne peuvent pas être calculées.`,
+                        `Des **ingrédients ou des emballages sans prix d'achat**.`,
+                        `Des **prix non mis à jour depuis plus de 30 jours**.`,
+                        `Un format **sans quantité produite par lot** (le coût du lot entier serait attribué à une seule portion), ou une **quantité négative** dans une recette.`,
+                        `Une **quantité de format nulle**, remplacée par 1 dans certains calculs.`,
+                        `Un format **vendu à un prix net de 0 $** (compté comme offert, à confirmer) ou **sans aucun volume vendu** (aucun frais fixe ne lui est réparti : son coût complet est incomplet).`,
+                    ],
+                },
+                { type: 'h', id: 'guide-verif-coherence', text: 'Des références cassées ou incohérentes', level: 5 },
+                {
+                    type: 'ul', items: [
+                        `Des **lignes de recette orphelines** : un ingrédient, un emballage ou une sous-recette supprimé alors qu'une recette l'utilisait encore. La ligne est comptée à 0 $, ce qui fait baisser le coût sans bruit.`,
+                        `Une **unité d'une autre famille** que celle de l'ingrédient (des grammes pour un ingrédient acheté au litre) : l'application suppose alors une densité de 1.`,
+                        `Un **pourcentage de perte de 100 % ou plus**, ignoré dans le calcul.`,
+                        `Un format **rattaché deux fois au même canal**, ou à un canal supprimé, et un produit lié à une **activité qui n'existe plus**.`,
+                        `Une **boucle de sous-recettes** (A utilise B qui utilise A) : le coût de ces recettes n'est pas défini.`,
+                    ],
+                },
+                { type: 'h', id: 'guide-verif-prudence', text: 'Des résultats à lire avec prudence', level: 5 },
+                {
+                    type: 'ul', items: [
+                        `Une **répartition des ventes** qui ne totalise pas 100 % (ou qui n'est pas renseignée) : les moyennes pondérées sont faussées.`,
+                        `Des **points de référence anciens**, enregistrés sans le détail par canal : leur point mort est approximatif.`,
+                        `Des **frais fixes non répartis**, ou répartis en trop.`,
                     ],
                 },
                 { type: 'p', text: 'Pour éviter ces erreurs à la source, l\'application demande une confirmation avant de supprimer un ingrédient, un emballage ou une sous-recette utilisé ailleurs, déplace les produits d\'une activité supprimée vers une autre, retire d\'un canal supprimé ses prix et ses volumes, et ne propose plus un canal déjà utilisé par le même format. Une copie de produit ou de format repart sans volumes de vente, pour ne pas compter les ventes deux fois.' },
                 { type: 'callout', kind: 'astuce', text: 'Prenez l\'habitude d\'ouvrir cet onglet par le panneau : s\'il est présent, corrigez avant d\'interpréter quoi que ce soit.' },
-                { type: 'callout', kind: 'retenir', text: 'Six sous-onglets, six questions. Un bandeau ambre signale les données à corriger avant de se fier aux chiffres.' },
+                { type: 'callout', kind: 'retenir', text: 'Neuf sous-onglets, quatre idées : le portrait de l\'entreprise, vos produits, vos achats et votre équipe, vos « et si ». Un bandeau ambre signale les données à corriger avant de se fier aux chiffres.' },
             ],
         },
 
@@ -78,7 +91,7 @@ export const partie3 = {
                     ],
                 },
                 { type: 'p', text: 'Les trois premières tuiles affichent un voyant de comparaison à vos objectifs (coche verte ou triangle rouge). Ces moyennes sont **pondérées par le revenu** de chaque produit : un produit qui génère beaucoup de ventes pèse davantage (voir [[guide-concept-mix|chapitre 9]]). Elles reposent sur la vue « tous canaux » de chaque produit : le prix net de chaque canal, pondéré par son volume.' },
-                { type: 'callout', kind: 'astuce', text: `Les trois ratios de coûts et la marge brute ne totalisent pas tout à fait 100 % : ici ${d(DEMO.apercu.coutMatiere)} + ${d(DEMO.apercu.coutEmballage)} + ${d(DEMO.apercu.coutMO)} + ${d(DEMO.apercu.margeBrute)} = 98,08 %. La différence de 1,92 % est la part de la sous-traitance, un coût direct qui n'a pas sa propre tuile.` },
+                { type: 'callout', kind: 'astuce', text: `Les trois ratios de coûts et la marge brute ne totalisent pas tout à fait 100 % : ici ${d(DEMO.apercu.coutMatiere)} + ${d(DEMO.apercu.coutEmballage)} + ${d(DEMO.apercu.coutMO)} + ${d(DEMO.apercu.margeBrute)} = ${pct(APERCU_SOMME, 2, false)}. La différence de ${pct(100 - APERCU_SOMME, 2, false)} est la part de la sous-traitance, un coût direct qui n'a pas sa propre tuile.` },
                 { type: 'callout', kind: 'attention', text: 'Le point mort des produits actifs est un chiffre d\'affaires (en dollars), pas un nombre d\'unités : des produits très différents n\'ont pas d\'unité commune. Comparez-le à votre chiffre d\'affaires réel de la période : s\'il lui est supérieur, vous perdez de l\'argent en moyenne.' },
                 { type: 'p', text: 'La {{Marge de sécurité}} répond à une question simple : **de combien mes ventes peuvent-elles baisser avant que je perde de l\'argent ?** À 20 %, vos ventes prévues peuvent reculer d\'un cinquième avant d\'atteindre le point mort. Une marge négative signifie que les ventes prévues sont déjà sous le point mort.' },
                 { type: 'callout', kind: 'pourquoi', text: 'C\'est l\'indicateur à consulter avant de vous engager dans une dépense fixe (loyer, équipement, embauche) : plus la marge de sécurité est mince, moins vous avez de place pour une mauvaise surprise. Le point mort donne la cible en dollars ; la marge de sécurité dit à quelle distance vous en êtes.' },
@@ -86,17 +99,17 @@ export const partie3 = {
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ventes prévues de ${d(DEMO.etat.revenusTheorique)}, point mort de ${d(DEMO.apercu.pointMortMenu)} : la marge de sécurité est de ${d(DEMO.apercu.margeSecurite)}.` },
 
                 { type: 'h', id: 'guide-rapport-constats', text: 'Constats clés' },
-                { type: 'p', text: 'Sous les tuiles, les {{Constats clés}} disent ce que vos chiffres révèlent de votre entreprise, en **forces** (ce qui va bien) et en **faiblesses** (ce qui mérite votre attention). Ils ne viennent pas d\'une intelligence artificielle : ce sont des règles fixes, appliquées à vos données, avec un chiffre et un lien vers l\'endroit où agir. Cinq constats au plus s\'affichent par colonne, les plus importants d\'abord ; {{Voir tous les constats}} ouvre une fenêtre qui les montre tous, regroupés par thème.' },
+                { type: 'p', text: `Les **constats** disent ce que vos chiffres révèlent de votre entreprise, en **forces** (ce qui va bien) et en **faiblesses** (ce qui mérite votre attention). Ils ne viennent pas d'une intelligence artificielle : ce sont des règles fixes, appliquées à vos données, avec un chiffre et un lien vers l'endroit où agir. Chaque constat a une seule adresse principale, pour ne pas se répéter d'un rapport à l'autre : la Vue d'ensemble porte l'entreprise dans son ensemble, en trois blocs placés chacun sous le rapport qu'il commente, et chaque autre sous-onglet (sauf Simulation) se termine par un bandeau avec ses propres constats. Tous ont la même forme : deux colonnes, le positif à gauche, le négatif à droite.` },
                 {
                     type: 'ul', items: [
-                        { label: 'Rentabilité et coûts.', text: 'La marge de sécurité, le bénéfice net prévu, les coûts comparés à vos cibles, et les produits qui dépassent la cible de coût matière.' },
-                        { label: 'Produits, canaux et activités.', text: 'Les produits qui perdent de l\'argent dans un canal, ceux qui sont rentables partout, les étoiles et les poids morts, la dépendance à un canal, l\'activité déficitaire ou à très faible marge.' },
-                        { label: 'Approvisionnement.', text: 'La dépendance à un fournisseur, les ingrédients de classe A à prix volatil, la perte stock prévue.' },
-                        { label: 'Main-d\'œuvre.', text: 'La paie non utilisée, le produit qui rapporte le plus (ou le moins) à l\'heure, la marge de croissance.' },
-                        { label: 'Réel et évolution.', text: 'L\'écart entre votre résultat réel et le modèle, et la variation de la marge brute et du coût matière depuis votre premier point de référence.' },
+                        { label: 'Objectifs stratégiques (sous les tuiles).', text: `Vos cibles de coûts (matière, emballage, main-d'œuvre) : celles que vous atteignez, celles qui restent à atteindre, et les produits qui dépassent la cible de coût matière.` },
+                        { label: 'Amélioration / détérioration (sous l’évolution des marges).', text: `Ce qui change dans l'entreprise : la marge brute, la marge nette, les coûts, les revenus et le point mort, depuis votre dernier point de référence, en tendance quand la mesure va dans le même sens sur plusieurs relevés, et sur 12 mois. Ce bloc demande au moins un point de référence.` },
+                        { label: 'Forces et faiblesses (sous la matrice activité × canal).', text: `Les constats de gravité majeure : la marge de sécurité et le bénéfice net prévu, la résistance à une hausse de coûts, la paie non utilisée, l'écart entre le réel et le modèle, et les constats majeurs d'un produit, d'un canal ou d'un fournisseur. Ce sont les mêmes règles que le chapitre 1 du rapport PDF.` },
+                        { label: 'Bandeau de fin de sous-onglet.', text: `Dans Portefeuille, Par SKU, Par Activité, Par Canal, Ingrédients, Emballages et Main-d'œuvre : les constats propres à ce sous-onglet, de toutes les gravités, du plus grave au moins grave. Les constats généraux de gravité moyenne ou mineure qui ne renvoient à aucun sous-onglet (la part des frais fixes, par exemple) ne figurent que dans le rapport PDF. Dans Par SKU, le bandeau suit le SKU choisi.` },
                     ],
                 },
-                { type: 'callout', kind: 'attention', text: 'Un constat n\'apparaît que si la donnée existe : sans cible saisie dans Paramètres, aucun constat sur les cibles ; sans chiffres réels dans l\'État des résultats, aucun constat sur l\'écart réel / théorique ; sans au moins deux points de référence, aucun constat sur l\'évolution. Les problèmes de données (un produit sans prix, par exemple) ne sont pas des constats : ils restent dans le panneau « points à vérifier ».' },
+                { type: 'p', text: `Chaque colonne affiche les trois constats les plus importants ; le lien {{Voir tout}}, suivi du nombre de constats, ouvre une fenêtre qui les montre tous, regroupés par thème. Le classement tient d'abord à la gravité de la décision : la survie de l'entreprise (le point mort, une perte) passe avant les moteurs de profit, puis l'efficacité ; à gravité égale, les dollars en jeu départagent. Les seuils qui déclenchent un constat (un fournisseur à 30 % des achats ou plus, une marge de sécurité sous 10 %, par exemple) sont des repères de gestion courants, pas des normes : jugez-les selon votre réalité.` },
+                { type: 'callout', kind: 'attention', text: `Un constat n'apparaît que si la donnée existe : sans cible saisie dans Paramètres, aucun constat sur les cibles (le bloc vous invite à les saisir) ; sans chiffres réels dans l'État des résultats, aucun constat sur l'écart entre le réel et le modèle ; sans point de référence, aucun constat sur l'évolution. Les problèmes de données (un produit sans prix, par exemple) ne sont pas des constats : ils restent dans le panneau « points à vérifier ».` },
                 { type: 'callout', kind: 'exemple', text: 'Dans le projet démo, le Sauté de poulet thaï (350 g), rentable dans ses trois canaux, est une force, alors que la dépendance aux Grandes surfaces (58 % des revenus, 15 % du bénéfice net) est une faiblesse.' },
                 { type: 'callout', kind: 'retenir', text: 'Une force et une faiblesse peuvent concerner le même produit sans se contredire : le Pâté chinois (340 g) rapporte beaucoup à l\'heure de main-d\'œuvre (force), mais c\'est aussi une vache à lait, très vendu pour une marge unitaire modeste (faiblesse). Ce sont deux angles différents.' },
 
@@ -131,7 +144,7 @@ export const partie3 = {
                     ],
                 },
                 { type: 'p', text: 'Lecture : le réel dépasse légèrement le théorique pour les revenus (+0,4 %), mais les charges directes réelles dépassent aussi celles du modèle (+5,8 %) : le bénéfice net réel (4 000,00 $) est inférieur de 36,5 % à celui du modèle (6 299,48 $). Un écart de charges directes de cet ordre signale en général des coûts que les recettes ne voient pas (rebuts, gaspillage, prix d\'achat plus élevés que ceux saisis). Regardez d\'abord les écarts en dollars : le pourcentage du bénéfice net est amplifié parce que ce bénéfice est une petite différence entre de grands montants.' },
-                { type: 'p', text: 'La comparaison se fait toujours à l\'échelle de l\'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Bénéfice brut = revenus moins charges directes ; bénéfice net = bénéfice brut moins le total des frais fixes (sous-total du tableau des dépenses). Ce total est soustrait identiquement du réel et du théorique : l\'écart entre les deux colonnes vient donc du bénéfice brut, auquel s\'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n\'existe pas dans les charges directes réelles).' },
+                { type: 'p', text: `La comparaison se fait toujours à l'échelle de l'entreprise, jamais par activité ou par canal, parce que le détail serait en partie circulaire. Le total des frais fixes étant soustrait identiquement des deux côtés, l'écart du bénéfice net vient du bénéfice brut, auquel s'ajoute seulement, côté théorique, le coût de vieillissement de vos produits (une charge financière qui n'existe pas dans les charges directes réelles).` },
 
                 { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : les tuiles (santé générale), l\'évolution (la tendance), la matrice Activité × Canal (où l\'on perd), puis la réconciliation (le modèle reflète-t-il la réalité ?). Pour l\'analyse produit par produit, passez au {{Portefeuille}}.' },
                 { type: 'words', items: [
@@ -195,7 +208,7 @@ export const partie3 = {
                     type: 'table', head: ['Section', 'Ce qu\'elle montre'], wrapCells: true, rows: [
                         ['{{PDS et frais de mise en marché}}', 'Le prix de détail suggéré, puis la part prélevée par chaque maillon du canal, en dollars, et le total des frais de mise en marché par unité.'],
                         ['{{Marge brute}}', 'Le prix de vente net, le bénéfice brut (prix moins coûts directs) et la marge brute en %.'],
-                        ['{{Répartition des charges fixes}}', 'Les frais fixes par unité, en trois parts : Général (toute l\'entreprise), Activité (la ligne de production du produit) et Canal (propre à chaque canal), puis leur total.'],
+                        ['{{Répartition des charges fixes}}', 'Les frais fixes par unité, en trois parts : Général (toute l\'entreprise), Activité (l\'activité de production du produit) et Canal (propre à chaque canal), puis leur total.'],
                         ['{{Coût net et marge nette}}', 'Le coût de revient complet par unité, le bénéfice net et la marge nette en %.'],
                         ['{{Seuil de rentabilité par canal de vente}}', 'Le revenu total du canal, les frais totaux, le bénéfice ou la perte, et le point mort en unités.'],
                     ],
@@ -287,13 +300,13 @@ export const partie3 = {
                 { type: 'p', text: 'Sous le tableau, une section {{Main-d\'œuvre}} ajoute trois lignes pour chaque activité : les **heures de main-d\'œuvre** réellement requises, leur **part** du total et le **bénéfice brut par heure**. Elle montre quelle activité rentabilise le mieux le temps de l\'équipe. Les produits de revente, qui n\'ont aucune main-d\'œuvre, sont exclus du bénéfice brut par heure.' },
                 { type: 'h', id: 'guide-activite-exemple', text: 'Lire Par Activité : le projet démo' },
                 {
-                    type: 'table', head: ['', 'Mets principaux', 'Sauces et acc.', 'Soupes et potages'], rows: [
-                        ['Revenu total', d(A.plats.revenu), d(A.sauces.revenu), d(A.soupes.revenu)],
-                        ['Coût de production', d(A.plats.cout), d(A.sauces.cout), d(A.soupes.cout)],
-                        ['Bénéfice brut (marge brute)', `${d(A.plats.brut)} (${d(A.plats.margeBrute)})`, `${d(A.sauces.brut)} (${d(A.sauces.margeBrute)})`, `${d(A.soupes.brut)} (${d(A.soupes.margeBrute)})`],
-                        ['Frais fixes', d(A.plats.fraisFixes), d(A.sauces.fraisFixes), d(A.soupes.fraisFixes)],
-                        ['Bénéfice net (marge nette)', `${d(A.plats.net)} (${d(A.plats.margeNette)})`, `${d(A.sauces.net)} (${d(A.sauces.margeNette)})`, `${d(A.soupes.net)} (${d(A.soupes.margeNette)})`],
-                        ['Point mort', d(A.plats.pointMort), d(A.sauces.pointMort), d(A.soupes.pointMort)],
+                    type: 'table', head: ['', 'Mets principaux surgelés', 'Soupes et potages', 'Sauces et accompagnements'], rows: [
+                        ['Revenu total', d(A.plats.revenu), d(A.soupes.revenu), d(A.sauces.revenu)],
+                        ['Coût de production', d(A.plats.cout), d(A.soupes.cout), d(A.sauces.cout)],
+                        ['Bénéfice brut (marge brute)', `${d(A.plats.brut)} (${d(A.plats.margeBrute)})`, `${d(A.soupes.brut)} (${d(A.soupes.margeBrute)})`, `${d(A.sauces.brut)} (${d(A.sauces.margeBrute)})`],
+                        ['Frais fixes', d(A.plats.fraisFixes), d(A.soupes.fraisFixes), d(A.sauces.fraisFixes)],
+                        ['Bénéfice net (marge nette)', `${d(A.plats.net)} (${d(A.plats.margeNette)})`, `${d(A.soupes.net)} (${d(A.soupes.margeNette)})`, `${d(A.sauces.net)} (${d(A.sauces.margeNette)})`],
+                        ['Point mort', d(A.plats.pointMort), d(A.soupes.pointMort), d(A.sauces.pointMort)],
                     ],
                 },
                 { type: 'p', text: 'Les trois activités sont rentables, mais pas autant : les mets principaux surgelés ont une marge nette de 11,01 % et portent l\'entreprise, les soupes et potages de 4,89 % et les sauces et accompagnements de 1,35 % seulement. Ces deux dernières ont une marge brute semblable (autour de 40 %), mais leurs frais fixes (7 580,81 $ et 4 734,65 $) en absorbent presque tout. Leur point mort (19 453,51 $ et 12 040,16 $) est proche de leur chiffre d\'affaires réel (20 829,93 $ et 12 447,00 $) : la moindre baisse de volume ou de prix les ferait passer sous le seuil de rentabilité.' },
@@ -306,8 +319,8 @@ export const partie3 = {
                         ['Point mort', d(C.directe.pointMort), d(C.epiceries.pointMort), d(C.grandes.pointMort)],
                     ],
                 },
-                { type: 'p', text: 'Les grandes surfaces représentent près de 60 % du chiffre d\'affaires des produits actifs, mais ne dégagent qu\'une marge nette de 1,98 % (915,81 $). La vente directe, la plus petite, est la plus rentable (marge nette de 26,76 %). Remarquez que la somme des bénéfices nets des canaux (3 448,69 $ + 1 934,99 $ + 915,81 $) est de 6 299,49 $, soit, à un cent d\'arrondi près, le bénéfice net théorique de la réconciliation (6 299,48 $) : c\'est le bénéfice net théorique de la réconciliation. Les trois rapports (par SKU, par activité, par canal) se recoupent exactement.' },
-                { type: 'callout', kind: 'pourquoi', text: 'Ces deux rapports transforment des dizaines de produits en quelques lignes lisibles, celles sur lesquelles on peut agir : revoir le prix d\'une ligne de production, renégocier un canal, ou décider d\'en abandonner un.' },
+                { type: 'p', text: 'Les grandes surfaces représentent près de 60 % du chiffre d\'affaires des produits actifs, mais ne dégagent qu\'une marge nette de 1,98 % (915,81 $). La vente directe, la plus petite, est la plus rentable (marge nette de 26,76 %). Remarquez que la somme des bénéfices nets des canaux (3 448,69 $ + 1 934,99 $ + 915,81 $) est de 6 299,49 $, soit, à un cent d\'arrondi près, le bénéfice net théorique de la réconciliation (6 299,48 $). Les trois rapports (par SKU, par activité, par canal) se recoupent.' },
+                { type: 'callout', kind: 'pourquoi', text: 'Ces deux rapports transforment des dizaines de produits en quelques lignes lisibles, celles sur lesquelles on peut agir : revoir le prix d\'une activité, renégocier un canal, ou décider d\'en abandonner un.' },
                 { type: 'callout', kind: 'retenir', text: 'Par Activité et Par Canal additionnent vos produits en segments. Comparez la marge nette des segments : ceux qui perdent de l\'argent sont vos priorités.' },
             ],
         },
@@ -320,7 +333,7 @@ export const partie3 = {
                 { type: 'callout', kind: 'pourquoi', text: 'Les sous-onglets {{Ingrédients}} et {{Emballages}} ont le même gabarit, et ils restent séparés : l\'emballage n\'est jamais fusionné avec la matière. Chacun répond à trois questions : où va l\'argent (analyse ABC), combien faut-il acheter (rapport d\'achats et perte stock), et les prix bougent-ils (évolution et volatilité).' },
                 { type: 'h', id: 'guide-ing-abc', text: 'L\'analyse ABC des ingrédients' },
                 { type: 'p', text: 'L\'analyse ABC classe vos ingrédients par importance financière (voir [[guide-concept-suivi|chapitre 11]] pour la méthode). Trois cartes présentent les catégories A, B et C, avec la part de chaque ingrédient dans le coût total consommé. Un badge {{volatile}} s\'ajoute aux ingrédients dont le prix bouge beaucoup (il faut au moins deux points de référence pour qu\'il apparaisse).' },
-                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la catégorie A compte quatre ingrédients (bœuf haché, poitrine de poulet, filet de saumon et riz basmati) pour ${d(DEMO.ingredients.abcA)} du coût total. Les trois premiers n'atteignent que 64,8 % : le riz basmati, qui franchit la barre des 70 %, est inclus dans la catégorie A.` },
+                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la catégorie A compte cinq ingrédients (bœuf haché, poitrine de poulet, filet de saumon, crème 35 % et riz basmati) pour ${d(DEMO.ingredients.abcA)} du coût total. Les quatre premiers n'atteignent que 68,6 % : le riz basmati, qui franchit la barre des 70 %, est inclus dans la catégorie A.` },
                 { type: 'p', text: 'L\'analyse porte uniquement sur les ingrédients **réellement consommés** par vos produits actifs, compte tenu des volumes vendus : un ingrédient qui ne sert à aucune recette n\'y figure pas.' },
 
                 { type: 'h', id: 'guide-ing-rapport-achats', text: 'Le rapport d\'achats et perte stock' },
@@ -353,7 +366,7 @@ export const partie3 = {
                 { type: 'callout', kind: 'attention', text: 'Ce rapport n\'est aussi juste que vos volumes : si vous n\'avez saisi aucun volume de vente dans Produits et SKUs, il n\'a rien à calculer et affiche des zéros.' },
 
                 { type: 'h', id: 'guide-emb-abc', text: 'Emballages : analyse ABC et rapport d\'achats' },
-                { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et perte stock existent aussi pour l\'emballage, dans le sous-onglet {{Emballages}}, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 71,5 % des coûts.' },
+                { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et perte stock existent aussi pour l\'emballage, dans le sous-onglet {{Emballages}}, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 77,3 % des coûts.' },
 
                 { type: 'h', id: 'guide-rapport-prix', text: 'Évolution des prix et volatilité' },
                 { type: 'p', text: 'Chacun de ces sous-onglets suit aussi le prix de vos ingrédients (ou de vos emballages) dans le temps, d\'un point de référence à l\'autre. Il se compose de deux éléments :' },
@@ -399,7 +412,7 @@ export const partie3 = {
                 },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 92,21 %, l'« Opérateur d'emballage » à 89,88 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
                 { type: 'callout', kind: 'pourquoi', text: 'Un taux d\'utilisation bas signale de la capacité payée et inutilisée : trop de personnel pour le volume vendu, des recettes qui ne reflètent pas le travail réel, ou des ventes qui n\'ont pas encore été saisies. C\'est un levier de rentabilité majeur, car **ce coût est réparti sur tous vos produits** (voir [[guide-concept-capacite|chapitre 10]]).' },
-                { type: 'callout', kind: 'attention', text: 'Une personne présente dans cet onglet mais affectée à aucune étape, comme le responsable de production du démo, fait baisser le taux d\'utilisation global. Son coût n\'est pas perdu : il est réparti sur toutes les recettes sous forme de coût indirect de main-d\'œuvre. Si cette personne ne fait pas de production, mieux vaut la retirer de l\'onglet et la saisir dans les frais fixes.' },
+                { type: 'callout', kind: 'attention', text: 'Une personne présente dans l\'onglet Main-d\'œuvre mais affectée à aucune étape (un poste de supervision, par exemple) fait baisser le taux d\'utilisation global. Son coût n\'est pas perdu : il est réparti sur toutes les recettes sous forme de coût indirect de main-d\'œuvre. Si cette personne ne fait aucune production, saisissez plutôt sa paie dans les frais fixes.' },
 
                 { type: 'h', id: 'guide-mo-paie-inutilisee', text: 'La paie non utilisée' },
                 { type: 'p', text: 'Sous le tableau, la {{Paie non utilisée}} chiffre en dollars ce que le taux d\'utilisation exprime en pourcentage : la paie versée pour des heures qui ne servent pas à produire, c\'est-à-dire le temps non productif prévu et la capacité productive inutilisée. Cette somme n\'est pas perdue : elle est absorbée dans le coût de revient de vos produits.' },
@@ -407,7 +420,7 @@ export const partie3 = {
 
                 { type: 'h', id: 'guide-mo-croissance', text: 'La marge de croissance' },
                 { type: 'p', text: 'La {{Marge de croissance}} estime ce que l\'équipe actuelle pourrait produire de plus sans embauche : les **heures productives libres** des postes de production, multipliées par le revenu (et par le bénéfice brut) moyen d\'une heure de production : le revenu des produits fabriqués divisé par toutes les heures de l\'équipe, sous-recettes comprises. Elle donne un ordre de grandeur pour décider s\'il vaut la peine de chercher des clients avant d\'embaucher. Ces heures libres sont inférieures à la différence totale du rapport de productivité : on en retire les heures des postes dont aucune recette ne demande de temps, car ce temps ne peut pas servir à produire.' },
-                { type: 'callout', kind: 'attention', text: 'C\'est une estimation indicative. Elle suppose que le mix de produits et de canaux reste le même, que la demande existe et que les heures libres tombent au bon poste. Les postes dont aucune recette ne demande d\'heures (comme le responsable de production du démo) et les produits de revente en sont exclus.' },
+                { type: 'callout', kind: 'attention', text: 'C\'est une estimation indicative. Elle suppose que le mix de produits et de canaux reste le même, que la demande existe et que les heures libres tombent au bon poste. Les postes dont aucune recette ne demande d\'heures (un poste de supervision, par exemple) et les produits de revente en sont exclus.' },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ${d(DEMO.mo.heuresLibres)} productives libres, à ${d(DEMO.mo.revenuHeure)} de revenu et ${d(DEMO.mo.beneficeHeure)} de bénéfice brut par heure : environ 6 500 $ de ventes et 2 800 $ de bénéfice brut additionnels, arrondis à la centaine.` },
 
                 { type: 'h', id: 'guide-mo-cascade', text: 'Utilisation de la masse salariale' },
@@ -424,7 +437,7 @@ export const partie3 = {
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo : ${d(DEMO.mo.coutHeureReel)} contre ${d(DEMO.mo.tauxMoyen)} de taux moyen chargé, soit environ 25 % de plus.` },
 
                 { type: 'h', id: 'guide-mo-capacite', text: 'Charge de travail par activité' },
-                { type: 'p', text: 'Ce deuxième tableau, nommé autrefois « Capacité de production par activité », répartit les heures de main-d\'œuvre réellement requises entre vos **activités de production**, et indique la part de chaque activité dans le total. Il montre où part le temps de votre équipe, donc quelle ligne de production est la plus exigeante. Ce n\'est pas une capacité : le tableau ne compare pas ces heures à une quantité disponible. Il n\'y a pas de « heures attendues » par activité : un poste ou un employé n\'est pas rattaché à une seule activité, donc rien n\'est comparable.' },
+                { type: 'p', text: 'Ce deuxième tableau répartit les heures de main-d\'œuvre réellement requises entre vos **activités de production**, et indique la part de chaque activité dans le total. Il montre où part le temps de votre équipe, donc quelle activité est la plus exigeante. Ce n\'est pas une capacité : le tableau ne compare pas ces heures à une quantité disponible. Il n\'y a pas de « heures attendues » par activité : un poste ou un employé n\'est pas rattaché à une seule activité, donc rien n\'est comparable.' },
                 { type: 'p', text: 'Dans le projet démo, les mets principaux surgelés consomment 126,81 heures (36,82 % du total), les soupes et potages 210,14 heures (61,01 %), et les sauces et accompagnements 7,47 heures (2,17 %). La sauce du Terroir est un produit de revente, sans étapes de production : seule la sauce à spaghetti maison demande du temps de cuisson et de mise en pot.' },
                 {
                     type: 'ul', itemIds: ['guide-mo-cap-heures', 'guide-mo-cap-part', 'guide-mo-charge-revenu-heure', 'guide-mo-charge-benefice-heure'], items: [
@@ -508,15 +521,52 @@ export const partie3 = {
         // =====================================================================================
         {
             id: 'guide-exports',
-            title: 'Exports : PDF et Excel',
+            title: 'Exporter le rapport PDF et le classeur Excel',
             blocks: [
                 { type: 'p', text: 'Deux boutons, en haut de l\'onglet, produisent des documents que vous pouvez partager hors de l\'application. Ils ont des usages différents.' },
                 {
                     type: 'table', head: ['Export', 'Usage', 'Contenu'], wrapCells: true, rows: [
-                        ['{{Générer un rapport PDF}}', 'Présentations, archivage, partage avec des partenaires, banquiers ou investisseurs.', 'Un rapport soigné de plusieurs pages : page de garde avec le nom et le logo de l\'entreprise, tableaux de bord, analyses stratégiques, graphiques et une **fiche de coût détaillée par format**. Une fenêtre vous demande le **titre** du rapport et le destinataire ({{Présenté à}}).'],
+                        ['{{Générer un rapport PDF}}', 'Présentations, archivage, partage avec des partenaires, banquiers ou investisseurs.', 'Un rapport structuré en chapitres : synthèse de direction, résultats, produits, canaux et activités, achats, main-d\'œuvre, une **fiche détaillée par format** et des annexes. Une fenêtre vous laisse choisir les chapitres, le titre, le destinataire ({{Présenté à}}) et vos commentaires.'],
                         ['{{Exporter vers Excel}}', 'Analyses poussées, graphiques personnalisés, intégration à d\'autres systèmes.', 'Un classeur .xlsx avec les données brutes : tableau de bord, résumé, ingrédients, main-d\'œuvre, et une feuille de coût détaillée par format.'],
                     ],
                 },
+                { type: 'h', id: 'guide-export-fenetre', text: 'La fenêtre d\'export du rapport PDF' },
+                { type: 'p', text: 'Le bouton {{Générer un rapport PDF}} ouvre une fenêtre. À gauche, les huit chapitres du rapport. À droite, le détail du chapitre choisi.' },
+                {
+                    type: 'ul', items: [
+                        '**Titre** et **Présenté à** : laissez-les vides pour garder les formules d\'origine. La page de garde les reprend.',
+                        '**Chapitres** : tous sont cochés au départ. Décochez ceux que votre lecteur n\'a pas besoin de voir.',
+                        'Un chapitre sans données est grisé, avec la raison : par exemple, aucun produit actif, ou aucune paie saisie.',
+                        '**Commentaire de la direction** : un texte libre par chapitre, de 1 000 caractères au plus.',
+                        '**Salaires individuels** : une case pour les annexes, décochée au départ.',
+                    ],
+                },
+                { type: 'p', text: 'Vos choix sont enregistrés avec le projet. Vous les retrouvez à la prochaine ouverture de la fenêtre, et dans le fichier sauvegardé. Si les dates de la période ne sont pas saisies dans l\'État des résultats, la fenêtre vous prévient : la période n\'est alors pas imprimée.' },
+                { type: 'h', id: 'guide-export-contenu', text: 'Ce que contient le rapport' },
+                {
+                    type: 'table', head: ['Chapitre', 'La question à laquelle il répond'], wrapCells: true, rows: [
+                        ['1. Synthèse de direction', 'Où en est l\'entreprise : rentabilité, solidité, direction ?'],
+                        ['2. Résultats : prévu, réel et tendance', 'Combien gagne-t-on vraiment, et dans quelle direction va-t-on ?'],
+                        ['3. Produits', 'Quels produits protéger, corriger ou abandonner ?'],
+                        ['4. Canaux et activités', 'Quels circuits de vente et quelles lignes de production paient les frais fixes ?'],
+                        ['5. Approvisionnement', 'Où achète-t-on, à quel prix, avec quels risques ?'],
+                        ['6. Main-d\'œuvre', 'L\'équipe est-elle bien utilisée, et que rapporte une heure ?'],
+                        ['7. Fiches produits', 'Quel est le détail d\'un produit, canal par canal ?'],
+                        ['Annexes', 'Les listes d\'ingrédients et d\'emballages, l\'équipe (sur demande), le glossaire et les repères des constats.'],
+                    ],
+                },
+                { type: 'p', text: 'Chaque fiche produit commence sur sa propre page. Les constats clés de la synthèse renvoient à la page où le sujet est détaillé. Les graphiques sont ceux de l\'application, avec les mêmes variables.' },
+                { type: 'h', id: 'guide-export-constats', text: 'Comment les constats du rapport sont classés' },
+                { type: 'p', text: 'Chaque constat a une **gravité** : majeure, moyenne ou mineure. L\'application la déduit de ce qu\'elle calcule déjà : l\'importance de la décision, le poids de la règle et le montant en jeu, comparé aux ventes.' },
+                { type: 'p', text: 'La synthèse ne montre que les constats majeurs. Chaque chapitre montre tous les constats de son sujet, du plus grave au moins grave. Une fiche produit montre ceux de ce produit. Un même constat peut donc se lire à deux endroits.' },
+                { type: 'p', text: 'Rien dans ce rapport n\'est écrit par une intelligence artificielle. Les phrases viennent de règles fixes appliquées à vos chiffres. Les blocs « Ce que cela veut dire » suivent le même principe : un seuil, un sommet, un creux.' },
+                { type: 'h', id: 'guide-export-commentaire', text: 'Le commentaire de la direction' },
+                { type: 'p', text: 'Un chiffre sans explication laisse le lecteur deviner. Écrivez votre lecture à la fin du chapitre concerné : une cause, une décision prise, un contexte. Sans texte, rien n\'est imprimé : aucune case vide, aucun espace réservé.' },
+                { type: 'h', id: 'guide-export-salaires', text: 'Les salaires individuels' },
+                { type: 'p', text: 'L\'annexe C liste chaque employé avec son taux, ses charges et ses heures. Elle n\'est imprimée que si vous cochez la case. Sans elle, aucun nom ni aucun salaire ne figure dans le rapport.' },
+                { type: 'callout', kind: 'attention', text: 'Un rapport remis à un banquier, à un investisseur ou à un acheteur ne doit pas contenir les salaires sans que vous l\'ayez décidé. Relisez les chapitres cochés avant d\'envoyer le fichier.' },
+                { type: 'h', id: 'guide-export-enregistrer', text: 'Où va le fichier ?' },
+                { type: 'p', text: 'Dans l\'application installée, une boîte {{Enregistrer sous}} vous laisse choisir le dossier. Le rapport s\'imprime sur votre ordinateur : rien ne passe par un serveur. Dans un navigateur, la boîte d\'impression s\'ouvre : choisissez l\'enregistrement au format PDF.' },
                 { type: 'callout', kind: 'attention', text: 'Un export reflète l\'état de l\'application au moment où vous le générez. Vérifiez le panneau « points à vérifier » avant : un rapport remis à un tiers avec des données incomplètes vous engage.' },
             ],
         },
@@ -535,6 +585,9 @@ export const partie3 = {
                         ['Marge nette négative dans un seul canal', 'Maillons qui prélèvent trop ; frais propres au canal', 'Rapport → Par SKU, Par Canal ; Paramètres → Canaux de vente', 'Renégocier la marge d\'un intermédiaire ; ajuster le prix net ; retirer le produit de ce canal'],
                         ['Point mort supérieur à ce que vous pouvez vendre', 'Marge unitaire trop faible ; frais fixes trop élevés', 'Rapport → Par SKU (point mort), Vue d\'ensemble', 'Relever la marge (prix, coût) ; réduire les frais fixes ; simplifier la liste de produits'],
                         ['Taux d\'utilisation de la main-d\'œuvre bas', 'Trop de personnel pour le volume ; étapes sans personnel affecté ; ventes non saisies', 'Rapport → Main-d\'œuvre (rapport de productivité)', 'Vérifier les recettes ; réaffecter ou réduire des heures ; vendre plus avec la même équipe'],
+                        ['Marge de sécurité mince ou négative', 'Ventes prévues proches du point mort ; frais fixes ou main-d\'œuvre lourds pour le volume', 'Rapport → Vue d\'ensemble (Marge de sécurité, Constats clés) ; État des résultats', 'Augmenter le volume ou la marge ; réduire les frais fixes avant tout nouvel engagement ; tester l\'effet d\'une hausse de coûts avec la simulation'],
+                        ['Un fournisseur pèse 30 % ou plus de vos achats', 'Habitude, prix, qualité, ou absence d\'alternative', 'Rapport → Ingrédients ou Emballages (Achats par fournisseur)', 'Demander des prix à un second fournisseur ; négocier un contrat ; répartir vos achats'],
+                        ['Paie non utilisée élevée', 'Trop d\'heures payées pour le volume vendu ; ventes non saisies', 'Rapport → Main-d\'œuvre (Paie non utilisée, Marge de croissance)', 'Chercher des ventes additionnelles avant d\'embaucher ; réaffecter ou réduire des heures'],
                         ['Grand écart entre réel et théorique', 'Fiches périmées ; volumes non saisis ; classement différent des coûts', 'Rapport → Vue d\'ensemble (Réconciliation) ; État des résultats', 'Mettre à jour prix et volumes ; vérifier le double comptage de la main-d\'œuvre ; revoir les recettes'],
                         ['Ingrédient de catégorie A au prix volatil', 'Marché instable ; dépendance à un fournisseur', 'Rapport → Ingrédients (ABC, évolution des prix)', 'Contrat à prix fixe ; second fournisseur ; clause d\'indexation ; ajuster le prix de vente'],
                         ['Vache à lait (très vendu, peu rentable)', 'Prix trop bas pour son coût', 'Rapport → Portefeuille (matrice stratégique)', 'Réduire le coût ; relever légèrement le prix ; tester avec la simulation'],

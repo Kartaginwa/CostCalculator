@@ -245,7 +245,7 @@ export function generateGuidePdf(parts, { showNotification, appLogoBase64 = null
     }
 
     // --- page de couverture : même présentation que la page de garde du rapport d'analyse -------------------------
-    // (cadre, logo de l'application centré, titre, sous-titre, date) — voir generatePdf.js.
+    // (cadre, logo de l'application centré, titre, sous-titre, date) — voir src/reports/report/front.js (couverture du rapport).
     doc.setDrawColor(...COLORS.muted); doc.setLineWidth(0.5);
     doc.rect(10, 10, PAGE.w - 20, PAGE.h - 20);
     let logoY = 80;

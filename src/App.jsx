@@ -5,22 +5,25 @@ import {
     PlusCircle, Settings, Package, TrendingUp,
 } from 'lucide-react';
 
-import { todayLocalISO, parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts, loadedHourlyRate } from './utils.js';
+import { todayLocalISO, parseLocaleNumber, FORMAT_FLAT_MIRROR_FIELDS, sumLineAmounts } from './utils.js';
 import {
     computeAnalysisData, computeIndirectPools,
 } from './engine/analysisData.js';
 import { computeSalesMixFromChannelPrices } from './engine/salesMixFromChannels.js';
 import { findSubRecipeUsages, formatNameList } from './engine/usage.js';
-import { computeLaborHoursNeeded } from './engine/laborHours.js';
+import { computeCalculatedGeneralInfo } from './engine/calculatedGeneralInfo.js';
 import { clearFormatVolumes, mirrorFirstFormat } from './engine/productEdits.js';
-import { generatePdf as generatePdfReport } from './reports/generatePdf.js';
+import { prepareReportModel, runReportExport } from './reports/exportFlow.js';
+import { COVER } from './reports/report/strings.js';
+import { normalizeReportOptions } from './state/reportOptions.js';
 import { exportToExcel as exportToExcelReport } from './reports/exportToExcel.js';
 import { getDefaultState, getEmptyState, buildDefaultFormat, stripFormatOwnedFields, buildFormatSku } from './state/initialState.js';
 import { projectReducer, toProjectState } from './state/projectReducer.js';
 import { buildProjectData, parseProjectData } from './state/projectSerialization.js';
 import { ProjectContext } from './state/ProjectContext.jsx';
 
-import { Notification, WelcomeModal, OnboardingModal, PdfOptionsModal } from './components/AppDialogs.jsx';
+import { Notification, WelcomeModal, OnboardingModal } from './components/AppDialogs.jsx';
+import { ReportExportModal } from './components/ReportExportModal.jsx';
 import { TourSession } from './tour/TourSession.jsx';
 import { InstructionModal } from './components/InstructionModal.jsx';
 import { ConfirmationModal } from './components/common.jsx';
@@ -154,7 +157,9 @@ const App = ({ tourMode = false } = {}) => {
     // de sélection à persister — `reportActiveSubTab` seul suffit pour revenir au bon sous-onglet.
 
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-    const [pdfOptions, setPdfOptions] = useState({ title: '', subtitle: '' });
+    // Rapport PDF : le modèle de données est construit à l'ouverture de la fenêtre d'export (chapitres grisés sans données, période), puis réutilisé pour imprimer.
+    const [reportModel, setReportModel] = useState(null);
+    const [isExporting, setIsExporting] = useState(false);
     const [isSalesImportWizardOpen, setIsSalesImportWizardOpen] = useState(false);
 
     // Phase 3.4 : remplace handlePosImport — écrit sur `format.channelPrices` (prix net + volume
@@ -237,19 +242,6 @@ const App = ({ tourMode = false } = {}) => {
         setUiSettings(prev => ({ ...prev, [key]: value }));
     };
 
-    const openPdfModal = () => {
-        setPdfOptions({
-            title: "Rapport d'analyse du coût de revient",
-            subtitle: `Préparer à l'attention des gestionnaires de ${companyName}`
-        });
-        setIsPdfModalOpen(true);
-    };
-
-    const handleConfirmPdfGeneration = (options) => {
-        setIsPdfModalOpen(false);
-        generatePdf(options); 
-    };
-
     // Stable (ne ferme que sur des setters useState, eux-mêmes stables) : nécessaire pour que
     // projectContextValue puisse être mémoïsé sans se recréer à chaque rendu de App.
     const showNotification = useCallback(({ message, type = 'success', onUndo }) => {
@@ -292,95 +284,11 @@ const App = ({ tourMode = false } = {}) => {
         };
     }, []);
 
-    const autoCalculatedLaborCost = useMemo(() => {
-        return laborDatabase.reduce((total, post) => {
-            const postTotal = (post.employees || []).reduce((sum, emp) => {
-                const paidHours = parseLocaleNumber(emp.workedHours);
-                return sum + (paidHours * loadedHourlyRate(emp));
-            }, 0);
-            return total + postTotal;
-        }, 0);
-    }, [laborDatabase]);
-    const calculatedGeneralInfo = useMemo(() => {
-        // Volumes RÉELS par canal (corrigé le 18/10, confirmé le 19/10 — voir
-        // Projet_Claude/03-Feuille-de-route.md, addendum du 19/10) : plus de reconstruction à
-        // partir du revenu déclaré (`totalRevenue`, réel) — ce serait mélanger les deux jeux de
-        // données que la Réconciliation réel/théorique doit garder indépendants. Repli direct sur
-        // `fmt.channelPrices[].volume`, la même donnée réelle que `channelBreakdown` utilise déjà
-        // dans analysisData.js. Un format sans aucun volume réel saisi contribue 0 heure de MO
-        // nécessaire (jamais une estimation fabriquée) — conséquence acceptée : la productivité
-        // cuisine et le rapport de productivité restent à 0 tant qu'aucune vente réelle n'est
-        // saisie par canal pour ce format.
-        // Les heures nécessaires viennent de `computeLaborHoursNeeded` (engine/laborHours.js) : les ventes de chaque format
-        // actif ET ce que les autres recettes consomment de leurs sous-recettes, même jamais vendues seules (19/11 : avant,
-        // le temps de fabrication d'une sous-recette non vendue n'était compté nulle part). Par poste, par activité de
-        // production (celle de la recette qui la fabrique) et au total.
-        const {
-            byPost: totalDirectLaborHoursNeededByPost,
-            byActivity: totalDirectLaborHoursNeededByActivity,
-            total: totalDirectLaborHoursNeeded,
-            hoursByFormat: laborHoursByFormat,
-        } = computeLaborHoursNeeded(products, baseIngredients, salesChannels);
-
-        // TOUS les postes de l'onglet Main-d'œuvre doivent se retrouver dans le coût des produits (décision du 19/11) :
-        // les heures employées, la capacité inutilisée, le temps non productif (déjà reflété par le « % temps productif
-        // attendu » de chaque employé) et même un poste sans aucune étape de recette.
-        // Le facteur d'absorption est donc : coût direct des heures nécessaires ÷ masse salariale de TOUS les postes.
-        // Chaque recette porte alors sa part de la paie, au prorata de son coût de main-d'œuvre directe : la paie de la
-        // cuisine est entièrement répartie sur les produits quand le volume la remplit. La valeur exposée
-        // (`kitchenProductivity`) peut dépasser 100 % quand le volume dépasse la paie ; c'est son USAGE qui est plafonné à
-        // 100 % (calculateCosts.js) : au-delà, la main-d'œuvre est comptée au taux horaire plein, jamais moins — un surplus de
-        // capacité n'enlève pas de coût.
-        // Le coût d'un poste est son taux moyen pondéré par les heures payées, comme dans calculateCosts.js.
-        const directLaborCostNeeded = laborDatabase.reduce((total, post) => {
-            const emps = post.employees || [];
-            const hours = emps.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours), 0);
-            if (!(hours > 0)) return total;
-            const cost = emps.reduce((sum, emp) => sum + parseLocaleNumber(emp.workedHours) * loadedHourlyRate(emp), 0);
-            return total + (totalDirectLaborHoursNeededByPost[post.postName] || 0) * (cost / hours);
-        }, 0);
-        const kitchenProductivity = autoCalculatedLaborCost > 0 ? (directLaborCostNeeded / autoCalculatedLaborCost) * 100 : 100;
-
-        const productivityReport = {
-            rows: laborDatabase.map(post => {
-                const expected = (post.employees || []).reduce((sum, emp) => sum + (parseLocaleNumber(emp.workedHours) * (parseLocaleNumber(emp.productiveTimePercentage) / 100)), 0);
-                const actual = totalDirectLaborHoursNeededByPost[post.postName] || 0;
-                const difference = expected - actual;
-                const utilization = expected > 0 ? (actual / expected) * 100 : 0;
-                return { postName: post.postName, expected, actual, difference, utilization };
-            }),
-            totals: {}
-        };
-        productivityReport.totals = productivityReport.rows.reduce((acc, row) => {
-            acc.expected += row.expected;
-            acc.actual += row.actual;
-            return acc;
-        }, { expected: 0, actual: 0 });
-        productivityReport.totals.difference = productivityReport.totals.expected - productivityReport.totals.actual;
-        productivityReport.totals.utilization = productivityReport.totals.expected > 0 ? (productivityReport.totals.actual / productivityReport.totals.expected) * 100 : 0;
-
-        // Phase 6 (15/10) : capacité de production PAR ACTIVITÉ (ligne de production) — pas de
-        // "expected" par activité (un poste/employé n'est pas rattaché à une seule activité, donc
-        // rien à comparer analogue au "expected" par poste) : seulement la part des heures de MO
-        // réellement nécessaires que CETTE activité consomme, du total du menu.
-        productivityReport.byActivity = productionActivities.map(activity => {
-            const actual = totalDirectLaborHoursNeededByActivity[activity.id] || 0;
-            const sharePercent = totalDirectLaborHoursNeeded > 0 ? (actual / totalDirectLaborHoursNeeded) * 100 : 0;
-            return { activityId: activity.id, activityName: activity.name, actual, sharePercent };
-        });
-
-        return {
-            ...generalInfo,
-            totalKitchenLaborCost: autoCalculatedLaborCost,
-            kitchenProductivity: kitchenProductivity,
-            productivityReport: productivityReport,
-            // Total des heures de MO nécessaires au menu : dénominateur de la méthode d'attribution
-            // « temps de production » (taux = frais indirects / ce total → réconcilie exactement).
-            totalDirectLaborHoursNeeded: totalDirectLaborHoursNeeded,
-            // Heures de main-d'œuvre par format (rentabilité de l'heure par produit, Rapport et suivi → Main-d'œuvre).
-            laborHoursByFormat,
-        };
-    }, [generalInfo, products, baseIngredients, laborDatabase, autoCalculatedLaborCost, productionActivities, salesChannels]);
+    // Heures de main-d'œuvre, productivité de la cuisine et rapport de productivité : calcul partagé avec le rapport PDF (engine/calculatedGeneralInfo.js).
+    const calculatedGeneralInfo = useMemo(
+        () => computeCalculatedGeneralInfo({ generalInfo, products, baseIngredients, laborDatabase, productionActivities, salesChannels }),
+        [generalInfo, products, baseIngredients, laborDatabase, productionActivities, salesChannels]
+    );
     // --- MOTEUR DE DONNÉES CENTRALISÉ ET MÉMORISÉ ---
     // Source unique de vérité pour les coûts : computeAnalysisData calcule productsWithCosts une
     // seule fois (avec un memo partagé) puis en dérive tous les KPIs. Défini ici, avant
@@ -982,11 +890,32 @@ const App = ({ tourMode = false } = {}) => {
     // --- GÉNÉRATION DES RAPPORTS (délégués à src/reports/) ---
     // Les fonctions pures de génération vivent dans src/reports/. On leur transmet ici le
     // contexte (état + données dérivées) dont elles ont besoin ; elles ne lisent aucun état React.
-    const generatePdf = (options) => generatePdfReport(options, {
-        showNotification, companyName, logoUrl, analysisData, appLogoBase64,
-        appLogoDimensions, calculatedGeneralInfo, trackingPoints, laborDatabase, baseIngredients,
-        ingredientsList, basePackaging,
-    });
+    // Rapport PDF (phase 6, 22/11) : la fenêtre d'export prépare le modèle du rapport à son ouverture ; le déroulement (composition, impression, enregistrement)
+    // vit dans reports/exportFlow.js, chargé à la demande.
+    const openPdfModal = () => {
+        const inputs = {
+            project: { companyName, logoUrl, generalInfo, products, ingredientsList, basePackaging, laborDatabase, salesChannels, productionActivities, expenseLines, revenueLines, directCostLines, trackingPoints },
+            analysisData, calculatedGeneralInfo,
+        };
+        prepareReportModel(inputs).then((model) => { setReportModel(model); setIsPdfModalOpen(true); }).catch((error) => {
+            console.error('Erreur de préparation du rapport:', error);
+            showNotification({ message: 'Impossible de préparer le rapport.', type: 'error' });
+        });
+    };
+
+    const handleConfirmPdfGeneration = async (options) => {
+        const chosen = normalizeReportOptions(options);
+        // Les choix sont enregistrés avec le projet avant l'impression : ils survivent à un échec ou à une annulation.
+        setUiSettings(prev => ({ ...prev, reportOptions: chosen }));
+        setIsExporting(true);
+        await new Promise(resolve => setTimeout(resolve, 60)); // laisse l'indicateur s'afficher avant la composition
+        const outcome = await runReportExport({ model: reportModel, options: chosen, companyName, logoUrl, appLogoUrl: appLogoBase64 || './Logo_RestoCalculateur3.png' });
+        setIsExporting(false);
+        if (outcome.status === 'saved') { showNotification({ message: `Rapport enregistré : ${outcome.path}`, type: 'success' }); setIsPdfModalOpen(false); }
+        else if (outcome.status === 'browser-print') setIsPdfModalOpen(false);
+        else if (outcome.status === 'error') showNotification({ message: outcome.message, type: 'error' });
+        // 'canceled' : la fenêtre reste ouverte (l'utilisateur peut ajuster ses choix)
+    };
 
     const exportToExcel = () => exportToExcelReport({
         showNotification, analysisData, generalInfo, calculatedGeneralInfo,
@@ -1229,11 +1158,16 @@ const App = ({ tourMode = false } = {}) => {
                         onClose={() => { setShowInstructions(false); setGuideAnchor(null); }}
                     />
 
-                    <PdfOptionsModal
+                    <ReportExportModal
                         isOpen={isPdfModalOpen}
-                        onClose={() => setIsPdfModalOpen(false)}
+                        onClose={() => { if (!isExporting) setIsPdfModalOpen(false); }}
                         onConfirm={handleConfirmPdfGeneration}
-                        initialData={pdfOptions}
+                        options={normalizeReportOptions(uiSettings.reportOptions)}
+                        availability={reportModel?.availability}
+                        period={reportModel?.period}
+                        busy={isExporting}
+                        defaultTitle={COVER.title}
+                        defaultAudience={COVER.defaultLine(companyName || 'l’entreprise')}
                     />
 
                     {/* Rendu seulement à l'ouverture : le chunk de l'assistant n'est chargé

@@ -187,3 +187,29 @@ Effet sur le projet démo : la marge de sécurité de 13,89 % n'est plus une for
 **Trois lectures pour chaque mesure** (marge brute, marge nette, coût matière, coût d'emballage, coût de main-d'œuvre, revenus, point mort) : variation depuis le dernier relevé utile ; tendance (même sens sur au moins trois valeurs consécutives, qui remplace la variation) ; recul de 12 mois (le relevé le plus proche d'il y a un an, à 75 jours près). Les tendances par produit (coût de revient, marge, érosion), par canal et par intrant gardent le dernier relevé utile pour référence ; les prix des intrants se mesurent sur les trois derniers relevés.
 
 **Hiérarchie d'affichage** : niveau de gravité (1 survie : point mort, bénéfice négatif, pertes, déficits ; 2 moteurs de profit : marges, cibles, produits, canaux, évolution ; 3 efficacité : main-d'œuvre, fournisseurs, activités ; 4 information : stabilité, répartition, confort), puis, dans le niveau, l'impact en $ rapporté aux ventes (1 % des ventes = 10 points, plafonné à 100) quand la règle le connaît, sinon son poids. Fonctions \`tierOf\` et \`rankOf\` dans \`keyFindings.js\` ; chaque constat porte \`tier\`, \`impact\` et \`rank\`.
+
+## Les constats dans toute l'application (23/11) : une adresse par constat
+
+Suite au classement à deux axes (portée générale / spécifique, gravité majeure / moyenne / mineure) mis en place pour l'export PDF, les constats sortent de la Vue d'ensemble et se répandent dans les rapports, sans se répéter. Filtres purs dans `src/engine/findingSurfaces.js` (mêmes données que le PDF), écran dans `src/features/reports/KeyFindings.jsx`.
+
+| Surface | Constats affichés |
+|---|---|
+| Vue d'ensemble, sous les tuiles : **Objectifs stratégiques** | Le groupe « objectif » (écart aux cibles), sans la version par format (elle vit dans la fiche du format) |
+| Vue d'ensemble, sous l'évolution des marges et coûts moyens : **Amélioration / détérioration** | Le groupe « évolution », de portée générale seulement |
+| Vue d'ensemble, sous la matrice Activité × Canal : **Forces et faiblesses** | **Exactement les règles du chapitre 1 du PDF** (`strengthsAndWeaknesses`) : les constats de gravité majeure, généraux d'office et spécifiques promus, hors objectifs et évolution ; les plus importants d'abord |
+| Fin de Portefeuille, Par SKU, Par Activité, Par Canal, Ingrédients, Emballages, Main-d'œuvre : **bandeau** | Les constats qui renvoient à ce sous-onglet, toutes gravités, du plus grave au moins grave, sauf ceux qui ont déjà leur adresse dans la Vue d'ensemble (objectifs, évolution générale, généraux majeurs) ; Par SKU y ajoute la fiche du SKU choisi |
+| Simulation | Aucun bandeau |
+
+**Contre les répétitions** : la portée générale et les objectifs vivent seulement dans la Vue d'ensemble ; un constat par format n'apparaît que dans la fiche du SKU choisi ; dans un bandeau, la règle agrégée écarte sa version par entité (ingrédients volatils, perte stock, écart entre formats), sauf pour les postes de production où la version par entité en dit plus ; un texte identique n'apparaît qu'une fois. Le seul recouvrement voulu : un constat spécifique majeur promu dans Forces et faiblesses reste aussi dans son sous-onglet. Un test vérifie que chaque constat du projet démo a une adresse. **Sans adresse dans l'application** (décision du 23/11) : les constats généraux de gravité moyenne ou mineure qui renvoient à la Vue d'ensemble ou à Simulation (part des frais fixes, revenus réels alignés, résistance à un choc de coûts) ; ils restent dans le chapitre 2 du rapport PDF, l'information étant déjà visible ailleurs (tuiles, réconciliation, simulateur).
+
+Chaque bloc : deux colonnes (positif à gauche), trois lignes au maximum par colonne, « Voir tout (n) » vers une fenêtre regroupée par thème.
+
+## Gravité révisée et forces miroirs (23/11)
+
+**Problème** : la gravité reprenait le poids (≥ 80 = majeure). Or le poids est un outil de tri, et les forces ont naturellement des poids plus bas que les alertes : dans le démo, Forces et faiblesses montrait un seul produit (« rentable partout », poids 80 choisi pour le classer premier, sans aucun enjeu en dollars) et presque aucune force.
+
+**Règle actuelle** (`severityOf`, `findingMeta.js`) : **majeure** si niveau 1, impact ≥ 3 % des ventes, constat **structurel**, ou (portée générale seulement) poids ≥ 80 ; **moyenne** si poids ≥ 50 ou impact ≥ 1 % ; sinon mineure. Le poids ne rend plus un constat spécifique majeur.
+
+**Constats structurels** (`STRUCTURAL`) : majeurs par nature, faiblesse comme force. Chaque faiblesse a son miroir : dépendance à un canal / **revenus bien répartis** (`channel-balanced`, nouveau) ; dépendance à un fournisseur / **fournisseurs répartis** (`supplier-spread`, dès trois fournisseurs sans dépendance) ; produits déficitaires / **aucun produit déficitaire** (`sku-none-losing`, nouveau) ; profit concentré / profit bien réparti ; activité déficitaire / toutes bénéficiaires ; paie non utilisée / bien utilisée ; cibles dépassées / **toutes les cibles atteintes** (`targets-all-met`, nouveau, au moins deux cibles saisies).
+
+Démo : 4 forces majeures (bénéfice net prévu, revenus réels alignés, profit bien réparti, activités bénéficiaires) contre 7 faiblesses majeures ; la différence tient aux données (démo volontairement déficitaire), plus à la formule.

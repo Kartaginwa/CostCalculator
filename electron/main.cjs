@@ -1,8 +1,13 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, session } = require('electron');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const { registerReportPrint } = require('./reportPrint.cjs');
+
+let mainWindow = null;
 
 function createWindow() {
-  const win = new BrowserWindow({
+  const win = mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
 	title: "TransfoCalculateur",
@@ -17,6 +22,8 @@ function createWindow() {
       sandbox: true,
     }
   });
+
+  win.on('closed', () => { if (mainWindow === win) mainWindow = null; });
 
   // Fermeture avec des modifications non sauvegardées : le renderer pose un gestionnaire
   // `beforeunload` (voir App.jsx) ; Electron annule alors la fermeture en silence si on ne
@@ -69,6 +76,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Impression du rapport PDF : fenêtre cachée locale, boîte « Enregistrer sous » (voir reportPrint.cjs).
+  registerReportPrint({ app, BrowserWindow, dialog, ipcMain, session, fs, os, path, getMainWindow: () => mainWindow });
   createWindow();
   
   app.on('activate', () => {

@@ -290,7 +290,7 @@ export const DEMO_SCREEN_CHECKS = {
         DEMO.mo.revenuHeure, DEMO.mo.beneficeHeure, DEMO.mo.heureActivite.plats, DEMO.mo.heureActivite.soupes, DEMO.mo.heureProduit.meilleur, DEMO.mo.heureProduit.dernier,
         '92.21 %', '89.88 %', '88.47 %', '126.81 h', '36.82 %', '210.14 h', '61.01 %',
     ],
-    "summary:Ingrédients": [DEMO.ingredients.abcA, DEMO.ingredients.coutNet, DEMO.ingredients.pertes, DEMO.ingredients.achatRequis],
+    "summary:Ingrédients": ['27.8%', '20.8%', '12.4%', '7.6%', '5.0%', DEMO.ingredients.abcA, DEMO.ingredients.coutNet, DEMO.ingredients.pertes, DEMO.ingredients.achatRequis],
     "summary:Vue d'ensemble": [
         DEMO.apercu.coutMatiere, DEMO.apercu.coutEmballage, DEMO.apercu.coutMO, DEMO.apercu.margeBrute, DEMO.apercu.pointMortMenu, DEMO.apercu.margeSecurite,
         DEMO.etat.revenus, DEMO.etat.chargesDirectes, DEMO.etat.beneficeBrut, DEMO.etat.beneficeNet,
@@ -335,4 +335,7 @@ DEMO_SCREEN_CHECKS['summary:Par SKU'].push(...Object.values(R.bySkuDetail));
 DEMO_SCREEN_CHECKS['summary:Par Activité'] = Object.values(R.activites).flatMap((o) => Object.values(o));
 DEMO_SCREEN_CHECKS['summary:Par Activité'].push(DEMO.mo.heureActivite.plats, DEMO.mo.heureActivite.soupes, DEMO.mo.heureActivite.sauces);
 DEMO_SCREEN_CHECKS['summary:Par Canal'] = Object.values(R.canaux).flatMap((o) => Object.values(o));
+DEMO_SCREEN_CHECKS['summary:Emballages'] = ['77.3% des coûts']; // catégorie A de l'emballage (sous-onglet Emballages)
 DEMO_SCREEN_CHECKS['summary:Portefeuille'] = Object.values(R.bcg); // matrice stratégique : sous-onglet Portefeuille (21/11)
+// Heures par activité (sous-onglet Main-d'œuvre) citées en toutes lettres dans la partie 3.
+DEMO_SCREEN_CHECKS["summary:Main-d'œuvre"].push('126.81 h', '36.82 %', '210.14 h', '61.01 %', '7.47 h', '2.17 %');

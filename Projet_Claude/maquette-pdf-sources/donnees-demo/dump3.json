@@ -1,0 +1,351 @@
+{
+ "rows": [
+  {
+   "n": "Pâté chinois traditionnel (340 g)",
+   "h": 12.035,
+   "gp": 3083.8286032569986,
+   "gph": 256.23835506913156
+  },
+  {
+   "n": "Sauté de poulet thaï, riz et légumes (900 g)",
+   "h": 10.425416666666665,
+   "gp": 2509.1799128729335,
+   "gph": 240.6791011908014
+  },
+  {
+   "n": "Sauté de poulet thaï, riz et légumes (350 g)",
+   "h": 14.083333333333332,
+   "gp": 2794.9568433686736,
+   "gph": 198.45847408534962
+  },
+  {
+   "n": "Pâté chinois traditionnel (900 g)",
+   "h": 15.751111111111111,
+   "gp": 2884.3174684909854,
+   "gph": 183.1183494386207
+  },
+  {
+   "n": "Purée de pommes de terre maison",
+   "h": 4.717013888888889,
+   "gp": 858.2034464891799,
+   "gph": 181.937867198295
+  },
+  {
+   "n": "Saumon teriyaki, riz et légumes",
+   "h": 18.933333333333337,
+   "gp": 3008.9030078322235,
+   "gph": 158.9209335122653
+  },
+  {
+   "n": "Poulet général Tao, riz et légumes",
+   "h": 25.40222222222222,
+   "gp": 3256.322780655418,
+   "gph": 128.1904690136417
+  },
+  {
+   "n": "Chili con carne mijoté",
+   "h": 21.106944444444444,
+   "gp": 2459.3433734168393,
+   "gph": 116.51820944002924
+  },
+  {
+   "n": "Sauce à spaghetti maison",
+   "h": 7.466666666666667,
+   "gp": 645.664091432897,
+   "gph": 86.47286938833442
+  },
+  {
+   "n": "Potage à la courge musquée",
+   "h": 33.96259259259259,
+   "gp": 2543.3754079851187,
+   "gph": 74.88755168060524
+  },
+  {
+   "n": "Soupe-repas aux légumes et poulet",
+   "h": 114.55475047161721,
+   "gp": 6056.140658996004,
+   "gph": 52.866778846474034
+  }
+ ],
+ "m": {
+  "act_plats": {
+   "channel_direct": {
+    "margeNetteTotal": 2139.637139295814,
+    "margeNettePercent": 0.29907301544622045
+   },
+   "channel_epiceries": {
+    "margeNetteTotal": 1477.0371491984936,
+    "margeNettePercent": 0.13072999396360308
+   },
+   "channel_gs": {
+    "margeNetteTotal": 1496.0956687190248,
+    "margeNettePercent": 0.05346244266712733
+   }
+  },
+  "act_soupes": {
+   "channel_direct": {
+    "margeNetteTotal": 837.9708038093088,
+    "margeNettePercent": 0.24049144727782001
+   },
+   "channel_epiceries": {
+    "margeNetteTotal": 368.2031686887467,
+    "margeNettePercent": 0.06493860139624669
+   },
+   "channel_gs": {
+    "margeNetteTotal": -187.46518389118228,
+    "margeNettePercent": -0.016056287430189907
+   }
+  },
+  "act_sauces": {
+   "channel_direct": {
+    "margeNetteTotal": 471.08296414234565,
+    "margeNettePercent": 0.20959377297666207
+   },
+   "channel_epiceries": {
+    "margeNetteTotal": 89.74766855327834,
+    "margeNettePercent": 0.025677405743098635
+   },
+   "channel_gs": {
+    "margeNetteTotal": -392.8163022834374,
+    "margeNettePercent": -0.05859256917804322
+   }
+  }
+ },
+ "totalH": 344.418773829373,
+ "ingr": [
+  {
+   "n": "Poitrine de poulet désossée",
+   "p": "Boucherie Nordique",
+   "pr": 62,
+   "f": 10,
+   "u": "kg",
+   "l": 6,
+   "up": 6.2
+  },
+  {
+   "n": "Bœuf haché mi-maigre",
+   "p": "Boucherie Nordique",
+   "pr": 48.75,
+   "f": 5,
+   "u": "kg",
+   "l": 8,
+   "up": 9.75
+  },
+  {
+   "n": "Filet de saumon surgelé IQF",
+   "p": "Poissonnerie Boréale",
+   "pr": 92.5,
+   "f": 5,
+   "u": "kg",
+   "l": 4,
+   "up": 18.5
+  },
+  {
+   "n": "Carottes en dés surgelées",
+   "p": "Maraîcher du Nord",
+   "pr": 18,
+   "f": 10,
+   "u": "kg",
+   "l": 0,
+   "up": 1.8
+  },
+  {
+   "n": "Brocoli en bouquets surgelé",
+   "p": "Maraîcher du Nord",
+   "pr": 26,
+   "f": 10,
+   "u": "kg",
+   "l": 0,
+   "up": 2.6
+  },
+  {
+   "n": "Petits pois surgelés",
+   "p": "Maraîcher du Nord",
+   "pr": 17,
+   "f": 10,
+   "u": "kg",
+   "l": 0,
+   "up": 1.7
+  },
+  {
+   "n": "Oignon jaune haché",
+   "p": "Maraîcher du Nord",
+   "pr": 12,
+   "f": 10,
+   "u": "kg",
+   "l": 5,
+   "up": 1.2
+  },
+  {
+   "n": "Maïs en grains surgelé",
+   "p": "Maraîcher du Nord",
+   "pr": 15,
+   "f": 10,
+   "u": "kg",
+   "l": 0,
+   "up": 1.5
+  },
+  {
+   "n": "Courge musquée en dés surgelée",
+   "p": "Maraîcher du Nord",
+   "pr": 19,
+   "f": 10,
+   "u": "kg",
+   "l": 0,
+   "up": 1.9
+  },
+  {
+   "n": "Pommes de terre en flocons",
+   "p": "Épicerie Grossiste Boréal",
+   "pr": 38,
+   "f": 10,
+   "u": "kg",
+   "l": 0,
+   "up": 3.8
+  },
+  {
+   "n": "Riz basmati",
+   "p": "Épicerie Grossiste Boréal",
+   "pr": 48,
+   "f": 20,
+   "u": "kg",
+   "l": 0,
+   "up": 2.4
+  },
+  {
+   "n": "Crème 35 %",
+   "p": "Fromagerie du Lac",
+   "pr": 42,
+   "f": 4,
+   "u": "L",
+   "l": 0,
+   "up": 10.5
+  },
+  {
+   "n": "Beurre non salé",
+   "p": "Fromagerie du Lac",
+   "pr": 52,
+   "f": 5,
+   "u": "kg",
+   "l": 0,
+   "up": 10.4
+  },
+  {
+   "n": "Farine tout usage",
+   "p": "Épicerie Grossiste Boréal",
+   "pr": 23,
+   "f": 20,
+   "u": "kg",
+   "l": 0,
+   "up": 1.15
+  },
+  {
+   "n": "Tomates broyées en conserve",
+   "p": "Épicerie Grossiste Boréal",
+   "pr": 9,
+   "f": 3,
+   "u": "kg",
+   "l": 0,
+   "up": 3
+  },
+  {
+   "n": "Haricots rouges en conserve",
+   "p": "Épicerie Grossiste Boréal",
+   "pr": 10.5,
+   "f": 3,
+   "u": "kg",
+   "l": 0,
+   "up": 3.5
+  },
+  {
+   "n": "Prémélange gingembre-ail-soya",
+   "p": "Épicerie Grossiste Boréal",
+   "pr": 19,
+   "f": 2,
+   "u": "kg",
+   "l": 0,
+   "up": 9.5
+  },
+  {
+   "n": "Épices et assaisonnements maison",
+   "p": "Épicerie Grossiste Boréal",
+   "pr": 20,
+   "f": 1,
+   "u": "kg",
+   "l": 0,
+   "up": 20
+  }
+ ],
+ "pk": [
+  "Barquette operable 340 ml|Emballages Boréal",
+  "Barquette operable 900 ml (familiale)|Emballages Boréal",
+  "Pellicule scellante operable|Emballages Boréal",
+  "Manchon de carton imprimé|Cartons Pro-Nord",
+  "Étiquette nutritionnelle / code-barres|Impression Boréale",
+  "Sac sous-vide pour soupe 750 ml|Emballages Boréal",
+  "Pot de verre 500 ml|Emballages Boréal",
+  "Couvercle twist-off 70 mm|Emballages Boréal"
+ ],
+ "prods": [
+  {
+   "n": "Purée de pommes de terre maison",
+   "act": "act_plats",
+   "vol": 20
+  },
+  {
+   "n": "Pâté chinois traditionnel (340 g)",
+   "act": "act_plats",
+   "vol": 20
+  },
+  {
+   "n": "Pâté chinois traditionnel (900 g)",
+   "act": "act_plats",
+   "vol": 10
+  },
+  {
+   "n": "Poulet général Tao, riz et légumes",
+   "act": "act_plats",
+   "vol": 20
+  },
+  {
+   "n": "Saumon teriyaki, riz et légumes",
+   "act": "act_plats",
+   "vol": 15
+  },
+  {
+   "n": "Sauté de poulet thaï, riz et légumes (350 g)",
+   "act": "act_plats",
+   "vol": 20
+  },
+  {
+   "n": "Sauté de poulet thaï, riz et légumes (900 g)",
+   "act": "act_plats",
+   "vol": 10
+  },
+  {
+   "n": "Chili con carne mijoté",
+   "act": "act_plats",
+   "vol": 20
+  },
+  {
+   "n": "Soupe-repas aux légumes et poulet",
+   "act": "act_soupes",
+   "vol": 46.648
+  },
+  {
+   "n": "Potage à la courge musquée",
+   "act": "act_soupes",
+   "vol": 15
+  },
+  {
+   "n": "Sauce à spaghetti maison",
+   "act": "act_sauces",
+   "vol": 15
+  },
+  {
+   "n": "Sauce artisanale du Terroir",
+   "act": "act_sauces",
+   "vol": 1
+  }
+ ]
+}

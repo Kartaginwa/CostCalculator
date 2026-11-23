@@ -1,6 +1,7 @@
 import { computeProjectAnalysis } from '../engine/analysisPipeline.js';
 import { computeSalesMixFromChannelPrices } from '../engine/salesMixFromChannels.js';
 import { todayLocalISO, generateSlug, sumLineAmounts, sumAmountsMap, DEFAULT_ACTIVE_UNITS } from '../utils.js';
+import { defaultReportOptions } from './reportOptions.js';
 
 // Construit le format de vente par défaut d'un produit à partir de ses champs "à plat"
 // (prixVente, nbPortions, etc.) ET de sa fiche recette (ingrédients, étapes de production, statut
@@ -837,6 +838,8 @@ export const getDefaultState = () => {
         // Scénario de la Simulation de chocs de coûts (Rapport et suivi → Simulation) : enregistré
         // avec le projet pour ne pas être perdu en quittant l'onglet ou en fermant l'app.
         costShocks: [],
+        // Options d'export du rapport PDF (chapitres, commentaires, salaires) : enregistrées avec le projet (voir reportOptions.js).
+        reportOptions: defaultReportOptions(),
         },
     };
 };
@@ -877,6 +880,8 @@ export const getEmptyState = () => ({
         // Scénario de la Simulation de chocs de coûts (Rapport et suivi → Simulation) : enregistré
         // avec le projet pour ne pas être perdu en quittant l'onglet ou en fermant l'app.
         costShocks: [],
+        // Options d'export du rapport PDF (chapitres, commentaires, salaires) : enregistrées avec le projet (voir reportOptions.js).
+        reportOptions: defaultReportOptions(),
     },
 });
 

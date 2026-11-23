@@ -86,6 +86,18 @@ export const REPORT_THRESHOLDS = {
     // qui dépendrait de la longueur de la période).
     growthMinShare: pct(5),
 
+    // ── Classement des constats (gravité) et constats par entité (22/11) ────────────────────────────────────────────────────────────
+    // Gravité d'un constat : majeure à partir d'un poids de 80 ou d'un impact de 3 % des ventes ; moyenne à partir d'un poids de 50 ou d'un impact de 1 % ; sinon mineure.
+    // Ordres de grandeur de gestion, à calibrer sur vos données ; le niveau 1 (survie) est toujours majeur.
+    severityMajorWeight: 80,
+    severityMediumWeight: 50,
+    severityMajorImpact: pct(3),
+    severityMediumImpact: pct(1),
+    // Un format dont le bénéfice brut par heure atteint ce multiple de la moyenne de l'équipe fait un bon usage du temps (le seuil bas est productHourLow).
+    productHourHigh: 1.25,
+    // Un ingrédient pèse lourd dans la perte stock prévue à partir de cette part de la perte totale.
+    lossItemShare: pct(25),
+
     // ── Réel vs théorique ─────────────────────────────────────────────────────────────────────────────────────────────────────────
     // Écart (en part du théorique) considéré « aligné » pour les revenus (force), et écart signalé pour les charges directes.
     // Repère : en analyse des écarts, on s'intéresse en général aux écarts de plus de 5 %.

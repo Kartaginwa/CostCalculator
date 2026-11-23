@@ -7,6 +7,9 @@
 //   - tous les seuils vivent dans reportThresholds.js ;
 //   - le poids (0–100) ordonne les constats ; l'écran en montre 5 par colonne, le reste est dans une fenêtre.
 import { parseLocaleNumber as P, formatNumber, unitConversionFactor } from '../utils.js';
+import { SUBTAB_LABELS, pct, usd, names, finding, force, weak, subject, activeRows, netMarginOfRows, computeFormatSpread } from './findingKit.js';
+import { classifyFinding, severityOf } from './findingMeta.js';
+import { ENTITY_RULES } from './entityFindings.js';
 import { REPORT_THRESHOLDS as T } from './reportThresholds.js';
 import {
     computeActivitySummaries, computeChannelSummaries, computeRealVsTheoreticalReconciliation, computeSnapshotMenuKpis, computeSnapshotBreakEven,
@@ -26,20 +29,9 @@ export const FINDING_GROUPS = [
     { id: 'evolution', label: 'Amélioration / détérioration', forceLabel: 'Améliorations', weakLabel: 'Détériorations', forceTag: 'Amélioration', weakTag: 'Détérioration' },
     { id: 'structure', label: 'Forces et faiblesses', forceLabel: 'Forces', weakLabel: 'Faiblesses', forceTag: 'Force', weakTag: 'Faiblesse' },
 ];
-export const groupOf = (id) => (id.startsWith('cost-') ? 'objectif' : id.startsWith('history-') ? 'evolution' : 'structure');
-export const SUBTAB_LABELS = {
-    overview: 'Vue d\'ensemble', portfolio: 'Portefeuille', bySku: 'Par SKU', byActivity: 'Par Activité', byChannel: 'Par Canal',
-    ingredients: 'Ingrédients', packaging: 'Emballages', labor: 'Main-d\'œuvre', simulation: 'Simulation',
-};
+export const groupOf = (id) => (/^(cost-|sku-over-cost-)/.test(id) ? 'objectif' : /^(history-|sku-cost-trend-|sku-margin-trend-)/.test(id) ? 'evolution' : 'structure');
+export { SUBTAB_LABELS }; // défini dans findingKit.js (partagé avec les règles par entité)
 
-const pct = (ratio, d = 1) => `${formatNumber(ratio * 100, d)} %`;
-// Montant en $ avec le séparateur de milliers de l'application (ex. 11 071 $).
-const usd = (v, d = 0) => `${v.toLocaleString('fr-CA', { minimumFractionDigits: d, maximumFractionDigits: d })} $`;
-// `impact` : montant en $ en jeu, quand la règle sait le calculer (sert à classer ; voir « hiérarchie » plus bas).
-const finding = (id, tone, theme, weight, title, detail, subTab, impact = null) => ({ id, tone, theme, weight, title, detail, link: { subTab, label: SUBTAB_LABELS[subTab] }, impact });
-const force = (...a) => finding(a[0], 'force', ...a.slice(1));
-const weak = (...a) => finding(a[0], 'faiblesse', ...a.slice(1));
-const names = (list, max = 3) => (list.length > max ? [...list.slice(0, max), `${list.length - max} autre${list.length - max > 1 ? 's' : ''}`] : list).join(', ');
 
 // Les trois derniers points de référence, du plus ancien au plus récent.
 const recentPoints = (points) => [...(points || [])].filter(p => p && p.timestamp).sort((x, y) => new Date(x.timestamp) - new Date(y.timestamp)).slice(-3);
@@ -106,6 +98,11 @@ const costTargetRules = (c) => {
         if (value * 100 > target) out.push(weak(`cost-${id}`, 'Coûts', weight, `Coût ${label} au-dessus de la cible`, detail, subTab));
         else out.push(force(`cost-${id}`, 'Coûts', weight - 15, `Coût ${label} sous sa cible`, detail, 'overview'));
     }
+    // Miroir de « cible dépassée » : au moins deux cibles saisies, et toutes atteintes.
+    const set = items.filter(([, , v, t]) => P(t) > 0 && Number.isFinite(v));
+    if (set.length >= 2 && set.every(([, , v, t]) => v * 100 <= P(t))) {
+        out.push(force('targets-all-met', 'Coûts', 70, `Vos ${set.length} cibles de coûts sont atteintes`, `Coûts ${set.map(([, label]) => label).join(', ').replace(/, ([^,]*)$/, ' et $1')} sous leurs cibles.`, 'overview'));
+    }
     // Produit par produit : combien dépassent la cible de coût matière.
     const target = P(c.info.foodCostTarget);
     if (target > 0) {
@@ -131,7 +128,8 @@ const productRules = (c) => {
     }
     if (everywhereNegative.length > 0) out.push(weak('sku-negative-everywhere', 'Produits', 92, `${everywhereNegative.length} produit${everywhereNegative.length > 1 ? 's' : ''} déficitaire${everywhereNegative.length > 1 ? 's' : ''} dans tous leurs canaux`, names(everywhereNegative.map(r => `« ${r.name} »`)), 'portfolio'));
     if (allPositive.length > 0) {
-        out.push(force('sku-positive', 'Produits', 60, `${allPositive.length} produit${allPositive.length > 1 ? 's' : ''} sur ${rows.length} rentable${allPositive.length > 1 ? 's' : ''} dans tous leurs canaux`, 'Marge nette positive partout où ils sont vendus.', 'portfolio'));
+        if (allPositive.length === rows.length && rows.length >= 3) out.push(force('sku-none-losing', 'Produits', 65, 'Aucun produit ne perd d\'argent', `Les ${rows.length} produits sont rentables dans tous leurs canaux.`, 'portfolio'));
+        if (allPositive.length < rows.length) out.push(force('sku-positive', 'Produits', 60, `${allPositive.length} produit${allPositive.length > 1 ? 's' : ''} sur ${rows.length} rentable${allPositive.length > 1 ? 's' : ''} dans tous leurs canaux`, 'Marge nette positive partout où ils sont vendus.', 'portfolio'));
         const best = allPositive.filter(r => r.margins.length >= 2).map(r => ({ r, min: Math.min(...r.margins.map(m => m.pct)), max: Math.max(...r.margins.map(m => m.pct)) })).sort((a, b) => b.min - a.min)[0];
         if (best) out.push(force('sku-best', 'Produits', 80, `« ${best.r.name} » est rentable partout`, `Marge nette positive dans ses ${best.r.margins.length} canaux, de ${pct(best.min)} à ${pct(best.max)}.`, 'portfolio'));
     }
@@ -159,6 +157,9 @@ const channelRules = (c) => {
         const profitShare = net > 0 ? top.margeNetteTotal / net : null;
         out.push(weak('channel-dependency', 'Canaux', 92, `${top.channelName} : ${pct(top.revenueTotal / revenue, 0)} des revenus${profitShare != null ? `, ${pct(profitShare, 0)} du bénéfice net` : ''}`,
             profitShare != null && profitShare < top.revenueTotal / revenue ? `${usd(top.margeNetteTotal)} de bénéfice net sur ${usd(net)} : le canal qui pèse le plus rapporte proportionnellement le moins.` : 'Une grande part de vos revenus dépend d\'un seul canal.', 'byChannel'));
+    }
+    if (rows.length >= 2 && top.revenueTotal / revenue < T.channelDependency) {
+        out.push(force('channel-balanced', 'Canaux', 60, 'Revenus bien répartis entre vos canaux', `Le premier canal, ${top.channelName}, ne pèse que ${pct(top.revenueTotal / revenue, 0)} des revenus.`, 'byChannel'));
     }
     rows.filter(r => r.margeNetteTotal < 0).forEach(r => out.push(weak(`channel-deficit-${r.channelId}`, 'Canaux', 80, `${r.channelName} perd de l'argent`, `Bénéfice net de ${usd(r.margeNetteTotal)} pour ${usd(r.revenueTotal)} de revenus.`, 'byChannel')));
     if (rows.length >= 2) {
@@ -218,11 +219,11 @@ const laborRules = (c) => {
     const ranked = c.productRows.filter(r => r.grossProfitPerHour != null);
     if (ranked.length >= 3) {
         const sorted = [...ranked].sort((a, b) => b.grossProfitPerHour - a.grossProfitPerHour);
-        const totalHours = ranked.reduce((s, r) => s + r.hours, 0);
-        const avg = ranked.reduce((s, r) => s + r.grossProfit, 0) / totalHours;
-        out.push(force('product-best-hour', 'Main-d\'œuvre', 75, `« ${sorted[0].name} » : le meilleur usage du temps`, `${usd(sorted[0].grossProfitPerHour)} de bénéfice brut par heure de main-d'œuvre (moyenne : ${usd(avg)}).`, 'labor'));
+        // Moyenne de l'écran Main-d'œuvre (marge de croissance) : bénéfice brut ÷ TOUTES les heures de production ; absente, la comparaison l'est aussi.
+        const avg = c.growth ? c.growth.grossProfitPerHour : null;
+        out.push(force('product-best-hour', 'Main-d\'œuvre', 75, `« ${sorted[0].name} » : le meilleur usage du temps`, `${usd(sorted[0].grossProfitPerHour)} de bénéfice brut par heure de main-d'œuvre${avg != null ? ` (moyenne : ${usd(avg)})` : ''}.`, 'labor'));
         const worst = sorted[sorted.length - 1];
-        if (worst.grossProfitPerHour < avg * T.productHourLow) out.push(weak('product-worst-hour', 'Main-d\'œuvre', 45, `« ${worst.name} » rapporte peu à l'heure`, `${usd(worst.grossProfitPerHour)} par heure, contre ${usd(avg)} en moyenne.`, 'labor'));
+        if (avg != null && worst.grossProfitPerHour < avg * T.productHourLow) out.push(weak('product-worst-hour', 'Main-d\'œuvre', 45, `« ${worst.name} » rapporte peu à l'heure`, `${usd(worst.grossProfitPerHour)} par heure, contre ${usd(avg)} en moyenne.`, 'labor'));
     }
     if (c.growth && c.growth.freeHours >= T.growthMinShare * (c.cascade.expectedHours || 0)) out.push(force('labor-growth', 'Main-d\'œuvre', 55, `Marge de croissance : ${formatNumber(c.growth.freeHours, 0)} h libres`, `Environ ${usd(Math.round(c.growth.additionalRevenue / 100) * 100)} de ventes de plus possibles sans embauche (estimation).`, 'labor'));
     return out;
@@ -243,18 +244,8 @@ const reconciliationRules = (c) => {
 };
 
 // ---------- tendances par produit, canal et intrant : ce qui a changé depuis le dernier point de référence utile ----------
-const activeRows = (rows) => (rows || []).filter(p => p && p.onMenu !== false);
 const rowRevenue = (p) => (p.channelBreakdown || []).reduce((s, cb) => s + P(cb.netPrice) * P(cb.volume), 0);
 const revenueOfRows = (rows) => activeRows(rows).reduce((s, p) => s + rowRevenue(p), 0);
-// Marge nette moyenne pondérée par les revenus de chaque canal ; null sans donnée.
-const netMarginOfRows = (rows) => {
-    let acc = 0, total = 0;
-    for (const p of activeRows(rows)) for (const cb of p.channelBreakdown || []) {
-        const r = P(cb.netPrice) * P(cb.volume);
-        if (r > 0 && Number.isFinite(cb.margeNettePercent)) { acc += cb.margeNettePercent * r; total += r; }
-    }
-    return total > 0 ? acc / total : null;
-};
 const skuNetMargin = (p) => netMarginOfRows([p]);
 const skuAvgNetPrice = (p) => { const l = (p.channelBreakdown || []).map(cb => P(cb.netPrice)).filter(v => v > 0); return l.length ? l.reduce((a, b) => a + b, 0) / l.length : null; };
 const rel = (now, before) => (before > 0 ? (now - before) / before : null);
@@ -270,7 +261,7 @@ const trendRules = (c) => {
     // Produits : on apparie les formats par leur identifiant (un produit absent d'un des deux relevés est ignoré).
     const thenById = new Map(thenRows.map(p => [p.id, p]));
     const pairs = nowRows.map(p => ({ now: p, then: thenById.get(p.id) })).filter(x => x.then);
-    const costChanges = pairs.map(x => ({ name: x.now.displayName, d: rel(P(x.now.costs?.totalCostPerPortion), P(x.then.costs?.totalCostPerPortion)) })).filter(x => x.d != null && P(x.d) === x.d);
+    const costChanges = pairs.map(x => ({ id: x.now.id, name: x.now.displayName, d: rel(P(x.now.costs?.totalCostPerPortion), P(x.then.costs?.totalCostPerPortion)) })).filter(x => x.d != null && P(x.d) === x.d);
     // 15 : coût de revient en hausse
     const worst = [...costChanges].sort((x, y) => y.d - x.d)[0];
     if (worst && worst.d >= T.skuCostChange) {
@@ -284,7 +275,7 @@ const trendRules = (c) => {
         out.push(force('history-sku-cost-down', 'Évolution', 46, `Coût de revient en baisse pour ${n} produit${n > 1 ? 's' : ''}`, `Le plus allégé : « ${best.name} », ${pct(best.d, 0)} ${since}.`, 'bySku'));
     }
     // 28 : marge nette d'un produit
-    const marginChanges = pairs.map(x => ({ name: x.now.displayName, then: skuNetMargin(x.then), now: skuNetMargin(x.now) })).filter(x => x.then != null && x.now != null).map(x => ({ ...x, d: x.now - x.then }));
+    const marginChanges = pairs.map(x => ({ id: x.now.id, name: x.now.displayName, then: skuNetMargin(x.then), now: skuNetMargin(x.now) })).filter(x => x.then != null && x.now != null).map(x => ({ ...x, d: x.now - x.then }));
     const down = [...marginChanges].sort((x, y) => x.d - y.d)[0];
     if (down && down.d <= -T.skuMarginPoints) out.push(weak('history-sku-margin-down', 'Évolution', 54, `Marge nette en recul pour ${marginChanges.filter(x => x.d <= -T.skuMarginPoints).length} produit(s)`, `Le plus touché : « ${down.name} », de ${pct(down.then)} à ${pct(down.now)} ${since}.`, 'bySku'));
     const up = [...marginChanges].sort((x, y) => y.d - x.d)[0];
@@ -293,6 +284,13 @@ const trendRules = (c) => {
     const eroded = pairs.map(x => ({ name: x.now.displayName, cost: rel(P(x.now.costs?.totalCostPerPortion), P(x.then.costs?.totalCostPerPortion)), price: rel(skuAvgNetPrice(x.now), skuAvgNetPrice(x.then)) }))
         .filter(x => x.cost != null && x.price != null && x.cost >= T.skuCostChange && Math.abs(x.price) < 0.01);
     if (eroded.length > 0) out.push(weak('history-erosion', 'Évolution', 62, `${eroded.length} produit${eroded.length > 1 ? 's' : ''} dont le coût monte sans hausse de prix`, `Érosion de marge : ${names(eroded.map(x => `« ${x.name} » (coût +${pct(x.cost, 0)})`))}.`, 'bySku'));
+    // Par format (constats par entité, demandés par les fiches produits)
+    if (c.includeEntities) {
+        costChanges.filter(x => Math.abs(x.d) >= T.skuCostChange).forEach(x => out.push(finding(`sku-cost-trend-${x.id}`, x.d > 0 ? 'faiblesse' : 'force', 'Évolution', x.d > 0 ? 56 : 46,
+            `« ${x.name} » : coût de revient en ${x.d > 0 ? 'hausse' : 'baisse'} de ${pct(Math.abs(x.d), 0)}`, `${since.charAt(0).toUpperCase()}${since.slice(1)}.`, 'bySku', null, subject('format', x.id, x.name))));
+        marginChanges.filter(x => Math.abs(x.d) >= T.skuMarginPoints).forEach(x => out.push(finding(`sku-margin-trend-${x.id}`, x.d > 0 ? 'force' : 'faiblesse', 'Évolution', x.d > 0 ? 46 : 54,
+            `« ${x.name} » : marge nette en ${x.d > 0 ? 'progrès' : 'recul'}`, `De ${pct(x.then)} à ${pct(x.now)} ${since}.`, 'bySku', null, subject('format', x.id, x.name))));
+    }
     // 37 : canaux
     const chRev = (rows) => { const m = new Map(); for (const p of activeRows(rows)) for (const cb of p.channelBreakdown || []) m.set(cb.channelId, (m.get(cb.channelId) || 0) + P(cb.netPrice) * P(cb.volume)); return m; };
     const chNow = chRev(nowRows), chThen = chRev(thenRows);
@@ -328,7 +326,7 @@ const trendRules = (c) => {
 //     au précédent, sinon le constat serait toujours « aucun changement ») ;
 //   - tendance : même sens sur au moins trois valeurs consécutives (jusqu'aux trois derniers relevés et aujourd'hui) ; elle remplace la variation récente ;
 //   - 12 mois : le relevé le plus proche d'il y a un an (à environ 75 jours près), pour les évolutions lentes que la variation récente ne voit pas.
-const EVOLUTION_METRICS = [
+export const EVOLUTION_METRICS = [
     { id: 'gross', label: 'Marge brute', higherIsBetter: true, kind: 'points', subTab: 'overview', weight: 66, snap: (p) => computeSnapshotMenuKpis(p.productsWithCosts)?.weightedGrossMargin, now: (c) => c.analysis.weightedGrossMargin },
     { id: 'net', label: 'Marge nette', higherIsBetter: true, kind: 'points', subTab: 'overview', weight: 68, snap: (p) => netMarginOfRows(activeRows(p.productsWithCosts)), now: (c) => netMarginOfRows(activeRows(c.analysis.activeProducts)) },
     { id: 'material', label: 'Coût matière', higherIsBetter: false, kind: 'points', subTab: 'ingredients', weight: 64, snap: (p) => computeSnapshotMenuKpis(p.productsWithCosts)?.weightedMaterialCost, now: (c) => c.analysis.weightedMaterialCost },
@@ -338,7 +336,7 @@ const EVOLUTION_METRICS = [
     { id: 'breakeven', label: 'Point mort', higherIsBetter: false, kind: 'rel', subTab: 'overview', weight: 62, snap: (p) => computeSnapshotBreakEven(activeRows(p.productsWithCosts).map(r => ({ ...r, onMenu: true })), P(p.generalInfo?.totalIndirects)), now: (c) => (c.analysis.globalBreakEven > 0 ? c.analysis.globalBreakEven : null) },
 ];
 // Points de référence utiles à l'évolution : du plus ancien au plus récent, sans les derniers qui reflètent déjà la situation d'aujourd'hui.
-const historyPoints = (c) => {
+export const historyPoints = (c) => {
     const points = [...c.trackingPoints].filter(p => p && p.timestamp).sort((x, y) => new Date(x.timestamp) - new Date(y.timestamp));
     const a = c.analysis;
     const close = (x, y) => Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) <= 1e-4;
@@ -351,11 +349,15 @@ const historyPoints = (c) => {
     while (points.length && sameAsNow(points[points.length - 1])) points.pop();
     return points;
 };
+// Le point de référence le plus proche d'il y a un an (à environ 75 jours près) ; partagé par les constats « sur 12 mois » et le tableau d'évolution du rapport.
+export const yearAgoPoint = (points) => {
+    const DAY = 86400000, target = Date.now() - 365 * DAY;
+    return points.map(p => ({ p, gap: Math.abs(new Date(p.timestamp) - target) })).filter(x => x.gap <= 75 * DAY).sort((x, y) => x.gap - y.gap)[0]?.p ?? null;
+};
 const evolutionRules = (c) => {
     const points = historyPoints(c);
     if (points.length < 1) return [];
     const out = [];
-    const DAY = 86400000;
     for (const m of EVOLUTION_METRICS) {
         const nowV = m.now(c);
         if (!Number.isFinite(nowV)) continue;
@@ -382,12 +384,11 @@ const evolutionRules = (c) => {
             }
         }
         // 12 mois : le relevé le plus proche d'il y a un an, pourvu qu'il diffère du relevé de comparaison récent
-        const target = Date.now() - 365 * DAY;
-        const yearAgo = points.map(p => ({ p, gap: Math.abs(new Date(p.timestamp) - target) })).filter(x => x.gap <= 75 * DAY).sort((x, y) => x.gap - y.gap)[0];
-        if (yearAgo && points.length >= 2 && yearAgo.p !== points[points.length - 1]) {
-            const v = m.snap(yearAgo.p);
+        const yearAgo = yearAgoPoint(points);
+        if (yearAgo && points.length >= 2 && yearAgo !== points[points.length - 1]) {
+            const v = m.snap(yearAgo);
             const d = Number.isFinite(v) ? delta(v, nowV) : null;
-            if (d != null && Math.abs(d) >= thr) out.push(make(`history-${m.id}-12m`, m.weight - 8, d, 'sur 12 mois', `De ${fmt(v)} (« ${yearAgo.p.name} ») à ${fmt(nowV)} aujourd'hui.`));
+            if (d != null && Math.abs(d) >= thr) out.push(make(`history-${m.id}-12m`, m.weight - 8, d, 'sur 12 mois', `De ${fmt(v)} (« ${yearAgo.name} ») à ${fmt(nowV)} aujourd'hui.`));
         }
     }
     return out;
@@ -430,12 +431,12 @@ const economicsRules = (c) => {
         if (inputs > 0) {
             const after = net - inputs * s;
             if (after < 0) out.push(weak('sens-inputs', 'Rentabilité', 72, `Une hausse de ${pct(s, 0)} des intrants vous ferait perdre de l'argent`, `Le bénéfice net prévu de ${usd(net)} passerait à ${usd(after)}.`, 'simulation', -after));
-            else out.push(force('sens-inputs', 'Rentabilité', 35, `Votre bénéfice résiste à une hausse de ${pct(s, 0)} des intrants`, `Il passerait de ${usd(net)} à ${usd(after)}.`, 'simulation'));
+            else out.push(force('sens-inputs', 'Rentabilité', 35, `Votre bénéfice résiste à une hausse de ${pct(s, 0)} des intrants`, `Il passerait de ${usd(net)} à ${usd(after)}.`, 'simulation', net - after));
         }
         if (labor > 0) {
             const after = net - labor * s;
             if (after < 0) out.push(weak('sens-labor', 'Main-d\'œuvre', 66, `Une hausse de ${pct(s, 0)} de la main-d'œuvre vous ferait perdre de l'argent`, `Le bénéfice net prévu de ${usd(net)} passerait à ${usd(after)}.`, 'simulation', -after));
-            else out.push(force('sens-labor', 'Main-d\'œuvre', 30, `Votre bénéfice résiste à une hausse de ${pct(s, 0)} de la main-d'œuvre`, `Il passerait de ${usd(net)} à ${usd(after)}.`, 'simulation'));
+            else out.push(force('sens-labor', 'Main-d\'œuvre', 30, `Votre bénéfice résiste à une hausse de ${pct(s, 0)} de la main-d'œuvre`, `Il passerait de ${usd(net)} à ${usd(after)}.`, 'simulation', net - after));
         }
         // 72 : l'intrant dont une hausse de 10 % coûte le plus
         const items = Object.values(c.analysis.purchasingReportData?.groupedByProvider || {}).flatMap(g => g.items);
@@ -522,13 +523,7 @@ const moreProductRules = (c) => {
         if (top3 <= T.profitSpreadTop3) out.push(force('profit-spread', 'Produits', 38, `Profit bien réparti : les 3 premiers produits pèsent ${pct(top3, 0)}`, `Sur ${contributions.length} produits contributifs : aucun ne porte à lui seul l'entreprise.`, 'portfolio'));
     }
     // 27 : écart de marge entre formats d'un même produit
-    const byProduct = new Map();
-    for (const p of c.analysis.activeProducts || []) {
-        const margin = netMarginOfRows([p]);
-        if (margin == null || p.productId == null) continue;
-        (byProduct.get(p.productId) || byProduct.set(p.productId, []).get(p.productId)).push({ name: p.displayName, margin });
-    }
-    const spread = [...byProduct.values()].filter(l => l.length >= 2).map(l => ({ l, gap: Math.max(...l.map(x => x.margin)) - Math.min(...l.map(x => x.margin)) })).filter(x => x.gap >= T.formatMarginGap).sort((x, y) => y.gap - x.gap);
+    const spread = computeFormatSpread(c.analysis.activeProducts);
     if (spread.length) {
         const worst = spread[0].l.reduce((a, b) => (b.margin < a.margin ? b : a)), best = spread[0].l.reduce((a, b) => (b.margin > a.margin ? b : a));
         out.push(weak('format-gap', 'Produits', 43, `${spread.length} produit${spread.length > 1 ? 's' : ''} aux marges très différentes selon le format`, `Le plus marqué : « ${best.name} » à ${pct(best.margin)} contre « ${worst.name} » à ${pct(worst.margin)}.`, 'bySku'));
@@ -565,11 +560,26 @@ const moreProductRules = (c) => {
     return out;
 };
 
+// Effet en dollars des variations de prix récentes des ingrédients, aux volumes prévus : pour chaque ingrédient acheté, l'écart entre son coût
+// d'achat actuel et ce qu'il aurait coûté au prix du début de la période récente (tendance en %). Négatif : économie. Null sans historique suffisant.
+// Exposé (phase 1 de la refonte de l'export PDF) pour que le constat et le rapport lisent le même chiffre.
+export function computeIngredientPriceEffect(purchasingReportData, recentVolatility) {
+    if (!recentVolatility?.hasEnoughData) return null;
+    const used = Object.values(purchasingReportData?.groupedByProvider || {}).flatMap(g => g.items);
+    let effect = 0, base = 0;
+    for (const item of used) {
+        const v = recentVolatility.byName[item.name];
+        base += item.purchaseCost;
+        if (v && v.count >= 2 && v.trendPercent > -100) effect += item.purchaseCost - item.purchaseCost / (1 + v.trendPercent / 100);
+    }
+    return { effect, base, share: base > 0 ? effect / base : null, pointCount: recentVolatility.pointCount };
+}
+
 const moreSupplyRules = (c) => {
     const out = [];
     // 46 : fournisseurs bien répartis
     const shares = c.ingredientShares.rows;
-    if (shares.length >= 4 && shares[0].share < T.providerSpread) out.push(force('supplier-spread', 'Approvisionnement', 36, `Achats d'ingrédients bien répartis entre ${shares.length} fournisseurs`, `Le premier fournisseur ne pèse que ${pct(shares[0].share, 0)} des achats.`, 'ingredients'));
+    if (shares.length >= 3 && !shares[0].isDependent) out.push(force('supplier-spread', 'Approvisionnement', 36, `Achats d'ingrédients bien répartis entre ${shares.length} fournisseurs`, `Le premier fournisseur ne pèse que ${pct(shares[0].share, 0)} des achats.`, 'ingredients'));
     // 53 : peu d'intrants pèsent lourd
     const abc = c.analysis.abcAnalysisData;
     const ranked = abc ? [...abc.A, ...abc.B, ...abc.C] : [];
@@ -590,19 +600,12 @@ const moreSupplyRules = (c) => {
         const top = savings.sort((x, y) => y.saving - x.saving)[0];
         out.push(weak('supplier-cheaper', 'Approvisionnement', 47, `${savings.length} ingrédient${savings.length > 1 ? 's' : ''} moins cher${savings.length > 1 ? 's' : ''} chez un autre fournisseur`, `Le plus marqué : ${top.name} chez ${top.provider}, ${pct(top.pct, 0)} de moins (perte incluse), soit ${usd(top.saving)} sur vos volumes prévus.`, 'ingredients', top.saving));
     }
-    // 55 : effet en dollars des variations de prix récentes, aux volumes actuels
-    const recent = c.ingredientVolatilityRecent;
-    if (recent?.hasEnoughData) {
-        let effect = 0, base = 0;
-        for (const item of used) {
-            const v = recent.byName[item.name];
-            base += item.purchaseCost;
-            if (v && v.count >= 2 && v.trendPercent > -100) effect += item.purchaseCost - item.purchaseCost / (1 + v.trendPercent / 100);
-        }
-        if (base > 0 && Math.abs(effect) / base >= T.priceEffectShare) {
-            if (effect > 0) out.push(weak('history-price-effect', 'Évolution', 57, `Les hausses de prix ajoutent ${usd(effect)} à vos achats d'ingrédients`, `Aux volumes prévus, sur les ${recent.pointCount} derniers relevés (${pct(effect / base)} des achats).`, 'ingredients', effect));
-            else out.push(force('history-price-effect', 'Évolution', 45, `Les baisses de prix font économiser ${usd(-effect)} sur vos achats d'ingrédients`, `Aux volumes prévus, sur les ${recent.pointCount} derniers relevés (${pct(-effect / base)} des achats).`, 'ingredients', -effect));
-        }
+    // 55 : effet en dollars des variations de prix récentes, aux volumes actuels (calcul partagé avec le rapport PDF : computeIngredientPriceEffect)
+    const pe = computeIngredientPriceEffect(c.analysis.purchasingReportData, c.ingredientVolatilityRecent);
+    if (pe && pe.base > 0 && Math.abs(pe.effect) / pe.base >= T.priceEffectShare) {
+        const { effect, base, pointCount } = pe;
+        if (effect > 0) out.push(weak('history-price-effect', 'Évolution', 57, `Les hausses de prix ajoutent ${usd(effect)} à vos achats d'ingrédients`, `Aux volumes prévus, sur les ${pointCount} derniers relevés (${pct(effect / base)} des achats).`, 'ingredients', effect));
+        else out.push(force('history-price-effect', 'Évolution', 45, `Les baisses de prix font économiser ${usd(-effect)} sur vos achats d'ingrédients`, `Aux volumes prévus, sur les ${pointCount} derniers relevés (${pct(-effect / base)} des achats).`, 'ingredients', -effect));
     }
     // 79 : concentration des frais fixes
     const lines = (c.expenseLines || []).map(l => ({ label: l.label, amount: P(l.amount) })).filter(l => l.amount > 0).sort((x, y) => y.amount - x.amount);
@@ -646,10 +649,12 @@ const moreLaborRules = (c) => {
 // Les forces suivent le même classement : ce qui compte le plus à protéger passe en premier.
 const TIER_RULES = [
     [/^(safety|net-theoretical|fixed-cover|channel-deficit-|activity-deficit-|activity-below-|sku-negative-everywhere|rec-net|sens-inputs|sens-labor)/, 1],
-    [/^(supplier-spread|stable-a|loss-low|activities-positive|post-used|labor-used|sens-item|inputs-top5|fixed-concentration|bcg-stars|activity-cover-|activity-best-hour|channel-best|profit-spread)/, 4],
+    [/^(stable-a|loss-low|post-used|sens-item|inputs-top5|fixed-concentration|bcg-stars|activity-cover-|activity-best-hour|channel-best)/, 4],
 ];
 const THEME_TIER = { 'Rentabilité': 2, 'Coûts': 2, 'Produits': 2, 'Canaux': 2, 'Évolution': 2, 'Réel vs théorique': 2, 'Activités': 3, 'Approvisionnement': 3, 'Main-d\'œuvre': 3 };
 export const tierOf = (f) => {
+    // Sensibilité (décision du 22/11) : un bénéfice qui RÉSISTE au choc n'est pas une question de survie ; la gravité suit l'ampleur de la perte simulée.
+    if (/^sens-(inputs|labor)$/.test(f.id) && f.tone === 'force') return 3;
     for (const [re, tier] of TIER_RULES) if (re.test(f.id)) return tier;
     return THEME_TIER[f.theme] || 3;
 };
@@ -679,17 +684,36 @@ export const FINDING_RULES = [
     economicsRules, moreChannelRules, moreActivityRules, moreProductRules, moreSupplyRules, moreLaborRules,
 ];
 
+// Sujet d'un constat par entité déjà existant (canal, activité) : déduit de son identifiant, sans modifier les règles.
+const subjectOf = (f, ctx) => {
+    if (f.subject) return f.subject;
+    let m = /^channel-deficit-(.+)$/.exec(f.id);
+    if (m) return subject('canal', m[1], ctx.channelNames?.[m[1]] || m[1]);
+    m = /^activity-(?:deficit|low|below|cover)-(.+)$/.exec(f.id);
+    if (m) return subject('activité', m[1], (ctx.productionActivities || []).find(x => String(x.id) === m[1])?.name || m[1]);
+    return null;
+};
+
 // Tous les constats applicables, du plus important au moins important (à poids égal, ordre stable par identifiant).
-export function computeKeyFindings(ctx) {
+// Chaque constat porte aussi son classement à deux axes : `scope` (general | specific), `subjectType`, `subject` (le sujet d'un constat par entité, sinon null),
+// `form` (entity | aggregate) et `severity` (major | medium | minor).
+// `options.entities` : ajoute les constats PAR ENTITÉ (entityFindings.js et tendances par format) ; faux par défaut, pour que les écrans existants gardent leur contenu.
+export function computeKeyFindings(ctx, { entities = false } = {}) {
     const all = [];
-    for (const rule of FINDING_RULES) {
-        try { all.push(...rule(ctx)); } catch { /* une règle qui échoue (donnée inattendue) se tait : un constat n'est jamais inventé */ }
+    const context = entities ? { ...ctx, includeEntities: true } : ctx;
+    for (const rule of entities ? [...FINDING_RULES, ...ENTITY_RULES] : FINDING_RULES) {
+        try { all.push(...rule(context)); } catch { /* une règle qui échoue (donnée inattendue) se tait : un constat n'est jamais inventé */ }
     }
     const byId = new Map();
     for (const f of all) if (!byId.has(f.id)) byId.set(f.id, f);
     const revenue = ctx.analysis?.menuRevenue || sum((ctx.channelSummaries || []), r => r.revenueTotal);
-    const sorted = [...byId.values()].map(f => { const g = { ...f, group: groupOf(f.id), impact: impactOf(ctx, f) }; return { ...g, tier: tierOf(g), rank: rankOf(g, revenue) }; })
-        .sort((a, b) => b.rank - a.rank || a.id.localeCompare(b.id));
+    const sorted = [...byId.values()].map(f => {
+        const g = { ...f, group: groupOf(f.id), impact: impactOf(ctx, f) };
+        const tier = tierOf(g);
+        const meta = classifyFinding(f.id) || { scope: 'specific', subjectType: null };
+        const sub = subjectOf(f, ctx);
+        return { ...g, tier, rank: rankOf(g, revenue), scope: meta.scope, subjectType: meta.subjectType, subject: sub, form: sub ? 'entity' : 'aggregate', severity: severityOf({ ...g, scope: meta.scope }, revenue, tier) };
+    }).sort((x, y) => y.rank - x.rank || x.id.localeCompare(y.id));
     const split = (list) => ({ forces: list.filter(f => f.tone === 'force'), faiblesses: list.filter(f => f.tone === 'faiblesse'), all: list });
     const groups = Object.fromEntries(FINDING_GROUPS.map(g => [g.id, split(sorted.filter(f => f.group === g.id))]));
     return { ...split(sorted), groups };

@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 
 export default [
-    { ignores: ['dist/**', 'release/**', 'node_modules/**', 'public/libs/**'] },
+    { ignores: ['dist/**', 'release/**', 'node_modules/**', 'public/libs/**', 'Projet_Claude/**'] }, // Projet_Claude : documents et sources de maquettes, pas du code de l'application
     js.configs.recommended,
     {
         files: ['src/**/*.{js,jsx}'],

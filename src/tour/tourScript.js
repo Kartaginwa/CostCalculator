@@ -40,6 +40,9 @@ const NEW_EXPENSE = '#tutorial-section-expenses tbody tr:last-child';
 const SHOCK_PCT = '[data-tour="shock-row"] input[inputmode="decimal"]';
 const KPI = '[data-tour="kpi-tiles"]';
 const SUBBAR = '[data-tour="subtab-bar"]';
+// Constats de la Vue d'ensemble : trois blocs séparés (23/11), chacun sous le rapport qu'il commente.
+const FIND_OBJ = '#tutorial-section-findings-objectif';
+const FIND_EVO = '#tutorial-section-findings-evolution';
 const FINDINGS = '#tutorial-section-key-findings';
 const RECON = '#tutorial-section-reconciliation';
 const CHART = '#tutorial-section-tracking-global .recharts-wrapper';
@@ -320,6 +323,8 @@ export const SCENES = [
             ...subNote(6200, 'ingredients', 'Vos achats et votre équipe'),
             { at: 8700, do: 'unnote' },
             ...subNote(8800, 'simulation', 'Vos « et si »'),
+            { at: 11300, do: 'unnote' },
+            { at: 11400, do: 'note', id: 'rapport-pdf', target: { btn: 'Générer un rapport PDF' }, text: 'Et un rapport PDF complet, prêt à partager', side: 'bottom' },
         ],
     },
     {
@@ -359,12 +364,12 @@ export const SCENES = [
         id: 'constats', chapter: 5, tab: 'summary', subtab: 'overview',
         caption: `Pas envie de fouiller dans les chiffres ? Les **constats clés** le font pour vous : vos objectifs atteints ou non, ce qui s'améliore ou se détériore, vos forces et vos faiblesses.`,
         steps: [
-            { at: 300, do: 'scroll', target: FINDINGS, block: 'start' },
-            { at: 1100, do: 'highlight', target: FINDINGS },
-            { at: 1400, do: 'note', id: 'c1', target: { text: 'Objectifs stratégiques', within: FINDINGS }, text: 'Vos cibles : atteintes ou non', side: 'right' },
-            { at: 4000, do: 'unnote' }, { at: 4100, do: 'scroll', target: { text: 'Amélioration / détérioration', within: FINDINGS }, block: 'start' },
-            { at: 5000, do: 'note', id: 'c2', target: { text: 'Amélioration / détérioration', within: FINDINGS }, text: 'Ce qui bouge depuis vos derniers points de référence', side: 'right' },
-            { at: 7600, do: 'unnote' }, { at: 7700, do: 'scroll', target: { text: 'Forces et faiblesses', within: FINDINGS }, block: 'start' },
+            { at: 300, do: 'scroll', target: FIND_OBJ, block: 'start' },
+            { at: 1100, do: 'highlight', target: FIND_OBJ },
+            { at: 1400, do: 'note', id: 'c1', target: { text: 'Objectifs stratégiques', within: FIND_OBJ }, text: 'Vos cibles : atteintes ou non', side: 'right' },
+            { at: 4000, do: 'unnote' }, { at: 4100, do: 'scroll', target: FIND_EVO, block: 'start' },
+            { at: 5000, do: 'note', id: 'c2', target: { text: 'Amélioration / détérioration', within: FIND_EVO }, text: 'Ce qui bouge depuis vos derniers points de référence', side: 'right' },
+            { at: 7600, do: 'unnote' }, { at: 7700, do: 'scroll', target: FINDINGS, block: 'start' },
             { at: 8600, do: 'note', id: 'c3', target: { text: 'Forces et faiblesses', within: FINDINGS }, text: 'Ce qui vous distingue, en bien comme en moins bien', side: 'right' },
         ],
     },

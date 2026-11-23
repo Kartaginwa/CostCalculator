@@ -6,8 +6,9 @@ import { getCostTargetIndicator, useEscapeKey, useSessionState } from '../ui-uti
 import { Tooltip, Pagination, CostNatureBadge, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
-import { computeSnapshotBreakEven, computeSnapshotMenuKpis, computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
-import { computeSalesChannelCascade } from '../engine/salesChannelCascade.js';
+import { computeMenuEngineeringQuadrants, computeActivitySummaries, computeChannelSummaries, computeActivityChannelMarginMatrix } from '../engine/analysisData.js';
+import { computeSkuCascade } from '../engine/skuCascade.js';
+import { computeGlobalSeries, computeProductSeries, isProductPriced } from '../engine/trackingSeries.js';
 import { computeProjectChecks } from '../engine/projectChecks.js';
 import { computeIngredientVolatility, computePackagingVolatility } from '../engine/priceVolatility.js';
 import { AbcAnalysis } from './reports/AbcAnalysis.jsx';
@@ -15,7 +16,7 @@ import { PurchasingReport } from './reports/PurchasingReport.jsx';
 import { LaborReport } from './reports/LaborReport.jsx';
 import { ReconciliationReport } from './reports/ReconciliationReport.jsx';
 import { ActivityLaborSection } from './reports/ActivityLaborSection.jsx';
-import { KeyFindings } from './reports/KeyFindings.jsx';
+import { FindingsProvider, ObjectivesFindings, EvolutionFindings, StrengthsFindings, TabFindings } from './reports/KeyFindings.jsx';
 import { computeSafetyMargin } from '../engine/laborReport.js';
 
 // Sous-onglets de Rapport et suivi (refonte du 21/11), en quatre groupes séparés par un trait : Vue d'ensemble | produits et segments |
@@ -522,7 +523,10 @@ const BySkuSectionHeader = ({ label, colSpan }) => (
 const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) => {
     const costs = row.costs;
     const channelBreakdown = row.channelBreakdown || [];
-    const pds = parseLocaleNumber(row.format?.pds);
+    // Cascade du SKU (PDS, maillons, frais, marges, seuil) : calculée par le moteur (engine/skuCascade.js), partagée avec le rapport PDF.
+    const cascade = computeSkuCascade(row, salesChannels);
+    const pds = cascade.pds;
+    const cascadeOf = (cb) => cascade.channels.find(c => c.channelId === cb.channelId);
     // Phase 4.6 : nom de l'activité de ce SKU, pour une infobulle lisible sur la ligne « Activité »
     // ci-dessous (le produit n'a pas de contenant « Général » propre — absent, jamais inventé).
     const activityName = productionActivities.find(a => a.id === row.activityId)?.name;
@@ -535,52 +539,12 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
         .filter(Boolean)
         .join(' + ') || 'Coûts additionnels';
 
-    // Clé de dédoublonnage d'un maillon : son nom (si renseigné, pour fusionner un même maillon
-    // nommé réutilisé par plusieurs canaux) — sinon channelId+index, pour qu'un maillon sans nom ne
-    // fusionne jamais avec un autre maillon sans nom d'un canal différent (deux maillons distincts
-    // qui ne portent simplement aucun nom, pas le même maillon).
-    const linkRowKey = (channelId, link, index) => (link.name || '').trim() || `${channelId}:${index}`;
-
-    // Un maillon par ligne, du plus proche du PDS (en haut) vers celui le plus proche du prix net
-    // (en bas) — cohérent avec PDS en haut et Prix de vente en bas de cette section.
-    const linkRows = [];
-    const seenLinkKeys = new Set();
-    channelBreakdown.forEach(cb => {
-        const links = salesChannels.find(c => c.id === cb.channelId)?.links || [];
-        for (let i = links.length - 1; i >= 0; i--) {
-            const key = linkRowKey(cb.channelId, links[i], i);
-            if (seenLinkKeys.has(key)) continue;
-            seenLinkKeys.add(key);
-            linkRows.push({ key, label: (links[i].name || '').trim() || `Maillon ${i + 1}` });
-        }
-    });
-
-    // Delta $ de CE maillon pour CE canal : la part de l'écart PDS/prix net qui lui revient (la
-    // cascade complète, pas seulement son résultat final — voir computeNetPriceFromPds pour le
-    // prix net global). Absent si le canal ne passe pas par ce maillon, ou si le PDS n'est pas saisi.
-    const getLinkDelta = (cb, linkRow) => {
-        if (!(pds > 0)) return null;
-        const links = salesChannels.find(c => c.id === cb.channelId)?.links || [];
-        const index = links.findIndex((l, i) => linkRowKey(cb.channelId, l, i) === linkRow.key);
-        if (index === -1) return null;
-        const prices = computeSalesChannelCascade({ links, anchorIndex: links.length, anchorValue: pds });
-        const before = prices[index];
-        const after = prices[index + 1];
-        return (before != null && after != null) ? after - before : null;
-    };
-
-    // Total $ de TOUS les maillons de ce canal (somme des deltas ci-dessus) : PDS moins le prix
-    // net que produirait la cascade complète — un canal sans maillon (ex. vente directe) donne
-    // bien 0 $, une vraie valeur (aucun maillon à additionner), jamais confondue avec un PDS absent.
-    const getTotalLinkDelta = (cb) => {
-        if (!(pds > 0)) return null;
-        const links = salesChannels.find(c => c.id === cb.channelId)?.links || [];
-        if (links.length === 0) return 0;
-        const prices = computeSalesChannelCascade({ links, anchorIndex: links.length, anchorValue: pds });
-        const first = prices[0];
-        const last = prices[links.length];
-        return (first != null && last != null) ? last - first : null;
-    };
+    // Un maillon par ligne, du plus proche du PDS (en haut) vers celui le plus proche du prix net (en bas) — cohérent avec PDS en haut et Prix de vente
+    // en bas de cette section. Les écarts $ viennent du moteur : absents (null) si le canal ne passe pas par ce maillon ou si le PDS n'est pas saisi ;
+    // un canal sans maillon (vente directe) donne bien 0 $ au total, une vraie valeur, jamais confondue avec un PDS absent.
+    const { linkRows } = cascade;
+    const getLinkDelta = (cb, linkRow) => cascadeOf(cb)?.deltas[linkRow.key] ?? null;
+    const getTotalLinkDelta = (cb) => cascadeOf(cb)?.totalDelta ?? null;
 
     return (
         <div>
@@ -663,16 +627,16 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
 
                             <BySkuSectionHeader label="Répartition des charges fixes" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Frais fixes — Général" tooltip="sku.ffGeneral" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costIndirectGeneralPerPortion || 0)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedGeneral)} $</td>
                             ))} />
                             <BySkuRow label={`Frais fixes — Activité${activityName ? ` (${activityName})` : ''}`} tooltip="sku.ffActivite" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costIndirectActivityPerPortion || 0)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedActivity)} $</td>
                             ))} />
                             <BySkuRow label="Frais fixes — Canal" tooltip="sku.ffCanal" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.costIndirectChannelPerPortion || 0)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedChannel)} $</td>
                             ))} />
                             <BySkuRow label="Frais fixes totaux par unité" tooltip="sku.ffTotal" emphasis render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cb.margeBruteDollar - cb.margeNetteDollar - (costs.costAgingPerPortion || 0))} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cascadeOf(cb).fixedTotal)} $</td>
                             ))} />
 
                             <BySkuSectionHeader label="Coût net et marge nette" colSpan={channelBreakdown.length + 1} />
@@ -682,7 +646,7 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                                 ))} />
                             )}
                             <BySkuRow label="Coût net" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cb.netPrice - cb.margeNetteDollar)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).netCost)} $</td>
                             ))} />
                             <BySkuRow label="Bénéfice net" tooltip="sku.beneficeNet" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatCurrency(cb.margeNetteDollar)} $</td>
@@ -694,22 +658,22 @@ const BySkuWaterfall = ({ row, productionActivities = [], salesChannels = [] }) 
                             <BySkuSectionHeader label="Seuil de rentabilité par canal de vente" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Revenu total" tooltip="sku.revenuTotal" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                    {cb.volume > 0 ? `${formatCurrency(cb.netPrice * cb.volume)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                    {cascadeOf(cb).revenueTotal != null ? `${formatCurrency(cascadeOf(cb).revenueTotal)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
                             <BySkuRow label="Frais totaux" tooltip="sku.fraisTotaux" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                    {cb.volume > 0 ? `${formatCurrency((cb.netPrice - cb.margeNetteDollar) * cb.volume)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                    {cascadeOf(cb).costTotal != null ? `${formatCurrency(cascadeOf(cb).costTotal)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
                             <BySkuRow label="Bénéfices / Pertes" tooltip="sku.beneficePerte" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold" style={cb.volume > 0 ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
-                                    {cb.volume > 0 ? `${formatCurrency(cb.margeNetteDollar * cb.volume)} $` : <span className="text-gray-400 font-normal" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                    {cascadeOf(cb).profitTotal != null ? `${formatCurrency(cascadeOf(cb).profitTotal)} $` : <span className="text-gray-400 font-normal" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
                             <BySkuRow label="Point mort" tooltip="sku.pointMort" emphasis render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold text-indigo-700">
-                                    {cb.breakEvenUnits != null ? `${cb.breakEvenUnits} unités` : 'N/A'}
+                                    {cascadeOf(cb).breakEvenUnits != null ? `${cascadeOf(cb).breakEvenUnits} unités` : 'N/A'}
                                 </td>
                             ))} />
                         </tbody>
@@ -888,6 +852,8 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
 
         </div>
 
+        {/* Constats : objectifs stratégiques, seuls sous les tuiles (23/11). */}
+        <ObjectivesFindings />
 
         <div className="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner">
             {/* Évolution des KPI globaux (ex-Suivi, fusionné le 24/10 — retour utilisateur,
@@ -910,6 +876,9 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
             </div>
 
         </div>
+
+        {/* Constats : amélioration / détérioration, seuls sous l'évolution des marges (23/11). */}
+        <EvolutionFindings />
         </>
     );
 };
@@ -1099,89 +1068,18 @@ export const SummaryTable = ({
         [trackingPoints, selectedSnapshotIds]
     );
 
-    const globalKpiData = useMemo(() => {
-        return displayedTrackingPoints.map(point => {
-            // Pondération par le REVENU (voir computeSnapshotMenuKpis) : même méthode que les tuiles de
-            // la Vue d'ensemble, pour que le dernier point du graphique corresponde à la tuile.
-            const kpis = computeSnapshotMenuKpis(point.productsWithCosts);
-
-            // Aucun produit actif avec un poids calculable à cette date : données ABSENTES (null, un
-            // trou dans la ligne), jamais forcées à 0.
-            if (!kpis) {
-                return {
-                    name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }), label: point.name, note: point.note,
-                    "Point Mort Global": null, "Marge Brute Moyenne": null, "Coût Matière Moyen": null, "Coût Emballage Moyen": null, "Coût Main-d'œuvre Moyen": null,
-                };
-            }
-
-            const { weightedGrossMargin, weightedMaterialCost, weightedPackagingCost, weightedLaborCost } = kpis;
-            // Même formule que la tuile « Point mort » (main-d'œuvre traitée comme un coût fixe) : la courbe rejoint la valeur actuelle.
-            const globalBreakEvenAtPoint = computeSnapshotBreakEven(point.productsWithCosts, point.generalInfo.totalIndirects)
-                ?? (weightedGrossMargin > 0 ? parseLocaleNumber(point.generalInfo.totalIndirects) / weightedGrossMargin : 0);
-
-            return {
-                name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
-                label: point.name,
-                note: point.note,
-                "Point Mort Global": globalBreakEvenAtPoint,
-                "Marge Brute Moyenne": weightedGrossMargin * 100,
-                "Coût Matière Moyen": weightedMaterialCost * 100,
-                "Coût Emballage Moyen": weightedPackagingCost * 100,
-                "Coût Main-d'œuvre Moyen": weightedLaborCost * 100,
-            };
-        });
-    }, [displayedTrackingPoints]);
+    // Séries d'évolution calculées par le moteur (engine/trackingSeries.js), partagées avec le rapport PDF : mêmes variables, mêmes règles de données absentes.
+    const globalKpiData = useMemo(() => computeGlobalSeries(displayedTrackingPoints), [displayedTrackingPoints]);
 
     // Évolution des coûts du SKU sélectionné ci-dessus (« Par SKU ») — ex-« Analyse par format » de
     // l'onglet Suivi, fusionnée le 24/10 : réutilise le MÊME sélecteur de SKU plutôt qu'un second
     // indépendant, qui pouvait pointer vers un autre produit (source de confusion).
-    const productKpiData = useMemo(() => {
-        if (!selectedSkuId) return [];
-
-        return displayedTrackingPoints.map(point => {
-            const productData = point.productsWithCosts.find(p => String(p.id) === String(selectedSkuId));
-            if (!productData) {
-                return {
-                    name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
-                    label: point.name,
-                    note: point.note,
-                    "Coût matière (%)": null,
-                    "Coût emballage (%)": null,
-                    "Coût main-d'œuvre (%)": null,
-                    "Coût frais indirects (%)": null,
-                    "Marge nette (%)": null,
-                    "Coût matière ($/u.)": null,
-                    "Coût emballage ($/u.)": null,
-                    "Coût main-d'œuvre ($/u.)": null,
-                    "Coût de revient ($/u.)": null,
-                };
-            }
-            return {
-                name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
-                label: point.name,
-                note: point.note,
-                "Coût matière (%)": productData.costs.costMatierePercent * 100,
-                "Coût emballage (%)": productData.costs.costPackagingPercent * 100,
-                "Coût main-d'œuvre (%)": productData.costs.costLaborPercent * 100,
-                "Coût frais indirects (%)": productData.costs.costIndirectPercent * 100,
-                "Marge nette (%)": productData.costs.margeNettePercent * 100,
-                "Coût matière ($/u.)": productData.costs.costMatierePerPortion,
-                "Coût emballage ($/u.)": productData.costs.costPackagingPerPortion,
-                "Coût main-d'œuvre ($/u.)": productData.costs.costLaborPerPortion,
-                "Coût de revient ($/u.)": productData.costs.totalCostPerPortion,
-            };
-        });
-    }, [displayedTrackingPoints, selectedSkuId]);
+    const productKpiData = useMemo(() => computeProductSeries(displayedTrackingPoints, selectedSkuId), [displayedTrackingPoints, selectedSkuId]);
 
     // Un format sans prix de vente (sous-recette jamais vendue seule) a tous ses ratios en % forcés
     // à 0 par calculateCosts.js (division par un prix nul) — le graphique basculerait alors sur une
     // ligne plate à 0 % trompeuse. On y bascule donc les coûts en $/unité, toujours significatifs.
-    const selectedProductIsPriced = useMemo(() => {
-        return displayedTrackingPoints.some(point => {
-            const p = point.productsWithCosts.find(pp => String(pp.id) === String(selectedSkuId));
-            return p && parseLocaleNumber(p.prixVente) > 0;
-        });
-    }, [displayedTrackingPoints, selectedSkuId]);
+    const selectedProductIsPriced = useMemo(() => isProductPriced(displayedTrackingPoints, selectedSkuId), [displayedTrackingPoints, selectedSkuId]);
 
     const trackableIngredients = useMemo(() => {
         const allIngredients = new Map();
@@ -1474,6 +1372,7 @@ export const SummaryTable = ({
     };
 
     return (
+        <FindingsProvider>
         <div className="container mx-auto p-6 bg-white rounded-xl shadow-2xl max-w-7xl">
             <SnapshotDetailsModal
                 isOpen={isSnapshotModalOpen}
@@ -1751,8 +1650,8 @@ export const SummaryTable = ({
                 />
             </div>
 
-            {/* Constats clés : sous la matrice Activité × Canal (déplacés le 21/11, demande de l'utilisateur). */}
-            <KeyFindings />
+            {/* Constats : forces et faiblesses (mêmes règles que le chapitre 1 du rapport PDF), seuls sous la matrice Activité × Canal (23/11). */}
+            <StrengthsFindings />
 
             <div className="mt-8">
                 <ReconciliationReport />
@@ -1971,6 +1870,12 @@ export const SummaryTable = ({
             {subTab === 'simulation' && (
                 <CostShockSimulator collapsible={false} />
             )}
+
+            {/* Bandeau de constats à la fin de chaque sous-onglet, sauf Vue d'ensemble (trois blocs ci-dessus) et Simulation (23/11). */}
+            {subTab !== 'overview' && subTab !== 'simulation' && (
+                <TabFindings subTab={subTab} selectedFormat={subTab === 'bySku' && selectedSkuRow ? { id: selectedSkuRow.id, productId: selectedSkuRow.productId } : null} />
+            )}
         </div>
+        </FindingsProvider>
     );
 };

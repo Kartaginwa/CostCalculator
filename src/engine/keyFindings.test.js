@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeKeyFindings, buildKeyFindingsContext, FINDING_RULES } from './keyFindings.js';
+import { STRUCTURAL } from './findingMeta.js';
 import { REPORT_THRESHOLDS as T } from './reportThresholds.js';
 
 // Contexte minimal (rien ne s'applique) : chaque test n'ajoute que les données de la règle qu'il vérifie.
@@ -138,7 +139,8 @@ describe('constats clés — approvisionnement et main-d\'œuvre', () => {
     it('rentabilité de l\'heure : meilleur et mauvais produits (au moins trois produits avec ratio), revente ignorée', () => {
         const row = (name, hours, gp, isResale = false) => ({ name, hours, grossProfit: gp, isResale, grossProfitPerHour: isResale ? null : gp / hours });
         const rows = [row('A', 10, 2500), row('B', 10, 1500), row('C', 10, 300), row('R', 0, 4000, true)];
-        const r = computeKeyFindings(ctx({ top: { productRows: rows } }));
+        // La moyenne est celle de l'écran Main-d'œuvre (marge de croissance) : le constat la lit, il ne la recalcule pas.
+        const r = computeKeyFindings(ctx({ top: { productRows: rows, growth: { freeHours: 0, additionalRevenue: 0, grossProfitPerHour: 100 } } }));
         expect(find(r, 'product-best-hour').title).toContain('« A »');
         expect(find(r, 'product-worst-hour').title).toContain('« C »');
         expect(computeKeyFindings(ctx({ top: { productRows: rows.slice(0, 2) } })).all).toEqual([]);
@@ -318,5 +320,55 @@ describe('constats clés — évolution : point identique à aujourd’hui, 12 m
         const r = computeKeyFindings(ctx({ analysis: { menuRevenue: 100000, purchasingReportData: mk('Beurre', 900) }, top: { cascade: { payroll: 50000, unusedShare: 0.2, unusedPay: 500 } } }));
         const ids = r.all.map(f => f.id);
         expect(ids.indexOf('loss-high')).toBeLessThan(ids.indexOf('labor-unused'));
+    });
+});
+
+describe('constats clés — forces miroirs et gravité structurelle (23/11)', () => {
+    it('toutes les cibles de coûts atteintes (au moins deux saisies) : une force majeure ; une seule dépassée : aucune', () => {
+        const a = { weightedMaterialCost: 0.30, weightedPackagingCost: 0.05, weightedLaborCost: 0.2 };
+        const ok = computeKeyFindings(ctx({ analysis: a, info: { foodCostTarget: '32', packagingCostTarget: '8', laborCostTarget: '22' } }));
+        expect(find(ok, 'targets-all-met')).toMatchObject({ tone: 'force', severity: 'major', scope: 'general' });
+        expect(find(ok, 'targets-all-met').title).toContain('3 cibles');
+        const one = computeKeyFindings(ctx({ analysis: a, info: { foodCostTarget: '32' } }));
+        expect(find(one, 'targets-all-met')).toBeUndefined();
+        const over = computeKeyFindings(ctx({ analysis: { ...a, weightedMaterialCost: 0.35 }, info: { foodCostTarget: '32', packagingCostTarget: '8' } }));
+        expect(find(over, 'targets-all-met')).toBeUndefined();
+    });
+    const prod = (id, margin) => ({ id, displayName: `Plat ${id}`, onMenu: true, channelBreakdown: [{ channelId: 'c1', margeNettePercent: margin, netPrice: 10, volume: 100 }] });
+    it('aucun produit ne perd d\'argent : force majeure, qui remplace « N produits rentables »', () => {
+        const r = computeKeyFindings(ctx({ analysis: { activeProducts: [prod('a', 0.2), prod('b', 0.1), prod('c', 0.3)] } }));
+        expect(find(r, 'sku-none-losing')).toMatchObject({ tone: 'force', severity: 'major' });
+        expect(find(r, 'sku-positive')).toBeUndefined();
+        const mixed = computeKeyFindings(ctx({ analysis: { activeProducts: [prod('a', 0.2), prod('b', -0.1), prod('c', 0.3)] } }));
+        expect(find(mixed, 'sku-none-losing')).toBeUndefined();
+        expect(find(mixed, 'sku-positive')).toBeDefined();
+    });
+    const seg = (id, name, rev) => ({ channelId: id, channelName: name, revenueTotal: rev, margeNetteTotal: rev * 0.1, margeNettePercent: 0.1, margeBruteTotal: rev * 0.4, costLaborTotal: 0, costAgingTotal: 0, totalIndirectTotal: 0, totalDirectCostTotal: rev * 0.6, costMatiereTotal: 0, costPackagingTotal: 0, costIndirectChannelTotal: 0 });
+    it('revenus bien répartis entre les canaux : force majeure ; un canal à 40 % ou plus : la dépendance, pas la force', () => {
+        const even = computeKeyFindings(ctx({ top: { channelSummaries: [seg('c1', 'Direct', 3500), seg('c2', 'Épiceries', 3200), seg('c3', 'GS', 3300)] } }));
+        expect(find(even, 'channel-balanced')).toMatchObject({ tone: 'force', severity: 'major' });
+        expect(find(even, 'channel-dependency')).toBeUndefined();
+        const dep = computeKeyFindings(ctx({ top: { channelSummaries: [seg('c1', 'Direct', 6000), seg('c2', 'GS', 2000)] } }));
+        expect(find(dep, 'channel-dependency').severity).toBe('major');
+        expect(find(dep, 'channel-balanced')).toBeUndefined();
+    });
+    it('fournisseurs répartis dès trois fournisseurs sans dépendance : force majeure', () => {
+        const shares = (rows) => ({ rows, total: 100 });
+        const ok = computeKeyFindings(ctx({ top: { ingredientShares: shares([{ provider: 'A', share: 0.28, isDependent: false }, { provider: 'B', share: 0.27, isDependent: false }, { provider: 'C', share: 0.25, isDependent: false }]) } }));
+        expect(find(ok, 'supplier-spread')).toMatchObject({ tone: 'force', severity: 'major' });
+        const dep = computeKeyFindings(ctx({ top: { ingredientShares: shares([{ provider: 'A', share: 0.5, isDependent: true }, { provider: 'B', share: 0.3, isDependent: false }, { provider: 'C', share: 0.2, isDependent: false }]) } }));
+        expect(find(dep, 'supplier-spread')).toBeUndefined();
+    });
+    it('un constat spécifique sans enjeu en dollars n\'est plus majeur à cause de son poids (« rentable partout »)', () => {
+        const r = computeKeyFindings(ctx({ analysis: { activeProducts: [prod('a', 0.2), prod('b', -0.1)] } }));
+        expect(find(r, 'sku-best')).toBeUndefined(); // 2 canaux requis
+        const two = (id, m) => ({ ...prod(id, m), channelBreakdown: [{ channelId: 'c1', margeNettePercent: m, netPrice: 10, volume: 100 }, { channelId: 'c2', margeNettePercent: m, netPrice: 10, volume: 100 }] });
+        const best = computeKeyFindings(ctx({ analysis: { activeProducts: [two('a', 0.2), prod('b', -0.1)] } }));
+        expect(find(best, 'sku-best').severity).toBe('medium');
+    });
+    it('chaque faiblesse structurelle a sa force miroir, de même gravité', () => {
+        const pairs = [['channel-dependency', 'channel-balanced'], ['supplier-ing', 'supplier-spread'], ['sku-losers', 'sku-none-losing'], ['profit-concentration', 'profit-spread'], ['labor-unused', 'labor-used'], ['cost-matiere', 'targets-all-met']];
+        for (const [, mirror] of pairs) expect(STRUCTURAL.test(mirror), mirror).toBe(true);
+        for (const [weakId] of pairs.slice(0, 5)) expect(STRUCTURAL.test(weakId) || weakId === 'labor-unused', weakId).toBe(true);
     });
 });

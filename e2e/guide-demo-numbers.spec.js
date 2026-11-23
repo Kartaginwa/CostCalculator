@@ -25,6 +25,7 @@ const SCREENS = {
     labor: async (page) => { await page.locator('#tab-labor').click(); },
     "summary:Ingrédients": async (page) => { await page.locator('#tab-summary').click(); await page.locator('[data-tour="subtab-ingredients"]').click(); },
     "summary:Portefeuille": async (page) => { await page.locator('#tab-summary').click(); await page.locator('[data-tour="subtab-portfolio"]').click(); },
+    "summary:Emballages": async (page) => { await page.locator('#tab-summary').click(); await page.locator('[data-tour="subtab-packaging"]').click(); },
     "summary:Main-d'œuvre": async (page) => { await page.locator('#tab-summary').click(); await page.locator('[data-tour="subtab-labor"]').click(); },
 };
 

@@ -11,7 +11,19 @@ import { effectiveNbPortions } from './yieldCalculator.js';
 // plusieurs appelants passent déjà `format` positionnellement (9e argument) ; l'insérer plus tôt
 // aurait silencieusement décalé ces appels existants. Défaut `[]`, sûr pour tout appel antérieur
 // à cette phase (aucun format n'a encore de `packagingItems` tant que rien n'y est rattaché).
-export const calculateCosts = (product, generalInfo, baseIngredients, allProducts, laborDatabase, overridePrice = null, memo = {}, visitedIds = new Set(), format = null, basePackaging = []) => {
+export const calculateCosts = (...args) => computeCostParts(...args).result;
+
+// Même calcul que calculateCosts, avec en plus le DÉTAIL LIGNE PAR LIGNE de la recette : matières, emballage et étapes de production (rapport PDF,
+// fiche d'un produit). C'est le même calcul, lu au même endroit : rien n'est recalculé ailleurs. Jamais mis en cache et jamais enregistré dans les
+// relevés (qui ne gardent que calculateCosts). Renvoie null pour une boucle circulaire.
+//   ingredients : [{ id, name, quantity, unit, yieldPercent, baseCost, lossCost, finalCost, matiereCost }]  (finalCost : après perte et rendement ; matiereCost : sa part
+//                 classée « matière » (toute la ligne pour un ingrédient de base ; une sous-recette en reporte une partie en emballage ou main-d'œuvre))
+//   packaging   : [{ id, name, quantity, unit, baseCost, lossCost, finalCost }]
+//   steps       : [{ id, name, durationSeconds, postIds, directCost, totalCost }]  (totalCost : après productivité de la cuisine)
+export const calculateCostLines = (product, generalInfo, baseIngredients, allProducts, laborDatabase, format = null, basePackaging = []) =>
+    computeCostParts(product, generalInfo, baseIngredients, allProducts, laborDatabase, null, {}, new Set(), format, basePackaging).lines;
+
+const computeCostParts = (product, generalInfo, baseIngredients, allProducts, laborDatabase, overridePrice = null, memo = {}, visitedIds = new Set(), format = null, basePackaging = []) => {
     const fmt = format || product.formats?.[0] || product;
 
     // Le cache est keyé par format (et non par produit) : deux formats d'une même recette mère ont
@@ -24,14 +36,14 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     // prix simulé (ni l'inverse). Les sous-recettes, elles, sont toujours appelées sans override
     // et restent pleinement cacheables via le memo partagé.
     if (overridePrice === null && memo[fmt.id]) {
-        return memo[fmt.id];
+        return { result: memo[fmt.id], lines: null };
     }
 
     // Boucle détectée par FORMAT (et non par produit) : un produit à plusieurs formats dont l'un utilise l'autre n'est pas une boucle.
     if (visitedIds.has(fmt.id)) {
         console.error(`Boucle circulaire détectée pour le produit: ${product.platName}`);
         // On retourne un objet de coûts vides pour éviter le crash
-        return {
+        const loopResult = {
             totalIngredientsCost: 0, totalPackagingCost: 0, totalLaborCost: 0, totalDirectLaborCost: 0, totalSubcontractingCost: 0,
             totalAgingCost: 0, indirectCostTotal: 0, totalRecipeCost: 0,
             costMatierePerPortion: 0, costPackagingPerPortion: 0, costLaborPerPortion: 0, costSubcontractingPerPortion: 0, costAgingPerPortion: 0,
@@ -42,6 +54,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             // Résultat tronqué : l'appelant le propage (`hasLoop`) et ne le met jamais en cache.
             hasLoop: true
         };
+        return { result: loopResult, lines: null };
     }
 
     // On crée une copie de la pile actuelle et on y ajoute le produit courant
@@ -71,6 +84,8 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
         let subcontractingFromSubRecipes = 0;
         let agingFromSubRecipes = 0;
         let hasLoop = false;
+        let ingredientLines = [];
+        const stepLines = [];
 
         if (fmt.isResaleProduct) {
             const purchaseCost = parseLocaleNumber(fmt.purchaseCost);
@@ -87,11 +102,13 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                 // Sous-recette : ses coûts par nature (matière / emballage / main-d'œuvre / sous-traitance), pour qu'ils
                 // restent classés sous leur nature chez le plat parent (20/11, audit constat 3).
                 let subRecipeCosts = null;
+                let lineName = '';
 
                 // Tente de trouver l'ingrédient dans la liste de base
                 const baseIngredient = baseIngredients.find(ing => ing.id === item.id);
 
                 if (baseIngredient) { // C'est un ingrédient de base
+                    lineName = baseIngredient.name || '';
                     unitPrice = parseLocaleNumber(baseIngredient.unitPrice);
                     lossPercentage = parseLocaleNumber(baseIngredient.lossPercentage) / 100;
                     ingredientUnit = baseIngredient.unit;
@@ -116,6 +133,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                         }
                     }
                     if (subRecipeProduct && subFmt) {
+                        lineName = subRecipeProduct.platName || subRecipeProduct.name || '';
                         // Appel récursif pour obtenir les coûts du format précis de la sous-recette.
                         subRecipeCosts = calculateCosts(subRecipeProduct, generalInfo, baseIngredients, allProducts, laborDatabase, null, memo, currentPath, subFmt, basePackaging);
                         const sanitizedPortionSize = parseLocaleNumber(subFmt.portionSize) || 1;
@@ -165,6 +183,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                     rawLaborRatio = subRecipeCosts.totalLaborCost > 0 ? subRecipeCosts.totalDirectLaborCost / subRecipeCosts.totalLaborCost : 0;
                 }
 
+                acc.lines.push({ id: item.id, name: lineName, quantity: parseLocaleNumber(item.quantity), unit: recipeUnit, yieldPercent: yieldPercent > 0 ? yieldPercent : null, baseCost, lossCost, finalCost, matiereCost: finalCost * matiereShare });
                 acc.totalBaseCost += baseCost * matiereShare;
                 acc.totalLossCost += lossCost * matiereShare;
                 acc.totalFinalCost += finalCost * matiereShare;
@@ -175,7 +194,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                 acc.agingFromSub += finalCost * agingShare;
 
                 return acc;
-            }, { totalBaseCost: 0, totalLossCost: 0, totalFinalCost: 0, packagingFromSub: 0, laborFromSub: 0, rawLaborFromSub: 0, subcontractingFromSub: 0, agingFromSub: 0, hasLoop: false });
+            }, { totalBaseCost: 0, totalLossCost: 0, totalFinalCost: 0, packagingFromSub: 0, laborFromSub: 0, rawLaborFromSub: 0, subcontractingFromSub: 0, agingFromSub: 0, hasLoop: false, lines: [] });
 
                 totalIngredientsCost = ingredientsCosts.totalFinalCost;
                 totalBaseIngredientsCost = ingredientsCosts.totalBaseCost;
@@ -186,6 +205,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                 subcontractingFromSubRecipes = ingredientsCosts.subcontractingFromSub;
                 agingFromSubRecipes = ingredientsCosts.agingFromSub;
                 hasLoop = ingredientsCosts.hasLoop;
+                ingredientLines = ingredientsCosts.lines;
 
             // Coûts de main-d'œuvre basés sur les étapes de production
             totalDirectLaborCost = 0;
@@ -193,6 +213,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
 
             (fmt.productionSteps || []).forEach(step => {
                 const durationSeconds = parseLocaleNumber(step.duration);
+                let stepDirectCost = 0;
 
                 (step.personnel || []).forEach(person => {
                     const postData = laborDatabase.find(p => p.postName === person.postId);
@@ -204,9 +225,11 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
                         const weightedAverageCost = totalHours > 0 ? totalCost / totalHours : 0;
 
                         totalDirectLaborCost += (durationSeconds / 3600) * weightedAverageCost;
+                        stepDirectCost += (durationSeconds / 3600) * weightedAverageCost;
                     }
                 });
 
+                stepLines.push({ id: step.stepId, name: step.stepName || '', durationSeconds, postIds: (step.personnel || []).map(person => person.postId), directCost: stepDirectCost, totalCost: stepDirectCost / productivityFactor });
                 const endTime = parseLocaleNumber(step.startTime) + durationSeconds;
                 if (endTime > totalProductionMinutes) {
                     totalProductionMinutes = endTime;
@@ -222,6 +245,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     let totalPackagingCost = 0;
     let totalBasePackagingCost = 0;
     let totalPackagingLossCost = 0;
+    const packagingLines = [];
     if (!fmt.isResaleProduct) {
         const packagingCosts = (fmt.packagingItems || []).reduce((acc, item) => {
             const basePkg = basePackaging.find(pkg => pkg.id === item.id);
@@ -238,6 +262,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
             acc.totalBaseCost += baseCost;
             acc.totalLossCost += lossCost;
             acc.totalFinalCost += costAfterLoss;
+            packagingLines.push({ id: item.id, name: basePkg.name || '', quantity: parseLocaleNumber(item.quantity), unit: recipeUnit, baseCost, lossCost, finalCost: costAfterLoss });
             return acc;
         }, { totalBaseCost: 0, totalLossCost: 0, totalFinalCost: 0 });
 
@@ -449,7 +474,7 @@ export const calculateCosts = (product, generalInfo, baseIngredients, allProduct
     if (overridePrice === null && !hasLoop) {
         memo[fmt.id] = result;
     }
-    return result;
+    return { result, lines: { ingredients: ingredientLines, packaging: packagingLines, steps: stepLines } };
 
 };
 

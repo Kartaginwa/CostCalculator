@@ -105,7 +105,7 @@ export const chapitreEtatResultats = {
 
         { type: 'h', id: 'guide-ff-fixe-variable', text: 'Fixe ou variable ? Deux regards, et le temps non productif', level: 5 },
         { type: 'p', text: 'Une cuisine salariée coûte la même chose que vous vendiez beaucoup ou peu : c\'est un coût fixe dans la réalité. L\'application la regarde pourtant de deux façons, selon la question posée. __Par unité :__ chaque recette porte le coût de ses propres heures, pour savoir ce que coûte un produit. __Point mort :__ la main-d\'œuvre de production est traitée comme un coût fixe pour la période, parce que la question est « combien dois-je vendre pour couvrir mes coûts ? ».' },
-        { type: 'p', text: 'L\'application répartit sur vos recettes le coût de **toutes les heures payées** de **tous les postes** de l\'onglet Main-d\'œuvre : les heures employées, la **capacité de production payée mais non utilisée** et le temps **non productif** (nettoyage, réunions, administration, déjà reflété par le « % temps productif attendu » de chaque employé). C\'est la part « coût indirect » de la main-d\'œuvre dans l\'onglet Production. La paie de la cuisine se retrouve donc entièrement dans le coût des produits, sans que vous ayez à saisir ce temps ailleurs.' },
+        { type: 'p', text: 'L\'application répartit sur vos recettes le coût de **toutes les heures payées** de **tous les postes** de l\'onglet Main-d\'œuvre : les heures employées, la **capacité de production payée mais non utilisée** et le temps **non productif** (nettoyage, réunions, administration, déjà reflété par le « % temps productif attendu » de chaque employé). C\'est le « coût du temps non productif » de la main-d\'œuvre dans l\'onglet Production. La paie de la cuisine se retrouve donc entièrement dans le coût des produits, sans que vous ayez à saisir ce temps ailleurs.' },
 
         { type: 'h', id: 'guide-ff-repartir', text: 'Répartir une dépense', level: 5 },
         { type: 'p', text: 'Les colonnes de droite permettent de répartir chaque dépense entre « Général », vos activités et vos canaux. La somme des colonnes ne doit pas dépasser le montant de la ligne : un indicateur (coche verte ou avertissement) le confirme, sans jamais bloquer ; une dépense qui ne s\'applique naturellement qu\'à une partie des colonnes (un loyer n\'a pas de canal) laisse simplement les autres vides.' },
@@ -249,8 +249,8 @@ export const chapitreProduction = {
         { type: 'p', text: 'Pour chaque étape, trois coûts s\'affichent :' },
         {
             type: 'ul', itemIds: ['guide-prod-col-cout-direct', 'guide-prod-col-cout-indirect', 'guide-prod-col-cout-total'], items: [
-                { label: 'Coût direct.', text: 'La durée de l\'étape × le coût horaire moyen du poste × le nombre de personnes : le salaire des heures réellement employées.' },
-                { label: 'Coût indirect.', text: 'La part de capacité inutilisée absorbée par cette étape (voir [[guide-concept-capacite|chapitre 10]]). Plus le taux d\'utilisation de votre équipe est bas, plus ce coût est élevé.' },
+                { label: 'Coût du temps productif.', text: 'La durée de l\'étape × le coût horaire moyen du poste × le nombre de personnes : le salaire des heures réellement employées.' },
+                { label: 'Coût du temps non productif.', text: 'Les heures payées qui ne servent pas à produire (capacité inutilisée, nettoyage, réunions), absorbées par cette étape (voir [[guide-concept-capacite|chapitre 10]]). Plus le taux d\'utilisation de votre équipe est bas, plus ce coût est élevé. Ce n\'est pas un frais indirect : c\'est de la main-d\'œuvre de production, payée mais non productive.' },
                 { label: 'Coût total.', text: 'La somme des deux.' },
             ],
         },

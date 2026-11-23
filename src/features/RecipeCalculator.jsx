@@ -1075,15 +1075,15 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                     </div>
                                 </th>
                                 <th className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">Fin</th>
-                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
+                                <th className="w-32 px-2 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
-                                        <div className="flex flex-col items-center"><span>Coût</span><span>Direct ($)</span></div>
+                                        <div className="flex flex-col items-center"><span>Coût temps</span><span>productif ($)</span></div>
                                         <Tooltip tip="prod.coutDirect" />
                                     </div>
                                 </th>
-                                <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
+                                <th className="w-40 px-2 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
-                                        <div className="flex flex-col items-center"><span>Coût</span><span>Indirect ($)</span></div>
+                                        <div className="flex flex-col items-center"><span>Coût temps</span><span>non productif ($)</span></div>
                                         <Tooltip tip="prod.coutIndirect" />
                                     </div>
                                 </th>
@@ -1199,8 +1199,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     </div>
                 <div className="mt-4 p-3 bg-yellow-100 rounded-md space-y-2">
                     <div className="grid grid-cols-2 gap-4">
-                        <p className="text-yellow-800">Total Coût Main-d'œuvre Direct: <span>{formatCurrency(costs.totalDirectLaborCost)} $</span></p>
-                        <p className="text-yellow-800">Total Coût Main-d'œuvre Indirect: <span>{formatCurrency(costs.totalLaborCost - costs.totalDirectLaborCost)} $</span></p>
+                        <p className="text-yellow-800">Total Coût du temps productif: <span>{formatCurrency(costs.totalDirectLaborCost)} $</span></p>
+                        <p className="text-yellow-800">Total Coût du temps non productif (absorbé): <span>{formatCurrency(costs.totalLaborCost - costs.totalDirectLaborCost)} $</span></p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 border-t border-yellow-200 pt-2">
                         <p className="font-bold text-yellow-800">Total Main-d'œuvre (recette): <span>{formatCurrency(costs.totalLaborCost)} $</span></p>

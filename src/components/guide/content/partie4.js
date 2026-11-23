@@ -71,6 +71,7 @@ const TERMES = [
     { term: 'Taux d\'utilisation', def: 'Les heures de production réellement nécessaires divisées par les heures productives payées. Un taux bas signale de la capacité inutilisée.' },
     { term: 'Taux de perte', def: 'La part d\'un ingrédient ou d\'un emballage qui se perd avant la production (péremption, casse, déclassement).' },
     { term: 'Taux de rejet', def: 'La part des produits finis retirés après la production (contrôle qualité). Distinct d\'une perte de procédé.' },
+    { term: 'Temps non productif', def: 'Les heures payées qui ne servent pas à produire (capacité inutilisée, nettoyage, réunions). Son coût est absorbé par les étapes de production et se lit dans l\'écran Production : ce n\'est pas un frais indirect.' },
     { term: 'Temps productif (%)', def: 'La part des heures travaillées qu\'un employé est censé consacrer à la production.' },
     { term: 'Tendance', def: 'La variation d\'un prix entre son premier et son dernier relevé.' },
     { term: 'Théorique', def: 'Les chiffres que prévoit le modèle de recettes, à partir de vos fiches, prix et volumes.' },

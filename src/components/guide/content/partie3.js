@@ -527,7 +527,7 @@ export const partie3 = {
                 {
                     type: 'table', head: ['Export', 'Usage', 'Contenu'], wrapCells: true, rows: [
                         ['{{Générer un rapport PDF}}', 'Présentations, archivage, partage avec des partenaires, banquiers ou investisseurs.', 'Un rapport structuré en chapitres : synthèse de direction, résultats, produits, canaux et activités, achats, main-d\'œuvre, une **fiche détaillée par format** et des annexes. Une fenêtre vous laisse choisir les chapitres, le titre, le destinataire ({{Présenté à}}) et vos commentaires.'],
-                        ['{{Exporter vers Excel}}', 'Analyses poussées, graphiques personnalisés, intégration à d\'autres systèmes.', 'Un classeur .xlsx avec les données brutes : tableau de bord, résumé, ingrédients, main-d\'œuvre, et une feuille de coût détaillée par format.'],
+                        ['{{Exporter vers Excel}}', 'Analyses poussées, graphiques personnalisés, transmission des données à un consultant, un comptable ou un autre outil.', 'Une **base de données** : un classeur .xlsx de tables à plat (formats, recettes, ventes par canal, ingrédients, main-d\'œuvre, frais fixes, suivi dans le temps…), avec un dictionnaire des colonnes. Voir [[guide-export-excel|plus bas]].'],
                     ],
                 },
                 { type: 'h', id: 'guide-export-fenetre', text: 'La fenêtre d\'export du rapport PDF' },
@@ -569,6 +569,26 @@ export const partie3 = {
                 { type: 'h', id: 'guide-export-enregistrer', text: 'Où va le fichier ?' },
                 { type: 'p', text: 'Dans l\'application installée, une boîte {{Enregistrer sous}} vous laisse choisir le dossier. Le rapport s\'imprime sur votre ordinateur : rien ne passe par un serveur. Dans un navigateur, la boîte d\'impression s\'ouvre : choisissez l\'enregistrement au format PDF.' },
                 { type: 'callout', kind: 'attention', text: 'Un export reflète l\'état de l\'application au moment où vous le générez. Vérifiez le panneau « points à vérifier » avant : un rapport remis à un tiers avec des données incomplètes vous engage.' },
+                { type: 'h', id: 'guide-export-excel', text: 'Le classeur Excel : une base de données' },
+                { type: 'p', text: 'Le classeur n\'est pas un résumé : c\'est toute l\'information du projet, rangée pour être retravaillée dans Excel ou dans un autre outil (tableaux croisés dynamiques, Power BI, Python…) par quelqu\'un qui n\'a pas l\'application. Chaque feuille décrit un seul type de chose, avec une ligne par élément et aucune cellule fusionnée. Les feuilles se relient par des identifiants (par exemple {{format_id}} ou {{canal_id}}).' },
+                {
+                    type: 'table', head: ['Feuille', 'Contenu'], wrapCells: true, rows: [
+                        ['{{Lisez-moi}} et {{Dictionnaire}}', 'Mode d\'emploi du fichier, puis une ligne par colonne : sa définition, sa nature (saisie ou calculée) et son type.'],
+                        ['{{Base_à_plat}}', 'La feuille à ouvrir en premier : une ligne par format et par canal de vente, avec les coûts, le prix, le volume, les marges, le seuil de rentabilité et les allergènes.'],
+                        ['{{Formats}}, {{Lignes_recette}}, {{Lignes_emballage}}, {{Étapes_production}}, {{Allergènes}}', 'Les produits : un format par ligne, puis le détail des recettes, des emballages, des étapes de production et des allergènes.'],
+                        ['{{Canaux}}, {{Activités}}', 'Les canaux de vente (avec leurs intermédiaires) et les activités de production.'],
+                        ['{{Ingrédients}}, {{Emballages}}', 'Les catalogues, avec les achats de la période et la classe ABC.'],
+                        ['{{Employés}}, {{Postes}}, {{Frais_fixes}}, {{Frais_répartition}}, {{Revenus}}, {{Coûts_directs}}', 'La main-d\'œuvre et l\'état des résultats. {{Frais_répartition}} dit où va chaque frais fixe.'],
+                        ['{{Suivi_global}}, {{Suivi_formats}}', 'L\'historique de vos points de référence, par relevé et par format.'],
+                    ],
+                },
+                { type: 'ul', items: [
+                    '**En-tête bleu** : valeur que vous avez saisie dans l\'application. **En-tête gris** : valeur calculée par l\'application.',
+                    '**Une cellule vide** veut dire que la donnée est absente ou sans objet. Elle n\'est jamais remplacée par un zéro.',
+                    'Les pourcentages sont de vrais pourcentages, et les montants de vrais nombres : ils se totalisent directement.',
+                    'Dans {{Base_à_plat}}, les informations d\'un format se répètent sur chaque ligne de canal. Pour additionner des coûts par format, utilisez la feuille {{Formats}}.',
+                ] },
+                { type: 'callout', kind: 'attention', text: 'Le classeur contient les taux horaires de chaque employé (feuille {{Employés}}). Retirez-la avant de transmettre le fichier si vous ne voulez pas partager les salaires.' },
             ],
         },
 

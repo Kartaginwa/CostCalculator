@@ -943,6 +943,9 @@ export function computeIndirectPools(draftProductsWithCosts, { expenseLines, rep
             [c.id, { amount: channelPoolTotals[c.id] || 0, driverTotal: channelDriverTotals[c.id] || 0 }]
         ))),
         meta: { total, allocated, unallocated, overAllocated },
+        // Répartition effective de chaque ligne de frais fixes ({ [ligneId]: { activityAllocations, channelAllocations } }), telle qu'utilisée ci-dessus :
+        // lue par l'export Excel (feuille Frais_répartition) pour ne jamais la recalculer.
+        effectiveAllocations,
     };
 }
 

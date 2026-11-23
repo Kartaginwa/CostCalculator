@@ -1,8 +1,8 @@
 // Phase 2.3 : propagation du coût d'emballage aux rapports PDF/Excel. Vérifie que les deux
 // exports n'échouent pas une fois un emballage réellement rattaché à un format, et que le
-// fichier Excel exporté contient bien les nouvelles colonnes/lignes de coût d'emballage.
+// fichier Excel exporté (base de données) contient bien le coût d'emballage du format et sa ligne d'emballage.
 import { test, expect } from '@playwright/test';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 
 test('exports PDF/Excel avec un emballage rattaché à un format : pas d\'erreur, données présentes', async ({ page }) => {
     const errors = [];
@@ -36,18 +36,14 @@ test('exports PDF/Excel avec un emballage rattaché à un format : pas d\'erreur
     const download = await downloadPromise;
     const path = await download.path();
 
+    // Base de données Excel (refonte du 23/11) : le format porte un coût d'emballage, et la ligne d'emballage du pot de verre figure dans Lignes_emballage.
     const workbook = XLSX.readFile(path);
-    const summarySheet = workbook.Sheets['Résumé'];
-    const summaryRows = XLSX.utils.sheet_to_json(summarySheet, { header: 1 });
-    expect(summaryRows[0]).toContain('Coût Emballage (%)');
-    const saumonRow = summaryRows.find(row => String(row[0]).includes('Saumon teriyaki'));
-    expect(saumonRow).toBeTruthy();
-    const pkgColIndex = summaryRows[0].indexOf('Coût Emballage (%)');
-    expect(saumonRow[pkgColIndex]).toBeGreaterThan(0);
-
-    const dashboardSheet = workbook.Sheets['Tableau de Bord'];
-    const dashboardRows = XLSX.utils.sheet_to_json(dashboardSheet, { header: 1 });
-    expect(dashboardRows.some(row => String(row[0]).includes('Coût Emballage Moyen Pondéré'))).toBe(true);
+    const formats = XLSX.utils.sheet_to_json(workbook.Sheets['Formats']);
+    const saumon = formats.find(row => String(row['produit']).includes('Saumon teriyaki'));
+    expect(saumon).toBeTruthy();
+    expect(saumon['coût_emballage_unité']).toBeGreaterThan(0);
+    const packagingLines = XLSX.utils.sheet_to_json(workbook.Sheets['Lignes_emballage']);
+    expect(packagingLines.some(row => String(row['produit']).includes('Saumon teriyaki') && String(row['emballage']).includes('Pot de verre 500 ml'))).toBe(true);
 
     // Export PDF : juste la garantie qu'il ne plante pas (contenu non inspecté, format binaire).
     await page.getByText('Générer un rapport PDF').click();

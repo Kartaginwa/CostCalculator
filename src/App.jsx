@@ -917,9 +917,10 @@ const App = ({ tourMode = false } = {}) => {
         // 'canceled' : la fenêtre reste ouverte (l'utilisateur peut ajuster ses choix)
     };
 
+    // Export Excel « base de données » (23/11) : le modèle lit l'état du projet et les calculs déjà faits (voir reports/excel/model.js).
     const exportToExcel = () => exportToExcelReport({
-        showNotification, analysisData, generalInfo, calculatedGeneralInfo,
-        baseIngredients, laborDatabase, companyName, ingredientsList, basePackaging,
+        showNotification, analysisData, calculatedGeneralInfo, companyName,
+        project: { generalInfo, products, baseIngredients, ingredientsList, basePackaging, laborDatabase, salesChannels, productionActivities, expenseLines, revenueLines, directCostLines, repartitionKeys, trackingPoints },
     });
 
     const getTabClasses = (tabName) => `flex-1 py-4 px-1 flex items-center justify-center border-b-2 font-medium text-sm focus:outline-none transition duration-300 ease-in-out ${activeTab === tabName ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`;

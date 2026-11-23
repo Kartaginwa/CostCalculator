@@ -9,6 +9,7 @@
 import { parseLocaleNumber as P, formatNumber, unitConversionFactor } from '../utils.js';
 import { SUBTAB_LABELS, pct, usd, names, finding, force, weak, subject, activeRows, netMarginOfRows, computeFormatSpread } from './findingKit.js';
 import { classifyFinding, severityOf } from './findingMeta.js';
+import { evaluateObjectives, activeTarget } from './objectives.js';
 import { ENTITY_RULES } from './entityFindings.js';
 import { REPORT_THRESHOLDS as T } from './reportThresholds.js';
 import {
@@ -29,7 +30,7 @@ export const FINDING_GROUPS = [
     { id: 'evolution', label: 'Amélioration / détérioration', forceLabel: 'Améliorations', weakLabel: 'Détériorations', forceTag: 'Amélioration', weakTag: 'Détérioration' },
     { id: 'structure', label: 'Forces et faiblesses', forceLabel: 'Forces', weakLabel: 'Faiblesses', forceTag: 'Force', weakTag: 'Faiblesse' },
 ];
-export const groupOf = (id) => (/^(cost-|sku-over-cost-)/.test(id) ? 'objectif' : /^(history-|sku-cost-trend-|sku-margin-trend-)/.test(id) ? 'evolution' : 'structure');
+export const groupOf = (id) => (/^(cost-|sku-over-cost-|obj-)/.test(id) ? 'objectif' : /^(history-|sku-cost-trend-|sku-margin-trend-)/.test(id) ? 'evolution' : 'structure');
 export { SUBTAB_LABELS }; // défini dans findingKit.js (partagé avec les règles par entité)
 
 
@@ -87,14 +88,18 @@ const netProfitRule = (c) => {
 const costTargetRules = (c) => {
     const a = c.analysis, out = [];
     const items = [
-        ['matiere', 'matière', a.weightedMaterialCost, c.info.foodCostTarget, 85, 'ingredients'],
-        ['emballage', 'emballage', a.weightedPackagingCost, c.info.packagingCostTarget, 60, 'packaging'],
-        ['mo', 'main-d\'œuvre', a.weightedLaborCost, c.info.laborCostTarget, 60, 'labor'],
+        ['matiere', 'matière', a.weightedMaterialCost, activeTarget(c.info, "matiere"), 85, 'ingredients'],
+        ['emballage', 'emballage', a.weightedPackagingCost, activeTarget(c.info, "emballage"), 60, 'packaging'],
+        ['mo', 'main-d\'œuvre', a.weightedLaborCost, activeTarget(c.info, "mo"), 60, 'labor'],
     ];
+    // Coût matière : les produits qui dépassent la cible sont dits dans le détail du constat (un seul constat par objectif, décision du 24/11).
+    const matTarget = P(activeTarget(c.info, 'matiere'));
+    const over = matTarget > 0 ? (a.activeProducts || []).filter(p => p.costs && p.costs.costMatierePercent * 100 > matTarget) : [];
+    const overText = over.length > 0 ? ` ${over.length} produit${over.length > 1 ? 's' : ''} sur ${(a.activeProducts || []).length} dépasse${over.length > 1 ? 'nt' : ''} cette cible : ${names(over.map(p => p.displayName))}.` : '';
     for (const [id, label, value, targetRaw, weight, subTab] of items) {
         const target = P(targetRaw);
         if (!(target > 0) || !Number.isFinite(value)) continue; // pas de cible saisie : règle muette
-        const detail = `À ${pct(value, 2)} contre une cible de ${formatNumber(target, 0)} %.`;
+        const detail = `À ${pct(value, 2)} contre une cible de ${formatNumber(target, 0)} %.${id === 'matiere' ? overText : ''}`;
         if (value * 100 > target) out.push(weak(`cost-${id}`, 'Coûts', weight, `Coût ${label} au-dessus de la cible`, detail, subTab));
         else out.push(force(`cost-${id}`, 'Coûts', weight - 15, `Coût ${label} sous sa cible`, detail, 'overview'));
     }
@@ -102,12 +107,6 @@ const costTargetRules = (c) => {
     const set = items.filter(([, , v, t]) => P(t) > 0 && Number.isFinite(v));
     if (set.length >= 2 && set.every(([, , v, t]) => v * 100 <= P(t))) {
         out.push(force('targets-all-met', 'Coûts', 70, `Vos ${set.length} cibles de coûts sont atteintes`, `Coûts ${set.map(([, label]) => label).join(', ').replace(/, ([^,]*)$/, ' et $1')} sous leurs cibles.`, 'overview'));
-    }
-    // Produit par produit : combien dépassent la cible de coût matière.
-    const target = P(c.info.foodCostTarget);
-    if (target > 0) {
-        const over = (a.activeProducts || []).filter(p => p.costs && p.costs.costMatierePercent * 100 > target);
-        if (over.length > 0) out.push(weak('cost-matiere-products', 'Coûts', 55, `${over.length} produit${over.length > 1 ? 's' : ''} sur ${(a.activeProducts || []).length} dépasse${over.length > 1 ? 'nt' : ''} la cible de coût matière`, names(over.map(p => p.displayName)), 'bySku'));
     }
     return out;
 };
@@ -226,6 +225,22 @@ const laborRules = (c) => {
         if (avg != null && worst.grossProfitPerHour < avg * T.productHourLow) out.push(weak('product-worst-hour', 'Main-d\'œuvre', 45, `« ${worst.name} » rapporte peu à l'heure`, `${usd(worst.grossProfitPerHour)} par heure, contre ${usd(avg)} en moyenne.`, 'labor'));
     }
     if (c.growth && c.growth.freeHours >= T.growthMinShare * (c.cascade.expectedHours || 0)) out.push(force('labor-growth', 'Main-d\'œuvre', 55, `Marge de croissance : ${formatNumber(c.growth.freeHours, 0)} h libres`, `Environ ${usd(Math.round(c.growth.additionalRevenue / 100) * 100)} de ventes de plus possibles sans embauche (estimation).`, 'labor'));
+    return out;
+};
+
+// Objectifs stratégiques autres que les trois cibles de coûts (objectives.js) : les cinq objectifs par défaut ajoutés le 24/11, la paie non utilisée et les objectifs
+// sur mesure. Un objectif sans valeur, désactivé ou sans donnée est muet. Les cibles de coût matière, d'emballage et de main-d'œuvre gardent leurs règles ci-dessus
+// (identifiants stables pour le guide).
+const objectiveRules = (c) => {
+    const money = (v, unit) => (unit === '$' ? usd(v) : `${formatNumber(v, 1)} %`);
+    const out = [];
+    for (const o of evaluateObjectives(c)) {
+        if (o.met == null || ['matiere', 'emballage', 'mo'].includes(o.key)) continue;
+        const detail = `À ${money(o.current, o.unit)} contre un objectif d'${o.dir === 'min' ? 'au moins' : 'au plus'} ${money(o.target, o.unit)}.`;
+        const id = `obj-${o.key}`;
+        if (o.met) out.push(force(id, o.theme, 45, `${o.label} : objectif atteint`, detail, o.subTab));
+        else out.push(weak(id, o.theme, Math.round(60 + Math.min(25, (o.gap / o.target) * 100)), `${o.label} ${o.dir === 'min' ? 'sous' : 'au-dessus de'} l'objectif`, detail, o.subTab));
+    }
     return out;
 };
 
@@ -679,7 +694,7 @@ const impactOf = (c, f) => {
 export const rankOf = (f, revenue) => (5 - tierOf(f)) * 1000 + (f.impact != null && revenue > 0 ? Math.min(100, (f.impact / revenue) * 1000) : f.weight);
 
 export const FINDING_RULES = [
-    safetyRule, netProfitRule, costTargetRules, productRules, channelRules, activityRules, supplyRules, laborRules, reconciliationRules,
+    safetyRule, netProfitRule, costTargetRules, objectiveRules, productRules, channelRules, activityRules, supplyRules, laborRules, reconciliationRules,
     evolutionRules, trendRules,
     economicsRules, moreChannelRules, moreActivityRules, moreProductRules, moreSupplyRules, moreLaborRules,
 ];

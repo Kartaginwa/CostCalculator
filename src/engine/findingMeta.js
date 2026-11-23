@@ -11,10 +11,11 @@ export const SCOPE_RULES = [
     // Généraux : l'entreprise dans son ensemble
     [/^(safety|net-theoretical|fixed-cover|fixed-share|sens-inputs|sens-labor|labor-unused|labor-used|targets-all-met)$/, 'general', 'entreprise'],
     [/^cost-(matiere|emballage|mo)$/, 'general', 'entreprise'],
+    [/^obj-/, 'general', 'objectif'],
     [/^rec-/, 'general', 'réel / théorique'],
     [/^history-(gross|net|material|packaging|labor|revenue|breakeven)(-12m)?$/, 'general', 'point de référence'],
     // Spécifiques
-    [/^(sku-losers|sku-none-losing|sku-negative-everywhere|sku-positive|sku-best|sku-missed-channel|bcg-|profit-|cost-matiere-products|format-gap|subrecipe-weight|resale-share|history-sku-|history-erosion|product-best-hour|product-worst-hour|hours-vs-profit)/, 'specific', 'produit'],
+    [/^(sku-losers|sku-none-losing|sku-negative-everywhere|sku-positive|sku-best|sku-missed-channel|bcg-|profit-|format-gap|subrecipe-weight|resale-share|history-sku-|history-erosion|product-best-hour|product-worst-hour|hours-vs-profit)/, 'specific', 'produit'],
     [/^(channel-|history-channel-)/, 'specific', 'canal'],
     [/^cell-deficit-/, 'specific', 'activité × canal'],
     [/^(activity-|activities-)/, 'specific', 'activité'],

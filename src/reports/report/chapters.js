@@ -39,7 +39,7 @@ export function chapter1(m, map, comment) {
     const k = m.kpis, t = m.targets;
     const tiles = `<div class="tiles">`
         + costTile('Coût matière', k.material, t.material) + costTile('Coût d’emballage', k.packaging, t.packaging) + costTile('Coût de main-d’œuvre', k.labor, t.labor)
-        + tile({ label: 'Marge brute', value: pc(k.grossMargin, 2), note: 'moyenne pondérée' })
+        + tile({ label: 'Marge brute', value: pc(k.grossMargin, 2), note: !t.grossMargin ? 'moyenne pondérée' : k.grossMargin * 100 >= t.grossMargin ? `${TARGET.above} (au moins ${f(t.grossMargin)} %)` : `${TARGET.below} (au moins ${f(t.grossMargin)} %)`, noteClass: !t.grossMargin ? undefined : k.grossMargin * 100 >= t.grossMargin ? 'ok' : 'bad' })
         + tile({ label: 'Point mort', value: usd(k.breakEven), note: k.revenue ? `ventes prévues : ${usd(k.revenue)}` : '' })
         + safetyTile(k) + `</div>`;
     let h = mark('synth') + h3('Indicateurs clés de rentabilité', 'moyennes pondérées par le mix de ventes', { first: true }) + tiles;

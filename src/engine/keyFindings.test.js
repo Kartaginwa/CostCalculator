@@ -69,10 +69,11 @@ describe('constats clés — rentabilité et coûts', () => {
         expect(find(r, 'cost-emballage').tone).toBe('force');
         expect(find(r, 'cost-mo').tone).toBe('force');
     });
-    it('produits au-dessus de la cible de coût matière, produit par produit', () => {
+    it('produits au-dessus de la cible de coût matière : dits dans le détail du constat du coût matière, sans constat à part', () => {
         const p = (name, pct) => ({ displayName: name, costs: { costMatierePercent: pct }, channelBreakdown: [] });
-        const r = computeKeyFindings(ctx({ analysis: { activeProducts: [p('A', 0.40), p('B', 0.20), p('C', 0.35)] }, info: { foodCostTarget: '32' } }));
-        expect(find(r, 'cost-matiere-products').title).toContain('2 produits sur 3');
+        const r = computeKeyFindings(ctx({ analysis: { activeProducts: [p('A', 0.40), p('B', 0.20), p('C', 0.35)], weightedMaterialCost: 0.33 }, info: { foodCostTarget: '32' } }));
+        expect(find(r, 'cost-matiere-products')).toBeUndefined();
+        expect(find(r, 'cost-matiere').detail).toContain('2 produits sur 3 dépassent cette cible : A, C');
     });
 });
 

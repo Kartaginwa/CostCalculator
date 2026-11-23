@@ -5,6 +5,7 @@ import {
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent, formatQuantityLabel,
     getCompatibleUnits, loadedHourlyRate, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits, formatNumber, unitConversionFactor, unitLabel } from '../utils.js';
 import { getCostTargetIndicator, useValueFlash, useSessionState } from '../ui-utils.jsx';
+import { activeTarget } from '../engine/objectives.js';
 import { Tooltip, EmptyState, CostNatureBadge, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
 import { computeFormatAllergens } from '../engine/allergens.js';
@@ -1388,7 +1389,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Matière (%)
                             <Tooltip tip="prod.tuileMatiere" />
-                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costMatierePercent : marginView.costMatierePercent, generalInfo.foodCostTarget)}
+                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costMatierePercent : marginView.costMatierePercent, activeTarget(generalInfo, 'matiere'))}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
                              {simulatedCosts
@@ -1400,7 +1401,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Emballage (%)
                             <Tooltip tip="prod.tuileEmballage" />
-                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costPackagingPercent : marginView.costPackagingPercent, generalInfo.packagingCostTarget)}
+                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costPackagingPercent : marginView.costPackagingPercent, activeTarget(generalInfo, 'emballage'))}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
                              {simulatedCosts
@@ -1412,7 +1413,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         <div className="text-sm text-gray-500 flex items-center justify-center">
                             Coût Main-d'œuvre (%)
                             <Tooltip tip="prod.tuileMo" />
-                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costLaborPercent : marginView.costLaborPercent, generalInfo.laborCostTarget)}
+                            {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costLaborPercent : marginView.costLaborPercent, activeTarget(generalInfo, 'mo'))}
                         </div>
                         <p className="text-xl font-bold text-gray-800">
                             {simulatedCosts

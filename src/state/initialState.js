@@ -783,6 +783,9 @@ export const getDefaultState = () => {
         // cohérent si cette liste change, plutôt qu'un chiffre recopié à la main.
         totalRevenue: demoRevenueLines.reduce((sum, line) => sum + sumAmountsMap(line.amounts), 0),
         foodCostTarget: 32, packagingCostTarget: 8, laborCostTarget: 22, menuRevenuePercentage: 100,
+        // Objectifs stratégiques ajoutés le 24/11 (voir engine/objectives.js) : de quoi montrer des objectifs atteints et à atteindre dans le démo.
+        grossMarginTarget: 40, netMarginTarget: 10, utilizationTarget: 85, unusedPayTarget: 15, lossTarget: 5, fixedShareTarget: 30,
+        objectivesOff: [], customObjectives: [],
         indirectCostMethod: 'directCost',
     };
 
@@ -864,6 +867,10 @@ export const getEmptyState = () => ({
         foodCostTarget: '',
         packagingCostTarget: '',
         laborCostTarget: '',
+        // Objectifs stratégiques (24/11) : sans valeur tant que l'utilisateur n'en choisit pas ; objectivesOff = objectifs désactivés (valeur gardée),
+        // customObjectives = objectifs sur mesure { id, indicator, dir, value, name } (20 au plus).
+        grossMarginTarget: '', netMarginTarget: '', utilizationTarget: '', unusedPayTarget: '', lossTarget: '', fixedShareTarget: '',
+        objectivesOff: [], customObjectives: [],
         menuRevenuePercentage: 100,
         indirectCostMethod: 'directCost',
     },

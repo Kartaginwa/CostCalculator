@@ -435,3 +435,24 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(parsed.products[0].productionSteps).toBeUndefined();
     });
 });
+
+describe('objectifs stratégiques dans le fichier du projet (24/11)', () => {
+    it('un projet antérieur, sans les nouveaux champs, se charge avec des objectifs vides (rien d\'actif)', () => {
+        const legacy = { generalInfo: { foodCostTarget: '30', laborCostTarget: '20' } };
+        const parsed = parseProjectData(legacy, getEmptyState());
+        expect(parsed.generalInfo.foodCostTarget).toBe('30');
+        for (const k of ['grossMarginTarget', 'netMarginTarget', 'utilizationTarget', 'unusedPayTarget', 'lossTarget', 'fixedShareTarget']) expect(parsed.generalInfo[k]).toBe('');
+        expect(parsed.generalInfo.objectivesOff).toEqual([]);
+        expect(parsed.generalInfo.customObjectives).toEqual([]);
+    });
+    it('les valeurs, les objectifs désactivés et les objectifs sur mesure font l\'aller-retour', () => {
+        const state = demoState();
+        state.generalInfo = { ...state.generalInfo, objectivesOff: ['matiere'], customObjectives: [{ id: 'custom_a', indicator: 'partCanal', dir: 'max', value: '40', name: 'Canal' }] };
+        const json = JSON.parse(JSON.stringify(buildProjectData(state)));
+        const parsed = parseProjectData(json, getEmptyState());
+        expect(parsed.generalInfo.objectivesOff).toEqual(['matiere']);
+        expect(parsed.generalInfo.customObjectives).toEqual([{ id: 'custom_a', indicator: 'partCanal', dir: 'max', value: '40', name: 'Canal' }]);
+        expect(parsed.generalInfo.grossMarginTarget).toBe(40);
+        expect(parsed.generalInfo.foodCostTarget).toBe(32); // désactivé, mais la valeur est gardée
+    });
+});

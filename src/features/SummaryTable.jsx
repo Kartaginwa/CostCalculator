@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, Label, ResponsiveContainer, Bar, LabelList, Cell } from 'recharts';
 import { ArrowUpDown, FileDown, Pencil, AlertTriangle, Star, HelpCircle as QuestionMark, Milk, Bone, Camera, Trash2, ChevronDown } from 'lucide-react';
 import { unnamedLabel, parseLocaleNumber, formatCurrency, formatPercent, formatNumber } from '../utils.js';
-import { getCostTargetIndicator, useEscapeKey, useSessionState } from '../ui-utils.jsx';
+import { useEscapeKey, useSessionState } from '../ui-utils.jsx';
+import { ObjectiveBadge } from '../components/ObjectiveBadge.jsx';
 import { Tooltip, Pagination, CostNatureBadge, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { CostShockSimulator } from './CostShockSimulator.jsx';
@@ -806,7 +807,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
                     <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
                         Coût Matière Moyen Pondéré
                         <Tooltip tip="kpi.matiere" />
-                        {getCostTargetIndicator(weightedMaterialCost, generalInfo.foodCostTarget)}
+                        <ObjectiveBadge id="matiere" value={weightedMaterialCost * 100} info={generalInfo} />
                     </div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
                 </div>
@@ -814,7 +815,7 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
                     <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
                         Coût Emballage Moyen Pondéré
                         <Tooltip tip="kpi.emballage" />
-                        {getCostTargetIndicator(weightedPackagingCost, generalInfo.packagingCostTarget)}
+                        <ObjectiveBadge id="emballage" value={weightedPackagingCost * 100} info={generalInfo} />
                     </div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
                 </div>
@@ -822,12 +823,12 @@ const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) => {
                     <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
                         Coût Main-d'œuvre Moyen Pondéré
                         <Tooltip tip="kpi.mo" />
-                        {getCostTargetIndicator(weightedLaborCost, generalInfo.laborCostTarget)}
+                        <ObjectiveBadge id="mo" value={weightedLaborCost * 100} info={generalInfo} />
                     </div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">
-                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /></div>
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /><ObjectiveBadge id="margeBrute" value={weightedGrossMargin * 100} info={generalInfo} /></div>
                     <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">

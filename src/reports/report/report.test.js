@@ -130,7 +130,7 @@ describe('modèle de données (démo)', () => {
         expect(m.kpis.grossMargin).toBe(analysisData.weightedGrossMargin);
         expect(m.kpis.revenue).toBe(analysisData.menuRevenue);
         expect(m.kpis.safety.ratio).toBeCloseTo(0.1389, 3);
-        expect(m.targets).toEqual({ material: 32, packaging: 8, labor: 22 });
+        expect(m.targets).toEqual({ material: 32, packaging: 8, labor: 22, grossMargin: 40 });
     });
     it('la cascade du revenu au bénéfice reprend les totaux par canal', () => {
         expect(m.cascade.revenue).toBeCloseTo(79713.59, 2);

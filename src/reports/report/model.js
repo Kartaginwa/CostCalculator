@@ -14,6 +14,7 @@ import { computeFormatAllergens } from '../../engine/allergens.js';
 import { computeSafetyMargin, computeActivityLaborRatios } from '../../engine/laborReport.js';
 import { computeActivityChannelMarginMatrix } from '../../engine/analysisData.js';
 import { REPORT_THRESHOLDS as T } from '../../engine/reportThresholds.js';
+import { activeTarget } from '../../engine/objectives.js';
 import { shortMonth } from './format.js';
 import { formatPeriod } from './period.js';
 
@@ -55,7 +56,7 @@ export function buildReportModel({ project, analysisData: a, calculatedGeneralIn
         points: trackingPoints.length, firstPoint: trackingPoints[0]?.timestamp ?? null, lastPoint: trackingPoints[trackingPoints.length - 1]?.timestamp ?? null,
         hasRealData: ctx.hasRealData,
     };
-    const targets = { material: targetOf(info.foodCostTarget), packaging: targetOf(info.packagingCostTarget), labor: targetOf(info.laborCostTarget) };
+    const targets = { material: targetOf(activeTarget(info, 'matiere')), packaging: targetOf(activeTarget(info, 'emballage')), labor: targetOf(activeTarget(info, 'mo')), grossMargin: targetOf(activeTarget(info, 'margeBrute')) };
 
     // ---------- indicateurs ----------
     const kpis = {

@@ -77,8 +77,8 @@ describe('constats par entité (démo)', () => {
     const base = computeKeyFindings(ctx);
     const res = computeKeyFindings(ctx, { entities: true });
 
-    it('par défaut, rien ne change : 45 constats agrégés, aucun constat par entité', () => {
-        expect(base.all).toHaveLength(45);
+    it('par défaut, rien ne change : 50 constats agrégés (dont 6 objectifs), aucun constat par entité', () => {
+        expect(base.all).toHaveLength(50);
         expect(base.all.every(f => !/^(sku-class|sku-loss|sku-over-cost|sku-hour|cell-deficit|post-state|supplier-dep|volatile-item|loss-item|format-gap-of)-/.test(f.id))).toBe(true);
     });
 

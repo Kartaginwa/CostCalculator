@@ -20,14 +20,14 @@ const row = (label, value) => `<tr><td class="l">${esc(label)}</td><td>${value}<
 /** Sommaire (numéros de page de la carte des pages) et « À propos de ce rapport ». Les chapitres exclus n'y figurent pas. */
 export function tocHtml(m, map, included) {
     const s = m.scope, t = m.targets;
-    const targets = [['matière', t.material], ['emballage', t.packaging], ['MO', t.labor]].filter(([, v]) => v).map(([n, v]) => `${n} ${f(v)} %`).join(' · ');
+    const targets = [['matière', t.material], ['emballage', t.packaging], ['MO', t.labor], ['marge brute min.', t.grossMargin]].filter(([, v]) => v).map(([n, v]) => `${n} ${f(v)} %`).join(' · ');
     const about = [
         m.period ? row('Période analysée', esc(m.period)) : '',
         row('Portée', `${f(s.products)} produit${s.products > 1 ? 's' : ''} · ${f(s.channels)} canal${s.channels > 1 ? 'ux' : ''} · ${f(s.activities)} activité${s.activities > 1 ? 's' : ''}`),
         row('Intrants suivis', `${f(s.ingredients)} ingrédient${s.ingredients > 1 ? 's' : ''} · ${f(s.packaging)} emballage${s.packaging > 1 ? 's' : ''}`),
         s.posts ? row('Équipe', `${f(s.posts)} poste${s.posts > 1 ? 's' : ''} · ${f(s.employees)} employé${s.employees > 1 ? 's' : ''}`) : '',
         s.points ? row('Points de référence', `${f(s.points)} (${esc(shortMonth(s.firstPoint))} à ${esc(shortMonth(s.lastPoint))})`) : row('Points de référence', 'aucun'),
-        row('Cibles de coûts saisies', targets ? esc(targets) : 'aucune'),
+        row('Objectifs principaux saisis', targets ? esc(targets) : 'aucune'),
         row('Chiffres réels saisis', s.hasRealData ? 'oui' : 'non'),
     ].join('');
     const list = CHAPTERS.filter(c => included.includes(c.id) && map.chapters[`ch${c.id}`]);

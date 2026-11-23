@@ -21,10 +21,43 @@ export const chapitreParametres = {
 
         // ---------------------------------------------------------------------------------
         { type: 'h', id: 'guide-param-objectifs', text: 'Objectifs stratégiques' },
-        { type: 'p', text: 'Trois champs vous permettent de fixer le **pourcentage maximal du prix de vente** que chaque famille de coûts devrait représenter : {{Objectif coût matière (%)}}, {{Objectif coût d\'emballage (%)}} et {{Objectif coût main-d\'œuvre (%)}}.' },
+        { type: 'p', text: 'Quatre champs vous permettent de fixer vos objectifs principaux : le **pourcentage maximal du prix de vente** que chaque famille de coûts devrait représenter ({{Objectif coût matière (%)}}, {{Objectif coût d\'emballage (%)}} et {{Objectif coût main-d\'œuvre (%)}}) et la **marge brute minimale** ({{Objectif marge brute (%)}}).' },
         { type: 'p', text: 'Ces cibles agissent comme des **voyants** dans l\'application. Dans le récapitulatif de l\'onglet Production, à côté de chaque ratio de coût, une coche verte indique que la cible est respectée ; un triangle rouge indique qu\'elle est dépassée. Les mêmes comparaisons se retrouvent dans le rapport. Un champ laissé vide n\'affiche aucun voyant.' },
         { type: 'callout', kind: 'exemple', text: `Le projet démo fixe ses cibles à 32 % pour la matière, 8 % pour l'emballage et 22 % pour la main-d'œuvre. Son Chili con carne mijoté a un coût matière de ${dp(DEMO.chili.coutMatierePct)} du prix de vente : la cible de 32 % est dépassée, le voyant est rouge. Son coût d'emballage (7,56 %) et sa main-d'œuvre (7,58 %) respectent leurs cibles : voyants verts.` },
         { type: 'callout', kind: 'astuce', text: 'Si vous ne savez pas quelles cibles choisir, partez de vos chiffres historiques ou de la moyenne de votre secteur, puis resserrez-les au fil du temps. Une cible n\'a de valeur que si elle est réaliste : trop facile, elle ne signale rien ; trop sévère, tous les voyants sont rouges.' },
+
+        { type: 'h', id: 'guide-obj-gerer', text: 'Gérer les objectifs' },
+        { type: 'p', text: 'Le bouton {{Gérer les objectifs}}, à la fin de la section, ouvre une fenêtre où se trouvent **tous** vos objectifs. Un objectif compare une valeur que l\'application mesure déjà à la cible que vous choisissez. Il produit un voyant à côté de la valeur concernée (coche verte ou triangle rouge) et un constat dans le bloc « Objectifs stratégiques » de la Vue d\'ensemble. Dans la fenêtre, un objectif atteint est surligné en vert.' },
+        { type: 'p', text: 'Les quatre objectifs principaux sont les champs ci-dessus : les saisir ici ou dans la fenêtre revient au même. Cinq autres existent par défaut, sans valeur tant que vous n\'en choisissez pas une (une suggestion apparaît en grisé) :' },
+        {
+            type: 'table', head: ['Objectif', 'Ce qu\'il mesure', 'Sens'], wrapCells: true,
+            rowIds: ['guide-obj-marge-nette', 'guide-obj-utilisation', 'guide-obj-paie-non-utilisee', 'guide-obj-perte-stock', 'guide-obj-frais-fixes'],
+            rows: [
+                ['Marge nette', 'Le bénéfice net prévu divisé par les ventes prévues, tous coûts et frais fixes déduits : le chiffre du constat « Bénéfice net prévu ».', 'Au moins'],
+                ['Taux d\'utilisation des postes', 'La ligne Total du tableau « Taux d\'Utilisation (%) » de Main-d\'œuvre : les heures réelles de production divisées par les heures attendues.', 'Au moins'],
+                ['Paie non utilisée', 'La part de la paie versée sans produire, affichée dans « Utilisation de la masse salariale » (Main-d\'œuvre). Elle comprend les heures payées mais non productives ; elle diffère donc du taux d\'utilisation, qui ne compte que les heures de production.', 'Au plus'],
+                ['Perte stock', 'La perte stock prévue divisée par les achats d\'ingrédients, comme dans le rapport d\'achats.', 'Au plus'],
+                ['Frais fixes', 'Les frais fixes répartis divisés par les revenus prévus.', 'Au plus'],
+            ],
+        },
+        { type: 'p', id: 'guide-obj-marge-brute', text: 'La marge brute reprend la marge brute moyenne pondérée de la tuile du même nom, avec le sens « au moins ».' },
+        { type: 'p', id: 'guide-obj-sens', text: 'Le **sens** d\'un objectif par défaut est fixe : un coût se lit « au plus » et une marge « au moins ». Les voyants et les constats reposent sur ce sens ; l\'inverser donnerait des résultats absurdes. Pour un autre sens, créez un objectif sur mesure.' },
+        { type: 'p', text: 'Un objectif peut être **désactivé sans être supprimé** : il garde sa valeur, mais n\'agit plus nulle part (ni voyant, ni constat). Réactivez-le quand vous voulez. Un objectif sans valeur, ou dont la donnée est absente, reste muet.' },
+        { type: 'h', id: 'guide-obj-sur-mesure', text: 'Objectifs sur mesure' },
+        { type: 'p', text: 'Avec {{Ajouter un objectif sur mesure}}, vous créez jusqu\'à **20 objectifs** : un nom facultatif, un indicateur choisi dans la liste, un sens (« au plus » ou « au moins ») et une valeur. Le sens se présélectionne selon l\'indicateur, mais vous pouvez le changer. Il n\'y a pas de formule libre : seuls les indicateurs que l\'application calcule déjà sont proposés, les neuf indicateurs ci-dessus et ceux-ci.' },
+        {
+            type: 'table', head: ['Indicateur', 'Ce qu\'il mesure', 'Sens habituel'], wrapCells: true,
+            rowIds: ['guide-obj-ind-securite', 'guide-obj-ind-point-mort', 'guide-obj-ind-revenus', 'guide-obj-ind-fournisseur', 'guide-obj-ind-canal', 'guide-obj-ind-produit'],
+            rows: [
+                ['Marge de sécurité', 'De combien les ventes prévues peuvent baisser avant le point mort.', 'Au moins'],
+                ['Point mort', 'Le chiffre d\'affaires à atteindre pour couvrir les frais fixes.', 'Au plus'],
+                ['Revenus prévus', 'Les ventes prévues de tous les produits actifs.', 'Au moins'],
+                ['Part du premier fournisseur', 'La part du premier fournisseur dans les achats d\'ingrédients.', 'Au plus'],
+                ['Part du premier canal', 'La part du premier canal dans les revenus prévus (au moins deux canaux).', 'Au plus'],
+                ['Marge nette du produit le moins rentable', 'La marge nette du produit le moins rentable, tous canaux confondus : un plancher de marge par produit.', 'Au moins'],
+            ],
+        },
+        { type: 'callout', kind: 'exemple', text: 'Pour ne jamais dépendre d\'un seul canal, créez « Part du premier canal », au plus 40 %. Pour exiger qu\'aucun produit ne tombe sous 5 % de marge nette, créez « Marge nette du produit le moins rentable », au moins 5 %.' },
 
         // ---------------------------------------------------------------------------------
         { type: 'h', id: 'guide-param-unites', text: 'Unités de mesure' },

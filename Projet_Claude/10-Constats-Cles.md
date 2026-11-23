@@ -84,7 +84,7 @@ Source : `src/engine/keyFindings.js`. Les seuils (en gras) sont dans `src/engine
 | 9 | `cost-matiere` | Faiblesse 85 / Force 70 | Coût matière moyen pondéré > / ≤ la cible de Paramètres | « Coût matière au-dessus de la cible » / « sous sa cible » | Aucune cible saisie |
 | 10 | `cost-emballage` | Faiblesse 60 / Force 45 | Idem, emballage | idem | idem |
 | 11 | `cost-mo` | Faiblesse 60 / Force 45 | Idem, main-d'œuvre | idem | idem |
-| 80 | `cost-matiere-products` | Faiblesse 55 | Au moins un produit dont le coût matière dépasse la cible | « N produits sur M dépassent la cible de coût matière » + les noms | Aucune cible saisie |
+| 80 | (dans `cost-matiere`) | — | Au moins un produit dont le coût matière dépasse la cible | Ajouté au détail du constat « Coût matière » : « N produits sur M dépassent cette cible : » + les noms (24/11 : plus de constat à part, pour qu'un objectif donne un seul constat) | Aucune cible saisie |
 
 ### Produits
 
@@ -213,3 +213,14 @@ Chaque bloc : deux colonnes (positif à gauche), trois lignes au maximum par col
 **Constats structurels** (`STRUCTURAL`) : majeurs par nature, faiblesse comme force. Chaque faiblesse a son miroir : dépendance à un canal / **revenus bien répartis** (`channel-balanced`, nouveau) ; dépendance à un fournisseur / **fournisseurs répartis** (`supplier-spread`, dès trois fournisseurs sans dépendance) ; produits déficitaires / **aucun produit déficitaire** (`sku-none-losing`, nouveau) ; profit concentré / profit bien réparti ; activité déficitaire / toutes bénéficiaires ; paie non utilisée / bien utilisée ; cibles dépassées / **toutes les cibles atteintes** (`targets-all-met`, nouveau, au moins deux cibles saisies).
 
 Démo : 4 forces majeures (bénéfice net prévu, revenus réels alignés, profit bien réparti, activités bénéficiaires) contre 7 faiblesses majeures ; la différence tient aux données (démo volontairement déficitaire), plus à la formule.
+
+## Objectifs stratégiques : catalogue, désactivation et objectifs sur mesure (24/11)
+
+Le groupe « Objectifs stratégiques » ne se limite plus aux trois cibles de coûts. Code : `src/engine/objectives.js` (catalogue et évaluation, sans nouveau calcul de donnée), fenêtre `src/components/ObjectivesModal.jsx`, voyant `src/components/ObjectiveBadge.jsx`.
+
+- **Neuf objectifs par défaut**, au sens fixe (un coût « au plus », une marge ou un taux « au moins ») : coût matière, coût d'emballage, coût de main-d'œuvre, **marge brute** (quatre principaux, saisis dans Paramètres), **marge nette**, **taux d'utilisation des postes**, **paie non utilisée**, **perte stock**, **frais fixes** (saisis dans la fenêtre « Gérer les objectifs », bouton bleu à la fin de la section de Paramètres). Les valeurs vivent dans les informations générales (champs `*Target`), donc dans le fichier du projet ; un ancien projet les reçoit vides (rien d'actif).
+- **Désactiver sans supprimer** : `generalInfo.objectivesOff` (liste d'identifiants). L'objectif garde sa valeur mais n'agit plus : ni voyant, ni constat.
+- **Objectifs sur mesure** (20 au plus, `generalInfo.customObjectives`) : nom facultatif, indicateur du catalogue (quinze au total : les neuf, plus marge de sécurité, point mort, revenus prévus, part du premier fournisseur, part du premier canal, marge nette du produit le moins rentable), sens au choix (présélectionné selon l'indicateur), valeur. Pas de formule libre. Les objectifs écartés plus tôt (chiffre d'affaires cible, plancher de marge par produit, concentration) y trouvent leur place.
+- **Valeurs reprises, jamais recalculées** : taux d'utilisation = ligne Total du tableau « Taux d'Utilisation (%) » de Main-d'œuvre ; paie non utilisée = carte « Utilisation de la masse salariale » ; marge nette = bénéfice net prévu ÷ ventes prévues ; perte stock = perte prévue ÷ achats d'ingrédients ; frais fixes = frais fixes répartis ÷ revenus prévus.
+- **Constats** : les trois cibles de coûts gardent leurs identifiants (`cost-*`) ; les autres objectifs donnent `obj-<indicateur>` ou `obj-<id sur mesure>` (« … : objectif atteint » en force, « … au-dessus de / sous l'objectif » en faiblesse avec l'écart), groupe « objectif », portée générale. Un objectif sans valeur, désactivé ou sans donnée est muet.
+- **Voyants** (coche verte ou triangle rouge, jamais sans valeur) : les quatre tuiles de la Vue d'ensemble (marge brute ajoutée), le taux d'utilisation et la part de la paie non utilisée (Main-d'œuvre), la perte stock (Ingrédients), les cibles de coûts de la fiche d'un format. Le rapport PDF affiche la cible de marge brute sous sa tuile et ignore les cibles désactivées.

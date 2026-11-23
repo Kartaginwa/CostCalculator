@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, ChevronDown, AlertTriangle } from 'lucide-react';
 import { parseLocaleNumber, formatCurrency, formatNumber } from '../utils.js';
+import { activeTarget } from '../engine/objectives.js';
 import { computeAnalysisData, computeIndirectPools, computeActivityImpact, computeChannelImpact } from '../engine/analysisData.js';
 import { applyCostShocks, applyLaborShocks, shockIsActive, expandShockScopes } from '../engine/costScenario.js';
 import { useProject } from '../state/ProjectContext.jsx';
@@ -180,8 +181,8 @@ export const CostShockSimulator = ({ collapsible = true }) => {
         return current.map(c => ({ ...c, after: shockedById.get(c.channelId) || c }));
     }, [shockedAnalysis, analysisData.activeProducts, salesChannels]);
 
-    const foodTarget = parseLocaleNumber(generalInfo.foodCostTarget);
-    const laborTarget = parseLocaleNumber(generalInfo.laborCostTarget);
+    const foodTarget = parseLocaleNumber(activeTarget(generalInfo, 'matiere'));
+    const laborTarget = parseLocaleNumber(activeTarget(generalInfo, 'mo'));
 
     const perDish = useMemo(() => {
         if (!shockedAnalysis) return [];

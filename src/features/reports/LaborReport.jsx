@@ -7,6 +7,7 @@ import {
     computeLaborCascade, computeProductLaborProfitability, computeActivityLaborRatios, computeGrowthMargin,
 } from '../../engine/laborReport.js';
 import { SortableTh, sortRows, nextSort } from './tableSort.jsx';
+import { ObjectiveBadge } from '../../components/ObjectiveBadge.jsx';
 
 // Rapports de main-d'œuvre de Rapport et suivi → Main-d'œuvre (extraits le 21/11 de l'onglet Main-d'œuvre, qui ne garde que la saisie ; enrichis au lot 2) :
 //   1. rapport de productivité par poste, paie non utilisée, marge de croissance ;
@@ -100,7 +101,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <td className={td}>{formatNumber(productivityReport.totals.expected, 2)} h</td>
                                 <td className={td}>{formatNumber(productivityReport.totals.actual, 2)} h</td>
                                 <td className={td}>{formatNumber(productivityReport.totals.difference, 2)} h</td>
-                                <td className={td}>{formatNumber(productivityReport.totals.utilization, 2)} %</td>
+                                <td className={td}><span className="inline-flex items-center">{formatNumber(productivityReport.totals.utilization, 2)} %<ObjectiveBadge id="utilisation" value={productivityReport.totals.expected > 0 ? productivityReport.totals.utilization : NaN} /></span></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -118,7 +119,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-gray-800">Part de la paie non utilisée</h3>
-                            <p className="text-2xl font-bold text-gray-900">{formatNumber(cascade.unusedShare * 100, 1)} %</p>
+                            <p className="text-2xl font-bold text-gray-900 flex items-center justify-center">{formatNumber(cascade.unusedShare * 100, 1)} %<ObjectiveBadge id="paieNonUtilisee" value={cascade.unusedShare * 100} /></p>
                         </div>
                     </div>
                 )}

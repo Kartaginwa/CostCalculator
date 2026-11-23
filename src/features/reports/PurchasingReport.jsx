@@ -4,6 +4,7 @@ import { formatCurrency, formatNumber, parseLocaleNumber } from '../../utils.js'
 import { Tooltip, Pagination } from '../../components/common.jsx';
 import { useSessionState } from '../../ui-utils.jsx';
 import { computeProviderShares } from '../../engine/laborReport.js';
+import { ObjectiveBadge } from '../../components/ObjectiveBadge.jsx';
 
 // Rapport d'achats et perte stock pour la période, commun aux ingrédients et aux emballages (extrait le 21/11 des onglets Ingrédients et
 // Emballage ; refondu au lot 2). Données : analysisData.js (computePurchasingAndAbc).
@@ -70,7 +71,7 @@ export const PurchasingReport = ({ id, report, itemLabel, selectId, memoryKey, i
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-red-800 flex items-center justify-center">Coût total de la perte stock<Tooltip tip="rapport.perteStock" /></h3>
-                    <p className="text-2xl font-bold text-red-900">{formatCurrency(report.grandTotal.loss)} $</p>
+                    <p className="text-2xl font-bold text-red-900 flex items-center justify-center">{formatCurrency(report.grandTotal.loss)} ${itemLabel === 'Ingrédient' && report.grandTotal.total > 0 && <ObjectiveBadge id="perteStock" value={(report.grandTotal.loss / report.grandTotal.total) * 100} />}</p>
                 </div>
                 <div className="md:col-span-1">
                     <h3 className="text-lg font-semibold text-gray-800">Coût d'Achat Total Requis</h3>

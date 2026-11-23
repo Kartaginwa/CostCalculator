@@ -8,6 +8,7 @@ import { parseLocaleNumber as P, formatNumber } from '../utils.js';
 import { REPORT_THRESHOLDS as T } from './reportThresholds.js';
 import { finding, force, weak, pct, usd, subject, computeFormatSpread } from './findingKit.js';
 import { computeActivityChannelMarginMatrix } from './analysisData.js';
+import { activeTarget } from './objectives.js';
 
 const nf = (v) => formatNumber(v, 0);
 
@@ -25,7 +26,7 @@ export const formatRules = (c) => {
     const m = a.menuEngineeringData || {};
     const classOf = new Map();
     Object.keys(CLASS_TEXT).forEach(k => (m[k] || []).forEach(p => classOf.set(String(p.id), k)));
-    const target = P(c.info.foodCostTarget);
+    const target = P(activeTarget(c.info, 'matiere'));
     // Bénéfice brut par heure : la moyenne de l'écran Main-d'œuvre (c.growth, calculé par computeGrowthMargin), pas une moyenne refaite ici.
     const ranked = (c.productRows || []).filter(r => r.grossProfitPerHour != null);
     const avgHour = ranked.length >= 3 && c.growth ? c.growth.grossProfitPerHour : null;

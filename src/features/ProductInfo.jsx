@@ -3,6 +3,7 @@ import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
 import { ArrowDownAZ, ArrowDownZA, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
 import { unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveNumber, isInvalidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal, UnitsModal } from '../components/common.jsx';
+import { ObjectivesModal } from '../components/ObjectivesModal.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
 import { computeNetPriceFromPds } from '../engine/salesChannelCascade.js';
 import { removeChannelFromProducts } from '../engine/productEdits.js';
@@ -16,6 +17,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     } = useProject();
 
     const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
+    const [isObjectivesModalOpen, setIsObjectivesModalOpen] = useState(false);
     const [isNameTouched, touchName] = useTouched();
     const [filterName, setFilterName] = useSessionState('info.filterName', '');
     const [filterCategory, setFilterCategory] = useSessionState('info.filterCategory', 'all');
@@ -351,7 +353,21 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                             <input type="text" inputMode="decimal" id="laborCostTarget" value={generalInfo.laborCostTarget || ''} onChange={(e) => onUpdateGeneralInfo('laborCostTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.laborCostTarget) ? 'border-red-500' : 'border-gray-300'}`} />
                             {isInvalidPercentage(generalInfo.laborCostTarget) && <ValidationMessage message="Doit être un %." />}
                         </div>
+                        <div>
+                            <label htmlFor="grossMarginTarget" className="flex items-center text-sm font-medium text-gray-700">
+                                Objectif marge brute (%)
+                                <Tooltip tip="obj.margeBrute" />
+                            </label>
+                            <input type="text" inputMode="decimal" id="grossMarginTarget" value={generalInfo.grossMarginTarget || ''} onChange={(e) => onUpdateGeneralInfo('grossMarginTarget', e.target.value)} className={`mt-1 block w-full rounded-md shadow-sm p-2 border text-right ${isInvalidPercentage(generalInfo.grossMarginTarget) ? 'border-red-500' : 'border-gray-300'}`} />
+                            {isInvalidPercentage(generalInfo.grossMarginTarget) && <ValidationMessage message="Doit être un %." />}
+                        </div>
                     </div>
+                    <div className="mt-4 flex justify-end">
+                        <button type="button" onClick={() => setIsObjectivesModalOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                            Gérer les objectifs
+                        </button>
+                    </div>
+                    <ObjectivesModal isOpen={isObjectivesModalOpen} onClose={() => setIsObjectivesModalOpen(false)} />
                 </div>
             </div>
 
@@ -825,4 +841,4 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             </div>
         </div>
     );
-};
+};

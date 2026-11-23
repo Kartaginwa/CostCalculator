@@ -262,7 +262,7 @@ export const chapitreProduction = {
                 { label: 'Intensité de main-d\'œuvre.', text: 'Temps Personnel ÷ Durée Processus. Une intensité de 1,00 signifie qu\'une personne travaille à la fois ; au-dessus de 1, plusieurs personnes travaillent en même temps.' },
             ],
         },
-        { type: 'callout', kind: 'exemple', text: `Chili con carne mijoté : la durée du processus est de 21,7 minutes, pour une intensité de 1,00 (une personne à la fois). La main-d'œuvre directe du lot est de ${d(DEMO.chili.moDirectRecette)} et la part indirecte de ${d(DEMO.chili.moIndirectRecette)}, soit ${d(DEMO.chili.totalMORecette)} pour le lot, donc **${d(DEMO.chili.coutMO)}** par unité.` },
+        { type: 'callout', kind: 'exemple', text: `Chili con carne mijoté : la durée du processus est de 21,7 minutes, pour une intensité de 1,00 (une personne à la fois). La main-d'œuvre directe du lot est de ${d(DEMO.chili.moDirectRecette)} et celle du temps non productif de ${d(DEMO.chili.moIndirectRecette)}, soit ${d(DEMO.chili.totalMORecette)} pour le lot, donc **${d(DEMO.chili.coutMO)}** par unité.` },
         { type: 'callout', kind: 'attention', text: 'Une étape sans personnel affecté ne coûte rien : le coût de main-d\'œuvre serait nul, et la recette paraîtrait plus rentable qu\'elle ne l\'est. Vérifiez que chaque étape a bien son personnel.' },
 
         { type: 'h', id: 'guide-prod-additionnels', text: '4. Coûts additionnels' },

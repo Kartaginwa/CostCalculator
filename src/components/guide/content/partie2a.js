@@ -75,7 +75,7 @@ export const chapitreParametres = {
         // ---------------------------------------------------------------------------------
         { type: 'h', id: 'guide-param-activites', text: 'Activités de production' },
         { type: 'p', text: 'Une **activité de production** regroupe les produits qui partagent un même procédé de fabrication : une ligne de surgélation, un atelier de mise en conserve, un procédé de pasteurisation. Un projet neuf contient déjà une activité, « Activité 1 » : renommez-la ou ajoutez-en d\'autres avec {{Ajouter une activité}}. Il en faut au moins une.' },
-        { type: 'callout', kind: 'pourquoi', text: 'Les activités servent à deux choses. Elles permettent de **répartir vos frais fixes** (le loyer d\'un atelier de surgélation ne se partage pas comme celui d\'une salle de conditionnement) et de **lire la rentabilité par ligne de production** dans les rapports. Créez vos activités avant vos produits, puisque chaque produit doit être rattaché à l\'une d\'elles.' },
+        { type: 'callout', kind: 'pourquoi', text: 'Les activités servent à deux choses. Elles permettent de **répartir vos frais fixes** (le loyer d\'un atelier de surgélation ne se partage pas comme celui d\'une salle de conditionnement) et de **lire la rentabilité par activité de production** dans les rapports. Créez vos activités avant vos produits, puisque chaque produit doit être rattaché à l\'une d\'elles.' },
         { type: 'callout', kind: 'exemple', text: 'Le projet démo a trois activités : Mets principaux surgelés, Soupes et potages, Sauces et accompagnements. Chacune porte ses frais fixes propres (par exemple une partie du loyer de l\'espace de production) et a son propre rapport de rentabilité.' },
 
         // ---------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ export const chapitreParametres = {
         {
             type: 'table', head: ['Niveau', 'Ce que c\'est', 'Exemple (projet démo)'], wrapCells: true, rows: [
                 ['Le **produit**', 'Une recette, avec son nom, son activité et sa catégorie.', 'Pâté chinois traditionnel'],
-                ['Le **format**', 'L\'emballage et la quantité sous lesquels le produit est vendu. Chaque format a sa propre fiche recette, son prix et son répartition des ventes.', '340 g et 900 g'],
+                ['Le **format**', 'L\'emballage et la quantité sous lesquels le produit est vendu. Chaque format a sa propre fiche recette, son prix et sa répartition des ventes.', '340 g et 900 g'],
                 ['Le **SKU**', 'Le numéro de référence d\'un format (de l\'anglais « stock keeping unit », unité de gestion de stock). Il est déduit automatiquement du produit et du format, mais vous pouvez le remplacer par votre propre codification.', 'Un code propre à chaque format'],
             ],
         },
@@ -120,7 +120,7 @@ export const chapitreParametres = {
         { type: 'h', id: 'guide-param-produits-colonnes', text: 'Les colonnes du tableau des formats', level: 5 },
         {
             type: 'table', head: ['Colonne', 'À quoi elle sert'], wrapCells: true, rowIds: ['guide-param-col-format', 'guide-param-col-sku', 'guide-param-col-pds', 'guide-param-col-canaux', 'guide-param-col-mix', 'guide-param-col-menu', null], rows: [
-                ['{{Format}}', 'La quantité et l\'unité de ce format (ex. 250 ml). Elle remplace l\'ancienne notion de « quantité par portion ».'],
+                ['{{Format}}', 'La quantité et l\'unité de ce format (ex. 250 ml).'],
                 ['{{SKU}}', 'Le numéro de référence du format, généré à partir du produit et du format ; modifiable.'],
                 ['{{PDS ($)}}', 'Le prix de détail suggéré au consommateur. Sert à générer le prix net de chaque canal.'],
                 ['{{Canaux}}', 'Le nombre de canaux où ce format est vendu ; cliquer ouvre la ligne de détail : prix net et volume par canal. L\'étoile marque le **canal principal**, dont le prix alimente les marges affichées dans l\'onglet Production. Un format n\'est pas forcément vendu dans tous les canaux.'],

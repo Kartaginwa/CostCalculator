@@ -4,7 +4,7 @@
 // Ce fichier assemble, trie et nomme ; une donnée absente reste absente (null), jamais un zéro inventé.
 import { parseLocaleNumber as P, loadedHourlyRate, MAJOR_ALLERGENS } from '../../utils.js';
 import { buildKeyFindingsContext, computeKeyFindings } from '../../engine/keyFindings.js';
-import { strengthsAndWeaknesses, chapterFindings, ficheFindings } from '../../engine/findingSurfaces.js';
+import { objectiveFindings, evolutionFindings, overviewStrengths, resultsFindings, tabFindings, ficheFindings, dedupeFindings } from '../../engine/findingSurfaces.js';
 import { computeProfitCascade } from '../../engine/profitCascade.js';
 import { computeTrendRows, computeReadings } from '../../engine/reportReadings.js';
 import { computeSkuCascade } from '../../engine/skuCascade.js';
@@ -23,9 +23,8 @@ const targetOf = (v) => positive(P(v));
 
 // Page (repère) où un constat est détaillé : la fiche du format pour un constat de format, sinon la section de l'onglet auquel il renvoie.
 const MARK_OF_TAB = { overview: 'resultats', simulation: 'tendance', portfolio: 'portefeuille', bySku: 'skutable', byChannel: 'canaux', byActivity: 'canaux', ingredients: 'ingr', packaging: 'emb', labor: 'mo1' };
-// Un constat par entité peut redire mot pour mot un constat agrégé (un seul fournisseur à 80 % des achats : les deux règles le disent) : on n'imprime qu'une fois
-// un texte identique, le plus grave d'abord (les listes arrivent déjà triées).
-export const dedupe = (list) => { const seen = new Set(); return list.filter(f => { const key = `${f.title}|${f.detail}`; if (seen.has(key)) return false; seen.add(key); return true; }); };
+// Les sous-onglets qui ont un bandeau de constats dans l'application (Vue d'ensemble : trois blocs ; Simulation : aucun). Le rapport imprime les MÊMES constats.
+export const FINDING_TABS = ['portfolio', 'bySku', 'byChannel', 'byActivity', 'ingredients', 'packaging', 'labor'];
 export const markOfFinding = (f) => (f.subject?.type === 'format' ? `fiche:${f.subject.id}` : MARK_OF_TAB[f.link?.subTab] || 'resultats');
 
 /**
@@ -74,11 +73,22 @@ export function buildReportModel({ project, analysisData: a, calculatedGeneralIn
     };
 
     // ---------- constats et lectures ----------
-    const surfaces = strengthsAndWeaknesses(all);
-    const notFormat = (f) => f.subject?.type !== 'format'; // les constats d'un format vivent dans sa fiche
-    const chapterLists = Object.fromEntries([2, 3, 4, 5, 6].map(n => [n, dedupe(chapterFindings(all, n).filter(notFormat))]));
+    // Le rapport utilise le MÊME mécanisme de classement que l'application (engine/findingSurfaces.js) : une adresse par constat.
+    //   chapitre 1 : les trois blocs de la Vue d'ensemble (objectifs, amélioration / détérioration, forces et faiblesses) ;
+    //   chapitre 2 : les constats généraux non majeurs qui n'ont aucune autre adresse ;
+    //   chapitres 3 à 6 : le bandeau de chaque sous-onglet ; chapitre 7 : la fiche du format.
     const readings = computeReadings(ctx);
     const pages = (f) => ({ ...f, mark: markOfFinding(f) });
+    const splitTone = (list) => ({ forces: list.filter(f => f.tone === 'force').map(pages), faiblesses: list.filter(f => f.tone === 'faiblesse').map(pages) });
+    const strengths = overviewStrengths(all);
+    const findingsByAddress = {
+        all,
+        objectives: splitTone(objectiveFindings(all)),
+        evolution: splitTone(evolutionFindings(all)),
+        strengths: { forces: strengths.forces.map(pages), faiblesses: strengths.faiblesses.map(pages) },
+        results: resultsFindings(all).map(pages),
+        tabs: Object.fromEntries(FINDING_TABS.map(tab => [tab, tabFindings(all, tab).all.map(pages)])),
+    };
 
     // ---------- portefeuille ----------
     const classOf = new Map();
@@ -116,7 +126,7 @@ export function buildReportModel({ project, analysisData: a, calculatedGeneralIn
             abc: { A: abc?.A || [], B: abc?.B || [], C: abc?.C || [], totals: abc?.totals || { A: 0, B: 0, C: 0 } },
             topLoss: topLoss && topLoss.lossCost > 0 ? { name: topLoss.name, loss: topLoss.lossCost } : null,
             volatile: (vol?.list || []).filter(v => v.isVolatile), pointCount: vol?.pointCount ?? 0, hasEnoughData: !!vol?.hasEnoughData,
-            findings: chapterLists[5].filter(f => (f.link?.subTab === 'packaging') === !isIng).map(f => ({ ...f, mark: isIng ? 'ingr' : 'emb' })),
+            findings: findingsByAddress.tabs[isIng ? 'ingredients' : 'packaging'],
             hasData: total > 0,
         };
     };
@@ -151,7 +161,7 @@ export function buildReportModel({ project, analysisData: a, calculatedGeneralIn
             nbPortions: costs.nbPortions, portionSize: costs.portionSize, portionUnit: format.portionUnit || '',
             status: format.isResaleProduct ? 'resale' : row.isIngredient ? 'sub' : 'finished',
             pds: positive(P(format.pds)), allergens: computeFormatAllergens(format, project.ingredientsList).map(k => ALLERGEN_NAME[k] || k),
-            findings: ficheFindings(all, row.id, row.productId),
+            findings: dedupeFindings(ficheFindings(all, row.id, row.productId)),
             costs: {
                 material: costs.costMatierePerPortion, packaging: costs.costPackagingPerPortion, labor: costs.costLaborPerPortion, subcontracting: costs.costSubcontractingPerPortion,
                 production: costs.totalDirectCostPerPortion,
@@ -181,7 +191,7 @@ export function buildReportModel({ project, analysisData: a, calculatedGeneralIn
         company: { name: project.companyName || '', logo: project.logoUrl || null },
         period: formatPeriod(info.startDate ?? project.generalInfo?.startDate, info.endDate ?? project.generalInfo?.endDate),
         scope, targets, kpis, cascade, recon: scope.hasRealData ? ctx.reconciliation.rows : null,
-        trend, readings, findings: { all, forces: dedupe(surfaces.forces).map(pages), faiblesses: dedupe(surfaces.faiblesses).map(pages), chapters: Object.fromEntries(Object.entries(chapterLists).map(([k, v]) => [k, v.map(pages)])) },
+        trend, readings, findings: findingsByAddress,
         portfolio: { menu: a.menuEngineeringData || {}, contribution, contributionTotal: contribution.reduce((s, c) => s + c.total, 0), skuTable, channelCols: channelCols.map(c => ({ id: c.id, name: c.name })) },
         segments: { channels: channelRows, activities: activityRows, matrixCols, matrixRows },
         supply, labor, fiches, catalogues, availability,

@@ -63,6 +63,14 @@ export const objectiveFindings = (all) => dedupeFindings((all || []).filter(f =>
 export const evolutionFindings = (all) => dedupeFindings((all || []).filter(f => f.group === 'evolution' && f.scope === 'general'));
 
 /**
+ * Constats du chapitre 2 du rapport PDF (Résultats) : ceux qui n'ont AUCUNE adresse dans l'application, c'est-à-dire les constats généraux de gravité moyenne ou mineure qui
+ * renvoient à la Vue d'ensemble ou à Simulation (ni objectif, ni évolution générale, ni général majeur : ceux-là ont leur bloc ; Simulation n'a pas de bandeau).
+ * Du plus grave au moins grave. Avec les trois blocs de la Vue d'ensemble, les bandeaux des sous-onglets et la fiche d'un format, c'est la quatrième et dernière adresse.
+ */
+export const resultsFindings = (all) => dedupeFindings((all || []).filter(f => f.subject?.type !== 'format' && f.scope === 'general' && f.severity !== 'major'
+    && f.group !== 'objectif' && f.group !== 'evolution' && ['overview', 'simulation'].includes(f.link?.subTab)).sort(bySeverity));
+
+/**
  * Forces et faiblesses de la Vue d'ensemble : exactement les règles du chapitre 1 du rapport PDF (strengthsAndWeaknesses), hors objectifs et évolution qui ont
  * leur propre bloc : les constats de gravité majeure, généraux d'office et spécifiques promus. Les plus importants d'abord.
  */

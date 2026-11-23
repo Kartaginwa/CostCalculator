@@ -69,3 +69,7 @@ Le test `e2e/report-parity.spec.js` imprime le rapport complet du démo et relit
 - Annexes : A (ingrédients), B (emballages), C (équipe, sur demande), D (glossaire), mêmes colonnes que l'ancien PDF.
 - Retiré et vérifié absent : nom de la méthode d'attribution, camemberts, vocabulaire « coût direct » de la main-d'œuvre, rendement par ligne.
 - Réponses aux questions de la fiche : (1) marge « tous canaux » d'un format : non ajoutée (décision du 22/11, l'ancien PDF calculait autrement) ; (2) libellé « Frais fixes » conservé ; (3) courbe en $/unité d'un format sans prix : **vérifiée** (cas « un format sans prix » : quatre lignes en $/unité, aucun pourcentage du prix imprimé).
+
+## Mise à jour du 23/11
+- Fiche d'un produit : les **constats du produit** sont maintenant **sous la cascade de marge par canal** (avant : au-dessus des tuiles de coût).
+- Les constats du rapport suivent les adresses de l'application (voir `16-Journal-Export-PDF.md`, section 2 bis) : le rapport n'a plus de règle de classement propre.

@@ -4,6 +4,7 @@ import { f, usd, pc, sgn, esc, marginCell } from './format.js';
 import { hbars, lineChart, niceScale, waterfall } from './charts.js';
 import { h3, grpTitle, mark, pageRef, commentBox, reading, findingsSection, shortName, tile } from './ui.js';
 import { CLASSES, FINDING_GROUP_LABELS, LABELS, TARGET } from './strings.js';
+import { SUBTAB_LABELS } from '../../engine/findingKit.js';
 
 const C = { green: '#10B981', pink: '#DB2777', yellow: '#F59E0B', purple: '#8B5CF6', grey: '#9CA3AF', blue: '#2563EB' };
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
@@ -27,7 +28,7 @@ const safetyTile = (k) => {
 // ---------- Chapitre 1 : synthèse ----------
 const ONE_DOLLAR_COLOR = { material: C.green, packaging: C.pink, labor: C.yellow, subcontracting: C.grey, fixed: C.purple, net: C.blue };
 
-const findingColumns = (list, map) => {
+const findingColumns = (map) => {
     const li = (x) => `<li><b>${esc(x.title)}</b><span>${esc(x.detail)}</span> <i>→ ${pageRef(map, x.mark)}</i></li>`;
     return (label, forces, faiblesses, a, b) => `${grpTitle(label, `· ${forces.length} + ${faiblesses.length} constats`)}`
         + `<div class="two" data-split="columns" style="gap:2.4mm"><div class="fcol f" data-col><h5>${esc(a)}</h5><ul>${forces.map(li).join('') || `<li class="mut">${LABELS.noFinding}</li>`}</ul></div>`
@@ -54,13 +55,15 @@ export function chapter1(m, map, comment) {
         h += h3('Évolution de la marge brute', `${m.trend.count} points de référence`)
             + lineChart({ h: 100, labels: m.trend.labels, series: [{ name: 'Marge brute', color: C.blue, vals: gm, endLabel: `${f(last, 1)} %` }], ymin: sc.min, ymax: sc.max, ystep: sc.step, yfmt: v => `${f(v)} %`, xEvery: Math.max(1, Math.ceil(m.trend.count / 6)) });
     }
-    // Constats clés : tous les constats majeurs, par groupe (le rapport ne coupe pas à trois par colonne : sur papier, il n'y a pas de « Voir tout »)
-    const group = findingColumns(null, map);
+    // Constats clés : les trois blocs de la Vue d'ensemble de l'application, avec les MÊMES règles (engine/findingSurfaces.js) : objectifs stratégiques, amélioration /
+    // détérioration, forces et faiblesses (gravité majeure). Sur papier, il n'y a pas de « Voir tout » : tout est imprimé, du plus important au moins important.
+    const group = findingColumns(map);
+    const blocks = { objectif: m.findings.objectives, evolution: m.findings.evolution, structure: m.findings.strengths };
     const parts = FINDING_GROUP_LABELS.map(([g, label, a, b]) => {
-        const forces = m.findings.forces.filter(x => x.group === g), faiblesses = m.findings.faiblesses.filter(x => x.group === g);
+        const { forces, faiblesses } = blocks[g];
         return forces.length || faiblesses.length ? group(label, forces, faiblesses, a, b) : '';
     }).join('');
-    h += mark('constats') + h3('Constats clés', 'les plus graves ; le détail est dans chaque chapitre') + (parts || `<div class="mut">Aucun constat majeur pour l’instant.</div>`) + commentBox(comment);
+    h += mark('constats') + h3('Constats clés', 'les plus graves ; le détail est dans chaque chapitre') + (parts || `<div class="mut">${LABELS.noFinding}</div>`) + commentBox(comment);
     return h;
 }
 
@@ -107,7 +110,7 @@ export function chapter2(m, map, comment) {
         }
         h += reading(m.readings.evolution);
     }
-    h += findingsSection('Constats de ce chapitre', m.findings.chapters[2], 'tous les niveaux de gravité') + commentBox(comment);
+    h += findingsSection('Constats complémentaires', m.findings.results, 'généraux, sans autre adresse dans le rapport') + commentBox(comment);
     return h;
 }
 
@@ -127,7 +130,7 @@ export function chapter3(m, map, comment) {
             + hbars(m.portfolio.contribution.map(c => ({ n: c.name, v: c.total, color: clsOf.get(c.name) === 'stars' ? '#2563EB' : clsOf.get(c.name) === 'dogs' ? '#FCA5A5' : '#93C5FD' })), { nameW: 62, valueW: 27, fmt: v => `${usd(v)} · ${f(v / total * 100, 0)}${' '}%` })
             + `<div class="legend"><span><i style="background:#2563EB"></i>Étoile</span><span><i style="background:#93C5FD"></i>Autre</span><span><i style="background:#FCA5A5"></i>Poids mort</span></div>`;
     }
-    h += findingsSection('Constats du portefeuille', m.findings.chapters[3].filter(x => x.link?.subTab === 'portfolio'), 'tous les niveaux de gravité');
+    h += findingsSection(`Constats : ${SUBTAB_LABELS.portfolio}`, m.findings.tabs.portfolio, 'du plus grave au moins grave');
     // Du PDS à la marge nette : une ligne par format, les canaux côte à côte
     const cols = m.portfolio.channelCols, n = cols.length;
     h += mark('skutable') + h3('Du PDS à la marge nette, produit par produit', 'une ligne par format') ;
@@ -138,7 +141,7 @@ export function chapter3(m, map, comment) {
             + r.channels.map(c => `<td>${c ? usd(c.netPrice, 2) : '—'}</td>`).join('') + r.channels.map(c => (c ? `<td class="heat" style="${marginCell(c.netMargin)}">${pc(c.netMargin, 1)}</td>` : '<td>—</td>')).join('')
             + `<td>${pageRef(map, 'fiche:' + r.id)}</td></tr>`).join('') + `</tbody></table>`
         + `<div class="src">Un produit sans PDS saisi affiche « — » dans sa colonne de PDS, jamais un zéro.</div>`;
-    h += findingsSection('Autres constats sur les produits', m.findings.chapters[3].filter(x => x.link?.subTab !== 'portfolio'), 'tous les niveaux de gravité; le détail de chaque format est dans sa fiche') + commentBox(comment);
+    h += findingsSection(`Constats : ${SUBTAB_LABELS.bySku}`, m.findings.tabs.bySku, 'le détail de chaque format est dans sa fiche') + commentBox(comment);
     return h;
 }
 
@@ -147,14 +150,15 @@ export function chapter4(m, map, comment) {
     const head = (label) => `<thead><tr><th style="text-align:left">${label}</th><th>Revenus</th><th>Part</th><th>Marge brute</th><th>Bénéfice net</th><th>Marge nette</th><th>Point mort</th><th>Marge de sécurité</th></tr></thead>`;
     const rows = (list) => list.map(c => `<tr><td class="l"><b>${esc(c.name)}</b></td><td>${usd(c.revenueTotal)}</td><td>${pc(c.share, 0)}</td><td>${pc(c.margeBrutePercent)}</td><td><b>${usd(c.margeNetteTotal)}</b></td><td class="heat" style="${marginCell(c.margeNettePercent)}">${pc(c.margeNettePercent)}</td><td>${usd(c.breakEvenRevenue)}</td><td>${pc(c.safety)}</td></tr>`).join('');
     const seg = m.segments;
-    let h = mark('canaux') + h3('Les canaux de vente', null, { first: true }) + `<table class="tb blue" data-split="rows">${head('Canal')}<tbody>${rows(seg.channels)}</tbody></table>`;
+    let h = mark('canaux') + h3('Les canaux de vente', null, { first: true }) + `<table class="tb blue" data-split="rows">${head('Canal')}<tbody>${rows(seg.channels)}</tbody></table>`
+        + findingsSection(`Constats : ${SUBTAB_LABELS.byChannel}`, m.findings.tabs.byChannel, 'du plus grave au moins grave');
     if (seg.activities.length) h += h3('Les activités de production') + `<table class="tb blue" data-split="rows">${head('Activité')}<tbody>${rows(seg.activities)}</tbody></table>`;
     if (seg.matrixRows.length && seg.matrixCols.length) {
         h += h3('Marge nette par activité et par canal') + `<div class="mt" style="grid-template-columns:34mm repeat(${seg.matrixCols.length},1fr)"><div></div>${seg.matrixCols.map(c => `<div class="h">${esc(shortName(c.name, 24))}</div>`).join('')}`
             + seg.matrixRows.map(a => `<div class="h">${esc(a.name)}</div>` + a.cells.map(cell => (cell ? `<div class="c" style="${marginCell(cell.margeNettePercent)}"><b>${pc(cell.margeNettePercent)}</b><small>${sgn(cell.margeNetteTotal)}${' '}$</small></div>` : '<div class="c">—</div>')).join('')).join('') + `</div>`;
         h += reading(m.readings.cells);
     }
-    h += findingsSection('Constats de ce chapitre', m.findings.chapters[4], 'tous les niveaux de gravité') + commentBox(comment);
+    h += findingsSection(`Constats : ${SUBTAB_LABELS.byActivity}`, m.findings.tabs.byActivity, 'du plus grave au moins grave') + commentBox(comment);
     return h;
 }
 
@@ -177,7 +181,7 @@ function supplyHtml(s, comment, first) {
         h += h3('Prix volatils', `amplitude sur ${s.pointCount} relevés`) + `<table class="tb yellow" data-split="rows"><thead><tr><th style="text-align:left">${label.slice(0, -1)}</th><th style="text-align:left">Fournisseur</th><th>Prix actuel</th><th>Amplitude</th><th>Tendance</th><th style="text-align:left">Volatilité</th></tr></thead><tbody>`
             + (s.volatile.length ? s.volatile.map(v => `<tr><td class="l"><b>${esc(v.name)}</b></td><td class="l">${esc(v.provider || '')}</td><td>${usd(v.currentPrice, 2)}</td><td><b>${f(v.amplitudePercent)} %</b></td><td>${sgn(v.trendPercent, 1)} %</td><td class="l">${v.tier === 'elevee' ? 'élevée' : 'modérée'}</td></tr>`).join('') : `<tr><td class="l" colspan="6">Aucun prix volatil.</td></tr>`) + `</tbody></table>`;
     }
-    return h + findingsSection(`Constats : ${low}`, s.findings, 'tous les niveaux de gravité') + (s.isIng ? '' : commentBox(comment));
+    return h + findingsSection(`Constats : ${label}`, s.findings, 'du plus grave au moins grave') + (s.isIng ? '' : commentBox(comment));
 }
 export function chapter5(m, map, comment) {
     const ing = supplyHtml(m.supply.ing, comment, true), pkg = supplyHtml(m.supply.pkg, comment, !ing);
@@ -213,6 +217,6 @@ export function chapter6(m, map, comment) {
         h += h3('Classement des produits', 'bénéfice brut par heure, produits de revente exclus') + hbars(L.productHour.map(x => ({ n: x.name, v: x.grossProfitPerHour, color: color(x.grossProfitPerHour), mark: L.average })), { nameW: 62, fmt: v => `${usd(v, 0)}/h` })
             + (L.average != null ? `<div class="legend"><span><i style="background:#10B981"></i>Au-dessus de la moyenne</span><span><i style="background:#F59E0B"></i>Sous la moyenne</span></div>` : '');
     }
-    h += findingsSection('Constats de ce chapitre', m.findings.chapters[6], 'tous les niveaux de gravité') + commentBox(comment);
+    h += findingsSection(`Constats : ${SUBTAB_LABELS.labor}`, m.findings.tabs.labor, 'du plus grave au moins grave') + commentBox(comment);
     return h;
 }

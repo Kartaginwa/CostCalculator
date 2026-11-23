@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { demoContext } from './testing/demoFindingsContext.js';
 import { computeKeyFindings } from './keyFindings.js';
-import { strengthsAndWeaknesses, chapterFindings, ficheFindings, chapterOf, objectiveFindings, evolutionFindings, overviewStrengths, tabFindings } from './findingSurfaces.js';
+import { strengthsAndWeaknesses, chapterFindings, ficheFindings, chapterOf, objectiveFindings, evolutionFindings, overviewStrengths, tabFindings, resultsFindings } from './findingSurfaces.js';
 import { SEVERITY_ORDER, STRUCTURAL } from './findingMeta.js';
 
 // Filtres par surface (phase 2 de la refonte de l'export PDF, 22/11) : fonctions pures sur des constats déjà classés.
@@ -156,5 +156,30 @@ describe('Forces et faiblesses du démo : équilibrées, sans constat d\'un seul
     });
     it('chaque force majeure est générale ou structurelle (miroir d\'une faiblesse majeure)', () => {
         for (const x of s.forces) expect(x.scope === 'general' || STRUCTURAL.test(x.id), x.id).toBe(true);
+    });
+});
+
+describe('chapitre 2 du PDF : les constats sans adresse dans l\'application', () => {
+    const all = computeKeyFindings(demoContext(), { entities: true }).all;
+    const TABS = ['portfolio', 'bySku', 'byActivity', 'byChannel', 'ingredients', 'packaging', 'labor'];
+    const results = resultsFindings(all);
+    it('ce sont des constats généraux non majeurs qui renvoient à la Vue d\'ensemble ou à Simulation', () => {
+        expect(results.length).toBeGreaterThan(0);
+        expect(results.every(x => x.scope === 'general' && x.severity !== 'major' && x.subject?.type !== 'format' && x.group !== 'objectif' && x.group !== 'evolution' && ['overview', 'simulation'].includes(x.link.subTab))).toBe(true);
+    });
+    it('ils n\'apparaissent dans aucune autre adresse : aucun constat n\'est imprimé deux fois', () => {
+        const others = [...objectiveFindings(all), ...evolutionFindings(all), ...Object.values(overviewStrengths(all)).flat(), ...TABS.flatMap(t => tabFindings(all, t).all)].map(x => x.id);
+        expect(results.filter(x => others.includes(x.id)).map(x => x.id)).toEqual([]);
+    });
+    it('ils sont triés du plus grave au moins grave, sans texte répété', () => {
+        const order = results.map(x => SEVERITY_ORDER[x.severity]);
+        expect(order).toEqual([...order].sort((a, b) => b - a));
+        const keys = results.map(x => `${x.title}|${x.detail}`);
+        expect(new Set(keys).size).toBe(keys.length);
+    });
+    it('chaque constat non par format a une adresse : bloc de la Vue d\'ensemble, bandeau, ou chapitre 2 (sauf les redondances voulues)', () => {
+        const home = new Set([...objectiveFindings(all), ...evolutionFindings(all), ...Object.values(overviewStrengths(all)).flat(), ...TABS.flatMap(t => tabFindings(all, t).all), ...results].map(x => x.id));
+        const redundant = /^(volatile-item-|loss-item-|format-gap-of-|post-(underused|overloaded|used)$|supplier-dep-)/;
+        expect(all.filter(x => x.subject?.type !== 'format' && !home.has(x.id) && !redundant.test(x.id)).map(x => x.id)).toEqual([]);
     });
 });

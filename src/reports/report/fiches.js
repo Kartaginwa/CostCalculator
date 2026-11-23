@@ -93,7 +93,6 @@ export function ficheHtml(F, m) {
     let h = `<div data-break="before" data-keep="next">${mark(F.mark)}<div class="fiche-head nx"><div><div style="font-size:14pt;font-weight:700">${esc(F.name)}</div>`
         + `<div class="mut">Lot de ${f(F.nbPortions)} portions de ${esc(String(F.portionSize))} ${esc(F.portionUnit)}${F.activity ? ` · ${esc(F.activity)}` : ''}</div></div>${cls ? `<span class="badge ${cls.css}">${cls.label}</span>` : ''}</div></div>`;
     h += `<table class="tb" data-keep="next" style="font-size:7.8pt;margin-bottom:1.2mm;--pad:1.1mm"><tbody><tr><td class="l">PDS : <b>${F.pds ? c2(F.pds) : '—'}</b></td><td class="l">Unités produites : <b>${f(F.nbPortions)}</b></td><td class="l">Format par portion : <b>${esc(String(F.portionSize))} ${esc(F.portionUnit)}</b></td><td class="l">Statut : <b>${status}</b></td><td class="l">Allergènes : <b>${F.allergens.length ? esc(F.allergens.join(', ')) : LABELS.noAllergen}</b></td></tr></tbody></table>`;
-    if (F.findings.length) h += h3('Constats du produit') + productFindings(F);
     h += `<div class="mut" data-keep="next" style="font-size:7.2pt;margin:2.6mm 0 1mm">Coût de production (identique dans tous les canaux)</div>`
         + `<div class="tiles4" style="grid-template-columns:repeat(${k.subcontracting > 0 ? 5 : 4},1fr)">`
         + tileCost('Coût matière', k.material, k.materialPct) + tileCost('Emballage', k.packaging, k.packagingPct) + tileCost('Main-d’œuvre', k.labor, k.laborPct)
@@ -101,6 +100,8 @@ export function ficheHtml(F, m) {
         + `<div class="tile" style="min-height:10mm;background:#fff;border:.5mm solid #9CA3AF"><div class="l">Coût de production (total)</div><div class="v" style="font-size:12pt">${c2(k.production)}</div></div></div>${comp}`;
     const casc = cascadeTable(F);
     if (casc) h += h3('Cascade de marge par canal', 'du PDS à la marge nette') + casc;
+    // Les constats du produit viennent APRÈS la cascade : on lit d'abord les chiffres, puis ce que les règles de l'application en disent.
+    if (F.findings.length) h += h3('Constats du produit', 'les règles de l’application, appliquées à ce format') + productFindings(F);
     h += recipeDetail(F) + evolution(F, m);
     return h;
 }
@@ -109,8 +110,8 @@ export function ficheHtml(F, m) {
 export function ficheIntro(m, map) {
     return h3('Comment lire une fiche', null, { first: true }) + `<div class="card"><ol style="margin:0;padding-left:4.4mm">`
         + `<li><b>Bandeau</b> : le produit, son format, sa classe stratégique, ses paramètres (PDS, unités, statut, allergènes).</li>`
-        + `<li><b>Constats du produit</b> : les règles des constats clés, appliquées à ce format.</li>`
         + `<li><b>Coût de production</b>, puis la <b>cascade de marge par canal</b>, identique à l’écran Par SKU : du PDS jusqu’à la marge nette et au point mort.</li>`
+        + `<li><b>Constats du produit</b> : les règles des constats clés, appliquées à ce format.</li>`
         + `<li><b>Détail de la recette</b> : matières premières, emballage, main-d’œuvre par étape, avec le coût de chaque ligne.</li>`
         + `<li><b>Évolution</b> du produit sur les points de référence.</li></ol>`
         + `<p style="margin:2mm 0 0"><b>Chaque fiche commence sur sa propre page.</b> Si une fiche est longue, ses tableaux se coupent proprement (en-tête répété, « suite » au titre) et la cascade ne se coupe qu’entre deux sections.</p></div>`

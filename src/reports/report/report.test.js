@@ -7,7 +7,11 @@ import { calculateCostLines } from '../../engine/calculateCosts.js';
 import { f, usd, pc, sgn, esc, longDate, shortMonth, marginCell, NBSP } from './format.js';
 import { formatPeriod } from './period.js';
 import { selectGlossary, termIsUsed } from './glossary.js';
-import { buildReportModel, dedupe } from './model.js';
+import { buildReportModel } from './model.js';
+import { ficheHtml } from './fiches.js';
+import { computeKeyFindings } from '../../engine/keyFindings.js';
+import { demoContext } from '../../engine/testing/demoFindingsContext.js';
+import { dedupeFindings, objectiveFindings, evolutionFindings, overviewStrengths, resultsFindings, tabFindings } from '../../engine/findingSurfaces.js';
 import { buildUnits, resolveOptions } from './buildReport.js';
 import { hbars, niceScale, lineChart, waterfall } from './charts.js';
 import { CHAPTERS } from './strings.js';
@@ -165,15 +169,16 @@ describe('modèle de données (démo)', () => {
         expect(m.catalogues.packaging).toHaveLength(8);
         expect(m.company).toEqual({ name: 'Boréal', logo: 'data:image/png;base64,AAA' });
     });
-    it('Forces / Faiblesses : les constats majeurs seulement, avec le renvoi à leur page', () => {
-        const all = [...m.findings.forces, ...m.findings.faiblesses];
+    it('Forces et faiblesses : les constats majeurs du groupe « structure », avec le renvoi à leur page', () => {
+        const all = [...m.findings.strengths.forces, ...m.findings.strengths.faiblesses];
         expect(all.length).toBeGreaterThan(3);
-        expect(all.every(x => x.severity === 'major')).toBe(true);
+        expect(all.every(x => x.severity === 'major' && x.group === 'structure')).toBe(true);
         expect(all.every(x => typeof x.mark === 'string')).toBe(true);
     });
-    it('un texte identique n\'est imprimé qu\'une fois (constat agrégé et constat par entité qui disent la même chose)', () => {
-        expect(dedupe([{ title: 'a', detail: 'b', id: 1 }, { title: 'a', detail: 'b', id: 2 }, { title: 'a', detail: 'c', id: 3 }]).map(x => x.id)).toEqual([1, 3]);
-        const lists = [...Object.values(m.findings.chapters), m.findings.forces, m.findings.faiblesses];
+    it('un texte identique n\'est imprimé qu\'une fois par liste (constat agrégé et constat par entité qui disent la même chose)', () => {
+        expect(dedupeFindings([{ title: 'a', detail: 'b', id: 1 }, { title: 'a', detail: 'b', id: 2 }, { title: 'a', detail: 'c', id: 3 }]).map(x => x.id)).toEqual([1, 3]);
+        const lists = [m.findings.objectives.forces, m.findings.objectives.faiblesses, m.findings.evolution.forces, m.findings.evolution.faiblesses, m.findings.strengths.forces, m.findings.strengths.faiblesses,
+            m.findings.results, ...Object.values(m.findings.tabs), ...m.fiches.map(f => f.findings)];
         for (const list of lists) { const keys = list.map(x => `${x.title}|${x.detail}`); expect(new Set(keys).size).toBe(keys.length); }
     });
     it('aucune valeur non finie dans le modèle', () => {
@@ -184,6 +189,64 @@ describe('modèle de données (démo)', () => {
         };
         walk({ ...m, findings: undefined }, 'm');
         expect(bad).toEqual([]);
+    });
+});
+
+describe('mêmes adresses que l\'application (engine/findingSurfaces.js)', () => {
+    const { state, analysisData, calculatedGeneralInfo, trackingPoints } = demoInputs();
+    const m = buildReportModel({ project: { ...state, trackingPoints, companyName: 'Boréal' }, analysisData, calculatedGeneralInfo });
+    const all = computeKeyFindings(demoContext(), { entities: true }).all;
+    const ids = (list) => list.map(x => x.id);
+
+    it('chapitre 1 : les trois blocs de la Vue d\'ensemble, mêmes constats dans le même ordre', () => {
+        const o = objectiveFindings(all), e = evolutionFindings(all), s = overviewStrengths(all);
+        expect(ids([...m.findings.objectives.forces, ...m.findings.objectives.faiblesses]).sort()).toEqual(ids(o).sort());
+        expect(ids([...m.findings.evolution.forces, ...m.findings.evolution.faiblesses]).sort()).toEqual(ids(e).sort());
+        expect(ids(m.findings.strengths.forces)).toEqual(ids(s.forces));
+        expect(ids(m.findings.strengths.faiblesses)).toEqual(ids(s.faiblesses));
+    });
+    it('chapitres 3 à 6 : le bandeau de chaque sous-onglet, tel que l\'application l\'affiche', () => {
+        for (const tab of ['portfolio', 'bySku', 'byChannel', 'byActivity', 'ingredients', 'packaging', 'labor']) {
+            expect(ids(m.findings.tabs[tab]), tab).toEqual(ids(tabFindings(all, tab).all));
+        }
+        expect(ids(m.supply.ing.findings)).toEqual(ids(tabFindings(all, 'ingredients').all));
+        expect(ids(m.supply.pkg.findings)).toEqual(ids(tabFindings(all, 'packaging').all));
+    });
+    it('chapitre 2 : les constats généraux non majeurs qui n\'ont aucune autre adresse', () => {
+        expect(ids(m.findings.results)).toEqual(ids(resultsFindings(all)));
+        expect(m.findings.results.length).toBeGreaterThan(0);
+    });
+    it('un constat par format n\'est que dans la fiche de ce format', () => {
+        const everywhere = [...m.findings.objectives.forces, ...m.findings.objectives.faiblesses, ...m.findings.evolution.forces, ...m.findings.evolution.faiblesses,
+            ...m.findings.strengths.forces, ...m.findings.strengths.faiblesses, ...m.findings.results, ...Object.values(m.findings.tabs).flat()];
+        expect(everywhere.filter(x => x.subject?.type === 'format')).toEqual([]);
+        m.fiches.forEach(F => F.findings.filter(x => x.subject?.type === 'format').forEach(x => expect(x.subject.id).toBe(F.id)));
+    });
+    it('la gravité du moteur est reprise : chaque liste est triée du plus grave au moins grave', () => {
+        const rank = { major: 3, medium: 2, minor: 1 };
+        for (const list of [m.findings.results, ...Object.values(m.findings.tabs), ...m.fiches.map(f => f.findings)]) {
+            const s = list.map(x => rank[x.severity]);
+            expect(s).toEqual([...s].sort((a, b) => b - a));
+        }
+    });
+    it('fiche : les constats du produit viennent APRÈS la cascade de marge par canal, avant la recette détaillée', () => {
+        const chili = m.fiches.find(f => f.id === 'fmt_chili');
+        const html = ficheHtml(chili, m);
+        const iCascade = html.indexOf('Cascade de marge par canal'), iFindings = html.indexOf('Constats du produit'), iRecipe = html.indexOf('Recette détaillée'), iTiles = html.indexOf('Coût de production (total)');
+        expect(iTiles).toBeGreaterThan(0);
+        expect(iCascade).toBeGreaterThan(iTiles);
+        expect(iFindings).toBeGreaterThan(iCascade);
+        expect(iRecipe).toBeGreaterThan(iFindings);
+    });
+    it('sections : titres des constats par sous-onglet, comme dans l\'application', () => {
+        const units = buildUnits(m, {}, noMap), html = (c) => units.find(u => u.chapter === c).html;
+        const order = (h, titles) => { const idx = titles.map(x => h.indexOf(x)); idx.forEach(i => expect(i).toBeGreaterThan(-1)); expect([...idx].sort((a, b) => a - b)).toEqual(idx); };
+        order(html('1'), ['Objectifs stratégiques', 'Amélioration / détérioration', 'Forces et faiblesses']);
+        expect(html('2')).toContain('Constats complémentaires');
+        order(html('3'), ['Constats : Portefeuille', 'Constats : Par SKU']);
+        order(html('4'), ['Constats : Par Canal', 'Les activités de production', 'Constats : Par Activité']);
+        expect(html('5')).toContain('Constats : Ingrédients');
+        expect(html('6')).toContain('Constats : Main-d\'œuvre');
     });
 });
 

@@ -26,6 +26,9 @@ Statut : **phases 0 à 8 faites le 22/11.** Ce document est le point d'entrée :
 | — | Chaque fiche commence sur sa page ; une cascade ne se coupe qu'entre deux sections ; au moins 2 lignes de chaque côté d'une coupure | Lisibilité |
 | — | Options d'export dans `uiSettings.reportOptions` (comme le scénario de chocs) | Aucun changement du réducteur ni de la liste des tranches du fichier |
 
+## 2 bis. Constats : une adresse par constat (23/11)
+Le rapport utilise **le même mécanisme de classement que l'application** (`src/engine/findingSurfaces.js`) : chapitre 1 = les trois blocs de la Vue d'ensemble ; chapitre 2 = `resultsFindings` (constats généraux non majeurs sans autre adresse) ; chapitres 3 à 6 = le bandeau de chaque sous-onglet (`tabFindings`) ; fiche = `ficheFindings`, **sous la cascade de marge**. La gravité (constats structurels majeurs, forces miroirs) vient du moteur. Un changement de règle dans l'application se répercute donc dans le rapport sans toucher au rapport.
+
 ## 3. Où est quoi
 - **Moteur de constats** : `src/engine/` — `findingKit.js`, `findingMeta.js` (portée, gravité), `entityFindings.js` (constats par entité), `findingSurfaces.js` (Forces / Faiblesses, chapitres, fiches), `reportReadings.js` (tableau d'évolution, quatre lectures), `profitCascade.js`, `skuCascade.js`, `trackingSeries.js`, `reportThresholds.js` (tous les seuils).
 - **Extractions du moteur** : `calculateCostLines` (`calculateCosts.js`, détail de recette), `calculatedGeneralInfo.js` (sorti de `App.jsx`), `allergens.js` (sorti de `RecipeCalculator.jsx`).

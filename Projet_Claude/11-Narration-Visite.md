@@ -8,7 +8,7 @@ Texte lu à l'écran (sous-titres) et dit par la voix. Document généré à par
 - Le texte de la colonne « Texte pour la voix » contient les repères `[pause]` (balise v4, durée non réglable ; `[long pause]` pour une pause plus longue). Les sous-titres affichés à l'écran n'en contiennent pas.
 - Tous les nombres sont écrits en lettres. Aucune balise d'émotion : même modèle, même voix, mêmes réglages pour tous les clips.
 - Une scène attend la fin de sa voix ; la carte de titre d'un chapitre reste affichée tant que sa voix parle.
-- Les fichiers de voix sans licence commerciale ne vont jamais dans Git (dossier `_essai-non-commercial/` ignoré).
+- Les fichiers de voix sans licence commerciale ne vont jamais dans Git (dossier `_essai-non-commercial/` ignoré). Les 55 clips payants, eux, sont dans Git depuis le 24/11.
 
 ## 1. Bienvenue
 

@@ -1,7 +1,7 @@
 // Vérifications de cohérence du projet (Phase 7, 18/11) : regroupe à un seul endroit des problèmes
 // de données qui, autrement, n'apparaissent que dans l'onglet concerné. Fonction pure — aucune
 // donnée n'est modifiée ; chaque constat dit où aller pour le corriger (`tab`).
-import { parseLocaleNumber, isNotEmpty, formatNumber, areUnitsCompatible } from '../utils.js';
+import { parseLocaleNumber, isNotEmpty, isValidNumber, formatNumber, areUnitsCompatible } from '../utils.js';
 import { findRecipeLoops } from './usage.js';
 
 const STALE_DAYS = 30;
@@ -99,6 +99,28 @@ export function computeProjectChecks({
     if (negativeQty.length > 0) {
         checks.push({ id: 'negative-quantity', tab: 'recipe', tabLabel: 'Production',
             message: `${plural(negativeQty.length, 'recette contient', 'recettes contiennent')} une quantité négative (${listNames(negativeQty.map(({ p }) => nameOf(p)))}) : elle retranche un coût au lieu de l'ajouter.` });
+    }
+
+    // Valeur saisie illisible (23/11, audit) : le calcul lit une saisie malformée comme 0 ou en retire les caractères inattendus,
+    // sans rien signaler. Seule une valeur TEXTE non vide est jugée (un champ vide reste « absent », un nombre n'a pas de format) ;
+    // le signe « - » n'est pas jugé ici (les quantités négatives ont leur propre contrôle).
+    const isUnreadable = (v) => typeof v === 'string' && isNotEmpty(v) && !isValidNumber(v.replace(/^\s*-/, ''));
+    const recipeRows = (f) => [...(f.ingredients || []), ...(f.packagingItems || [])];
+    const unreadableQty = recipeFormats.filter(({ f }) => recipeRows(f).some(row => isUnreadable(row.quantity)));
+    if (unreadableQty.length > 0) {
+        checks.push({ id: 'unreadable-quantity', tab: 'recipe', tabLabel: 'Production',
+            message: `${plural(unreadableQty.length, 'recette contient', 'recettes contiennent')} une quantité illisible (${listNames(unreadableQty.map(({ p }) => nameOf(p)))}) : la valeur saisie peut être lue de travers ou comptée comme 0.` });
+    }
+    const unreadablePrice = [...(baseIngredients || []), ...(basePackaging || [])].filter(i => !i.isRecipe && isUnreadable(i.purchasePrice));
+    if (unreadablePrice.length > 0) {
+        checks.push({ id: 'unreadable-price', tab: 'ingredients', tabLabel: 'Ingrédients / Emballage',
+            message: `${plural(unreadablePrice.length, 'article a', 'articles ont')} un prix d'achat illisible (${listNames(unreadablePrice.map(i => i.name))}) : la valeur saisie peut être lue de travers ou comptée comme 0 $.` });
+    }
+    // Rendement saisi à 0 (ou illisible) : le calcul l'ignore, comme si aucun rendement n'était indiqué (champ vide = 100 %).
+    const zeroYield = recipeFormats.filter(({ f }) => (f.ingredients || []).some(row => isNotEmpty(row.yieldPercentage) && !(parseLocaleNumber(row.yieldPercentage) > 0)));
+    if (zeroYield.length > 0) {
+        checks.push({ id: 'yield-zero', tab: 'recipe', tabLabel: 'Production',
+            message: `${plural(zeroYield.length, 'recette contient', 'recettes contiennent')} un rendement de 0 % ou illisible (${listNames(zeroYield.map(({ p }) => nameOf(p)))}) : il est ignoré dans le calcul, comme si aucun rendement n'était indiqué.` });
     }
 
     if (Array.isArray(baseIngredients)) {

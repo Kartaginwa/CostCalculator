@@ -9,7 +9,6 @@
     "start": "electron .",
     "start:built": "npm run build && electron .",
     "build:win": "npm run build && npx electron-builder --win",
-    "build:linux": "npm run build && npx electron-builder --linux",
     "postinstall": "node scripts/copy-libs.cjs",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -37,14 +36,6 @@
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Utility",
-      "icon": "assets/icon.png"
     }
   },
   "devDependencies": {

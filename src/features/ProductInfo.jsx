@@ -116,7 +116,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             setMobileShowDetail(true);
         }
         prevProductIdsRef.current = currentIds;
-    }, [products]);
+    }, [products, setSelectedProductId]);
 
     // Garde la sélection valide : si le produit sélectionné disparaît de la liste filtrée/triée
     // actuelle (supprimé, ou simplement masqué par un filtre), retombe sur le premier produit
@@ -130,7 +130,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         if (!stillVisible) {
             setSelectedProductId(filteredAndSortedProducts[0].product.id);
         }
-    }, [filteredAndSortedProducts, selectedProductId]);
+    }, [filteredAndSortedProducts, selectedProductId, setSelectedProductId]);
 
     const handleAddItem = () => {
         onNewProduct();

@@ -141,4 +141,22 @@ describe('computeProjectChecks : boucles, quantité produite, quantités négati
         const ok = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: '3' }] })] }];
         expect(run({ products: ok })).not.toContain('negative-quantity');
     });
+    // Saisies illisibles et rendement nul (23/11, audit) : jamais de fausse alerte sur un champ vide, un nombre ou un format courant.
+    it('signale une quantité ou un prix illisible, jamais un champ vide, un nombre ou une saisie à virgule ou espaces', () => {
+        const bad = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: 'abc' }] })] }];
+        expect(run({ products: bad })).toContain('unreadable-quantity');
+        const fine = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'a', quantity: '' }, { id: 'b', quantity: 2.5 }, { id: 'c', quantity: '1 234,5' }, { id: 'd', quantity: '-3' }] })] }];
+        expect(run({ products: fine })).not.toContain('unreadable-quantity');
+        expect(run({ baseIngredients: [{ name: 'Sel', purchasePrice: '12,5$x' }] })).toContain('unreadable-price');
+        expect(run({ basePackaging: [{ name: 'Sac', purchasePrice: 'abc' }] })).toContain('unreadable-price');
+        expect(run({ baseIngredients: [{ name: 'A', purchasePrice: '' }, { name: 'B', purchasePrice: 1e-7 }, { name: 'C', purchasePrice: '12,50' }, { name: 'Sous', isRecipe: true, purchasePrice: 'abc' }] })).not.toContain('unreadable-price');
+    });
+    it('signale un rendement à 0 % ou illisible, pas un rendement vide ou à 100 %', () => {
+        const zero = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: 1, yieldPercentage: '0' }] })] }];
+        expect(run({ products: zero })).toContain('yield-zero');
+        const bad = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: 1, yieldPercentage: 'abc' }] })] }];
+        expect(run({ products: bad })).toContain('yield-zero');
+        const ok = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: 1, yieldPercentage: '' }, { id: 'y', quantity: 1, yieldPercentage: 100 }, { id: 'z', quantity: 1, yieldPercentage: '85' }] })] }];
+        expect(run({ products: ok })).not.toContain('yield-zero');
+    });
 });

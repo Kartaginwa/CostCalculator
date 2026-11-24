@@ -1315,20 +1315,20 @@ export const SummaryTable = ({
         [activitySummaries]
     );
 
-    const getActivityMatrixValue = (activity, key) => {
-        if (key === 'total') {
-            const total = activitySummaries.find(r => r.activityId === activity.id);
-            return total ? total.margeNetteTotal : null;
-        }
-        if (key.startsWith('channel:')) {
-            const channelId = key.slice('channel:'.length);
-            const cell = activityChannelMatrix[activity.id]?.[channelId];
-            return cell ? cell.margeNetteTotal : null;
-        }
-        return activity.name; // key === 'activityName'
-    };
-
     const sortedActivityRows = useMemo(() => {
+        // Défini dans le useMemo : il ne sert qu'ici et ne lit que des valeurs déjà listées dans les dépendances.
+        const getActivityMatrixValue = (activity, key) => {
+            if (key === 'total') {
+                const total = activitySummaries.find(r => r.activityId === activity.id);
+                return total ? total.margeNetteTotal : null;
+            }
+            if (key.startsWith('channel:')) {
+                const channelId = key.slice('channel:'.length);
+                const cell = activityChannelMatrix[activity.id]?.[channelId];
+                return cell ? cell.margeNetteTotal : null;
+            }
+            return activity.name; // key === 'activityName'
+        };
         const items = [...productionActivities];
         items.sort((a, b) => {
             const aValue = getActivityMatrixValue(a, activityMatrixSort.key);

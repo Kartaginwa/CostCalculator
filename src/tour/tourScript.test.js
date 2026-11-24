@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SCENES, CHAPTERS, TOTAL_DURATION, INTRO_MS, readingMs, expandSteps, narrationOf } from './tourScript.js';
+import { SCENES, CHAPTERS, TOTAL_DURATION, INTRO_MS, readingMs, expandSteps, narrationOf, voiceOf, introNarrationOf, introAudioId, stripPauses } from './tourScript.js';
 import { TOUR_AUDIO } from './tourAudio.js';
 
 // La visite guidée est une donnée : on vérifie sa structure (durée cible, chapitres, gestes valides, sous-titres rédigés
@@ -7,12 +7,12 @@ import { TOUR_AUDIO } from './tourAudio.js';
 const KNOWN = new Set(['tab', 'subtab', 'scroll', 'scrollTop', 'highlight', 'point', 'click', 'press', 'hover', 'unhover', 'select', 'type', 'note', 'unnote', 'hoverAt', 'escape', 'guideOpen', 'guideClose']);
 // Sous-onglets de Rapport et suivi (REPORT_SUBTAB_GROUPS, SummaryTable.jsx) : la visite doit tous les montrer.
 const REPORT_SUBTABS = ['overview', 'portfolio', 'bySku', 'byActivity', 'byChannel', 'ingredients', 'packaging', 'labor', 'simulation'];
-const SCENE_COUNT = 40;
+const SCENE_COUNT = 45;
 
 describe('Visite guidée : scénario', () => {
-    it('dure entre 5 et 8 minutes à vitesse normale (plus vite à 1,5×)', () => {
+    it('dure entre 5 et 10 minutes à vitesse normale (plus vite à 1,5×)', () => {
         expect(TOTAL_DURATION).toBeGreaterThanOrEqual(300000);
-        expect(TOTAL_DURATION).toBeLessThanOrEqual(480000);
+        expect(TOTAL_DURATION).toBeLessThanOrEqual(600000);
     });
     it('laisse le temps de lire : chaque scène dure au moins le temps de lecture de son sous-titre, et chaque titre de chapitre au moins 2,5 s', () => {
         SCENES.forEach((sc) => expect(sc.duration, sc.id).toBeGreaterThanOrEqual(readingMs(sc.caption)));
@@ -70,6 +70,34 @@ describe('Visite guidée : scénario', () => {
         // la réconciliation n'est plus présentée dans l'État des résultats
         SCENES.filter((s) => s.tab === 'income-statement').forEach((s) => expect(JSON.stringify(s.steps), s.id).not.toContain('reconciliation'));
     });
+    it("chaque nouveauté demandée est jouée dans l'application : objectif sur mesure, canaux d'un produit, temps productif attendu, cinq parties de Production, clés de répartition, essai de chaque liste déroulante", () => {
+        const steps = (id) => JSON.stringify(SCENES.find((s) => s.id === id).steps);
+        expect(steps('objectifs')).toContain('Ajouter un objectif sur mesure');
+        expect(steps('produits-canaux')).toContain('canaux');
+        expect(steps('main-oeuvre')).toContain('Temps productif attendu');
+        // Production : les cinq parties, dans l'ordre, sans retour aux marges avant le récapitulatif
+        const recipe = SCENES.filter((s) => s.tab === 'recipe').map((s) => s.id);
+        expect(recipe).toEqual(['recette', 'recette-direct', 'recette-emballage', 'etapes', 'couts-additionnels', 'cascade', 'simulation-prix']);
+        // (la scène d'ouverture « recette » survole les cinq parties en passant, au rythme de la voix, puis revient à l'en-tête)
+        SCENES.filter((s) => s.tab === 'recipe' && !['recette', 'cascade', 'simulation-prix'].includes(s.id)).forEach((s) => expect(JSON.stringify(s.steps), s.id).not.toContain('#recap-section'));
+        // État des résultats : les frais fixes, leurs clés de répartition et le coefficient d'imputation, pas de scène sur les bénéfices
+        const income = SCENES.filter((s) => s.tab === 'income-statement').map((s) => s.id);
+        expect(income).toEqual(['revenus', 'frais-fixes', 'cles-repartition', 'repartition']);
+        expect(steps('cles-repartition')).toContain('Clé de répartition');
+        expect(steps('repartition')).toContain('#tutorial-section-cici select');
+        // chaque liste déroulante dont la narration parle est essayée (un geste « pick »)
+        ['canaux', 'produits', 'cascade', 'matrice', 'par-sku', 'intrants', 'cles-repartition', 'repartition'].forEach((id) => expect(steps(id), id).toContain('"do":"pick"'));
+        // le cadre bleu est retiré avant l'ouverture d'une fenêtre devant la page
+        ['canaux', 'constats-onglet'].forEach((id) => expect(steps(id), id).toContain('"do":"highlight","target":null'));
+        // le guide : son plan, ses encadrés, puis la recherche
+        const guide = SCENES.filter((s) => s.id.startsWith('guide')).map((s) => s.id);
+        expect(guide).toEqual(['guide-plan', 'guide-encadres', 'guide']);
+        expect(guide.indexOf('guide')).toBe(guide.length - 1);
+    });
+    it('le rapport complet ne parle pas des salaires, ni dans la narration ni dans les étiquettes', () => {
+        const pdf = SCENES.find((s) => s.id === 'export-pdf');
+        expect(`${narrationOf(pdf)} ${JSON.stringify(pdf.steps)}`).not.toMatch(/salaire/i);
+    });
     it('présente les dernières améliorations : objectifs stratégiques, constats de fin de sous-onglet, temps non productif, exports PDF et Excel', () => {
         const sceneOf = (id) => SCENES.find((s) => s.id === id);
         expect(sceneOf('objectifs').tab).toBe('info');
@@ -78,6 +106,7 @@ describe('Visite guidée : scénario', () => {
         expect(JSON.stringify(sceneOf('etapes').steps)).toContain('temps non productif');
         const partage = CHAPTERS.findIndex((c) => c.id === 'partage');
         expect(sceneOf('export-pdf').chapter).toBe(partage);
+        expect(sceneOf('etapes').tab).toBe('recipe');
         expect(sceneOf('export-excel').chapter).toBe(partage);
         expect(JSON.stringify(sceneOf('export-pdf').steps)).toContain('Générer un rapport PDF');
         expect(JSON.stringify(sceneOf('export-excel').steps)).toContain('Exporter vers Excel');
@@ -134,8 +163,34 @@ describe('Visite guidée : narration prête pour une voix', () => {
     it('aucune consigne procédurale (« cliquez sur », « ouvrez l\'onglet », « sélectionnez ») dans la narration', () => {
         SCENES.forEach((s) => expect(narrationOf(s), s.id).not.toMatch(/cliquez|ouvrez l|sélectionnez|appuyez|dans le menu/i));
     });
-    it('chaque fichier de voix déposé dans src/tour/audio correspond à une scène (une faute de nom est signalée)', () => {
-        const ids = SCENES.map((s) => s.id);
+    it('chaque carte de titre de chapitre a son texte : de 8 à 25 mots, phrases complètes, sans symbole ni sigle', () => {
+        CHAPTERS.forEach((c, i) => {
+            const text = introNarrationOf(i);
+            const n = text.split(/\s+/).filter(Boolean).length;
+            expect(n, `${c.id} : ${n} mots`).toBeGreaterThanOrEqual(8);
+            expect(n, `${c.id} : ${n} mots`).toBeLessThanOrEqual(25);
+            expect(text, c.id).toMatch(/[.?!]$/);
+            expect(text, c.id).not.toMatch(/[%$→←↓↑#@=<>()[\]{}|]/);
+            expect(text, c.id).not.toMatch(/\b[A-Z]{2,}\b/);
+            expect(text, c.id).not.toMatch(/\bplats?\b|\bmenus?\b/i);
+        });
+    });
+    it('les pauses pour la voix : au plus deux par texte, jamais en début ni en fin, jamais affichées', () => {
+        const texts = [...SCENES.map(voiceOf), ...CHAPTERS.map((c) => c.narration)];
+        texts.forEach((t) => {
+            const pauses = t.match(/\[(?:long )?pause\]/g) || [];
+            expect(pauses.length, t).toBeLessThanOrEqual(2);
+            expect(t, t).not.toMatch(/^\s*\[|\]\s*$/);
+            expect(stripPauses(t), t).not.toMatch(/[[\]]/);
+        });
+        SCENES.forEach((s) => expect(narrationOf(s), s.id).not.toMatch(/pause/));
+    });
+    it('les nombres sont écrits en lettres, comme la voix les dira (aucun chiffre dans un texte lu)', () => {
+        SCENES.forEach((s) => expect(narrationOf(s), s.id).not.toMatch(/\d/));
+        CHAPTERS.forEach((c, i) => expect(introNarrationOf(i), c.id).not.toMatch(/\d/));
+    });
+    it('chaque fichier de voix déposé dans src/tour/audio correspond à une scène ou à une carte de titre (une faute de nom est signalée)', () => {
+        const ids = [...SCENES.map((s) => s.id), ...CHAPTERS.map((_, i) => introAudioId(i))];
         Object.keys(TOUR_AUDIO).forEach((name) => expect(ids, `fichier audio « ${name} » sans scène`).toContain(name));
     });
 });

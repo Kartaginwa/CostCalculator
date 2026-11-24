@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Play, Pause, SkipBack, SkipForward, X } from 'lucide-react';
-import { SCENES, CHAPTERS, TOTAL_DURATION, INTRO_MS, SETTLE_MS, NAV_STEP_MS, POINT_LEAD, hasIntro, sceneLength, expandSteps } from './tourScript.js';
+import { SCENES, CHAPTERS, TOTAL_DURATION, INTRO_OUT_MS, SETTLE_MS, NAV_STEP_MS, POINT_LEAD, hasIntro, introMsOf, introAudioId, stripPauses, sceneLength, expandSteps } from './tourScript.js';
 import { TOUR_AUDIO } from './tourAudio.js';
 import {
     resolveEl, makeReader, setFieldValue, selectOptionByText, clickEl, hoverEl, hoverAtEl, pressEscape, scrollToEl, focusField, blurField,
@@ -58,7 +58,6 @@ const inZone = (el) => {
 
 const STYLES = `
 @keyframes tourWord { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
-@keyframes tourIntro { 0% { opacity: 0; } 12% { opacity: 1; } 86% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes tourIntroText { 0% { opacity: 0; transform: translateY(26px) scale(.96); } 16% { opacity: 1; transform: none; } 100% { opacity: 1; transform: scale(1.03); } }
 @keyframes tourFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tourPulse { 0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,.22), 0 0 16px rgba(59,130,246,.40); } 50% { box-shadow: 0 0 0 8px rgba(59,130,246,.12), 0 0 26px rgba(59,130,246,.55); } }
@@ -101,12 +100,13 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
     const [clock, setClock] = useState(0);
     const [notes, setNotes] = useState([]);
     const [introOn, setIntroOn] = useState(hasIntro(0));
+    const [introLeaving, setIntroLeaving] = useState(false);
     const [fading, setFading] = useState(false);
 
     const idxRef = useRef(0);
     const playingRef = useRef(true);
     const speedRef = useRef(1);
-    const elapsedRef = useRef(hasIntro(0) ? -INTRO_MS : 0);
+    const elapsedRef = useRef(hasIntro(0) ? -introMsOf(0) : 0);
     const firedRef = useRef(new Set());
     const extraRef = useRef([]);            // gestes ajoutés à l'exécution (navigation entre onglets)
     const pendingRef = useRef([]);
@@ -133,16 +133,18 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
     const audioRef = useRef(null);          // voix humaine de la scène (facultative : seulement si un fichier existe, voir tourAudio.js)
     const audioPendingRef = useRef(false);  // la voix parle encore : la scène ne passe pas à la suivante
     const audioStartedRef = useRef(false);
+    const introAudioStartedRef = useRef(false); // la voix de la carte de titre du chapitre
+    const introLeavingRef = useRef(false);
 
     // Voix de la scène : démarre quand la scène commence vraiment (après le titre de chapitre et le changement d'onglet),
     // suit la pause et la vitesse, et se tait dès qu'on change de scène ou qu'on quitte.
     const stopAudio = useCallback(() => {
         const a = audioRef.current;
         if (a) { a.onended = null; a.onerror = null; a.pause(); }
-        audioRef.current = null; audioPendingRef.current = false; audioStartedRef.current = false;
+        audioRef.current = null; audioPendingRef.current = false; audioStartedRef.current = false; introAudioStartedRef.current = false;
     }, []);
-    const startAudio = useCallback((scene) => {
-        const url = TOUR_AUDIO[scene.id];
+    const startAudio = useCallback((key) => {
+        const url = TOUR_AUDIO[key];
         if (!url || typeof Audio === 'undefined') return;
         const a = new Audio(url);
         a.playbackRate = speedRef.current;
@@ -306,7 +308,7 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
             // l'application neuve apparaît en fondu (temps réel : indépendant de la pause et de la vitesse)
             fadeTimerRef.current = setTimeout(() => { if (rootRef.current) { rootRef.current.style.transition = 'opacity 260ms ease-out'; rootRef.current.style.opacity = '1'; } }, SETTLE_MS + 120);
         }
-        const base = (intro ? -INTRO_MS : 0) - (fresh ? SETTLE_MS : 0);
+        const base = (intro ? -introMsOf(next) : 0) - (fresh ? SETTLE_MS : 0);
         const navTime = planNav(SCENES[next], intro, base);
         elapsedRef.current = base - navTime;
         // les gestes de navigation (déjà datés depuis `base - navTime`) : on les recale sur le nouveau départ
@@ -315,6 +317,7 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
         firedRef.current = new Set();
         idxRef.current = next;
         introOnRef.current = intro; setIntroOn(intro);
+        introLeavingRef.current = false; setIntroLeaving(false);
         setIdx(next);
     }, [cleanupScene, finish, onResetApp, rootRef, planNav]);
 
@@ -326,12 +329,20 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
             const i = idxRef.current;
             const scene = SCENES[i];
             const r = rootRef.current;
-            const introMs = hasIntro(i) ? INTRO_MS : 0;
+            const introMs = introMsOf(i);
             if (playingRef.current && !finishingRef.current) {
                 elapsedRef.current += dt * speedRef.current;
-                const el = elapsedRef.current;
+                let el = elapsedRef.current;
+                // carte de titre : sa voix démarre avec elle, et la carte reste affichée tant que la voix parle, puis s'efface en fondu
+                if (introOnRef.current) {
+                    if (!introAudioStartedRef.current && el >= -introMs + 200) { introAudioStartedRef.current = true; startAudio(introAudioId(scene.chapter)); }
+                    if (el >= -INTRO_OUT_MS) {
+                        if (audioPendingRef.current) { elapsedRef.current = -INTRO_OUT_MS; el = -INTRO_OUT_MS; }
+                        else if (!introLeavingRef.current) { introLeavingRef.current = true; setIntroLeaving(true); }
+                    }
+                }
                 if (introOnRef.current && el >= 0) { introOnRef.current = false; setIntroOn(false); }
-                if (el >= 0 && !audioStartedRef.current) { audioStartedRef.current = true; startAudio(scene); }
+                if (el >= 0 && !audioStartedRef.current) { audioStartedRef.current = true; startAudio(scene.id); }
                 // navigation ajoutée à l'exécution, puis gestes du scénario
                 extraRef.current.forEach((x) => { if (!x.done && x.at <= el) { x.done = true; if (!run(x)) pendingRef.current.push({ s: x, since: el }); } });
                 EXPANDED[i].forEach((s, k) => {
@@ -364,7 +375,7 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
             }
             // progression
             const cur = Math.min(idxRef.current, SCENES.length - 1);
-            const done = SCENE_STARTS[cur] + clamp(elapsedRef.current + (hasIntro(cur) ? INTRO_MS : 0), 0, sceneLength(cur));
+            const done = SCENE_STARTS[cur] + clamp(elapsedRef.current + introMsOf(cur), 0, sceneLength(cur));
             CHAPTER_RANGES.forEach((c, ci) => {
                 const f = segFills.current[ci];
                 if (f) f.style.width = `${clamp((done - c.start) / (c.end - c.start), 0, 1) * 100}%`;
@@ -518,8 +529,8 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
 
             {introOn && (
                 <div key={`intro-${scene.id}`} data-testid="tour-intro" className="fixed inset-0 z-[126] flex items-center justify-center backdrop-blur-md"
-                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,.97) 0%, rgba(241,247,253,.97) 55%, rgba(231,246,236,.97) 100%)', animation: `tourIntro ${INTRO_MS}ms ease-in-out both` }}>
-                    <div className="text-center px-6" style={{ animation: `tourIntroText ${INTRO_MS}ms ease-out both` }}>
+                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,.97) 0%, rgba(241,247,253,.97) 55%, rgba(231,246,236,.97) 100%)', animation: 'tourFadeIn 400ms ease-out backwards', opacity: introLeaving ? 0 : 1, transition: `opacity ${INTRO_OUT_MS}ms ease-in-out` }}>
+                    <div className="text-center px-6" style={{ animation: `tourIntroText ${introMsOf(idx)}ms ease-out both` }}>
                         {idx === 0
                             ? <img src="./Logo_RestoCalculateur3.png" alt="Logo TransfoCalculateur" className="h-44 sm:h-56 w-auto mx-auto mb-8" />
                             : <div className="text-[10rem] leading-none font-black -mb-16 select-none" style={{ color: 'rgba(27,163,59,.16)' }}>{scene.chapter}</div>}
@@ -530,11 +541,11 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
                 </div>
             )}
 
-            <div className="fixed left-1/2 -translate-x-1/2 z-[120] w-[min(46rem,calc(100vw-2rem))] pointer-events-none" style={{ bottom: BAR_H + 16 }}>
+            <div className="fixed left-1/2 -translate-x-1/2 z-[120] w-[min(34rem,calc(100vw-2rem))] pointer-events-none" style={{ bottom: BAR_H + 10 }}>
                 <div key={scene.id} role="status" aria-live="polite" data-testid="tour-caption"
-                    className="bg-gray-900/90 text-white text-[16px] leading-snug rounded-2xl px-5 py-3.5 shadow-2xl text-center backdrop-blur">
-                    <div className="text-[11px] uppercase tracking-widest text-blue-300 mb-1 font-semibold">{chapter.title}</div>
-                    <Caption text={scene.caption} />
+                    className="bg-gray-900/85 text-white text-[13.5px] leading-snug rounded-xl px-4 py-2.5 shadow-xl text-center backdrop-blur">
+                    <div className="text-[10px] uppercase tracking-widest text-blue-300 mb-0.5 font-semibold">{chapter.title}</div>
+                    <Caption text={stripPauses(scene.caption)} />
                 </div>
             </div>
 

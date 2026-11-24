@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // Étape 7 de la Phase 7 : la visite guidée est une démonstration qui se joue seule, sur une COPIE du projet
 // démo (saisie lettre à lettre, étiquettes, valeurs lues en direct), sans jamais toucher au projet de l'utilisateur.
 // À la fin, elle se ferme d'elle-même : l'utilisateur retrouve ce qu'il avait (un projet, ou l'accueil).
-const SCENES = 40;
+const SCENES = 45;
 const collectErrors = (page) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(`pageerror : ${e.message}`));
@@ -38,9 +38,9 @@ test('La visite démarre seule, se contrôle par une petite barre (pause, scène
     expect(bar.height).toBeLessThanOrEqual(48);
     expect(bar.y + bar.height).toBeGreaterThan(700);
 
-    // aucun clic nécessaire : la scène suivante arrive d'elle-même (≈ 9 s à 1×, vitesse 1,5×)
+    // aucun clic nécessaire : la scène suivante arrive d'elle-même (≈ 17 s à 1× avec la carte de titre, vitesse 1,5×)
     await page.getByRole('button', { name: '1,5×' }).click();
-    await expect(page.getByTestId('tour-layer')).toHaveAttribute('data-scene', 'ordre', { timeout: 12000 });
+    await expect(page.getByTestId('tour-layer')).toHaveAttribute('data-scene', 'ordre', { timeout: 20000 });
 
     // pause : le temps ne bouge plus
     await page.getByTestId('tour-toggle').click();
@@ -80,7 +80,7 @@ test('Les mots et les chiffres se tapent vraiment dans l\'application jouée, av
     await expect(page.getByTestId('tour-note').first()).toBeVisible();
 
     // un ingrédient se saisit : le coût unitaire est lu en direct dans l'étiquette
-    for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Scène suivante' }).click();
+    for (let i = 0; i < 6; i++) await page.getByRole('button', { name: 'Scène suivante' }).click();
     await expect(page.getByTestId('tour-layer')).toHaveAttribute('data-scene', 'ingredient-saisie');
     await expect(page.getByTestId('tour-app').locator('[id^="ingredient-row-manual_"] input').first()).toHaveValue('Farine de blé', { timeout: 15000 });
     await expect(page.getByTestId('tour-note').filter({ hasText: 'Coût unitaire : 1,85' })).toBeVisible({ timeout: 20000 });
@@ -117,7 +117,7 @@ test('La visite se joue en entier sur une copie du démo, se ferme d\'elle-même
 
     const seen = new Set();
     const framing = [];
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 450; i++) {
         // la caméra suit : une étiquette visible reste toujours dans le cadre, au-dessus des sous-titres
         const st = await page.evaluate(() => {
             const l = document.querySelector('[data-testid=tour-layer]');

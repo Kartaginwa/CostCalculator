@@ -108,15 +108,32 @@ export const pressEscape = () => document.dispatchEvent(new window.KeyboardEvent
 // la cible est centrée dans la zone réellement visible, ou alignée en haut si elle est plus haute que cette zone.
 const TOP_RESERVED = 76;
 const BOTTOM_RESERVED = 150;
+// Dans une fenêtre modale (le guide, par exemple), c'est son contenu qui défile, pas la page : on cherche le conteneur défilant.
+const modalScroller = (el) => {
+    if (!el.closest || !el.closest('.fixed.inset-0.z-50')) return null;
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+        const oy = window.getComputedStyle(p).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 1) return p;
+    }
+    return null;
+};
+
 export const scrollToEl = (el, block = 'center') => {
     if (!el) return;
+    const reduceMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sp = modalScroller(el);
+    if (sp) {
+        const pr = sp.getBoundingClientRect(); const er = el.getBoundingClientRect();
+        const delta = block === 'start' || er.height > pr.height ? er.top - pr.top - 16 : er.top - pr.top - (pr.height - er.height) / 2;
+        sp.scrollTo({ top: Math.max(0, sp.scrollTop + delta), behavior: reduceMotion ? 'auto' : 'smooth' });
+        return;
+    }
     const r = el.getBoundingClientRect();
     const avail = window.innerHeight - BOTTOM_RESERVED - TOP_RESERVED;
     const delta = block === 'start' || r.height > avail
         ? r.top - TOP_RESERVED - 10
         : r.top - (TOP_RESERVED + (avail - r.height) / 2);
-    const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top: Math.max(0, window.scrollY + delta), behavior: reduce ? 'auto' : 'smooth' });
+    window.scrollTo({ top: Math.max(0, window.scrollY + delta), behavior: reduceMotion ? 'auto' : 'smooth' });
 };
 
 export const isVisible = (el) => !!el && el.getClientRects().length > 0;

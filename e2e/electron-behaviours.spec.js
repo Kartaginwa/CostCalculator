@@ -1,11 +1,13 @@
 // Comportements propres à Electron, que le navigateur de test ne voit pas (ajouté le 24/11 avec la montée d'Electron) :
 //  1. la boîte « Modifications non sauvegardées » à la fermeture de la fenêtre (electron/main.cjs, événement will-prevent-unload) :
 //     « Rester » garde la fenêtre ouverte, « Quitter sans sauvegarder » la ferme ;
-//  2. la voix de la visite guidée se lance vraiment dans l'application (lecture automatique de Chromium, CSP, fichiers audio dans dist).
+//  2. la voix de la visite guidée se lance vraiment dans l'application (lecture automatique de Chromium, CSP, fichiers audio dans dist) ;
+//  3. « Sauvegarder » écrit le fichier du projet (téléchargement Blob géré par Electron) et « Ouvrir » charge un projet depuis un fichier.
 // Chaque test tourne contre l'application construite (dist, `npm run build`) et, si elle existe, contre l'exécutable empaqueté
 // (`npx electron-builder --win --dir`), seul à prouver que les fichiers audio sont bien dans l'archive asar.
 import { _electron as electron, test, expect } from '@playwright/test';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 const PACKAGED = path.join(process.cwd(), 'release', 'win-unpacked', 'RestoCalculateur.exe');
@@ -68,6 +70,48 @@ for (const mode of MODES) {
                 await closed;
             } finally {
                 await app.evaluate(({ app: electronApp }) => electronApp.exit(0)).catch(() => {});
+            }
+        });
+
+        test('Sauvegarder écrit le fichier du projet, et Ouvrir charge un projet depuis un fichier', async () => {
+            test.setTimeout(120000);
+            const stamp = Date.now();
+            const target = path.join(os.tmpdir(), `transfo-projet-${stamp}.json`);
+            const modified = path.join(os.tmpdir(), `transfo-projet-modifie-${stamp}.json`);
+            const app = await launch(mode);
+            try {
+                const win = await app.firstWindow();
+                await win.getByText('Créer un nouveau projet').click();
+                const skip = win.getByText('Explorer par moi-même');
+                if (await skip.count() > 0) await skip.click();
+                await win.locator('#tutorial-company-name').fill('Entreprise test');
+                await expect(win.getByTestId('unsaved-indicator')).toBeVisible();
+
+                // Le téléchargement (Blob + lien) est dirigé vers un fichier choisi, au lieu de la boîte native « Enregistrer sous ».
+                await app.evaluate(({ session }, savePath) => {
+                    globalThis.__telechargement = { etat: 'attente' };
+                    session.defaultSession.once('will-download', (event, item) => {
+                        item.setSavePath(savePath);
+                        item.once('done', (e, state) => { globalThis.__telechargement = { etat: state, nom: item.getFilename() }; });
+                    });
+                }, target);
+                await win.getByRole('button', { name: /Sauvegarder/ }).click();
+                await expect.poll(() => app.evaluate(() => globalThis.__telechargement.etat), { timeout: 15000 }).toBe('completed');
+                expect(await app.evaluate(() => globalThis.__telechargement.nom)).toBe('projet_cout_revient_Entreprise_test.json');
+                const saved = JSON.parse(fs.readFileSync(target, 'utf8'));
+                expect(saved.companyName).toBe('Entreprise test');
+                await expect(win.getByTestId('unsaved-indicator')).toHaveCount(0);
+
+                // Ouvrir : un fichier de projet (légèrement modifié) est chargé par le champ fichier de l'application.
+                saved.companyName = 'Chargé depuis un fichier';
+                fs.writeFileSync(modified, JSON.stringify(saved));
+                await win.locator('input[type="file"][accept=".json"]').setInputFiles(modified);
+                await expect(win.locator('#tutorial-company-name')).toHaveValue('Chargé depuis un fichier');
+                await expect(win.getByTestId('unsaved-indicator')).toHaveCount(0);
+            } finally {
+                await app.evaluate(({ app: electronApp }) => electronApp.exit(0)).catch(() => {});
+                fs.rmSync(target, { force: true });
+                fs.rmSync(modified, { force: true });
             }
         });
 

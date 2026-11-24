@@ -7,7 +7,7 @@ const CLASS_BG = { A: 'var(--red-bg)', B: 'var(--amber-bg)', C: 'var(--green-bg)
 
 const catalogueTable = (label, rows) => {
     const sorted = [...rows].sort((a, b) => (a.cls || 'Z').localeCompare(b.cls || 'Z', 'fr') || a.name.localeCompare(b.name, 'fr'));
-    return `<table class="tb" data-split="rows" style="font-size:7.8pt"><thead><tr><th style="text-align:left">${label}</th><th>Classe</th><th style="text-align:left">Fournisseur</th><th>Format d’achat</th><th>Prix d’achat</th><th>Perte</th><th>Prix unitaire</th></tr></thead><tbody>`
+    return `<table class="tb" data-split="rows" style="font-size:7.8pt"><thead><tr><th>${label}</th><th>Classe</th><th>Fournisseur</th><th>Format d’achat</th><th>Prix d’achat</th><th>Perte</th><th>Prix unitaire</th></tr></thead><tbody>`
         + sorted.map(i => `<tr><td class="l"><b>${esc(i.name)}</b></td><td${i.cls ? ` style="background:${CLASS_BG[i.cls]}"` : ''}><b>${i.cls || '—'}</b></td><td class="l">${esc(i.provider)}</td><td>${f(Number(i.purchaseFormat), 0)} ${esc(i.unit || '')}</td><td>${usd(Number(i.purchasePrice), 2)}</td><td>${f(i.loss)}\u00A0%</td><td>${usd(Number(i.unitPrice), 2)}/${esc(i.unit || '')}</td></tr>`).join('') + `</tbody></table>`;
 };
 
@@ -21,7 +21,7 @@ export const annexC = (m, first) => {
     const posts = m.labor.posts.filter(p => p.employees.length);
     if (!posts.length) return '';
     return mark('annC') + h3('Annexe C — Équipe', 'salaires individuels', { first })
-        + `<table class="tb" data-split="rows" style="font-size:7.6pt"><thead><tr><th style="text-align:left">Employé</th><th>Salaire horaire</th><th>Charges</th><th>Vacances</th><th>Heures payées</th><th>Coût chargé</th></tr></thead><tbody>`
+        + `<table class="tb" data-split="rows" style="font-size:7.6pt"><thead><tr><th>Employé</th><th>Salaire horaire</th><th>Charges</th><th>Vacances</th><th>Heures payées</th><th>Coût chargé</th></tr></thead><tbody>`
         + posts.map(p => `<tr><td class="l" colspan="6" style="background:#E5E7EB;font-weight:700">${esc(p.name)}</td></tr>` + p.employees.map(e => `<tr><td class="l">${esc(e.name)}</td><td>${usd(e.rate, 2)}</td><td>${f(e.charges)}\u00A0%</td><td>${f(e.vacation)}\u00A0%</td><td>${f(e.hours)} h</td><td>${usd(e.loaded)}</td></tr>`).join('')).join('') + `</tbody></table>`;
 };
 
@@ -38,9 +38,9 @@ export const annexD = (glossary, glossaryTotal, first) => {
         ['Marge nette très faible', `< ${p(T.lowNetMargin)}`],
     ];
     return mark('annD') + h3('Annexe D — Glossaire', `${glossary.length} termes employés dans ce rapport, sur ${glossaryTotal} dans le guide`, { first })
-        + `<table class="tb" data-split="rows" style="font-size:7.6pt"><thead><tr><th style="text-align:left">Terme</th><th style="text-align:left">Définition</th></tr></thead><tbody>`
+        + `<table class="tb" data-split="rows" style="font-size:7.6pt"><thead><tr><th>Terme</th><th>Définition</th></tr></thead><tbody>`
         + glossary.map(d => `<tr><td class="l" style="white-space:nowrap;vertical-align:top"><b>${esc(d.term)}</b></td><td class="l">${esc(d.def)}</td></tr>`).join('') + `</tbody></table>`
         + h3('Repères utilisés par les constats clés', 'ordres de grandeur de gestion, non des normes')
-        + `<table class="tb" data-split="rows" style="font-size:7.6pt"><thead><tr><th style="text-align:left">Repère</th><th>Seuil</th></tr></thead><tbody>${marks.map(([a, b]) => `<tr><td class="l">${esc(a)}</td><td>${b}</td></tr>`).join('')}</tbody></table>`
+        + `<table class="tb" data-split="rows" style="font-size:7.6pt"><thead><tr><th>Repère</th><th>Seuil</th></tr></thead><tbody>${marks.map(([a, b]) => `<tr><td class="l">${esc(a)}</td><td>${b}</td></tr>`).join('')}</tbody></table>`
         + `<div class="src">Ces chiffres sont des prévisions fondées sur vos recettes, prix et volumes saisis. Ils ne remplacent pas des états financiers vérifiés.</div>`;
 };

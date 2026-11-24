@@ -149,7 +149,7 @@ export function generateGuidePdf(parts, { showNotification, appLogoBase64 = null
             headStyles: { fillColor: [243, 244, 246], textColor: COLORS.text, fontStyle: 'bold' },
             alternateRowStyles: { fillColor: [250, 250, 250] },
             columnStyles: numeric ? Object.fromEntries(block.head.map((_, i) => [i, { halign: i === 0 ? 'left' : 'right' }])) : {},
-            didParseCell: (data) => { if (block.boldLast && data.section === 'body' && data.row.index === body.length - 1) data.cell.styles.fontStyle = 'bold'; },
+            didParseCell: (data) => { if (data.section === 'head') data.cell.styles.halign = 'center'; if (block.boldLast && data.section === 'body' && data.row.index === body.length - 1) data.cell.styles.fontStyle = 'bold'; },
             didDrawPage: () => {},
             theme: 'grid',
             // les lignes ancrées (rowIds) servent au sommaire : on ne suit pas leur page, elles n'y figurent pas

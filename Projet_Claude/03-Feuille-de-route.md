@@ -4262,3 +4262,4 @@ Lecture intégrale des textes affichés (interface, infobulles, constats, visite
 - Tous les en-têtes de colonne (`<th>` des `<thead>`, `SortableTh`, en-tête en grille de la fenêtre des objectifs, tableaux du guide à l'écran) sont centrés ; les en-têtes de ligne (première colonne des tableaux « Par SKU » / « Par activité » / « Par canal ») restent à gauche. Les boutons de tri en `flex` reçoivent `justify-center`.
 - Non touchés : tableaux du rapport PDF, du guide PDF et de l'export Excel (à confirmer avec l'utilisateur).
 - Vérification : eslint 0 erreur, vitest 738, playwright 159, build propre.
+- **Suite (24/11/2026)** : en-têtes centrées aussi dans le rapport PDF (styles `table.tb th` et `table.bs thead th`, `text-align:left` retirés des `<th>` d'en-tête) et dans le guide PDF (`didParseCell`, section `head`). Pagination inchangée (50 produits : 124 pages). Excel laissé tel quel, à la demande de l'utilisateur.

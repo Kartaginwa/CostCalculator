@@ -77,7 +77,7 @@ export function chapter2(m, map, comment) {
     }
     h += h3('Réconciliation réel / théorique');
     if (m.recon) {
-        h += `<table class="tb blue" data-split="rows"><thead><tr><th style="text-align:left">Poste</th><th>Réel</th><th>Théorique (modèle)</th><th>Écart $</th><th>Écart %</th></tr></thead><tbody>`
+        h += `<table class="tb blue" data-split="rows"><thead><tr><th>Poste</th><th>Réel</th><th>Théorique (modèle)</th><th>Écart $</th><th>Écart %</th></tr></thead><tbody>`
             + m.recon.map(r => `<tr><td class="l"><b>${esc(r.label)}</b></td><td>${usd(r.real)}</td><td>${usd(r.theoretical)}</td><td>${sgn(r.diff)}${' '}$</td><td><b>${r.diffPercent == null ? '—' : (r.diffPercent > 0 ? '+' : '') + pc(r.diffPercent)}</b></td></tr>`).join('') + `</tbody></table>`;
         if (c && c.aging > 0) h += `<div class="src">Le bénéfice net théorique inclut ${usd(c.aging)} de vieillissement, absent du réel saisi.</div>`;
         h += reading(m.readings.reconciliation);
@@ -105,7 +105,7 @@ export function chapter2(m, map, comment) {
                 const d = cmp.delta == null ? '' : r.kind === 'rel' ? `${cmp.delta > 0 ? '+' : ''}${pc(cmp.delta, 1)}` : `${sgn(cmp.delta * 100, 1)} pt`;
                 return `<td>${val} <span class="mut">(${d})</span></td>`;
             };
-            h += `<table class="tb" data-split="rows" style="margin-top:2.4mm"><thead><tr><th style="text-align:left">Indicateur</th><th>Aujourd’hui</th><th>Il y a 3 relevés${lbl('threeBack') ? ` <span style="font-weight:400">(${esc(lbl('threeBack'))})</span>` : ''}</th><th>Il y a 12 mois${lbl('yearAgo') ? ` <span style="font-weight:400">(${esc(lbl('yearAgo'))})</span>` : ''}</th></tr></thead><tbody>`
+            h += `<table class="tb" data-split="rows" style="margin-top:2.4mm"><thead><tr><th>Indicateur</th><th>Aujourd’hui</th><th>Il y a 3 relevés${lbl('threeBack') ? ` <span style="font-weight:400">(${esc(lbl('threeBack'))})</span>` : ''}</th><th>Il y a 12 mois${lbl('yearAgo') ? ` <span style="font-weight:400">(${esc(lbl('yearAgo'))})</span>` : ''}</th></tr></thead><tbody>`
                 + rows.map(r => `<tr><td class="l"><b>${esc(r.label)}</b></td><td><b>${r.kind === 'rel' ? usd(r.now) : pc(r.now)}</b></td>${cell(r, r.threeBack)}${cell(r, r.yearAgo)}</tr>`).join('') + `</tbody></table>`;
         }
         h += reading(m.readings.evolution);
@@ -134,7 +134,7 @@ export function chapter3(m, map, comment) {
     // Du PDS à la marge nette : une ligne par format, les canaux côte à côte
     const cols = m.portfolio.channelCols, n = cols.length;
     h += mark('skutable') + h3('Du PDS à la marge nette, produit par produit', 'une ligne par format') ;
-    h += `<table class="tb" data-split="rows"><thead><tr><th style="text-align:left"${n ? ' rowspan="2"' : ''}>Produit</th><th${n ? ' rowspan="2"' : ''} style="text-align:center">Classe</th><th${n ? ' rowspan="2"' : ''}>PDS</th><th${n ? ' rowspan="2"' : ''}>Coût de prod.</th>`
+    h += `<table class="tb" data-split="rows"><thead><tr><th${n ? ' rowspan="2"' : ''}>Produit</th><th${n ? ' rowspan="2"' : ''} style="text-align:center">Classe</th><th${n ? ' rowspan="2"' : ''}>PDS</th><th${n ? ' rowspan="2"' : ''}>Coût de prod.</th>`
         + (n ? `<th colspan="${n}" style="text-align:center">Prix de vente</th><th colspan="${n}" style="text-align:center">Marge nette</th>` : '') + `<th${n ? ' rowspan="2"' : ''}>Fiche</th></tr>`
         + (n ? `<tr>${[...cols, ...cols].map(c => `<th style="font-size:6.8pt">${esc(shortName(c.name, 16))}</th>`).join('')}</tr>` : '') + `</thead><tbody>`
         + m.portfolio.skuTable.map(r => `<tr><td class="l"><b>${esc(r.name)}</b></td><td style="text-align:center">${r.cls ? `<span class="badge ${CLASSES[r.cls].css}" style="font-size:6.4pt;white-space:nowrap">${CLASSES[r.cls].label}</span>` : '—'}</td><td>${usd(r.pds, 2)}</td><td>${usd(r.cost, 2)}</td>`
@@ -147,7 +147,7 @@ export function chapter3(m, map, comment) {
 
 // ---------- Chapitre 4 : canaux et activités ----------
 export function chapter4(m, map, comment) {
-    const head = (label) => `<thead><tr><th style="text-align:left">${label}</th><th>Revenus</th><th>Part</th><th>Marge brute</th><th>Bénéfice net</th><th>Marge nette</th><th>Point mort</th><th>Marge de sécurité</th></tr></thead>`;
+    const head = (label) => `<thead><tr><th>${label}</th><th>Revenus</th><th>Part</th><th>Marge brute</th><th>Bénéfice net</th><th>Marge nette</th><th>Point mort</th><th>Marge de sécurité</th></tr></thead>`;
     const rows = (list) => list.map(c => `<tr><td class="l"><b>${esc(c.name)}</b></td><td>${usd(c.revenueTotal)}</td><td>${pc(c.share, 0)}</td><td>${pc(c.margeBrutePercent)}</td><td><b>${usd(c.margeNetteTotal)}</b></td><td class="heat" style="${marginCell(c.margeNettePercent)}">${pc(c.margeNettePercent)}</td><td>${usd(c.breakEvenRevenue)}</td><td>${pc(c.safety)}</td></tr>`).join('');
     const seg = m.segments;
     let h = mark('canaux') + h3('Les canaux de vente', null, { first: true }) + `<table class="tb blue" data-split="rows">${head('Canal')}<tbody>${rows(seg.channels)}</tbody></table>`
@@ -175,10 +175,10 @@ function supplyHtml(s, comment, first) {
         + hbars(s.providers.map(r => ({ n: r.provider, v: (r.share || 0) * 100, color: r.isDependent ? '#F59E0B' : '#93C5FD', mark: s.dependency * 100 })), { max: Math.ceil(max / 10) * 10, nameW: 52, fmt: v => `${f(v)}\u00A0%` })
         + `<div class="src">Repère noir\u00A0: seuil de dépendance (${f(s.dependency * 100)}\u00A0% des achats).</div>`
         + h3('Classement ABC', `${s.abc.A.length} + ${s.abc.B.length} + ${s.abc.C.length} ${low}`)
-        + `<table class="tb" style="font-size:7.4pt" data-keep="next"><thead><tr><th>Classe</th><th>Valeur</th><th style="text-align:left">${label}</th></tr></thead><tbody>${abcRow('A')}${abcRow('B')}${abcRow('C')}</tbody></table>`;
+        + `<table class="tb" style="font-size:7.4pt" data-keep="next"><thead><tr><th>Classe</th><th>Valeur</th><th>${label}</th></tr></thead><tbody>${abcRow('A')}${abcRow('B')}${abcRow('C')}</tbody></table>`;
     if (s.topLoss) h += h3('Perte en stock', 'prévue, non mesurée') + `<div class="card"><div style="font-size:15pt;font-weight:700">${usd(s.loss)}</div><div class="mut">${pc(s.lossShare)} des achats</div><p style="margin:1mm 0 0">La plus coûteuse\u00A0: <b>${esc(s.topLoss.name)}, ${usd(s.topLoss.loss)}</b>.</p></div>`;
     if (s.hasEnoughData) {
-        h += h3('Prix volatils', `amplitude sur ${s.pointCount} relevés`) + `<table class="tb yellow" data-split="rows"><thead><tr><th style="text-align:left">${label.slice(0, -1)}</th><th style="text-align:left">Fournisseur</th><th>Prix actuel</th><th>Amplitude</th><th>Tendance</th><th style="text-align:left">Volatilité</th></tr></thead><tbody>`
+        h += h3('Prix volatils', `amplitude sur ${s.pointCount} relevés`) + `<table class="tb yellow" data-split="rows"><thead><tr><th>${label.slice(0, -1)}</th><th>Fournisseur</th><th>Prix actuel</th><th>Amplitude</th><th>Tendance</th><th>Volatilité</th></tr></thead><tbody>`
             + (s.volatile.length ? s.volatile.map(v => `<tr><td class="l"><b>${esc(v.name)}</b></td><td class="l">${esc(v.provider || '')}</td><td>${usd(v.currentPrice, 2)}</td><td><b>${f(v.amplitudePercent)}\u00A0%</b></td><td>${sgn(v.trendPercent, 1)}\u00A0%</td><td class="l">${v.tier === 'elevee' ? 'élevée' : 'modérée'}</td></tr>`).join('') : `<tr><td class="l" colspan="6">Aucun prix volatil.</td></tr>`) + `</tbody></table>`;
     }
     return h + findingsSection(`Constats\u00A0: ${label}`, s.findings, 'du plus grave au moins grave') + (s.isIng ? '' : commentBox(comment));
@@ -193,7 +193,7 @@ export function chapter6(m, map, comment) {
     const L = m.labor, cs = L.cascade;
     let h = mark('mo1');
     if (L.productivity.length) {
-        h += h3('Rapport de productivité par poste', null, { first: true }) + `<table class="tb yellow" data-split="rows"><thead><tr><th style="text-align:left">Poste</th><th>Heures attendues</th><th>Heures réelles</th><th>Différence</th><th>Taux d’utilisation</th></tr></thead><tbody>`
+        h += h3('Rapport de productivité par poste', null, { first: true }) + `<table class="tb yellow" data-split="rows"><thead><tr><th>Poste</th><th>Heures attendues</th><th>Heures réelles</th><th>Différence</th><th>Taux d’utilisation</th></tr></thead><tbody>`
             + L.productivity.map(r => `<tr><td class="l"><b>${esc(r.postName)}</b></td><td>${f(r.expected, 2)} h</td><td>${f(r.actual, 2)} h</td><td>${f(r.difference, 2)} h</td><td><b>${f(r.utilization, 2)}\u00A0%</b></td></tr>`).join('') + `</tbody>`
             + (L.totals ? `<tfoot><tr><td class="l">Total</td><td>${f(L.totals.expected, 2)} h</td><td>${f(L.totals.actual, 2)} h</td><td>${f(L.totals.difference, 2)} h</td><td>${f(L.totals.utilization, 2)}\u00A0%</td></tr></tfoot>` : '') + `</table>`;
     }

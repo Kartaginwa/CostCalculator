@@ -51,13 +51,13 @@ function recipeDetail(F) {
     const { ingredients, packaging, steps } = F.lines;
     if (!ingredients.length && !packaging.length && !steps.length) return '';
     const k = F.costs;
-    const ing = ingredients.length ? recipeTable('green', '<th style="text-align:left">Ingrédient</th><th>Qté</th><th>Total</th>',
+    const ing = ingredients.length ? recipeTable('green', '<th>Ingrédient</th><th>Qté</th><th>Total</th>',
         ingredients.map(i => `<tr><td class="l">${esc(i.name)}</td><td>${f(i.quantity, i.quantity % 1 ? 2 : 0)} ${esc(i.unit)}</td><td>${f(i.finalCost, 2)}\u00A0$</td></tr>`).join(''),
         `<td class="l" colspan="2">Matières <span class="mut">(dont perte ${f(k.totalLoss, 2)}\u00A0$)</span></td><td>${f(k.totalMaterial, 2)}\u00A0$</td>`) : '';
-    const pkg = packaging.length ? recipeTable('pink', '<th style="text-align:left">Emballage</th><th>Qté</th><th>Total</th>',
+    const pkg = packaging.length ? recipeTable('pink', '<th>Emballage</th><th>Qté</th><th>Total</th>',
         packaging.map(i => `<tr><td class="l">${esc(i.name)}</td><td>${f(i.quantity, i.quantity % 1 ? 2 : 0)}</td><td>${f(i.finalCost, 2)}\u00A0$</td></tr>`).join(''),
         `<td class="l" colspan="2">Emballage</td><td>${f(k.totalPackaging, 2)}\u00A0$</td>`) : '';
-    const lab = steps.length ? recipeTable('yellow', '<th style="text-align:left">Étape</th><th>Durée</th><th>Total</th>',
+    const lab = steps.length ? recipeTable('yellow', '<th>Étape</th><th>Durée</th><th>Total</th>',
         steps.map(s => {
             const crew = Object.entries(s.postIds.reduce((q, x) => { q[x] = (q[x] || 0) + 1; return q; }, {})).map(([x, n]) => `${n}× ${esc(x)}`).join(', ');
             return `<tr><td class="l">${esc(s.name)}${crew ? `<br><span class="mut">${crew}</span>` : ''}</td><td>${f(s.durationSeconds / 60, 1)} min</td><td>${f(s.totalCost, 2)}\u00A0$</td></tr>`;

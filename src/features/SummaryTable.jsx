@@ -27,7 +27,7 @@ import { getMarginCellStyle } from './summary/summaryUtils.js';
 // approvisionnement et équipe | simulation. L'ancien sous-onglet « Intrants » est scindé en Ingrédients et Emballages.
 const REPORT_SUBTAB_GROUPS = [
     [{ id: 'overview', label: "Vue d'ensemble" }],
-    [{ id: 'portfolio', label: 'Portefeuille' }, { id: 'bySku', label: 'Par SKU' }, { id: 'byActivity', label: 'Par Activité' }, { id: 'byChannel', label: 'Par Canal' }],
+    [{ id: 'portfolio', label: 'Portefeuille' }, { id: 'bySku', label: 'Par SKU' }, { id: 'byActivity', label: 'Par activité' }, { id: 'byChannel', label: 'Par canal' }],
     [{ id: 'ingredients', label: 'Ingrédients' }, { id: 'packaging', label: 'Emballages' }, { id: 'labor', label: "Main-d'œuvre" }],
     [{ id: 'simulation', label: 'Simulation' }],
 ];
@@ -78,7 +78,7 @@ export const SummaryTable = ({
     }, [skuOptions, selectedSkuId, onSelectedSkuIdChange]);
     const selectedSkuRow = productsWithCosts.find(p => p.id === selectedSkuId) || null;
 
-    // Par Activité / Par Canal (révisé le 02/11, retour utilisateur) : une ligne par activité (ou
+    // Par activité / Par canal (révisé le 02/11, retour utilisateur) : une ligne par activité (ou
     // par canal), chacune réduite à son propre TOTAL — plus de sélecteur, plus de ventilation par
     // l'autre axe (voir SegmentSummaryTable ci-dessus pour la justification complète du
     // changement). Une activité/un canal sans aucune vente réelle en est simplement absent (voir
@@ -147,7 +147,7 @@ export const SummaryTable = ({
                 name: snapshotDateLabel(point.timestamp),
                 label: point.name,
                 note: point.note,
-                "Prix Unitaire": ingredientData ? ingredientData.unitPrice : null,
+                "Prix unitaire": ingredientData ? ingredientData.unitPrice : null,
             };
         });
     }, [displayedTrackingPoints, selectedIngredientId]);
@@ -176,7 +176,7 @@ export const SummaryTable = ({
                 name: snapshotDateLabel(point.timestamp),
                 label: point.name,
                 note: point.note,
-                "Prix Unitaire": packagingData ? packagingData.unitPrice : null,
+                "Prix unitaire": packagingData ? packagingData.unitPrice : null,
             };
         });
     }, [displayedTrackingPoints, selectedPackagingId]);
@@ -190,7 +190,7 @@ export const SummaryTable = ({
     const handleSaveSnapshot = ({ name, note }) => {
         if (editingSnapshot) {
             setTrackingPoints(prev => prev.map(p => (p.id === editingSnapshot.id ? { ...p, name, note } : p)));
-            showNotification({ message: "Point de référence mis à jour !", type: 'success' });
+            showNotification({ message: "Point de référence mis à jour !", type: 'success' });
         } else {
             // On capture les coûts déjà calculés dans la source unique (analysisData.productsWithCosts)
             // plutôt que de les recalculer. Le deep-clone fige la copie, indépendante des recalculs
@@ -206,7 +206,7 @@ export const SummaryTable = ({
                 basePackaging: JSON.parse(JSON.stringify(basePackaging)),
             };
             setTrackingPoints(prev => [...prev, newSnapshot]);
-            showNotification({ message: "Point de référence créé avec succès !", type: 'success' });
+            showNotification({ message: "Point de référence créé avec succès !", type: 'success' });
         }
         setIsSnapshotModalOpen(false);
         setEditingSnapshot(null);
@@ -223,7 +223,7 @@ export const SummaryTable = ({
         setTrackingPoints(newTrackingPoints);
         setSelectedSnapshotIds(newSelectedIds);
         showNotification({
-            message: `Le point de référence "${pointToDelete.name}" a été supprimé.`,
+            message: `Le point de référence «\u00A0${pointToDelete.name}\u00A0» a été supprimé.`,
             type: 'info',
             onUndo: () => {
                 setTrackingPoints(originalTrackingPoints);
@@ -337,7 +337,7 @@ export const SummaryTable = ({
     // (sommer ou moyenner des % individuels diverge du vrai % consolidé, paradoxe de Simpson,
     // même principe que partout ailleurs dans ce fichier), alors qu'un $ se somme sans ambiguïté.
     // Les totaux réutilisent directement `activitySummaries`/`channelSummaries` (déjà calculés
-    // plus haut pour Par Activité/Par Canal) plutôt que de re-sommer la matrice — même donnée,
+    // plus haut pour Par activité/Par canal) plutôt que de re-sommer la matrice — même donnée,
     // jamais deux calculs indépendants qui pourraient diverger.
     const [activityMatrixSort, setActivityMatrixSort] = useSessionState('summary.activityMatrixSort', { key: 'activityName', direction: 'descending' });
     const [activityMatrixPage, setActivityMatrixPage] = useStateResetOnChange(1, [activityMatrixSort]);
@@ -349,7 +349,7 @@ export const SummaryTable = ({
 
     // Grand total (coin inférieur droit) : somme des totaux par activité — équivalente à la somme
     // des totaux par canal (les deux ventilent le même bénéfice net, juste selon un axe différent,
-    // comme déjà vérifié pour Par Activité/Par Canal).
+    // comme déjà vérifié pour Par activité/Par canal).
     const activityMatrixGrandTotal = useMemo(
         () => activitySummaries.reduce((sum, r) => sum + r.margeNetteTotal, 0),
         [activitySummaries]
@@ -449,7 +449,7 @@ export const SummaryTable = ({
                 </div>
             </div>
             {products.length === 0 && (
-                <EmptyState message="Rien à analyser pour l'instant : ajoutez d'abord des produits.">
+                <EmptyState message="Rien à analyser pour l'instant&nbsp;: ajoutez d'abord des produits.">
                     <button onClick={() => goToTab('info')} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Aller à Paramètres → Produits et SKUs</button>
                 </EmptyState>
             )}
@@ -504,7 +504,7 @@ export const SummaryTable = ({
             {subTab === 'bySku' && (
             <div id="tutorial-section-summary-bysku">
                 <div className="flex items-center gap-2 mb-6">
-                    <label htmlFor="summarySkuSelect" className="text-sm font-medium text-gray-700">SKU :</label>
+                    <label htmlFor="summarySkuSelect" className="text-sm font-medium text-gray-700">SKU&nbsp;:</label>
                     <select
                         id="summarySkuSelect"
                         value={selectedSkuId || ''}
@@ -516,7 +516,7 @@ export const SummaryTable = ({
                     {selectedSkuRow && (
                         <button
                             onClick={() => onEditProduct(products.findIndex(p => p.id === selectedSkuRow.productId), selectedSkuRow.formatIndex || 0)}
-                            title="Éditer ce SKU dans Production"
+                            title="Modifier ce SKU dans Production"
                             className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 flex-shrink-0"
                         >
                             <Pencil size={18} />
@@ -525,7 +525,7 @@ export const SummaryTable = ({
                 </div>
                 {selectedSkuRow
                     ? <BySkuWaterfall row={selectedSkuRow} productionActivities={productionActivities} salesChannels={salesChannels} />
-                    : <p className="text-center text-gray-500 py-8">Aucun SKU actif pour l'instant — cochez la case « Actif » d'un format dans Paramètres → Produits et SKUs.</p>}
+                    : <p className="text-center text-gray-500 py-8">Aucun SKU actif pour l'instant — cochez la case «&nbsp;Actif&nbsp;» d'un format dans Paramètres → Produits et SKUs.</p>}
 
                 {/* Évolution des coûts de ce SKU (ex-« Analyse par format » de l'onglet Suivi,
                     fusionnée ici le 24/10, retour utilisateur, sous le tableau récapitulatif du
@@ -536,7 +536,7 @@ export const SummaryTable = ({
                     <p className="text-sm text-gray-500 mb-4">
                         {selectedProductIsPriced
                             ? "Comment les coûts et la marge nette (%) de ce SKU ont évolué, d'un point de référence à l'autre. Un excellent moyen de mesurer l'impact de vos changements de prix ou d'optimisation des coûts."
-                            : "Ce SKU n'a pas de prix de vente (sous-recette non vendue seule) : les ratios en % du prix n'ont pas de sens, les coûts sont donc affichés en $ par unité produite."}
+                            : "Ce SKU n'a pas de prix de vente (sous-recette non vendue seule) : les ratios en % du prix n'ont pas de sens, les coûts sont donc affichés en $ par unité produite."}
                     </p>
                     {selectedProductIsPriced ? (
                         <SimpleLineChart
@@ -545,7 +545,7 @@ export const SummaryTable = ({
                                 { dataKey: "Coût matière (%)", color: "#82ca9d", unit: '%' },
                                 { dataKey: "Coût emballage (%)", color: "#db2777", unit: '%' },
                                 { dataKey: "Coût main-d'œuvre (%)", color: "#ffc658", unit: '%' },
-                                { dataKey: "Coût frais indirects (%)", color: "#8884d8", unit: '%' },
+                                { dataKey: "Coût des frais indirects (%)", color: "#8884d8", unit: '%' },
                                 { dataKey: "Marge nette (%)", color: "#ff7300", unit: '%' },
                             ]}
                             yAxisLabel="Pourcentage (%)"
@@ -567,7 +567,7 @@ export const SummaryTable = ({
             </div>
             )}
 
-            {/* Par Activité / Par Canal (révisé le 02/11, retour utilisateur) : une ligne par
+            {/* Par activité / Par canal (révisé le 02/11, retour utilisateur) : une ligne par
                 activité (ou par canal), chacune réduite à son propre total — plus de sélecteur, la
                 liste entière est déjà visible (voir SegmentSummaryTable, computeActivitySummaries/
                 computeChannelSummaries, engine/analysisData.js, pour la méthodologie : $ sommés
@@ -607,19 +607,19 @@ export const SummaryTable = ({
                 l'échelle propre de CETTE cellule), même si la valeur affichée est en $. */}
             <div className="mt-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Bénéfices / pertes des activités par canaux</h2>
-                <p className="text-sm text-gray-500 mb-4">Le bénéfice net (ou la perte) de chaque activité de production, pour chacun de ses canaux de vente, avec le total par activité et par canal. « — » : cette activité n'a aucune vente dans ce canal.</p>
+                <p className="text-sm text-gray-500 mb-4">Le bénéfice net (ou la perte) de chaque activité de production, pour chacun de ses canaux de vente, avec le total par activité et par canal. «&nbsp;—&nbsp;»&nbsp;: cette activité n'a aucune vente dans ce canal.</p>
             </div>
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
-                                <button onClick={() => requestActivityMatrixSort('activityName')} className="flex items-center w-full">
+                            <th className="px-3 py-1.5 text-center text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
+                                <button onClick={() => requestActivityMatrixSort('activityName')} className="flex items-center w-full justify-center">
                                     Activité {getActivityMatrixSortIcon('activityName')}
                                 </button>
                             </th>
                             {salesChannels.map(c => (
-                                <th key={c.id} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                                <th key={c.id} className="px-3 py-1.5 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
                                     <button onClick={() => requestActivityMatrixSort(`channel:${c.id}`)} className="flex items-center justify-end w-full">
                                         {c.name || 'Sans nom'} {getActivityMatrixSortIcon(`channel:${c.id}`)}
                                     </button>
@@ -628,7 +628,7 @@ export const SummaryTable = ({
                             {/* Colonne Total : pas de bordure ajoutée ici (retour utilisateur) — la
                                 ligne des titres ne doit pas changer d'apparence ; la séparation se
                                 fait seulement sur les lignes de données et la ligne Total ci-dessous. */}
-                            <th className="px-3 py-1.5 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                            <th className="px-3 py-1.5 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
                                 <button onClick={() => requestActivityMatrixSort('total')} className="flex items-center justify-end w-full">
                                     Total {getActivityMatrixSortIcon('total')}
                                 </button>
@@ -645,12 +645,12 @@ export const SummaryTable = ({
                                         const cell = activityChannelMatrix[activity.id]?.[c.id];
                                         return (
                                             <td key={c.id} className="px-3 py-1.5 text-right font-bold" style={cell ? getMarginCellStyle(cell.margeNettePercent) : undefined}>
-                                                {cell ? `${formatCurrency(cell.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
+                                                {cell ? `${formatCurrency(cell.margeNetteTotal)}\u00A0$` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
                                             </td>
                                         );
                                     })}
                                     <td className="px-3 py-1.5 text-right font-bold border-l-4 border-white" style={activityTotal ? getMarginCellStyle(activityTotal.margeNettePercent) : undefined}>
-                                        {activityTotal ? `${formatCurrency(activityTotal.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente pour cette activité">—</span>}
+                                        {activityTotal ? `${formatCurrency(activityTotal.margeNetteTotal)}\u00A0$` : <span className="text-gray-400 font-normal" title="Aucune vente pour cette activité">—</span>}
                                     </td>
                                 </tr>
                             );
@@ -675,11 +675,11 @@ export const SummaryTable = ({
                                 const channelTotal = channelSummaries.find(r => r.channelId === c.id);
                                 return (
                                     <td key={c.id} className="px-3 py-1.5 text-right border-t-4 border-white" style={channelTotal ? getMarginCellStyle(channelTotal.margeNettePercent) : undefined}>
-                                        {channelTotal ? `${formatCurrency(channelTotal.margeNetteTotal)} $` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
+                                        {channelTotal ? `${formatCurrency(channelTotal.margeNetteTotal)}\u00A0$` : <span className="text-gray-400 font-normal" title="Aucune vente dans ce canal">—</span>}
                                     </td>
                                 );
                             })}
-                            <td className="px-3 py-1.5 text-right text-indigo-700 border-l-4 border-t-4 border-white">{formatCurrency(activityMatrixGrandTotal)} $</td>
+                            <td className="px-3 py-1.5 text-right text-indigo-700 border-l-4 border-t-4 border-white">{formatCurrency(activityMatrixGrandTotal)}&nbsp;$</td>
                         </tr>
                     </tbody>
                 </table>
@@ -721,12 +721,12 @@ export const SummaryTable = ({
                             <XAxis type="number" hide />
                             <YAxis type="category" dataKey="name" width={240} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} interval={0} />
                             <RechartsTooltip
-                                formatter={(value) => `${formatCurrency(value)} $`}
+                                formatter={(value) => `${formatCurrency(value)}\u00A0$`}
                                 cursor={{ fill: 'rgba(243, 244, 246, 0.5)' }}
                                 contentStyle={{ borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                             />
                             <Bar dataKey="totalContribution" radius={[0, 4, 4, 0]}>
-                                <LabelList dataKey="totalContribution" position="right" formatter={(value) => `${formatCurrency(value)} $`} style={{ fill: '#374151', fontSize: '12px' }}/>
+                                <LabelList dataKey="totalContribution" position="right" formatter={(value) => `${formatCurrency(value)}\u00A0$`} style={{ fill: '#374151', fontSize: '12px' }}/>
                                 {displayedContributions.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.totalContribution >= 0 ? '#10B981' : '#EF4444'} />
                                 ))}
@@ -751,25 +751,25 @@ export const SummaryTable = ({
                 pas encore. */}
             <div className="mt-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Marges nettes des SKUs par canaux</h2>
-                <p className="text-sm text-gray-500 mb-4">La marge nette (% du prix de vente) de chaque SKU, pour chacun de ses canaux de vente. « — » : ce SKU n'est pas vendu dans ce canal.</p>
+                <p className="text-sm text-gray-500 mb-4">La marge nette (% du prix de vente) de chaque SKU, pour chacun de ses canaux de vente. «&nbsp;—&nbsp;»&nbsp;: ce SKU n'est pas vendu dans ce canal.</p>
             </div>
             <div id="tutorial-section-summary-table" className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
-                                <button onClick={() => requestSort('displayName')} className="flex items-center w-full">
+                            <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 sticky left-0 bg-gray-100">
+                                <button onClick={() => requestSort('displayName')} className="flex items-center w-full justify-center">
                                     Produit {getSortIcon('displayName')}
                                 </button>
                             </th>
                             {salesChannels.map(c => (
-                                <th key={c.id} className="px-3 py-1 text-right text-xs font-medium text-gray-500 whitespace-nowrap">
+                                <th key={c.id} className="px-3 py-1 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
                                     <button onClick={() => requestSort(`channel:${c.id}`)} className="flex items-center justify-end w-full">
                                         {c.name || 'Sans nom'} {getSortIcon(`channel:${c.id}`)}
                                     </button>
                                 </th>
                             ))}
-                            <th className="relative px-3 py-1"></th>
+                            <th className="relative px-3 py-1 text-center"></th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -780,14 +780,14 @@ export const SummaryTable = ({
                                     const cb = (product.channelBreakdown || []).find(ch => ch.channelId === c.id);
                                     return (
                                         <td key={c.id} className="px-3 py-1 text-right font-bold" style={cb ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
-                                            {cb ? `${formatPercent(cb.margeNettePercent)} %` : <span className="text-gray-400 font-normal" title="Non vendu dans ce canal">—</span>}
+                                            {cb ? `${formatPercent(cb.margeNettePercent)}\u00A0%` : <span className="text-gray-400 font-normal" title="Non vendu dans ce canal">—</span>}
                                         </td>
                                     );
                                 })}
                                 <td className="px-3 py-1 text-right">
                                     <button
                                         onClick={() => onEditProduct(products.findIndex(p => p.id === product.productId), product.formatIndex || 0)}
-                                        title="Éditer le produit"
+                                        title="Modifier le produit"
                                         className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50"
                                     >
                                         <Pencil size={18} />
@@ -830,9 +830,9 @@ export const SummaryTable = ({
                     <SimpleLineChart
                         data={ingredientPriceData}
                         lines={[
-                            { dataKey: "Prix Unitaire", color: "#82ca9d", unit: ' $' },
+                            { dataKey: "Prix unitaire", color: "#82ca9d", unit: ' $' },
                         ]}
-                        yAxisLabel="Prix Unitaire ($)"
+                        yAxisLabel="Prix unitaire ($)"
                     />
 
                     {/* Volatilité des prix d'achat — dérivée des points de référence. */}
@@ -841,7 +841,7 @@ export const SummaryTable = ({
                         <p className="text-sm text-gray-500 mb-4">
                             Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
                             {priceVolatility.hasEnoughData ? ` sur vos ${priceVolatility.pointCount} points de référence` : ''}.
-                            À croiser avec la classe ABC (section Analyse ABC ci-dessus) : un ingrédient de forte valeur au prix volatil est une priorité d'approvisionnement.
+                            À croiser avec la classe ABC (section Analyse ABC ci-dessus)&nbsp;: un ingrédient de forte valeur au prix volatil est une priorité d'approvisionnement.
                         </p>
                         <VolatilityTable
                             volatility={priceVolatility}
@@ -878,9 +878,9 @@ export const SummaryTable = ({
                     <SimpleLineChart
                         data={packagingPriceData}
                         lines={[
-                            { dataKey: "Prix Unitaire", color: "#db2777", unit: ' $' },
+                            { dataKey: "Prix unitaire", color: "#db2777", unit: ' $' },
                         ]}
-                        yAxisLabel="Prix Unitaire ($)"
+                        yAxisLabel="Prix unitaire ($)"
                     />
 
                     {/* Volatilité des prix d'achat — Emballage (Phase 6) : même analyse que les
@@ -890,7 +890,7 @@ export const SummaryTable = ({
                         <p className="text-sm text-gray-500 mb-4">
                             Amplitude du prix (écart entre son plus bas et son plus haut, en % de la moyenne) et tendance
                             {packagingVolatility.hasEnoughData ? ` sur vos ${packagingVolatility.pointCount} points de référence` : ''}.
-                            À croiser avec la classe ABC (section Analyse ABC ci-dessus) : un emballage de forte valeur au prix volatil est une priorité d'approvisionnement.
+                            À croiser avec la classe ABC (section Analyse ABC ci-dessus)&nbsp;: un emballage de forte valeur au prix volatil est une priorité d'approvisionnement.
                         </p>
                         <VolatilityTable
                             volatility={packagingVolatility}

@@ -2,13 +2,13 @@
 // se fait ici, à un seul endroit. Aucun texte d'IA : ce sont des libellés et des gabarits fixes.
 
 export const CHAPTERS = [
-    { id: '1', n: '1', title: 'Synthèse de direction', question: 'Où en est l’entreprise : rentabilité, solidité, direction ?', tab: 'Vue d’ensemble' },
-    { id: '2', n: '2', title: 'Résultats : prévu, réel et tendance', question: 'Combien gagne-t-on vraiment, et dans quelle direction va-t-on ?', tab: 'Vue d’ensemble · Simulation' },
-    { id: '3', n: '3', title: 'Produits : où l’argent se fait et se perd', question: 'Quels produits protéger, corriger ou abandonner ?', tab: 'Portefeuille · Par SKU' },
-    { id: '4', n: '4', title: 'Canaux et activités', question: 'Quels circuits de vente et quelles lignes de production paient les frais fixes ?', tab: 'Par Canal · Par Activité' },
-    { id: '5', n: '5', title: 'Approvisionnement', question: 'Où achète-t-on, à quel prix, avec quels risques ?', tab: 'Ingrédients · Emballages' },
-    { id: '6', n: '6', title: 'Main-d’œuvre', question: 'L’équipe est-elle bien utilisée, et que rapporte une heure ?', tab: 'Main-d’œuvre' },
-    { id: '7', n: '7', title: 'Fiches produits', question: 'Quel est le détail d’un produit, canal par canal ?', tab: 'Par SKU · Recette et calcul' },
+    { id: '1', n: '1', title: 'Synthèse de direction', question: 'Où en est l’entreprise : rentabilité, solidité, direction ?', tab: 'Vue d’ensemble' },
+    { id: '2', n: '2', title: 'Résultats : prévu, réel et tendance', question: 'Combien gagne-t-on vraiment, et dans quelle direction va-t-on ?', tab: 'Vue d’ensemble · Simulation' },
+    { id: '3', n: '3', title: 'Produits : où l’argent se fait et se perd', question: 'Quels produits protéger, corriger ou abandonner ?', tab: 'Portefeuille · Par SKU' },
+    { id: '4', n: '4', title: 'Canaux et activités', question: 'Quels canaux de vente et quelles lignes de production paient les frais fixes ?', tab: 'Par canal · Par activité' },
+    { id: '5', n: '5', title: 'Approvisionnement', question: 'Où achète-t-on, à quel prix, avec quels risques ?', tab: 'Ingrédients · Emballages' },
+    { id: '6', n: '6', title: 'Main-d’œuvre', question: 'L’équipe est-elle bien utilisée, et que rapporte une heure ?', tab: 'Main-d’œuvre' },
+    { id: '7', n: '7', title: 'Fiches produits', question: 'Quel est le détail d’un produit, canal par canal ?', tab: 'Par SKU · Recette et calcul' },
     { id: 'A', n: 'A', title: 'Annexes et méthodes', question: 'Les listes de référence et la façon dont les chiffres sont calculés.', tab: 'Ingrédients · Emballages · Main-d’œuvre' },
 ];
 
@@ -21,7 +21,7 @@ export const COVER = {
 
 // Classe stratégique (matrice : popularité × marge) : clé du moteur → [classe CSS, libellé, consigne du quadrant, texte du constat du produit].
 export const CLASSES = {
-    stars: { css: 'star', label: 'Étoile', plural: 'Étoiles', hint: 'Très populaires et très rentables. Mettez-les en avant !' },
+    stars: { css: 'star', label: 'Étoile', plural: 'Étoiles', hint: 'Très populaires et très rentables. Mettez-les en avant !' },
     questions: { css: 'que', label: 'Dilemme', plural: 'Dilemmes', hint: 'Rentables mais peu populaires. Envisagez de les promouvoir.' },
     cows: { css: 'cow', label: 'Vache à lait', plural: 'Vaches à lait', hint: 'Très populaires mais peu rentables. Optimisez leurs coûts.' },
     dogs: { css: 'dog', label: 'Poids mort', plural: 'Poids morts', hint: 'Peu populaires et peu rentables. Pensez à les retirer.' },

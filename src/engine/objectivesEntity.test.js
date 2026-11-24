@@ -22,7 +22,7 @@ describe('catalogue élargi', () => {
         expect(new Set(CUSTOM_INDICATOR_IDS).size).toBe(CUSTOM_INDICATOR_IDS.length);
         expect(INDICATOR_GROUPS.length).toBe(8);
     });
-    it('un indicateur « par entité » porte un type de sujet connu', () => {
+    it('un indicateur « par entité » porte un type de sujet connu', () => {
         for (const id of CUSTOM_INDICATOR_IDS) if (INDICATORS[id].entity) expect(ENTITY_KINDS[INDICATORS[id].entity], id).toBeTruthy();
     });
 });
@@ -55,7 +55,7 @@ describe('valeurs sur le projet démo', () => {
 });
 
 describe('objectifs sur mesure par entité', () => {
-    it('évalue un objectif sur un sujet précis, avec un libellé « sujet · indicateur »', () => {
+    it('évalue un objectif sur un sujet précis, avec un libellé « sujet · indicateur »', () => {
         const c0 = demoContext();
         const ing = subjectsOf(c0, 'ingPart').find(s => /Bœuf/.test(s.label));
         const o = evaluateObjectives(withCustom([mk('c1', 'ingPart', ing.id, 'max', '20')])).find(x => x.key === 'c1');
@@ -69,7 +69,7 @@ describe('objectifs sur mesure par entité', () => {
         expect(o).toMatchObject({ current: null, met: null, hasTarget: true });
         expect(o.label).toContain('Sujet introuvable');
     });
-    it('« au plus 0 produit déficitaire » est un objectif valide (zéro permis pour un nombre)', () => {
+    it('« au plus 0 produit déficitaire » est un objectif valide (zéro permis pour un nombre)', () => {
         const o = evaluateObjectives(withCustom([mk('c1', 'produitsDeficitaires', '', 'max', '0')])).find(x => x.key === 'c1');
         expect(o.hasTarget).toBe(true);
         expect(o.met).toBe(false);
@@ -79,16 +79,16 @@ describe('objectifs sur mesure par entité', () => {
     });
     it('un objectif par entité donne un constat à son nom, lié au bon sous-onglet', () => {
         const c0 = demoContext();
-        const post = subjectsOf(c0, 'posteUtilisation').find(s => /Cuisinier/.test(s.label));
+        const post = subjectsOf(c0, 'posteUtilisation').find(s => /Opérateur de production/.test(s.label));
         const r = computeKeyFindings(withCustom([mk('c1', 'posteUtilisation', post.id, 'min', '95')]));
         const f = r.all.find(x => x.id === 'obj-c1');
         expect(f.tone).toBe('faiblesse');
         expect(f.link.subTab).toBe('labor');
-        expect(f.title).toContain('Cuisinier de production');
-        expect(f.detail).toContain('au moins 95,0 %');
+        expect(f.title).toContain('Opérateur de production');
+        expect(f.detail).toContain('au moins 95,0 %');
     });
     it('formate chaque unité', () => {
-        expect(fmtObjValue(34.56, '%')).toBe('34,6 %');
+        expect(fmtObjValue(34.56, '%')).toBe('34,6 %');
         expect(fmtObjValue(1.84, 'fois')).toBe('1,8 fois');
         expect(fmtObjValue(5, 'n')).toBe('5');
         expect(fmtObjValue(null, '%')).toBe('—');

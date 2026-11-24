@@ -38,14 +38,14 @@ describe('computeSalesChannelCascade - ancré au coût de revient (cas par défa
         expect(prices[3]).toBeCloseTo(25);
     });
 
-    it("aucun maillon : la cascade ne contient que le prix ancré", () => {
+    it("aucun maillon : la cascade ne contient que le prix ancré", () => {
         const prices = computeSalesChannelCascade({ links: [], anchorIndex: 0, anchorValue: 10 });
         expect(prices).toEqual([10]);
     });
 });
 
 describe('computeSalesChannelCascade - ancré ailleurs que le coût (édition à n\'importe quel maillon)', () => {
-    it("ancré au prix consommateur (PDSF connu) : déduit le coût de revient en remontant la chaîne", () => {
+    it("ancré au prix consommateur (PDSF connu) : déduit le coût de revient en remontant la chaîne", () => {
         const prices = computeSalesChannelCascade({
             links: [
                 { type: 'markup', percent: 50 },
@@ -61,7 +61,7 @@ describe('computeSalesChannelCascade - ancré ailleurs que le coût (édition à
         expect(prices[3]).toBeCloseTo(25);
     });
 
-    it("ancré au milieu de la chaîne : recalcule à la fois vers l'avant et vers l'arrière", () => {
+    it("ancré au milieu de la chaîne : recalcule à la fois vers l'avant et vers l'arrière", () => {
         const prices = computeSalesChannelCascade({
             links: [
                 { type: 'markup', percent: 50 },

@@ -84,7 +84,7 @@ describe('Relevés du projet démo', () => {
         expect(kpis.weightedLaborCost).toBeCloseTo(liveKpis.weightedLaborCost, 3);
         expect(kpis.weightedMaterialCost).toBeCloseTo(liveKpis.weightedMaterialCost, 3);
     });
-    it('tous les relevés portent le détail par canal : aucun avertissement de relevé ancien', () => {
+    it('tous les relevés portent le détail par canal : aucun avertissement de relevé ancien', () => {
         const state = getDefaultState();
         expect(state.trackingPoints.length).toBe(19);
         state.trackingPoints.forEach((pt) => {
@@ -117,7 +117,7 @@ describe('Calibrage du projet démo (20/11)', () => {
         }));
         return groups;
     };
-    it('le bénéfice net théorique est positif et proche du réel (4 000 $)', () => {
+    it('le bénéfice net théorique est positif et proche du réel (4 000 $)', () => {
         const net = Object.values(aggregate(() => 'tout'))[0].net;
         expect(net).toBeGreaterThan(3000);
         expect(net).toBeLessThan(7000);
@@ -126,21 +126,21 @@ describe('Calibrage du projet démo (20/11)', () => {
         Object.entries(aggregate((r) => r.activityId)).forEach(([id, g]) => expect(g.net, `activité ${id}`).toBeGreaterThan(0));
         Object.entries(aggregate((r, cb) => cb.channelId)).forEach(([id, g]) => expect(g.net, `canal ${id}`).toBeGreaterThan(0));
     });
-    it('les revenus théoriques par activité restent proches des revenus réels saisis (±10 %)', () => {
+    it('les revenus théoriques par activité restent proches des revenus réels saisis (±10 %)', () => {
         const byActivity = aggregate((r) => r.activityId);
         const real = { act_plats: 45000, act_soupes: 20000, act_sauces: 12500 };
         Object.entries(real).forEach(([id, amount]) => expect(Math.abs(byActivity[id].revenue - amount) / amount, id).toBeLessThan(0.1));
         const total = Object.values(byActivity).reduce((s, g) => s + g.revenue, 0);
         expect(Math.abs(total - 80000) / 80000).toBeLessThan(0.03);
     });
-    it('l\'équipe est utilisée entre 80 % et 95 % (ni sous-capacité, ni inoccupée)', () => {
+    it('l\'équipe est utilisée entre 80 % et 95 % (ni sous-capacité, ni inoccupée)', () => {
         const hours = computeLaborHoursNeeded(state.products, state.ingredientsList).byPost;
         const expected = state.laborDatabase.reduce((s, post) => s + (post.employees || []).reduce((t, e) => t + Number(e.workedHours) * Number(e.productiveTimePercentage) / 100, 0), 0);
         const needed = Object.values(hours).reduce((s, h) => s + h, 0);
         expect(needed / expected).toBeGreaterThan(0.8);
         expect(needed / expected).toBeLessThan(0.95);
     });
-    it('les parts de ventes du démo totalisent 100 %', () => {
+    it('les parts de ventes du démo totalisent 100 %', () => {
         const total = state.products.flatMap((p) => p.formats).filter((f) => f.onMenu).reduce((s, f) => s + Number(f.salesMix), 0);
         expect(total).toBeCloseTo(100, 1);
     });
@@ -195,7 +195,7 @@ describe('Gestes de la fiche produit', () => {
         // Un canal absent ne change rien.
         expect(removeChannelFromProducts(state.products, 'canal_inconnu').removedCount).toBe(0);
     });
-    it('supprimer le premier format passe le miroir « à plat » au suivant', () => {
+    it('supprimer le premier format passe le miroir « à plat » au suivant', () => {
         const state = getDefaultState();
         const product = state.products.find(p => p.formats.length > 1);
         const second = product.formats[1];
@@ -204,7 +204,7 @@ describe('Gestes de la fiche produit', () => {
         expect(updated.portionUnit).toBe(second.portionUnit);
         expect(updated.prixVente).toBe(second.prixVente);
     });
-    it('le démo : un canal en double est signalé, et l\'activité d\'un produit supprimée est signalée', () => {
+    it('le démo : un canal en double est signalé, et l\'activité d\'un produit supprimée est signalée', () => {
         const state = getDefaultState();
         const products = state.products.map(p => ({ ...p, formats: p.formats.map(f => (f.id === 'fmt_chili' ? { ...f, channelPrices: [...f.channelPrices, { ...f.channelPrices[0], id: 'cp_dup' }] } : f)) }));
         const ids = computeProjectChecks({ products, productionActivities: state.productionActivities.slice(1), salesChannels: state.salesChannels }).map(c => c.id);

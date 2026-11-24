@@ -73,39 +73,39 @@ export const chapitreEtatResultats = {
         { type: 'p', text: 'Listez ici chaque dépense qui n\'est pas liée à un produit précis : loyer de l\'atelier, électricité, marketing, salaires d\'administration, assurances, frais bancaires. Pour chaque poste, indiquez un libellé, une catégorie (frais généraux de production, frais de vente / mise en marché, frais d\'administration ou frais financiers) et un montant. __Pourquoi ?__ Le total de cette liste est ce que vos produits doivent payer, en plus de leurs coûts directs, pour que l\'entreprise soit rentable. Ce total alimente le coût de revient complet de chaque produit.' },
 
         { type: 'h', id: 'guide-ff-regle', text: 'Charge directe ou frais fixe ? La règle', level: 5 },
-        { type: 'p', text: 'Une charge directe est un coût qui s\'attache à la fabrication d\'un produit : matières, emballage, sous-traitance, main-d\'œuvre de production. Un frais fixe est un coût de l\'entreprise que l\'on répartit ensuite sur les produits. Pour la main-d\'œuvre, la question n\'est pas « est-ce de la cuisine ? » mais **« ce coût est-il déjà modélisé dans l\'application ? »** :' },
+        { type: 'p', text: 'Une charge directe est un coût qui s\'attache à la fabrication d\'un produit : matières, emballage, sous-traitance, main-d\'œuvre de production. Un frais fixe est un coût de l\'entreprise que l\'on répartit ensuite sur les produits. Pour la main-d\'œuvre, la question n\'est pas « est-ce de la production ? » mais **« ce coût est-il déjà modélisé dans l\'application ? »** :' },
         {
             type: 'ul', items: [
                 'Les postes de l\'onglet Main-d\'œuvre qui servent aux étapes de production sont déjà comptés dans le coût de chaque recette (durée de l\'étape × coût horaire chargé du poste, augmentée de la part de capacité inutilisée). Saisissez leur coût réel dans **Charges directes réelles → Main-d\'œuvre directe**, jamais dans les frais fixes.',
                 'La main-d\'œuvre qui n\'est pas dans l\'onglet (gérant, administration, ventes) va dans les **frais fixes**.',
-                'Une personne qui fait les deux (par exemple cuisine et vente) se partage : la part de ses heures en production va dans l\'onglet Main-d\'œuvre, le reste en frais fixes.',
+                'Une personne qui fait les deux (par exemple production et vente) se partage : la part de ses heures en production va dans l\'onglet Main-d\'œuvre, le reste en frais fixes.',
             ],
         },
         { type: 'h', id: 'guide-ff-exemples', text: 'Où saisir quoi ? Quelques exemples', level: 5 },
         {
             type: 'ul', items: [
                 'Achats de matières premières, emballages, sous-traitance : charges directes.',
-                'Salaires de la cuisine (postes de l\'onglet Main-d\'œuvre) : charges directes, « Main-d\'œuvre directe », même si votre comptable les range sous « Salaires ».',
+                'Salaires de production (postes de l\'onglet Main-d\'œuvre) : charges directes, « Main-d\'œuvre directe », même si votre comptable les range sous « Salaires ».',
                 'Salaire du gérant, de l\'administration, du représentant : frais fixes.',
                 'Loyer et électricité de l\'atelier, assurances, comptabilité, frais bancaires : frais fixes.',
             ],
         },
         { type: 'h', id: 'guide-ff-double-comptage', text: 'Pourquoi cette règle : l\'exemple du double comptage', level: 5 },
         { type: 'callout', kind: 'exemple', blocks: [
-            { type: 'p', text: `Vos cuisiniers coûtent ${money(DOUBLE_COMPTAGE.cuisiniers, 0)} par an et sont dans l'onglet Main-d'œuvre. Vos autres frais fixes sont le loyer (${money(DOUBLE_COMPTAGE.loyer, 0)}) et le salaire du gérant (${money(DOUBLE_COMPTAGE.gerant, 0)}).` },
+            { type: 'p', text: `Vos opérateurs coûtent ${money(DOUBLE_COMPTAGE.cuisiniers, 0)} par an et sont dans l'onglet Main-d'œuvre. Vos autres frais fixes sont le loyer (${money(DOUBLE_COMPTAGE.loyer, 0)}) et le salaire du gérant (${money(DOUBLE_COMPTAGE.gerant, 0)}).` },
             {
                 type: 'table', head: ['Saisie', 'Frais fixes', 'Conséquence'], wrapCells: true, rows: [
-                    ['Correcte : cuisiniers en charges directes', money(DOUBLE_COMPTAGE.correct, 0), 'Chaque produit porte ses heures de cuisine une seule fois.'],
-                    ['Erreur : cuisiniers aussi en frais fixes', money(DOUBLE_COMPTAGE.erreur, 0), 'Chaque produit porte ses heures de cuisine **deux fois** : sa marge nette est sous-estimée.'],
+                    ['Correcte : opérateurs en charges directes', money(DOUBLE_COMPTAGE.correct, 0), 'Chaque produit porte ses heures de production une seule fois.'],
+                    ['Erreur : opérateurs aussi en frais fixes', money(DOUBLE_COMPTAGE.erreur, 0), 'Chaque produit porte ses heures de production **deux fois** : sa marge nette est sous-estimée.'],
                 ],
             },
             { type: 'p', text: 'Votre bénéfice net réel, lui, ne change pas : seul le partage entre bénéfice brut et bénéfice net est faussé. L\'application est un outil de coût de revient, pas votre grand livre : elle peut classer autrement que votre comptable sans que votre profit change.' },
         ] },
-        { type: 'p', text: 'Si un libellé de frais fixes ressemble à de la main-d\'œuvre de production (par exemple « Salaires cuisine »), un rappel s\'affiche au-dessus du tableau, avec un lien vers cette section. Vous pouvez l\'ignorer s\'il s\'agit de personnel hors modèle.' },
+        { type: 'p', text: 'Si un libellé de frais fixes ressemble à de la main-d\'œuvre de production (par exemple « Salaires de production »), un rappel s\'affiche au-dessus du tableau, avec un lien vers cette section. Vous pouvez l\'ignorer s\'il s\'agit de personnel hors modèle.' },
 
         { type: 'h', id: 'guide-ff-fixe-variable', text: 'Fixe ou variable ? Deux regards, et le temps non productif', level: 5 },
-        { type: 'p', text: 'Une cuisine salariée coûte la même chose que vous vendiez beaucoup ou peu : c\'est un coût fixe dans la réalité. L\'application la regarde pourtant de deux façons, selon la question posée. __Par unité :__ chaque recette porte le coût de ses propres heures, pour savoir ce que coûte un produit. __Point mort :__ la main-d\'œuvre de production est traitée comme un coût fixe pour la période, parce que la question est « combien dois-je vendre pour couvrir mes coûts ? ».' },
-        { type: 'p', text: 'L\'application répartit sur vos recettes le coût de **toutes les heures payées** de **tous les postes** de l\'onglet Main-d\'œuvre : les heures employées, la **capacité de production payée mais non utilisée** et le temps **non productif** (nettoyage, réunions, administration, déjà reflété par le « % temps productif attendu » de chaque employé). C\'est le « coût du temps non productif » de la main-d\'œuvre dans l\'onglet Production. La paie de la cuisine se retrouve donc entièrement dans le coût des produits, sans que vous ayez à saisir ce temps ailleurs.' },
+        { type: 'p', text: 'Une équipe de production salariée coûte la même chose que vous vendiez beaucoup ou peu : c\'est un coût fixe dans la réalité. L\'application la regarde pourtant de deux façons, selon la question posée. __Par unité :__ chaque recette porte le coût de ses propres heures, pour savoir ce que coûte un produit. __Point mort :__ la main-d\'œuvre de production est traitée comme un coût fixe pour la période, parce que la question est « combien dois-je vendre pour couvrir mes coûts ? ».' },
+        { type: 'p', text: 'L\'application répartit sur vos recettes le coût de **toutes les heures payées** de **tous les postes** de l\'onglet Main-d\'œuvre : les heures employées, la **capacité de production payée mais non utilisée** et le temps **non productif** (nettoyage, réunions, administration, déjà reflété par le « % temps productif attendu » de chaque employé). C\'est le « coût du temps non productif » de la main-d\'œuvre dans l\'onglet Production. La paie de production se retrouve donc entièrement dans le coût des produits, sans que vous ayez à saisir ce temps ailleurs.' },
 
         { type: 'h', id: 'guide-ff-repartir', text: 'Répartir une dépense', level: 5 },
         { type: 'p', text: 'Les colonnes de droite permettent de répartir chaque dépense entre « Général », vos activités et vos canaux. La somme des colonnes ne doit pas dépasser le montant de la ligne : un indicateur (coche verte ou avertissement) le confirme, sans jamais bloquer ; une dépense qui ne s\'applique naturellement qu\'à une partie des colonnes (un loyer n\'a pas de canal) laisse simplement les autres vides.' },
@@ -124,7 +124,7 @@ export const chapitreEtatResultats = {
             rows: [
                 ['{{Poste de dépense}}, {{Montant ($)}}', 'Le libellé et le montant réel de la dépense.'],
                 ['{{Catégorie}}', 'La fonction de l\'entreprise à laquelle la dépense se rattache. Elle **suggère**, sans l\'imposer, une colonne par défaut : frais généraux de production → Général ou une activité ; frais de vente et de mise en marché → Général ou un canal de vente ; frais d\'administration et frais financiers → Général.'],
-                ['{{Clé de répartition}}', 'Un raccourci optionnel qui pré-remplit la grille (voir la liste ci-dessus). Manuel laisse la grille telle quelle.'],
+                ['{{Clé de répartition}}', 'Un raccourci facultatif qui pré-remplit la grille (voir la liste ci-dessus). Manuel laisse la grille telle quelle.'],
                 ['{{Général}}', 'Une allocation à l\'entreprise entière, sans lien de causalité avec une activité ou un canal précis (salaire de direction, assurance générale). C\'est ce qu\'on appelle les **frais de structure** : ils existent même si vous ne fabriquez rien.'],
                 ['Colonnes des activités', 'La part de la dépense attribuée à chaque activité de production. La somme des cellules remplies est comparée au montant de la ligne : une coche verte indique que la répartition est complète, un avertissement qu\'elle ne l\'est pas.'],
                 ['Colonnes des canaux', 'La part attribuée à chaque canal de vente : un axe **indépendant** des activités. Une même dépense peut être répartie sur les deux à la fois, ou sur un seul si l\'autre ne s\'applique pas. Les valeurs dérivées d\'une clé sont verrouillées ; passez la ligne en Manuel pour les modifier.'],
@@ -160,7 +160,7 @@ export const chapitreEtatResultats = {
                 { label: 'Confirmer.', text: 'Choisissez entre **Ajouter à mes lignes existantes** (recommandé : vos lignes déjà saisies restent intactes) et **Remplacer entièrement** vos lignes de revenus et de frais fixes par celles du fichier.' },
             ],
         },
-        { type: 'callout', kind: 'attention', text: 'Relisez toujours les lignes importées d\'un PDF : la reconnaissance du texte peut se tromper de poste ou de signe. Et rappelez-vous la règle des frais fixes : un salaire de cuisine importé dans les frais fixes sera compté deux fois.' },
+        { type: 'callout', kind: 'attention', text: 'Relisez toujours les lignes importées d\'un PDF : la reconnaissance du texte peut se tromper de poste ou de signe. Et rappelez-vous la règle des frais fixes : un salaire de production importé dans les frais fixes sera compté deux fois.' },
 
         { type: 'callout', kind: 'retenir', text: 'L\'État des résultats reçoit le réel. Les charges directes suivent la nature de vos recettes (matières, main-d\'œuvre, emballage, sous-traitance) ; les frais fixes se répartissent entre Général, activités et canaux, puis entre les produits par le CICI. La réconciliation mesure l\'écart avec votre modèle.' },
         { type: 'words', items: [
@@ -210,7 +210,7 @@ export const chapitreProduction = {
         { type: 'h', id: 'guide-prod-sous-recette', text: 'Sous-recette et produit de revente', level: 5 },
         {
             type: 'ul', items: [
-                { label: 'Considérer comme une sous-recette (mise en place).', text: 'Cochez cette case pour une recette de base (une sauce, une garniture, un bouillon) qui servira d\'**ingrédient** dans d\'autres recettes. Elle apparaît alors dans la liste des ingrédients des recettes et de la base. Quand une recette l\'utilise, elle n\'apporte que son **coût direct** (jamais ses frais fixes), pour que les frais fixes ne soient pas comptés deux fois : le produit final porte les siens.' },
+                { label: 'Considérer comme une sous-recette.', text: 'Cochez cette case pour une recette de base (une sauce, une garniture, un bouillon) qui servira d\'**ingrédient** dans d\'autres recettes. Elle apparaît alors dans la liste des ingrédients des recettes et de la base. Quand une recette l\'utilise, elle n\'apporte que son **coût direct** (jamais ses frais fixes), pour que les frais fixes ne soient pas comptés deux fois : le produit final porte les siens.' },
                 { label: 'Considérer comme un produit de revente.', text: 'Cochez cette case pour un format acheté et revendu tel quel (boissons, croustilles d\'un fournisseur). La fiche se simplifie à un seul champ, {{Coût d\'achat par unité ($)}} ; les sections ingrédients, emballage et processus disparaissent, puisque le coût d\'achat couvre tout. Les allergènes se cochent alors à la main.' },
             ],
         },
@@ -257,9 +257,9 @@ export const chapitreProduction = {
         { type: 'p', text: 'Trois indicateurs résument l\'organisation du travail :' },
         {
             type: 'ul', itemIds: ['guide-prod-ind-duree', 'guide-prod-ind-temps-personnel', 'guide-prod-ind-intensite'], items: [
-                { label: 'Durée Processus.', text: 'Le temps total écoulé entre le début de la première étape et la fin de la dernière.' },
-                { label: 'Temps Personnel.', text: 'La somme du temps de travail de chaque personne. Exemple : 10 minutes avec 2 cuisiniers font 20 minutes de personnel.' },
-                { label: 'Intensité de main-d\'œuvre.', text: 'Temps Personnel ÷ Durée Processus. Une intensité de 1,00 signifie qu\'une personne travaille à la fois ; au-dessus de 1, plusieurs personnes travaillent en même temps.' },
+                { label: 'Durée du processus.', text: 'Le temps total écoulé entre le début de la première étape et la fin de la dernière.' },
+                { label: 'Temps de personnel.', text: 'La somme du temps de travail de chaque personne. Exemple : 10 minutes avec 2 opérateurs font 20 minutes de personnel.' },
+                { label: 'Intensité de main-d\'œuvre.', text: 'Temps de personnel ÷ Durée du processus. Une intensité de 1,00 signifie qu\'une personne travaille à la fois ; au-dessus de 1, plusieurs personnes travaillent en même temps.' },
             ],
         },
         { type: 'callout', kind: 'exemple', text: `Chili con carne mijoté : la durée du processus est de 21,7 minutes, pour une intensité de 1,00 (une personne à la fois). La main-d'œuvre directe du lot est de ${d(DEMO.chili.moDirectRecette)} et celle du temps non productif de ${d(DEMO.chili.moIndirectRecette)}, soit ${d(DEMO.chili.totalMORecette)} pour le lot, donc **${d(DEMO.chili.coutMO)}** par unité.` },
@@ -279,19 +279,19 @@ export const chapitreProduction = {
         { type: 'p', text: 'Cette section synthétise votre **coût de production** (matière + emballage + main-d\'œuvre + sous-traitance) et calcule en temps réel les ratios et marges qui en découlent. Le sélecteur {{Canal :}} choisit le prix net utilisé : par défaut, le canal principal du format.' },
         {
             type: 'table', head: ['Tuile', 'Ce qu\'elle indique'], wrapCells: true, rowIds: ['guide-prod-tuile-ratios', 'guide-prod-tuile-cout-production', 'guide-prod-tuile-contribution', 'guide-prod-tuile-marge-brute', 'guide-prod-tuile-prix', 'guide-prod-tuile-point-mort'], rows: [
-                ['{{Coût Matière (%)}}, {{Coût Emballage (%)}}, {{Coût Main-d\'œuvre (%)}}', 'La part du prix de vente que représente chaque famille de coût, avec un voyant de comparaison à vos objectifs (coche verte ou triangle rouge).'],
-                ['{{Coût de Production}}', 'La somme de vos coûts directs par unité, avant les frais fixes.'],
+                ['{{Coût matière (%)}}, {{Coût emballage (%)}}, {{Coût main-d\'œuvre (%)}}', 'La part du prix de vente que représente chaque famille de coût, avec un voyant de comparaison à vos objectifs (coche verte ou triangle rouge).'],
+                ['{{Coût de production}}', 'La somme de vos coûts directs par unité, avant les frais fixes.'],
                 ['{{Marge de contribution}}', 'Prix de vente moins le coût matière, en $ et en % du prix.'],
                 ['{{Marge brute}}', 'Prix de vente moins les coûts directs, en $ et en % du prix.'],
-                ['{{Prix de Vente}}', 'Le prix net du canal sélectionné.'],
-                ['{{Point Mort}}', 'Le nombre d\'unités à vendre, dans ce canal, pour couvrir la part des frais fixes qui revient à ce format, y compris la main-d\'œuvre directe traitée comme fixe. Il reprend la valeur déjà calculée dans le rapport Par SKU.'],
+                ['{{Prix de vente}}', 'Le prix net du canal sélectionné.'],
+                ['{{Point mort}}', 'Le nombre d\'unités à vendre, dans ce canal, pour couvrir la part des frais fixes qui revient à ce format, y compris la main-d\'œuvre directe traitée comme fixe. Il reprend la valeur déjà calculée dans le rapport Par SKU.'],
             ],
         },
         { type: 'callout', kind: 'exemple', text: `Chili con carne mijoté, canal « Vente directe » : coût de production ${d(DEMO.chili.coutProduction)} (${d(DEMO.chili.coutMatiere)} + ${d(DEMO.chili.coutEmballage)} + ${d(DEMO.chili.coutMO)}), prix de vente ${d(DEMO.chili.prixVente)}. Marge de contribution ${d(DEMO.chili.margeContribution)}, marge brute ${d(DEMO.chili.margeBrute)}, point mort ${d(DEMO.chili.pointMort)}.` },
         { type: 'p', text: 'Les **frais fixes** et la **marge nette** ne sont pas calculés dans cet onglet : ils dépendent de l\'État des résultats et du CICI, et vivent dans le rapport {{Par SKU}}, où chaque produit a son propre taux d\'absorption. Tant qu\'un format n\'a pas de prix de vente, les ratios de coûts, les marges et le point mort sont remplacés par « — » : saisissez un prix dans Paramètres → Produits et SKUs, ou testez-en un avec le mode simulation.' },
 
         { type: 'h', id: 'guide-prod-simulation', text: 'Le mode simulation de prix', level: 5 },
-        { type: 'p', text: 'Le bouton {{Simuler un nouveau prix}} ouvre le {{Mode Simulation}} : saisissez un {{Prix de vente simulé ($)}} et toutes les tuiles se recalculent en affichant, à côté de chaque valeur actuelle, l\'écart avec le prix simulé. Le point mort reste affiché et compare le point mort réel à celui du prix simulé. {{Quitter}} revient au prix réel, sans rien modifier à vos données.' },
+        { type: 'p', text: 'Le bouton {{Simuler un nouveau prix}} ouvre le {{Mode simulation}} : saisissez un {{Prix de vente simulé ($)}} et toutes les tuiles se recalculent en affichant, à côté de chaque valeur actuelle, l\'écart avec le prix simulé. Le point mort reste affiché et compare le point mort réel à celui du prix simulé. {{Quitter}} revient au prix réel, sans rien modifier à vos données.' },
         { type: 'callout', kind: 'astuce', text: 'Utilisez la simulation avant de modifier un prix : elle montre immédiatement l\'effet d\'un prix de 5 % plus haut ou plus bas sur la marge brute et sur le point mort.' },
 
         { type: 'callout', kind: 'retenir', text: 'Une fiche = un format. Toutes les quantités sont pour le lot entier, et la quantité produite donne le coût par unité. Le coût de production réunit matière, emballage, main-d\'œuvre et sous-traitance ; les frais fixes et la marge nette se lisent dans les rapports.' },

@@ -181,7 +181,7 @@ describe("expandShockScopes — résout 'format'/'activity' en 'selection' concr
         expect(expandShockScopes(shocks, { productsWithCosts, laborDatabase })).toEqual(shocks);
     });
 
-    it('cible absente (format/activité supprimé depuis) : selectedIds vide, pas une erreur', () => {
+    it('cible absente (format/activité supprimé depuis) : selectedIds vide, pas une erreur', () => {
         const [expanded] = expandShockScopes(
             [{ type: 'ingredient', scope: 'format', target: 'fmt_disparu', percent: 10 }],
             { productsWithCosts, laborDatabase }

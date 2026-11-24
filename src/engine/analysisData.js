@@ -297,7 +297,7 @@ export function computeAnalysisData(products, baseIngredients, laborDatabase, ge
             // % du mix des ventes comme avant. Moyenner des POURCENTAGES avec un poids en UNITÉS
             // (le mix des ventes) peut produire un signe contraire à la même moyenne pondérée en
             // DOLLARS (paradoxe de Simpson) — observé concrètement sur le projet démo avant cette
-            // correction : cette tuile affichait une marge pondérée négative alors que le Point Mort
+            // correction : cette tuile affichait une marge pondérée négative alors que le Point mort
             // du Menu, lui, restait positif et fini, deux indicateurs du même tableau de bord se
             // contredisant sur la question la plus simple (le menu est-il profitable en moyenne).
             // Repli sur le $ mix des ventes quand aucun revenu réel par canal n'existe encore (projet

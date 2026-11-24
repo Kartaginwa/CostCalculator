@@ -1,4 +1,4 @@
-// Rapport et suivi, sous-onglets « Par Activité »/« Par Canal » — révisés le 02/11 (retour
+// Rapport et suivi, sous-onglets « Par activité »/« Par canal » — révisés le 02/11 (retour
 // utilisateur immédiat sur la version du 24/10) : celle-ci avait un sélecteur + une ventilation par
 // l'autre axe (comme « Par SKU »), ce qui donnait l'impression de deux rapports répétés l'un de
 // l'autre une fois transposés, alors que le vrai intérêt était LE TOTAL de chaque ligne. Révision :
@@ -14,7 +14,7 @@
 // infobulle, ligne d'emphase bg-indigo-50 pour Frais fixes/Point mort.
 import { test, expect } from '@playwright/test';
 
-test("Rapport et suivi : Par Activité et Par Canal, même mise en page que Par SKU (sections, étiquette de ligne sticky, ligne d'emphase)", async ({ page }) => {
+test("Rapport et suivi : Par activité et Par canal, même mise en page que Par SKU (sections, étiquette de ligne sticky, ligne d'emphase)", async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -24,11 +24,11 @@ test("Rapport et suivi : Par Activité et Par Canal, même mise en page que Par 
     await page.locator('#tab-summary').click();
 
     // Sous-onglets présents (entre Par SKU et Intrants dans le JSX).
-    await expect(page.getByRole('button', { name: 'Par Activité', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Par Canal', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Par activité', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Par canal', exact: true })).toBeVisible();
 
-    // Par Activité : une colonne par activité, aucun sélecteur (toute la liste est déjà visible).
-    await page.getByText('Par Activité', { exact: true }).click();
+    // Par activité : une colonne par activité, aucun sélecteur (toute la liste est déjà visible).
+    await page.getByText('Par activité', { exact: true }).click();
     const byActivity = page.locator('#tutorial-section-summary-byactivity');
     await expect(byActivity.locator('select')).toHaveCount(0);
     // 3 en-têtes de section (Marge brute / Frais fixes et marge nette / Seuil de rentabilité).
@@ -53,8 +53,8 @@ test("Rapport et suivi : Par Activité et Par Canal, même mise en page que Par 
     await expect(activityMargeNetteRow).toContainText('Marge nette');
     await expect(activityMargeNetteRow).toContainText('11,01 %');
 
-    // Par Canal : même structure, une colonne par canal.
-    await page.getByText('Par Canal', { exact: true }).click();
+    // Par canal : même structure, une colonne par canal.
+    await page.getByText('Par canal', { exact: true }).click();
     const byChannel = page.locator('#tutorial-section-summary-bychannel');
     await expect(byChannel.locator('select')).toHaveCount(0);
     const channelRows = byChannel.locator('tbody tr');
@@ -73,7 +73,7 @@ test("Rapport et suivi : Par Activité et Par Canal, même mise en page que Par 
     // Position (sous-onglet) conservée après un aller-retour vers un autre onglet.
     await page.locator('#tab-ingredients').click();
     await page.locator('#tab-summary').click();
-    await expect(page.locator('button:has-text("Par Canal")')).toHaveClass(/border-blue-600/);
+    await expect(page.locator('button:has-text("Par canal")')).toHaveClass(/border-blue-600/);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

@@ -314,17 +314,17 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                     </button>
                 </div>
                 <div className="p-6 flex-1 overflow-y-auto">
-                    {isLoading && <div className="text-center"><p>Lecture du fichier en cours...</p></div>}
+                    {isLoading && <div className="text-center"><p>Lecture du fichier en cours…</p></div>}
 
                     {!isLoading && step === 1 && (
                         <div className="text-center">
-                            <h3 className="text-xl font-semibold mb-4">Étape 1: Téléverser votre rapport de ventes</h3>
+                            <h3 className="text-xl font-semibold mb-4">Étape 1&nbsp;: Téléverser votre rapport de ventes</h3>
                             <p className="text-gray-600 mb-8">
-                                Un rapport de ventes par distributeur/circuit, un export comptable (QuickBooks, Odoo...)
-                                ou tout fichier listant les produits, quantités vendue et prix — un canal par ligne si vous en
+                                Un rapport de ventes par distributeur/canal, un export comptable (QuickBooks, Odoo…)
+                                ou tout fichier listant les produits, quantités vendues et prix — un canal par ligne si vous en
                                 avez plusieurs.
                                 <br />
-                                Les formats supportés sont CSV et Excel (.csv, .xls, .xlsx).
+                                Les formats pris en charge sont CSV et Excel (.csv, .xls, .xlsx).
                             </p>
                             <input
                                 type="file"
@@ -345,8 +345,8 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
 
                     {!isLoading && step === 2 && (
                         <div>
-                            <h3 className="text-xl font-semibold mb-2">Étape 2: Correspondance des colonnes</h3>
-                            <p className="text-gray-600 mb-6">Associez les colonnes de votre fichier <span className="font-semibold text-gray-800">{fileName}</span> aux champs de l'application. Les champs marqués d'un astérisque (*) sont obligatoires. Format et Canal sont optionnels : s'ils ne sont pas mappés, toutes les lignes sont supposées viser le premier format du produit et le premier canal de vente.</p>
+                            <h3 className="text-xl font-semibold mb-2">Étape 2&nbsp;: Correspondance des colonnes</h3>
+                            <p className="text-gray-600 mb-6">Associez les colonnes de votre fichier <span className="font-semibold text-gray-800">{fileName}</span> aux champs de l'application. Les champs marqués d'un astérisque (*) sont obligatoires. Format et Canal sont facultatifs&nbsp;: s'ils ne sont pas mappés, toutes les lignes sont supposées viser le premier format du produit et le premier canal de vente.</p>
                             <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
                                 {headers.map(header => (
                                     <div key={header} className="grid grid-cols-2 gap-4 items-center p-2 rounded-md hover:bg-gray-50">
@@ -373,14 +373,14 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
 
                     {!isLoading && step === 3 && (
                         <div>
-                            <h3 className="text-xl font-semibold mb-2">Étape 3: Prévisualisation et résolution</h3>
+                            <h3 className="text-xl font-semibold mb-2">Étape 3&nbsp;: Prévisualisation et résolution</h3>
                             <p className="text-gray-600 mb-6">
-                                Vérifiez chaque ligne : à quel produit, quel format et quel canal de vente elle correspond.
+                                Vérifiez chaque ligne&nbsp;: à quel produit, quel format et quel canal de vente elle correspond.
                                 Une ligne dont le format n'est pas résolu est désélectionnée par défaut — elle ne sera
                                 pas importée tant que vous ne la liez pas à un format existant.
                             </p>
                             <div className="flex items-center space-x-4 mb-4 p-2 bg-gray-50 rounded-md">
-                                <span className="text-sm font-medium text-gray-700">Sélections rapides:</span>
+                                <span className="text-sm font-medium text-gray-700">Sélections rapides&nbsp;:</span>
                                 <button onClick={handleDeselectAll} className="text-sm text-red-600 hover:underline">
                                     Tout désélectionner
                                 </button>
@@ -392,12 +392,12 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                                             <th className="p-2 w-12 text-center">
                                                 <input type="checkbox" checked={selectedItems.size === processedData.length && processedData.length > 0} onChange={handleSelectAll} className="h-4 w-4" />
                                             </th>
-                                            <th className="p-2 text-left">Produit</th>
-                                            <th className="p-2 text-left">Produit</th>
-                                            <th className="p-2 text-left">Format</th>
-                                            <th className="p-2 text-left">Canal</th>
-                                            <th className="p-2 text-right">Prix net</th>
-                                            <th className="p-2 text-right">Qté vendue</th>
+                                            <th className="p-2 text-center">Produit</th>
+                                            <th className="p-2 text-center">Produit</th>
+                                            <th className="p-2 text-center">Format</th>
+                                            <th className="p-2 text-center">Canal</th>
+                                            <th className="p-2 text-center">Prix net</th>
+                                            <th className="p-2 text-center">Quantité vendue</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
@@ -414,7 +414,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                                                             {existingProducts.map(p => <option key={p.id} value={p.id}>{p.platName}</option>)}
                                                         </select>
                                                     ) : (
-                                                        <span className="text-xs text-gray-500 italic">Lié à "{existingProducts.find(p => p.id === item.existingProductId)?.platName}"</span>
+                                                        <span className="text-xs text-gray-500 italic">Lié à «&nbsp;{existingProducts.find(p => p.id === item.existingProductId)?.platName}&nbsp;»</span>
                                                     )}
                                                 </td>
                                                 <td className="p-2">
@@ -436,7 +436,7 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                                                         <option value="ignore">-- Ignorer cette ligne --</option>
                                                     </select>
                                                 </td>
-                                                <td className="p-2 text-right">{formatCurrency(item.prixVente)} $</td>
+                                                <td className="p-2 text-right">{formatCurrency(item.prixVente)}&nbsp;$</td>
                                                 <td className="p-2 text-right">{item.quantitySold}</td>
                                             </tr>
                                         ))}
@@ -444,21 +444,21 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                                 </table>
                             </div>
                             <div className="mt-4 text-right text-sm font-semibold">
-                                <p>{selectedItems.size} item(s) sélectionné(s) pour l'importation.</p>
+                                <p>{selectedItems.size} élément(s) sélectionné(s) pour l'importation.</p>
                             </div>
                         </div>
                     )}
                     {!isLoading && step === 4 && (
                         <div className="text-center">
-                            <h3 className="text-xl font-semibold mb-4">Étape 4: Confirmation</h3>
+                            <h3 className="text-xl font-semibold mb-4">Étape 4&nbsp;: Confirmation</h3>
                             <div className="p-4 bg-gray-100 rounded-lg space-y-2 text-left max-w-md mx-auto">
-                                <p>Vous êtes sur le point de :</p>
+                                <p>Vous êtes sur le point de&nbsp;:</p>
                                 <ul className="list-disc list-inside">
                                     <li><strong>Mettre à jour</strong> {processedData.filter(item => selectedItems.has(item.id) && item.formatResolution !== 'ignore' && item.channelResolution !== 'ignore' && item.productStatus === 'update').length} format(s) existant(s) (prix net + volume par canal).</li>
                                     <li><strong>Ajouter</strong> {processedData.filter(item => selectedItems.has(item.id) && item.channelResolution !== 'ignore' && item.productStatus === 'new').length} nouveau(x) produit(s).</li>
                                     <li><strong>Créer</strong> {processedData.filter(item => selectedItems.has(item.id) && item.channelResolution === 'create').length} nouveau(x) canal(aux) de vente.</li>
                                 </ul>
-                                <p className="border-t pt-2 mt-2">Le <strong>répartition des ventes</strong> de TOUS les formats actifs sera recalculé à partir des volumes par canal déjà saisis (cet import + les précédents), et les <strong>revenus totaux</strong> seront ajustés en conséquence. <strong>Attention</strong> : un format dont aucun volume n'a encore été importé ou saisi apparaîtra à 0 % de répartition des ventes après cette opération, même s'il avait une valeur avant.</p>
+                                <p className="border-t pt-2 mt-2">Le <strong>répartition des ventes</strong> de TOUS les formats actifs sera recalculé à partir des volumes par canal déjà saisis (cet import + les précédents), et les <strong>revenus totaux</strong> seront ajustés en conséquence. <strong>Attention</strong>&nbsp;: un format dont aucun volume n'a encore été importé ou saisi apparaîtra à 0&nbsp;% de répartition des ventes après cette opération, même s'il avait une valeur avant.</p>
                             </div>
                             <p className="text-gray-600 my-8">
                                 Cette action modifiera vos produits et vos canaux de vente. Êtes-vous sûr de vouloir continuer ?
@@ -478,13 +478,13 @@ export const SalesReportImportWizardModal = ({ isOpen, onClose, onImportComplete
                             </button>
                         )}
                         {step === 3 && (
-                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un item." : ""}>
+                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un élément." : ""}>
                                 Suivant
                             </button>
                         )}
                         {step === 4 && (
                             <button onClick={handleConfirmImport} className="px-4 py-2 border rounded-md text-xs text-white bg-green-600 hover:bg-green-700">
-                                Confirmer et Importer
+                                Confirmer et importer
                             </button>
                         )}
                     </div>

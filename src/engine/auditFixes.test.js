@@ -30,8 +30,8 @@ const allocatedToActive = (data) => {
         + sum(act, (p) => sum(p.channelBreakdown, (cb) => P(cb.costIndirectChannelPerPortion) * P(cb.volume)));
 };
 
-describe('Audit de la méthode : correctifs du 19/11', () => {
-    it('base : les frais fixes du démo sont répartis en totalité sur les produits actifs', () => {
+describe('Audit de la méthode : correctifs du 19/11', () => {
+    it('base : les frais fixes du démo sont répartis en totalité sur les produits actifs', () => {
         const { data } = pipeline(getDefaultState());
         expect(allocatedToActive(data)).toBeCloseTo(28000, 1);
     });
@@ -44,7 +44,7 @@ describe('Audit de la méthode : correctifs du 19/11', () => {
         const inactive = data.productsWithCosts.find((p) => p.id === 'fmt_chili');
         expect(P(inactive.costs.costIndirectGeneralPerPortion)).toBe(0);
         expect(P(inactive.costs.costIndirectActivityPerPortion)).toBe(0);
-        // Par Activité / Par Canal : seulement les produits actifs
+        // Par activité / Par canal : seulement les produits actifs
         const activeRevenue = data.menuRevenue;
         const byActivity = computeActivitySummaries(data.productsWithCosts, state.productionActivities);
         const byChannel = computeChannelSummaries(data.productsWithCosts, state.salesChannels);
@@ -54,7 +54,7 @@ describe('Audit de la méthode : correctifs du 19/11', () => {
         expect(sum(byActivity, (s) => s.margeNetteTotal)).toBeCloseTo(sum(byChannel, (s) => s.margeNetteTotal), 2);
     });
 
-    it('2. des frais fixes partiellement répartis ne disparaissent pas : le reste va dans Général et est signalé', () => {
+    it('2. des frais fixes partiellement répartis ne disparaissent pas : le reste va dans Général et est signalé', () => {
         const state = getDefaultState();
         const l0 = state.expenseLines[0]; // loyer, 9 000 $ réparti à la main
         state.expenseLines[0] = { ...l0, repartitionKey: 'manual', activityAllocations: { general: 6000 }, channelAllocations: {} };
@@ -77,7 +77,7 @@ describe('Audit de la méthode : correctifs du 19/11', () => {
         expect(computeProjectChecks({ fixedCosts: pools.meta }).map((c) => c.id)).toContain('fixed-costs-over-allocated');
     });
 
-    it('3. le calcul du simulateur (mêmes pools, coûts simulés) répartit toujours 100 % des frais fixes', () => {
+    it('3. le calcul du simulateur (mêmes pools, coûts simulés) répartit toujours 100 % des frais fixes', () => {
         const state = getDefaultState();
         const shocked = applyCostShocks(state.ingredientsList, [{ type: 'ingredient', scope: 'all', percent: 15 }]);
         const base = pipeline(state);

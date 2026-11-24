@@ -58,7 +58,7 @@ test("Simulateur de chocs : portées 'par format'/'par activité' et tableaux d'
     expect(soupesDelta).toBeGreaterThan(saucesDelta);
 
     // Tableau "Impact par circuit de vente" : s'affiche aussi (3 canaux dans le projet démo).
-    const channelTable = page.locator('p', { hasText: 'Impact par circuit de vente' }).locator('xpath=following-sibling::table');
+    const channelTable = page.locator('p', { hasText: 'Impact par canal de vente' }).locator('xpath=following-sibling::table');
     await expect(channelTable.locator('tbody tr')).toHaveCount(3);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);

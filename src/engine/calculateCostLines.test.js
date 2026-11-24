@@ -49,7 +49,7 @@ describe('calculateCostLines', () => {
         expect(lines.packaging.length).toBe((p.packagingItems || []).length); // l'emballage d'un produit de revente est conservé (audit C11)
     });
 
-    it('ne change pas calculateCosts : même résultat qu\'avant, et le cache n\'embarque jamais le détail', () => {
+    it('ne change pas calculateCosts : même résultat qu\'avant, et le cache n\'embarque jamais le détail', () => {
         const p = product();
         const memo = {};
         const a = calculateCosts(p, info, [farine], [p], laborDatabase, null, memo, new Set(), null, [boite]);

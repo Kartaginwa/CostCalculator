@@ -63,7 +63,7 @@ describe('normalizeReportOptions', () => {
 });
 
 describe('enregistrement avec le projet', () => {
-    it('aller-retour : les options saisies sont retrouvées à la réouverture', () => {
+    it('aller-retour : les options saisies sont retrouvées à la réouverture', () => {
         const state = asProjectState(getDefaultState());
         state.uiSettings = { ...state.uiSettings, reportOptions: { title: 'Rapport T3', presentedTo: 'Banque Nord', chapters: ['1', '2', '7'], comments: { 2: 'Le creux d’août suit la hausse du bœuf.' }, includeSalaries: true } };
         const json = JSON.parse(JSON.stringify(buildProjectData(state)));

@@ -31,7 +31,7 @@ const INDICATOR_TIPS = {
 // Colonnes (une seule ligne par objectif, en-têtes alignés) : case à cocher, nom ou libellé, [indicateur], sens, valeur, valeur actuelle, état.
 const DEFAULT_COLS = '2rem minmax(0,1.7fr) 5rem 8.5rem minmax(0,0.9fr) minmax(0,1.5fr)';
 const CUSTOM_COLS = '2rem minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.2fr) 6rem 8.5rem minmax(0,0.9fr) minmax(0,1.4fr)';
-const headCls = 'grid gap-2 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500';
+const headCls = 'grid gap-2 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-center text-gray-500';
 
 const fmtValue = fmtObjValue;
 const inputCls = (bad) => `p-1.5 text-sm border rounded-md text-right ${bad ? 'border-red-500' : 'border-gray-300'}`;
@@ -84,7 +84,7 @@ const ObjectivesBody = ({ onClose }) => {
 
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center">Objectifs par défaut<Tooltip tip="obj.sens" /></h4>
                 <div className={headCls} style={{ gridTemplateColumns: DEFAULT_COLS }} aria-hidden="true">
-                    <span /><span>Objectif</span><span>Sens</span><span className="flex items-center justify-end gap-1"><span className="w-20 text-center">Valeur</span><span className="w-3" /></span><span className="pl-3">Actuel</span><span>État</span>
+                    <span /><span>Objectif</span><span>Sens</span><span className="flex items-center justify-center gap-1"><span className="w-20 text-center">Valeur</span><span className="w-3" /></span><span className="pl-3">Actuel</span><span>État</span>
                 </div>
                 <div className="space-y-1" data-testid="objectives-default">
                     {DEFAULT_OBJECTIVES.map(def => {
@@ -110,11 +110,11 @@ const ObjectivesBody = ({ onClose }) => {
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mt-5 mb-2 flex items-center">Objectifs sur mesure ({customs.length} sur {MAX_CUSTOM_OBJECTIVES})<Tooltip tip="obj.surMesure" /></h4>
                 {customs.length > 0 && (
                     <div className={headCls} style={{ gridTemplateColumns: CUSTOM_COLS }} aria-hidden="true">
-                        <span /><span>Nom (facultatif)</span><span>Indicateur</span><span>Sujet</span><span>Sens</span><span className="flex items-center justify-end gap-1"><span className="w-20 text-center">Valeur</span><span className="w-8" /></span><span className="pl-3">Actuel</span><span>État</span>
+                        <span /><span>Nom (facultatif)</span><span>Indicateur</span><span>Sujet</span><span>Sens</span><span className="flex items-center justify-center gap-1"><span className="w-20 text-center">Valeur</span><span className="w-8" /></span><span className="pl-3">Actuel</span><span>État</span>
                     </div>
                 )}
                 <div className="space-y-1" data-testid="objectives-custom">
-                    {customs.length === 0 && <p className="text-sm text-gray-500 p-2">Aucun objectif sur mesure. Choisissez un indicateur (au besoin, un sujet précis : un ingrédient, un poste, un canal…), un sens et une valeur.</p>}
+                    {customs.length === 0 && <p className="text-sm text-gray-500 p-2">Aucun objectif sur mesure. Choisissez un indicateur (au besoin, un sujet précis&nbsp;: un ingrédient, un poste, un canal…), un sens et une valeur.</p>}
                     {customs.map(c => {
                         const o = list.find(x => x.key === c.id);
                         if (!o) return null;

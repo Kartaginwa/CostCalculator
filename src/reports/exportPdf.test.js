@@ -5,7 +5,7 @@ import { suggestedReportName, saveReportPdf, hasPrintBridge } from './exportPdf.
 afterEach(() => { delete globalThis.window; });
 
 describe('suggestedReportName', () => {
-    it('« Rapport - entreprise - date.pdf », sans caractère interdit', () => {
+    it('« Rapport - entreprise - date.pdf », sans caractère interdit', () => {
         expect(suggestedReportName('Boréal Mets Préparés inc.', new Date(2026, 10, 22))).toBe('Rapport - Boréal Mets Préparés inc. - 2026-11-22.pdf');
         expect(suggestedReportName('A/B:C*', new Date(2026, 0, 5))).toBe('Rapport - A B C - 2026-01-05.pdf');
         expect(suggestedReportName('', new Date(2026, 0, 5))).toBe('Rapport - 2026-01-05.pdf');

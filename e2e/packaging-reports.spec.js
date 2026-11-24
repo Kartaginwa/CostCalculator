@@ -22,8 +22,8 @@ test('exports PDF/Excel avec un emballage rattaché à un format : pas d\'erreur
     await packagingSection.locator('#tutorial-add-packaging-to-recipe').click();
     await page.waitForTimeout(200);
     const newRow = packagingSection.locator('tbody tr').last();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').click();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').fill('Pot de verre 500 ml');
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').click();
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').fill('Pot de verre 500 ml');
     await page.locator('li:has-text("Pot de verre 500 ml")').first().click();
     await newRow.locator('input[inputmode="decimal"]').first().fill('1');
     await page.waitForTimeout(300);

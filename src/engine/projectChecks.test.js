@@ -9,7 +9,7 @@ describe('computeProjectChecks', () => {
         const products = [{ platName: 'A', formats: [fmt({ salesMix: 60 })] }, { platName: 'B', formats: [fmt({ salesMix: 40 })] }];
         expect(computeProjectChecks({ products })).toEqual([]);
     });
-    it('signale un mix ≠ 100 %, un SKU sans prix et un produit sans nom', () => {
+    it('signale un mix ≠ 100 %, un SKU sans prix et un produit sans nom', () => {
         const products = [{ platName: '', formats: [fmt({ salesMix: 30, prixVente: 0 })] }];
         const ids = computeProjectChecks({ products }).map(c => c.id);
         expect(ids).toEqual(expect.arrayContaining(['unnamed-products', 'no-sale-price', 'sales-mix']));
@@ -31,7 +31,7 @@ describe('computeProjectChecks', () => {
 });
 
 // Intégrité des données (19/11, audit complémentaire) : des erreurs que le calcul absorbait sans bruit.
-describe('computeProjectChecks : intégrité des données', () => {
+describe('computeProjectChecks : intégrité des données', () => {
     const ingredients = [{ id: 'ing_riz', name: 'Riz', unit: 'kg', purchasePrice: 3 }];
     const packaging = [{ id: 'pkg_sac', name: 'Sac', unit: 'unité', purchasePrice: 0.2 }];
     const recipeProduct = (rows = {}) => ({
@@ -54,7 +54,7 @@ describe('computeProjectChecks : intégrité des données', () => {
         const useGone = recipeProduct({ ingredients: [{ id: 'ing_disparu', quantity: 1, recipeUnit: 'kg' }] });
         const check = computeProjectChecks({ products: [useGone], baseIngredients: ingredients }).find(c => c.id === 'missing-references');
         expect(check.message).toMatch(/Plat/);
-        expect(check.message).toMatch(/0 \$/);
+        expect(check.message).toMatch(/0\u00A0\$/);
     });
     it('signale un emballage supprimé', () => {
         const product = recipeProduct({ packagingItems: [{ id: 'pkg_gone', quantity: 1, recipeUnit: 'unité' }] });
@@ -66,7 +66,7 @@ describe('computeProjectChecks : intégrité des données', () => {
         const sameFamily = recipeProduct({ ingredients: [{ id: 'ing_riz', quantity: 1, recipeUnit: 'lb' }] });
         expect(run({ products: [sameFamily] })).not.toContain('unit-mismatch');
     });
-    it('signale une perte de 100 % ou plus', () => {
+    it('signale une perte de 100 % ou plus', () => {
         expect(run({ baseIngredients: [{ id: 'a', name: 'Lait', unit: 'L', purchasePrice: 2, lossPercentage: 100 }] })).toContain('loss-100');
         expect(run({ baseIngredients: [{ id: 'a', name: 'Lait', unit: 'L', purchasePrice: 2, lossPercentage: 99 }] })).not.toContain('loss-100');
     });
@@ -94,7 +94,7 @@ describe('computeProjectChecks : intégrité des données', () => {
 });
 
 // Contrôles ajoutés le 20/11 (audit, constats 6 et 7).
-describe('computeProjectChecks : volumes et prix à 0 $', () => {
+describe('computeProjectChecks : volumes et prix à 0 $', () => {
     it('signale un SKU actif sans aucun volume vendu (un % des ventes seul ne suffit pas)', () => {
         const noVolume = [{ platName: 'Sauce', formats: [fmt({ salesMix: 100, indirectCosts: { portionsSold: 0 }, channelPrices: [{ channelId: 'c', netPrice: 5, volume: 0 }] })] }];
         const checks = computeProjectChecks({ products: noVolume });
@@ -107,7 +107,7 @@ describe('computeProjectChecks : volumes et prix à 0 $', () => {
         const inactive = [{ platName: 'Bouillon', formats: [fmt({ onMenu: false, salesMix: 0, indirectCosts: { portionsSold: 0 } })] }];
         expect(computeProjectChecks({ products: inactive }).map(c => c.id)).not.toContain('no-volume');
     });
-    it('signale un volume vendu à un prix net de 0 $ (produit offert, à confirmer)', () => {
+    it('signale un volume vendu à un prix net de 0 $ (produit offert, à confirmer)', () => {
         const free = [{ platName: 'Échantillon', formats: [fmt({ salesMix: 100, channelPrices: [{ channelId: 'c', netPrice: 0, volume: 25 }] })] }];
         const checks = computeProjectChecks({ products: free });
         expect(checks.map(c => c.id)).toContain('sold-at-zero');
@@ -117,7 +117,7 @@ describe('computeProjectChecks : volumes et prix à 0 $', () => {
 });
 
 // Contrôles ajoutés le 20/11 (audit, constats 8 et 9).
-describe('computeProjectChecks : boucles, quantité produite, quantités négatives', () => {
+describe('computeProjectChecks : boucles, quantité produite, quantités négatives', () => {
     const run = (args) => computeProjectChecks(args).map(c => c.id);
     it('signale une boucle de sous-recettes avec les noms des produits concernés', () => {
         const a = { id: 'a', platName: 'Sauce A', isIngredient: true, formats: [fmt({ id: 'fa', ingredients: [{ id: 'fb', quantity: 1 }] })] };
@@ -151,7 +151,7 @@ describe('computeProjectChecks : boucles, quantité produite, quantités négati
         expect(run({ basePackaging: [{ name: 'Sac', purchasePrice: 'abc' }] })).toContain('unreadable-price');
         expect(run({ baseIngredients: [{ name: 'A', purchasePrice: '' }, { name: 'B', purchasePrice: 1e-7 }, { name: 'C', purchasePrice: '12,50' }, { name: 'Sous', isRecipe: true, purchasePrice: 'abc' }] })).not.toContain('unreadable-price');
     });
-    it('signale un rendement à 0 % ou illisible, pas un rendement vide ou à 100 %', () => {
+    it('signale un rendement à 0 % ou illisible, pas un rendement vide ou à 100 %', () => {
         const zero = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: 1, yieldPercentage: '0' }] })] }];
         expect(run({ products: zero })).toContain('yield-zero');
         const bad = [{ platName: 'Plat', formats: [fmt({ ingredients: [{ id: 'x', quantity: 1, yieldPercentage: 'abc' }] })] }];

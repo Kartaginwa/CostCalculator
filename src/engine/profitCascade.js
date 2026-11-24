@@ -1,5 +1,5 @@
 // Cascade « du revenu au bénéfice net » et « sur chaque dollar de vente » (phase 2 de la refonte de l'export PDF, 22/11).
-// AUCUN calcul de donnée : on met en série les totaux que computeChannelSummaries (analysisData.js) calcule déjà pour le rapport Par Canal, en les
+// AUCUN calcul de donnée : on met en série les totaux que computeChannelSummaries (analysisData.js) calcule déjà pour le rapport Par canal, en les
 // additionnant sur les canaux. Les identités (revenu − charges directes = bénéfice brut ; bénéfice brut − frais fixes − vieillissement = bénéfice net)
 // sont celles de aggregateSegmentRows : un test les vérifie.
 // Une donnée absente reste absente : sans canal avec ventes, la fonction renvoie null.

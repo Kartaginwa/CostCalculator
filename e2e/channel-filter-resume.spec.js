@@ -77,7 +77,7 @@ test('Rapport : Vue d\'ensemble (matrice de marges nettes par canal), Par SKU (c
     const bySku = page.locator('#tutorial-section-summary-bysku');
     await bySku.locator('#summarySkuSelect').selectOption({ label: 'Poulet général Tao, riz et légumes' });
     await page.waitForTimeout(300);
-    await expect(bySku.getByText('Coût de Production (total)')).toBeVisible();
+    await expect(bySku.getByText('Coût de production (total)')).toBeVisible();
     await expect(bySku.locator('th', { hasText: 'Grande distribution' })).toBeVisible();
     await expect(bySku.getByText('Point mort')).toBeVisible();
 

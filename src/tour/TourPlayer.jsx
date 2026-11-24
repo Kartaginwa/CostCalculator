@@ -356,7 +356,7 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
                     pendingRef.current = pendingRef.current.filter((p) => {
                         if (el - p.since <= RETRY_MS) return !run(p.s);
                         // un geste dont la cible n'existe pas : abandonné sans bruit, mais consigné (les tests le vérifient)
-                        (window.__tourMisses = window.__tourMisses || []).push(`${scene.id} : ${p.s.do} ${JSON.stringify(p.s.target)}`);
+                        (window.__tourMisses = window.__tourMisses || []).push(`${scene.id}\u00A0: ${p.s.do} ${JSON.stringify(p.s.target)}`);
                         return false;
                     });
                 }
@@ -553,7 +553,7 @@ export const TourPlayer = ({ rootRef, onExit, onResetApp }) => {
             <div ref={barRef} data-testid="tour-controls" className="fixed bottom-0 inset-x-0 z-[130] bg-gray-900/95 text-gray-200 backdrop-blur" style={{ height: BAR_H }}>
                 <div className="flex gap-0.5 h-1.5" role="group" aria-label="Chapitres">
                     {CHAPTER_RANGES.map((c, ci) => (
-                        <button key={CHAPTERS[ci].id} onClick={() => { goTo(c.first); setPlay(true); }} title={CHAPTERS[ci].title} aria-label={`Chapitre : ${CHAPTERS[ci].title}`}
+                        <button key={CHAPTERS[ci].id} onClick={() => { goTo(c.first); setPlay(true); }} title={CHAPTERS[ci].title} aria-label={`Chapitre\u00A0: ${CHAPTERS[ci].title}`}
                             className="relative h-1.5 bg-gray-700 hover:h-2.5 hover:bg-gray-600 transition-all overflow-hidden" style={{ flexGrow: c.end - c.start, flexBasis: 0 }}>
                             <span ref={(el) => { segFills.current[ci] = el; }} className="absolute left-0 top-0 h-full bg-blue-500" style={{ width: 0 }} />
                         </button>

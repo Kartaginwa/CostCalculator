@@ -60,7 +60,7 @@ test('Onglets de saisie : les rapports ont quitté la page, sans phrase de renvo
     // Ingrédients : plus d'ABC, de rapport d'achats ni de renvoi.
     await page.locator('#tab-ingredients').click();
     await expect(page.getByText('Analyse ABC des ingrédients')).toHaveCount(0);
-    await expect(page.getByText("Rapport d'achats et perte stock")).toHaveCount(0);
+    await expect(page.getByText("Rapport d'achats et perte en stock")).toHaveCount(0);
     await expect(page.getByText(/se trouvent dans/)).toHaveCount(0);
     // Emballage.
     await page.locator('#tab-packaging').click();

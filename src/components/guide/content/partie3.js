@@ -28,8 +28,8 @@ export const partie3 = {
                         ['{{Vue d\'ensemble}}', 'Comment va mon entreprise, et mes résultats réels suivent-ils mon modèle ?'],
                         ['{{Portefeuille}}', 'Quels produits sont stratégiques, lesquels rapportent le plus, où perd-on ?'],
                         ['{{Par SKU}}', 'Comment un produit se comporte-t-il dans chacun de ses canaux ?'],
-                        ['{{Par Activité}}', 'Quelle activité de production est rentable ?'],
-                        ['{{Par Canal}}', 'Quel circuit de vente est rentable ?'],
+                        ['{{Par activité}}', 'Quelle activité de production est rentable ?'],
+                        ['{{Par canal}}', 'Quel canal de vente est rentable ?'],
                         ['{{Ingrédients}} et {{Emballages}}', 'Où va mon argent d\'achat, combien dois-je acheter, quels prix bougent ?'],
                         ['{{Main-d\'œuvre}}', 'Mon équipe est-elle bien utilisée, et où part son temps ?'],
                         ['{{Simulation}}', 'Et si mes coûts augmentaient de 8 % ?'],
@@ -82,11 +82,11 @@ export const partie3 = {
                 { type: 'p', text: 'Six tuiles résument vos produits :' },
                 {
                     type: 'table', head: ['Tuile', 'Ce qu\'elle mesure', 'Projet démo'], wrapCells: true, rowIds: ['guide-kpi-matiere', 'guide-kpi-emballage', 'guide-kpi-mo', 'guide-kpi-marge-brute', 'guide-kpi-point-mort', 'guide-kpi-marge-securite'], rows: [
-                        ['{{Coût Matière Moyen Pondéré}}', 'La part du prix de vente que représente, en moyenne, le coût matière de tous vos produits.', d(DEMO.apercu.coutMatiere)],
-                        ['{{Coût Emballage Moyen Pondéré}}', 'Idem pour l\'emballage.', d(DEMO.apercu.coutEmballage)],
-                        ['{{Coût Main-d\'œuvre Moyen Pondéré}}', 'Idem pour la main-d\'œuvre.', d(DEMO.apercu.coutMO)],
-                        ['{{Marge Brute Moyenne Pondérée}}', 'La marge brute moyenne des produits actifs.', d(DEMO.apercu.margeBrute)],
-                        ['{{Point Mort des Produits Actifs}}', 'Le chiffre d\'affaires que les produits actifs doivent générer pour couvrir l\'ensemble des frais fixes et de la main-d\'œuvre directe qui lui sont alloués.', d(DEMO.apercu.pointMortMenu)],
+                        ['{{Coût matière moyen pondéré}}', 'La part du prix de vente que représente, en moyenne, le coût matière de tous vos produits.', d(DEMO.apercu.coutMatiere)],
+                        ['{{Coût emballage moyen pondéré}}', 'Idem pour l\'emballage.', d(DEMO.apercu.coutEmballage)],
+                        ['{{Coût main-d\'œuvre moyen pondéré}}', 'Idem pour la main-d\'œuvre.', d(DEMO.apercu.coutMO)],
+                        ['{{Marge brute moyenne pondérée}}', 'La marge brute moyenne des produits actifs.', d(DEMO.apercu.margeBrute)],
+                        ['{{Point mort des produits actifs}}', 'Le chiffre d\'affaires que les produits actifs doivent générer pour couvrir l\'ensemble des frais fixes et de la main-d\'œuvre directe qui leur sont alloués.', d(DEMO.apercu.pointMortMenu)],
                         ['{{Marge de sécurité}}', 'De combien vos ventes prévues peuvent baisser avant d\'atteindre le point mort : (ventes prévues − point mort) ÷ ventes prévues.', d(DEMO.apercu.margeSecurite)],
                     ],
                 },
@@ -102,10 +102,10 @@ export const partie3 = {
                 { type: 'p', text: `Les **constats** disent ce que vos chiffres révèlent de votre entreprise, en **forces** (ce qui va bien) et en **faiblesses** (ce qui mérite votre attention). Ils ne viennent pas d'une intelligence artificielle : ce sont des règles fixes, appliquées à vos données, avec un chiffre et un lien vers l'endroit où agir. Chaque constat a une seule adresse principale, pour ne pas se répéter d'un rapport à l'autre : la Vue d'ensemble porte l'entreprise dans son ensemble, en trois blocs placés chacun sous le rapport qu'il commente, et chaque autre sous-onglet (sauf Simulation) se termine par un bandeau avec ses propres constats. Tous ont la même forme : deux colonnes, le positif à gauche, le négatif à droite.` },
                 {
                     type: 'ul', items: [
-                        { label: 'Objectifs stratégiques (sous les tuiles).', text: `Vos objectifs : ceux que vous atteignez, ceux qui restent à atteindre, et les produits qui dépassent la cible de coût matière. Il peut s'agir des cibles de coûts, de la marge brute, de la marge nette, du taux d'utilisation, de la paie non utilisée, de la perte stock, des frais fixes, ou de vos propres objectifs (voir {{Gérer les objectifs}} dans Paramètres).` },
+                        { label: 'Objectifs stratégiques (sous les tuiles).', text: `Vos objectifs : ceux que vous atteignez, ceux qui restent à atteindre, et les produits qui dépassent la cible de coût matière. Il peut s'agir des cibles de coûts, de la marge brute, de la marge nette, du taux d'utilisation, de la paie non utilisée, de la perte en stock, des frais fixes, ou de vos propres objectifs (voir {{Gérer les objectifs}} dans Paramètres).` },
                         { label: 'Amélioration / détérioration (sous l\'évolution des marges).', text: `Ce qui change dans l'entreprise : la marge brute, la marge nette, les coûts, les revenus et le point mort, depuis votre dernier point de référence, en tendance quand la mesure va dans le même sens sur plusieurs relevés, et sur 12 mois. Ce bloc demande au moins un point de référence.` },
                         { label: 'Forces et faiblesses (sous la matrice activité × canal).', text: `Les constats de gravité majeure : la marge de sécurité et le bénéfice net prévu, la résistance à une hausse de coûts, la paie non utilisée, l'écart entre le réel et le modèle, et les constats majeurs d'un produit, d'un canal ou d'un fournisseur. Ce sont les mêmes règles que le chapitre 1 du rapport PDF.` },
-                        { label: 'Bandeau de fin de sous-onglet.', text: `Dans Portefeuille, Par SKU, Par Activité, Par Canal, Ingrédients, Emballages et Main-d'œuvre : les constats propres à ce sous-onglet, de toutes les gravités, du plus grave au moins grave. Les constats généraux de gravité moyenne ou mineure qui ne renvoient à aucun sous-onglet (la part des frais fixes, par exemple) ne figurent que dans le rapport PDF. Dans Par SKU, le bandeau suit le SKU choisi.` },
+                        { label: 'Bandeau de fin de sous-onglet.', text: `Dans Portefeuille, Par SKU, Par activité, Par canal, Ingrédients, Emballages et Main-d'œuvre : les constats propres à ce sous-onglet, de toutes les gravités, du plus grave au moins grave. Les constats généraux de gravité moyenne ou mineure qui ne renvoient à aucun sous-onglet (la part des frais fixes, par exemple) ne figurent que dans le rapport PDF. Dans Par SKU, le bandeau suit le SKU choisi.` },
                     ],
                 },
                 { type: 'p', text: `Chaque colonne affiche les trois constats les plus importants ; le lien {{Voir tout}}, suivi du nombre de constats, ouvre une fenêtre qui les montre tous, regroupés par thème. Le classement tient d'abord à la gravité de la décision : la survie de l'entreprise (le point mort, une perte) passe avant les moteurs de profit, puis l'efficacité ; à gravité égale, les dollars en jeu départagent. Les seuils qui déclenchent un constat (un fournisseur à 30 % des achats ou plus, une marge de sécurité sous 10 %, par exemple) sont des repères de gestion courants, pas des normes : jugez-les selon votre réalité.` },
@@ -185,10 +185,10 @@ export const partie3 = {
                 { type: 'callout', kind: 'attention', text: 'La marge utilisée ici est la marge **brute** en dollars par unité, avant les frais fixes. Un produit « rentable » dans la matrice peut quand même avoir une marge nette négative dans un canal coûteux : confirmez toujours dans le rapport Par SKU.' },
 
                 { type: 'h', id: 'guide-rapport-contribution', text: 'Classement par contribution totale au profit' },
-                { type: 'p', text: 'Ce graphique à barres classe vos produits non par leur pourcentage de marge, mais par le **montant total en dollars** qu\'ils génèrent pour payer vos frais fixes : marge brute par unité × unités vendues. Il révèle vos véritables piliers financiers : un produit à 20 % de marge qui se vend en très grandes quantités peut peser plus qu\'un produit à 50 % qui se vend peu. Le nombre de produits affichés se règle en bas du graphique ({{Items par page}}, boutons {{Précédent}} et {{Suivant}}).' },
+                { type: 'p', text: 'Ce graphique à barres classe vos produits non par leur pourcentage de marge, mais par le **montant total en dollars** qu\'ils génèrent pour payer vos frais fixes : marge brute par unité × unités vendues. Il révèle vos véritables piliers financiers : un produit à 20 % de marge qui se vend en très grandes quantités peut peser plus qu\'un produit à 50 % qui se vend peu. Le nombre de produits affichés se règle en bas du graphique ({{Éléments par page}}, boutons {{Précédent}} et {{Suivant}}).' },
 
                 { type: 'h', id: 'guide-rapport-matrice-sku', text: 'Marges nettes des SKUs par canaux' },
-                { type: 'p', text: 'Ce tableau donne la marge nette, en % du prix de vente, de chaque produit dans chacun de ses canaux. Le bouton {{Éditer le produit}} d\'une ligne ouvre la fiche du produit dans l\'onglet Production. Un « — » signifie que ce produit n\'est pas vendu dans ce canal : jamais un zéro inventé. Des codes de couleur permettent de repérer d\'un coup d\'œil les combinaisons qui font gagner ou perdre de l\'argent.' },
+                { type: 'p', text: 'Ce tableau donne la marge nette, en % du prix de vente, de chaque produit dans chacun de ses canaux. Le bouton {{Modifier le produit}} d\'une ligne ouvre la fiche du produit dans l\'onglet Production. Un « — » signifie que ce produit n\'est pas vendu dans ce canal : jamais un zéro inventé. Des codes de couleur permettent de repérer d\'un coup d\'œil les combinaisons qui font gagner ou perdre de l\'argent.' },
                 { type: 'callout', kind: 'pourquoi', text: 'Un produit peut être rentable dans un canal et perdre de l\'argent dans un autre. Cette matrice montre où se cachent vos pertes.' },
                 { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : la matrice (quels produits sont stratégiques), la contribution (qui paie les frais fixes), les marges par canal (où l\'on perd).' },
                 { type: 'words', items: [
@@ -237,7 +237,7 @@ export const partie3 = {
                         { id: 'guide-sku-ligne-point-mort', term: 'Point mort', def: 'Le nombre d\'unités à vendre dans ce canal pour couvrir la part des frais fixes attribuée à ce produit (la main-d\'œuvre de production étant traitée comme fixe pour la période).' },
                     ],
                 },
-                { type: 'p', text: 'Sous le tableau, un graphique montre l\'évolution des coûts et de la marge nette de ce produit d\'un point de référence à l\'autre. Le bouton {{Éditer ce SKU dans Production}} ouvre sa fiche.' },
+                { type: 'p', text: 'Sous le tableau, un graphique montre l\'évolution des coûts et de la marge nette de ce produit d\'un point de référence à l\'autre. Le bouton {{Modifier ce SKU dans Production}} ouvre sa fiche.' },
                 { type: 'h', id: 'guide-sku-exemple', text: 'Lire un exemple complet : le Chili con carne mijoté' },
                 { type: 'p', text: `Le coût de production du Chili est de ${d(DEMO.chili.coutProduction)} par unité, quel que soit le canal. Voici ce qui se passe ensuite, canal par canal.` },
                 {
@@ -271,9 +271,9 @@ export const partie3 = {
         // =====================================================================================
         {
             id: 'guide-rapport-activite-canal',
-            title: 'Par Activité et Par Canal',
+            title: 'Par activité et Par canal',
             blocks: [
-                { type: 'p', text: 'Ces deux sous-onglets ont la même mise en page que Par SKU, mais pour un **segment** plutôt qu\'un seul produit : « Par Activité » présente chaque activité de production, réduite à son propre total (tous canaux confondus) ; « Par Canal » fait de même pour vos canaux de vente. Les colonnes sont classées par bénéfice net décroissant : le segment le plus rentable en premier.' },
+                { type: 'p', text: 'Ces deux sous-onglets ont la même mise en page que Par SKU, mais pour un **segment** plutôt qu\'un seul produit : « Par activité » présente chaque activité de production, réduite à son propre total (tous canaux confondus) ; « Par canal » fait de même pour vos canaux de vente. Les colonnes sont classées par bénéfice net décroissant : le segment le plus rentable en premier.' },
                 { type: 'p', text: 'Ils diffèrent volontairement de Par SKU sur quatre points :' },
                 {
                     type: 'ul', items: [
@@ -296,9 +296,9 @@ export const partie3 = {
                         { id: 'guide-seg-ligne-point-mort', term: 'Point mort', def: 'Le revenu que ce segment doit générer pour couvrir ses frais fixes (dont la main-d\'œuvre, traitée comme fixe pour la période). Il s\'exprime en **dollars de revenu**, pas en unités : des produits très différents n\'ont pas d\'unité de vente commune. La méthode est celle du ratio de marge de contribution pondéré en dollars, la même que pour le point mort des produits actifs.' },
                     ],
                 },
-                { type: 'h', id: 'guide-activite-main-oeuvre', text: 'La section Main-d\'œuvre de Par Activité' },
+                { type: 'h', id: 'guide-activite-main-oeuvre', text: 'La section Main-d\'œuvre de Par activité' },
                 { type: 'p', text: 'Sous le tableau, une section {{Main-d\'œuvre}} ajoute trois lignes pour chaque activité : les **heures de main-d\'œuvre** réellement requises, leur **part** du total et le **bénéfice brut par heure**. Elle montre quelle activité rentabilise le mieux le temps de l\'équipe. Les produits de revente, qui n\'ont aucune main-d\'œuvre, sont exclus du bénéfice brut par heure.' },
-                { type: 'h', id: 'guide-activite-exemple', text: 'Lire Par Activité : le projet démo' },
+                { type: 'h', id: 'guide-activite-exemple', text: 'Lire Par activité : le projet démo' },
                 {
                     type: 'table', head: ['', 'Mets principaux surgelés', 'Soupes et potages', 'Sauces et accompagnements'], rows: [
                         ['Revenu total', d(A.plats.revenu), d(A.soupes.revenu), d(A.sauces.revenu)],
@@ -310,7 +310,7 @@ export const partie3 = {
                     ],
                 },
                 { type: 'p', text: 'Les trois activités sont rentables, mais pas autant : les mets principaux surgelés ont une marge nette de 11,01 % et portent l\'entreprise, les soupes et potages de 4,89 % et les sauces et accompagnements de 1,35 % seulement. Ces deux dernières ont une marge brute semblable (autour de 40 %), mais leurs frais fixes (7 580,81 $ et 4 734,65 $) en absorbent presque tout. Leur point mort (19 453,51 $ et 12 040,16 $) est proche de leur chiffre d\'affaires réel (20 829,93 $ et 12 447,00 $) : la moindre baisse de volume ou de prix les ferait passer sous le seuil de rentabilité.' },
-                { type: 'h', id: 'guide-canal-exemple', text: 'Lire Par Canal : le projet démo' },
+                { type: 'h', id: 'guide-canal-exemple', text: 'Lire Par canal : le projet démo' },
                 {
                     type: 'table', head: ['', 'Vente directe', 'Épiceries', 'Grandes surfaces'], rows: [
                         ['Revenu total', d(C.directe.revenu), d(C.epiceries.revenu), d(C.grandes.revenu)],
@@ -321,7 +321,7 @@ export const partie3 = {
                 },
                 { type: 'p', text: 'Les grandes surfaces représentent près de 60 % du chiffre d\'affaires des produits actifs, mais ne dégagent qu\'une marge nette de 1,98 % (915,81 $). La vente directe, la plus petite, est la plus rentable (marge nette de 26,76 %). Remarquez que la somme des bénéfices nets des canaux (3 448,69 $ + 1 934,99 $ + 915,81 $) est de 6 299,49 $, soit, à un cent d\'arrondi près, le bénéfice net théorique de la réconciliation (6 299,48 $). Les trois rapports (par SKU, par activité, par canal) se recoupent.' },
                 { type: 'callout', kind: 'pourquoi', text: 'Ces deux rapports transforment des dizaines de produits en quelques lignes lisibles, celles sur lesquelles on peut agir : revoir le prix d\'une activité, renégocier un canal, ou décider d\'en abandonner un.' },
-                { type: 'callout', kind: 'retenir', text: 'Par Activité et Par Canal additionnent vos produits en segments. Comparez la marge nette des segments : ceux qui perdent de l\'argent sont vos priorités.' },
+                { type: 'callout', kind: 'retenir', text: 'Par activité et Par canal additionnent vos produits en segments. Comparez la marge nette des segments : ceux qui perdent de l\'argent sont vos priorités.' },
             ],
         },
 
@@ -330,43 +330,43 @@ export const partie3 = {
             id: 'guide-rapport-intrants',
             title: 'Ingrédients et Emballages : vos achats',
             blocks: [
-                { type: 'callout', kind: 'pourquoi', text: 'Les sous-onglets {{Ingrédients}} et {{Emballages}} ont le même gabarit, et ils restent séparés : l\'emballage n\'est jamais fusionné avec la matière. Chacun répond à trois questions : où va l\'argent (analyse ABC), combien faut-il acheter (rapport d\'achats et perte stock), et les prix bougent-ils (évolution et volatilité).' },
+                { type: 'callout', kind: 'pourquoi', text: 'Les sous-onglets {{Ingrédients}} et {{Emballages}} ont le même gabarit, et ils restent séparés : l\'emballage n\'est jamais fusionné avec la matière. Chacun répond à trois questions : où va l\'argent (analyse ABC), combien faut-il acheter (rapport d\'achats et perte en stock), et les prix bougent-ils (évolution et volatilité).' },
                 { type: 'h', id: 'guide-ing-abc', text: 'L\'analyse ABC des ingrédients' },
                 { type: 'p', text: 'L\'analyse ABC classe vos ingrédients par importance financière (voir [[guide-concept-suivi|chapitre 11]] pour la méthode). Trois cartes présentent les catégories A, B et C, avec la part de chaque ingrédient dans le coût total consommé. Un badge {{volatile}} s\'ajoute aux ingrédients dont le prix bouge beaucoup (il faut au moins deux points de référence pour qu\'il apparaisse).' },
                 { type: 'callout', kind: 'exemple', text: `Dans le projet démo, la catégorie A compte cinq ingrédients (bœuf haché, poitrine de poulet, filet de saumon, crème 35 % et riz basmati) pour ${d(DEMO.ingredients.abcA)} du coût total. Les quatre premiers n'atteignent que 68,6 % : le riz basmati, qui franchit la barre des 70 %, est inclus dans la catégorie A.` },
                 { type: 'p', text: 'L\'analyse porte uniquement sur les ingrédients **réellement consommés** par vos produits actifs, compte tenu des volumes vendus : un ingrédient qui ne sert à aucune recette n\'y figure pas.' },
 
-                { type: 'h', id: 'guide-ing-rapport-achats', text: 'Le rapport d\'achats et perte stock' },
+                { type: 'h', id: 'guide-ing-rapport-achats', text: 'Le rapport d\'achats et perte en stock' },
                 { type: 'p', text: 'Ce rapport estime ce que vous devez acheter pour la période, en partant de vos recettes et de vos ventes : pour chaque ingrédient, la quantité requise est la quantité de la recette multipliée par le nombre de lots à produire, ce nombre se déduisant des volumes saisis dans Produits et SKUs. Trois totaux, pour tous les fournisseurs, s\'affichent en premier :' },
                 {
                     type: 'ul', items: [
                         { label: 'Coût net total (production).', text: 'La valeur de la matière réellement utilisée dans vos produits.' },
-                        { label: 'Coût total de la perte stock.', text: 'La valeur de ce qui se perd en stock avant utilisation.' },
+                        { label: 'Coût total de la perte en stock.', text: 'La valeur de ce qui se perd en stock avant utilisation.' },
                         { label: 'Coût d\'achat total requis.', text: 'La somme des deux : ce qu\'il faut réellement acheter, et donc budgéter.' },
                     ],
                 },
-                { type: 'callout', kind: 'attention', text: 'La **perte stock** est **prévue**, pas mesurée : c\'est le taux de perte saisi dans le catalogue, appliqué aux quantités que vos ventes requièrent. La perte réellement constatée se lit dans la {{Réconciliation réel / théorique}} de la Vue d\'ensemble.' },
-                { type: 'p', text: `Dans le projet démo : ${d(DEMO.ingredients.coutNet)} de coût net, ${d(DEMO.ingredients.pertes)} de perte stock, soit ${d(DEMO.ingredients.achatRequis)} d'achats requis.` },
+                { type: 'callout', kind: 'attention', text: 'La **perte en stock** est **prévue**, pas mesurée : c\'est le taux de perte saisi dans le catalogue, appliqué aux quantités que vos ventes requièrent. La perte réellement constatée se lit dans la {{Réconciliation réel / théorique}} de la Vue d\'ensemble.' },
+                { type: 'p', text: `Dans le projet démo : ${d(DEMO.ingredients.coutNet)} de coût net, ${d(DEMO.ingredients.pertes)} de perte en stock, soit ${d(DEMO.ingredients.achatRequis)} d'achats requis.` },
                 { type: 'h', id: 'guide-rapport-fournisseurs', text: 'Achats par fournisseur', level: 5 },
                 { type: 'p', text: 'Un premier tableau montre, pour chaque fournisseur, son coût d\'achat requis et sa **part des achats**. Une barre orange et la mention {{dépendance}} signalent un fournisseur qui pèse 30 % ou plus des achats : s\'il fait défaut ou augmente ses prix, une grande part de vos achats est touchée. C\'est aussi votre levier de négociation. Les achats dont le fournisseur n\'est pas renseigné sont regroupés sous « Non spécifié ».' },
                 { type: 'callout', kind: 'exemple', text: 'Dans le projet démo, la Boucherie Nordique pèse 50 % des achats d\'ingrédients : c\'est une dépendance.' },
-                { type: 'p', text: 'Le tableau de détail réunit toutes les lignes, tous fournisseurs confondus. Un clic sur un titre de colonne le trie ; il est trié par défaut sur le {{Coût perte stock}}, du plus élevé au plus faible : les pertes les plus coûteuses sont en haut. La liste {{Fournisseur}} limite le détail à un seul fournisseur, et le nombre de lignes par page se règle en bas.' },
+                { type: 'p', text: 'Le tableau de détail réunit toutes les lignes, tous fournisseurs confondus. Un clic sur un titre de colonne le trie ; il est trié par défaut sur le {{Coût de perte en stock}}, du plus élevé au plus faible : les pertes les plus coûteuses sont en haut. La liste {{Fournisseur}} limite le détail à un seul fournisseur, et le nombre de lignes par page se règle en bas.' },
                 {
                     type: 'table', caption: 'Les colonnes du détail', head: ['Colonne', 'Ce qu\'elle contient'], wrapCells: true,
                     rowIds: ['guide-ing-ra-qte-nette', null, 'guide-ing-ra-cout-net', 'guide-ing-ra-qte-perdue', 'guide-ing-ra-cout-perdu', 'guide-ing-ra-achat-requis'],
                     rows: [
-                        ['{{Qté nette}}', 'La quantité de l\'ingrédient réellement utilisée dans vos produits, d\'après vos ventes de la période.'],
-                        ['{{Taux perte stock}}', 'Le taux de perte saisi dans le catalogue pour cet ingrédient.'],
+                        ['{{Quantité nette}}', 'La quantité de l\'ingrédient réellement utilisée dans vos produits, d\'après vos ventes de la période.'],
+                        ['{{Taux de perte en stock}}', 'Le taux de perte saisi dans le catalogue pour cet ingrédient.'],
                         ['{{Coût net}}', 'Le coût de cette quantité : la valeur de la matière qui est transformée en produits vendus.'],
-                        ['{{Qté perte stock}}', 'La quantité à acheter en plus pour compenser ce qui se perd en stock avant d\'être utilisé, selon le taux de perte de l\'ingrédient.'],
-                        ['{{Coût perte stock}}', 'Le coût de cette perte stock.'],
-                        ['{{Achat requis}}', 'La somme du coût net et du coût de la perte stock : ce qu\'il faut réellement acheter et budgéter pour cet ingrédient.'],
+                        ['{{Quantité de perte en stock}}', 'La quantité à acheter en plus pour compenser ce qui se perd en stock avant d\'être utilisé, selon le taux de perte de l\'ingrédient.'],
+                        ['{{Coût de perte en stock}}', 'Le coût de cette perte en stock.'],
+                        ['{{Achat requis}}', 'La somme du coût net et du coût de la perte en stock : ce qu\'il faut réellement acheter et budgéter pour cet ingrédient.'],
                     ],
                 },
-                { type: 'callout', kind: 'attention', text: 'Ce rapport n\'est aussi juste que vos volumes : si vous n\'avez saisi aucun volume de vente dans Produits et SKUs, il n\'a rien à calculer et affiche des zéros.' },
+                { type: 'callout', kind: 'attention', text: 'Ce rapport est aussi juste que vos volumes : si vous n\'avez saisi aucun volume de vente dans Produits et SKUs, il n\'a rien à calculer et affiche des zéros.' },
 
                 { type: 'h', id: 'guide-emb-abc', text: 'Emballages : analyse ABC et rapport d\'achats' },
-                { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et perte stock existent aussi pour l\'emballage, dans le sous-onglet {{Emballages}}, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 77,3 % des coûts.' },
+                { type: 'p', text: 'L\'analyse ABC et le rapport d\'achats et perte en stock existent aussi pour l\'emballage, dans le sous-onglet {{Emballages}}, avec le même principe. L\'analyse n\'inclut que les emballages réellement rattachés à au moins un format de vente. Dans le projet démo, la catégorie A de l\'emballage représente 77,3 % des coûts.' },
 
                 { type: 'h', id: 'guide-rapport-prix', text: 'Évolution des prix et volatilité' },
                 { type: 'p', text: 'Chacun de ces sous-onglets suit aussi le prix de vos ingrédients (ou de vos emballages) dans le temps, d\'un point de référence à l\'autre. Il se compose de deux éléments :' },
@@ -385,9 +385,9 @@ export const partie3 = {
                 },
                 { type: 'p', text: 'Ces mesures existent dès deux points de référence ; le projet démo en compte dix-neuf, ce qui donne des séries longues. Le tableau se croise avec l\'analyse ABC ci-dessus : un ingrédient de catégorie A dont le prix est volatil est une priorité d\'approvisionnement.' },
                 { type: 'callout', kind: 'astuce', text: 'Le tableau est trié par amplitude décroissante : les prix les plus capricieux sont en haut. Regardez d\'abord la colonne de tendance : un prix volatil mais sans tendance fluctue autour d\'une moyenne ; un prix à tendance haussière régulière appelle une action (contrat, second fournisseur, révision de prix).' },
-                { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : l\'analyse ABC (où est l\'argent), les achats par fournisseur (où sont les dépendances), le détail trié par perte stock (où l\'on perd), puis l\'évolution des prix (ce qui menace vos coûts). Faites-le pour les ingrédients, puis pour les emballages.' },
+                { type: 'callout', kind: 'retenir', text: 'Lisez dans cet ordre : l\'analyse ABC (où est l\'argent), les achats par fournisseur (où sont les dépendances), le détail trié par perte en stock (où l\'on perd), puis l\'évolution des prix (ce qui menace vos coûts). Faites-le pour les ingrédients, puis pour les emballages.' },
                 { type: 'words', items: [
-                    { term: 'Perte stock', def: 'la quantité à acheter en plus pour compenser ce qui se perd avant l\'utilisation ; prévue, pas mesurée.' },
+                    { term: 'Perte en stock', def: 'la quantité à acheter en plus pour compenser ce qui se perd avant l\'utilisation ; prévue, pas mesurée.' },
                     { term: 'Dépendance (fournisseur)', def: 'un fournisseur qui pèse 30 % ou plus des achats.' },
                     { term: 'Amplitude', def: 'l\'écart entre le prix le plus bas et le plus haut, en % de la moyenne.' },
                 ] },
@@ -410,7 +410,7 @@ export const partie3 = {
                         { label: 'Taux d\'utilisation (%).', text: 'Les heures réelles ÷ les heures attendues.' },
                     ],
                 },
-                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Cuisinier de production » est utilisé à 92,21 %, l'« Opérateur d'emballage » à 89,88 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
+                { type: 'callout', kind: 'exemple', text: `Dans le projet démo, l'équipe de production a ${d(DEMO.mo.heuresAttendues)} productives attendues, pour ${d(DEMO.mo.heuresReelles)} réellement requises : un taux d'utilisation de ${d(DEMO.mo.utilisation)}. Le « Opérateur de production » est utilisé à 92,21 %, l'« Opérateur d'emballage » à 89,88 %, le « Contrôleur qualité » à 88,47 %. Le « Responsable de production », lui, est à 0 % : aucune étape de recette ne lui est affectée.` },
                 { type: 'callout', kind: 'pourquoi', text: 'Un taux d\'utilisation bas signale de la capacité payée et inutilisée : trop de personnel pour le volume vendu, des recettes qui ne reflètent pas le travail réel, ou des ventes qui n\'ont pas encore été saisies. C\'est un levier de rentabilité majeur, car **ce coût est réparti sur tous vos produits** (voir [[guide-concept-capacite|chapitre 10]]).' },
                 { type: 'callout', kind: 'attention', text: 'Une personne présente dans l\'onglet Main-d\'œuvre mais affectée à aucune étape (un poste de supervision, par exemple) fait baisser le taux d\'utilisation global. Son coût n\'est pas perdu : il est réparti sur toutes les recettes sous forme de coût du temps non productif. Si cette personne ne fait aucune production, saisissez plutôt sa paie dans les frais fixes.' },
 
@@ -482,7 +482,7 @@ export const partie3 = {
                 {
                     type: 'ul', items: [
                         'Les indicateurs des produits actifs : coût matière moyen pondéré (le « coût matière »), coût de main-d\'œuvre moyen pondéré, marge brute moyenne pondérée et point mort des produits actifs, avec l\'écart avec le scénario et la comparaison à vos objectifs.',
-                        'L\'impact par activité de production et par circuit de vente.',
+                        'L\'impact par activité de production et par canal de vente.',
                         'La marge nette par portion de chaque produit, actuelle et en scénario.',
                     ],
                 },
@@ -490,7 +490,7 @@ export const partie3 = {
                     type: 'dl', items: [
                         { id: 'guide-sim-indicateurs', term: 'Indicateurs des produits actifs', def: 'Le coût matière moyen pondéré (« coût matière » à l\'écran) et le coût de main-d\'œuvre moyen pondéré, en % du prix de vente ; la marge brute moyenne pondérée ; le point mort des produits actifs en dollars. Chacun est affiché « actuel → scénario », avec l\'écart, et comparé à vos objectifs. Les moyennes sont celles de la Vue d\'ensemble : pondérées par le revenu de chaque produit.' },
                         { id: 'guide-sim-impact-activite', term: 'Impact par activité de production', def: 'La marge brute et les coûts moyens de **chaque activité**, calculés avec les seuls formats de cette activité et pondérés par leur part des ventes. Cela isole l\'impact propre de l\'activité au lieu de le diluer dans la moyenne des produits actifs.' },
-                        { id: 'guide-sim-impact-canal', term: 'Impact par circuit de vente', def: 'La marge brute et les coûts moyens de **chaque canal**, pondérés par le volume réel de ce canal (et non par la vue « tous canaux »). Un canal sans aucun volume saisi n\'apparaît pas.' },
+                        { id: 'guide-sim-impact-canal', term: 'Impact par canal de vente', def: 'La marge brute et les coûts moyens de **chaque canal**, pondérés par le volume réel de ce canal (et non par la vue « tous canaux »). Un canal sans aucun volume saisi n\'apparaît pas.' },
                         { id: 'guide-sim-marge-portion', term: 'Marge nette par portion, par produit', def: 'Pour chaque produit : la marge nette par unité avec vos prix et salaires actuels, la marge nette une fois les chocs appliqués, et l\'écart (scénario moins actuel, en dollars par unité). Un écart négatif signifie que le choc réduit la marge.' },
                     ],
                 },
@@ -548,7 +548,7 @@ export const partie3 = {
                         ['1. Synthèse de direction', 'Où en est l\'entreprise : rentabilité, solidité, direction ?'],
                         ['2. Résultats : prévu, réel et tendance', 'Combien gagne-t-on vraiment, et dans quelle direction va-t-on ?'],
                         ['3. Produits', 'Quels produits protéger, corriger ou abandonner ?'],
-                        ['4. Canaux et activités', 'Quels circuits de vente et quelles activités de production paient les frais fixes ?'],
+                        ['4. Canaux et activités', 'Quels canaux de vente et quelles activités de production paient les frais fixes ?'],
                         ['5. Approvisionnement', 'Où achète-t-on, à quel prix, avec quels risques ?'],
                         ['6. Main-d\'œuvre', 'L\'équipe est-elle bien utilisée, et que rapporte une heure ?'],
                         ['7. Fiches produits', 'Quel est le détail d\'un produit, canal par canal ?'],
@@ -603,7 +603,7 @@ export const partie3 = {
                     type: 'table', head: ['Ce que vous constatez', 'Causes probables', 'Où regarder', 'Actions possibles'], wrapCells: true, rows: [
                         ['Coût matière au-dessus de la cible', 'Hausse de prix d\'un ingrédient ; recette trop généreuse ; pertes ou rendement mal estimés', 'Ingrédients (comparaison) ; Production (rendement) ; Rapport → Ingrédients (ABC, achats)', 'Comparer les fournisseurs ; ajuster la recette ; viser les ingrédients de catégorie A ; relever le prix (tester avec la simulation de prix)'],
                         ['Marge brute correcte, marge nette négative', 'Frais fixes lourds pour le volume vendu ; volumes plus faibles que prévu', 'Rapport → Par SKU (section Répartition des charges fixes) ; État des résultats', 'Augmenter le volume ; réduire les frais fixes ; relever le prix ; vérifier la règle de répartition (CICI)'],
-                        ['Marge nette négative dans un seul canal', 'Maillons qui prélèvent trop ; frais propres au canal', 'Rapport → Par SKU, Par Canal ; Paramètres → Canaux de vente', 'Renégocier la marge d\'un intermédiaire ; ajuster le prix net ; retirer le produit de ce canal'],
+                        ['Marge nette négative dans un seul canal', 'Maillons qui prélèvent trop ; frais propres au canal', 'Rapport → Par SKU, Par canal ; Paramètres → Canaux de vente', 'Renégocier la marge d\'un intermédiaire ; ajuster le prix net ; retirer le produit de ce canal'],
                         ['Point mort supérieur à ce que vous pouvez vendre', 'Marge unitaire trop faible ; frais fixes trop élevés', 'Rapport → Par SKU (point mort), Vue d\'ensemble', 'Relever la marge (prix, coût) ; réduire les frais fixes ; simplifier la liste de produits'],
                         ['Taux d\'utilisation de la main-d\'œuvre bas', 'Trop de personnel pour le volume ; étapes sans personnel affecté ; ventes non saisies', 'Rapport → Main-d\'œuvre (rapport de productivité)', 'Vérifier les recettes ; réaffecter ou réduire des heures ; vendre plus avec la même équipe'],
                         ['Marge de sécurité mince ou négative', 'Ventes prévues proches du point mort ; frais fixes ou main-d\'œuvre lourds pour le volume', 'Rapport → Vue d\'ensemble (Marge de sécurité, Constats clés) ; État des résultats', 'Augmenter le volume ou la marge ; réduire les frais fixes avant tout nouvel engagement ; tester l\'effet d\'une hausse de coûts avec la simulation'],

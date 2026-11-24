@@ -17,14 +17,14 @@ describe('formatCurrency', () => {
         expect(formatCurrency(-160000)).toBe('-160 000,00');
     });
 
-    it('retourne « 0,00 » pour une valeur non numérique, sans planter', () => {
+    it('retourne « 0,00 » pour une valeur non numérique, sans planter', () => {
         expect(formatCurrency('abc')).toBe('0,00');
         expect(formatCurrency(undefined)).toBe('0,00');
     });
 });
 
 describe('isDiscreteUnit', () => {
-    it("une unité de compte (« unité ») est discrète", () => {
+    it("une unité de compte (« unité ») est discrète", () => {
         expect(isDiscreteUnit('unité')).toBe(true);
     });
 
@@ -126,7 +126,7 @@ describe('guessExpenseCategory', () => {
 
 describe('parsePdfStatementLine', () => {
     it('isole le poste et le montant en fin de ligne (texte reconstruit depuis un PDF)', () => {
-        expect(parsePdfStatementLine('Loyer (espace de production)        9 000,00 $')).toEqual({ label: 'Loyer (espace de production)', amount: 9000 });
+        expect(parsePdfStatementLine('Loyer (espace de production)        9 000,00 $')).toEqual({ label: 'Loyer (espace de production)', amount: 9000 });
     });
 
     it('gère un montant entre parenthèses comme négatif', () => {
@@ -152,7 +152,7 @@ describe('parsePdfStatementLine', () => {
 });
 
 
-describe('saisie numérique : point OU virgule, milliers tolérés', () => {
+describe('saisie numérique : point OU virgule, milliers tolérés', () => {
     it.each([['1,5', 1.5], ['1.5', 1.5], ['1 234,56', 1234.56], ['1,234.56', 1234.56], ['1.234,56', 1234.56], ['1,234,567', 1234567], ['12', 12], ['$ 45,00', 45]])(
         'parseLocaleNumber(%s) = %s', (input, expected) => { expect(parseLocaleNumber(input)).toBeCloseTo(expected, 5); });
     it('isValidNumber accepte virgule, point et milliers, refuse le texte', () => {
@@ -179,7 +179,7 @@ describe('looksLikeProductionLabor', () => {
 });
 
 describe('landedUnitPrice (coût d\'achat rendu)', () => {
-    it("sans escompte ni transport : prix ÷ format, comme avant", () => {
+    it("sans escompte ni transport : prix ÷ format, comme avant", () => {
         expect(landedUnitPrice({ purchasePrice: 48.75, purchaseFormat: 5 })).toBeCloseTo(9.75, 10);
         expect(landedUnitPrice({ purchasePrice: '62,00', purchaseFormat: '10' })).toBeCloseTo(6.2, 10);
     });
@@ -187,7 +187,7 @@ describe('landedUnitPrice (coût d\'achat rendu)', () => {
         // 100 $ − 5 % = 95 $ ; + 8 $ de transport = 103 $ ; ÷ 10 = 10,30 $
         expect(landedUnitPrice({ purchasePrice: 100, purchaseFormat: 10, discountPercentage: 5, inboundCost: 8 })).toBeCloseTo(10.3, 10);
     });
-    it("borne l'escompte entre 0 et 100 % et traite un format vide comme 1", () => {
+    it("borne l'escompte entre 0 et 100 % et traite un format vide comme 1", () => {
         expect(landedUnitPrice({ purchasePrice: 10, purchaseFormat: 1, discountPercentage: 250 })).toBe(0);
         expect(landedUnitPrice({ purchasePrice: 10, purchaseFormat: 1, discountPercentage: -20 })).toBe(10);
         expect(landedUnitPrice({ purchasePrice: 10, purchaseFormat: '' })).toBe(10);

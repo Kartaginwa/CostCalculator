@@ -80,7 +80,7 @@ test('« Voir tout » ouvre la fenêtre du bloc, séparée en constats positifs 
 
 test('Chaque sous-onglet (sauf Simulation) se termine par un bandeau de constats, même forme que la Vue d\'ensemble', async ({ page }) => {
     const errors = await startDemo(page);
-    const titles = { portfolio: 'Portefeuille', bySku: 'Par SKU', byActivity: 'Par Activité', byChannel: 'Par Canal', ingredients: 'Ingrédients', packaging: 'Emballages', labor: 'Main-d\'œuvre' };
+    const titles = { portfolio: 'Portefeuille', bySku: 'Par SKU', byActivity: 'Par activité', byChannel: 'Par canal', ingredients: 'Ingrédients', packaging: 'Emballages', labor: 'Main-d\'œuvre' };
     for (const [tab, label] of Object.entries(titles)) {
         await page.locator(`[data-tour="subtab-${tab}"]`).click();
         const banner = page.getByTestId(`tab-findings-${tab}`);
@@ -126,10 +126,10 @@ test('Par SKU : le bandeau suit le SKU choisi', async ({ page }) => {
 
 test('Le lien d\'un constat ouvre le bon sous-onglet', async ({ page }) => {
     await startDemo(page);
-    await page.getByTestId('findings-group-structure').getByRole('button', { name: 'Voir Par Canal →' }).first().click();
+    await page.getByTestId('findings-group-structure').getByRole('button', { name: 'Voir Par canal →' }).first().click();
     await expect(page.locator('[data-tour="subtab-byChannel"]')).toHaveAttribute('aria-current', 'page');
     // Dans son propre sous-onglet, un constat n'a pas de lien vers lui-même.
-    await expect(page.getByTestId('tab-findings-byChannel').getByRole('button', { name: 'Voir Par Canal →' })).toHaveCount(0);
+    await expect(page.getByTestId('tab-findings-byChannel').getByRole('button', { name: 'Voir Par canal →' })).toHaveCount(0);
 });
 
 test('Aucun avertissement de données parmi les constats', async ({ page }) => {

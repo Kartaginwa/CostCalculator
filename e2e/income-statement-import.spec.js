@@ -25,11 +25,11 @@ test("État des résultats : assistant d'import crée des revenus (dont un venti
 
     // Étape 1 : téléversement.
     await modal.locator('input[type="file"]').setInputFiles(fixturePath);
-    await expect(modal.getByText('Étape 2: Correspondance des colonnes')).toBeVisible();
+    await expect(modal.getByText('Étape 2 : Correspondance des colonnes')).toBeVisible();
 
     // Étape 2 : la correspondance se devine automatiquement (mots-clés) — rien à changer.
     await modal.getByRole('button', { name: 'Suivant' }).click();
-    await expect(modal.getByText('Étape 3: Prévisualisation et résolution')).toBeVisible();
+    await expect(modal.getByText('Étape 3 : Prévisualisation et résolution')).toBeVisible();
 
     // Étape 3 : le Poste est maintenant un <input> éditable (correction manuelle, surtout utile
     // pour un PDF) — `hasText` ne porte pas sur la valeur d'un champ de formulaire, d'où le filtre
@@ -57,9 +57,9 @@ test("État des résultats : assistant d'import crée des revenus (dont un venti
     await modal.getByRole('button', { name: 'Suivant' }).click();
 
     // Étape 4 : confirmation, mode Additif par défaut.
-    await expect(modal.getByText('Étape 4: Confirmation')).toBeVisible();
+    await expect(modal.getByText('Étape 4 : Confirmation')).toBeVisible();
     await expect(modal.locator('input[name="importMode"]').first()).toBeChecked();
-    await modal.getByText('Confirmer et Importer').click();
+    await modal.getByText('Confirmer et importer').click();
     await expect(page.getByText('2 revenu(s) et 2 dépense(s) importé(s).')).toBeVisible();
 
     // Les lignes importées s'ajoutent (additif) à côté des 4 revenus / 8 dépenses du projet démo,

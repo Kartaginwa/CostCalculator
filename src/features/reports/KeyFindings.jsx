@@ -144,5 +144,5 @@ export const TabFindings = ({ subTab, selectedFormat }) => {
     const { all } = useAllFindings();
     const { forces, faiblesses } = tabFindings(all, subTab, { formatId: selectedFormat?.id, productId: selectedFormat?.productId });
     if (forces.length + faiblesses.length === 0) return null;
-    return <FindingsBlock id={`tutorial-section-findings-${subTab}`} testId={`tab-findings-${subTab}`} title={`Constats : ${SUBTAB_LABELS[subTab]}`} tip="constats.onglet" forceLabel="Forces" weakLabel="Faiblesses" forces={forces} faiblesses={faiblesses} here={subTab} />;
+    return <FindingsBlock id={`tutorial-section-findings-${subTab}`} testId={`tab-findings-${subTab}`} title={`Constats\u00A0: ${SUBTAB_LABELS[subTab]}`} tip="constats.onglet" forceLabel="Forces" weakLabel="Faiblesses" forces={forces} faiblesses={faiblesses} here={subTab} />;
 };

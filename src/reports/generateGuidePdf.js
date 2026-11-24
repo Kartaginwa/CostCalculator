@@ -268,7 +268,7 @@ export function generateGuidePdf(parts, { showNotification, appLogoBase64 = null
     doc.setFontSize(18); doc.setFont('helvetica', 'normal'); doc.setTextColor(75, 85, 99);
     doc.text(doc.splitTextToSize(pdfSafe("Comprendre le coût de revient et utiliser l'application"), PAGE.w - 80), PAGE.w / 2, 205, { align: 'center' });
     doc.setFontSize(12); doc.setTextColor(...COLORS.muted);
-    doc.text(`Date : ${new Date().toLocaleDateString('fr-CA', { dateStyle: 'long' })}`, PAGE.w / 2, PAGE.h - 30, { align: 'center' });
+    doc.text(`Date\u00A0: ${new Date().toLocaleDateString('fr-CA', { dateStyle: 'long' })}`, PAGE.w / 2, PAGE.h - 30, { align: 'center' });
 
     // --- sommaire : page 2, rempli à la fin (on connaît alors les numéros de page) ---------------------------
     doc.addPage();

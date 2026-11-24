@@ -63,11 +63,11 @@ export const ReconciliationReport = () => {
                                 return (
                                     <tr key={row.label} className={isMarge ? 'font-bold border-t-2 border-gray-300' : ''}>
                                         <td className="px-4 py-2">{row.label}</td>
-                                        <td className="px-4 py-2 text-right">{formatCurrency(row.real)} $</td>
-                                        <td className="px-4 py-2 text-right">{formatCurrency(row.theoretical)} $</td>
-                                        <td className="px-4 py-2 text-right">{row.diff >= 0 ? '+' : ''}{formatCurrency(row.diff)} $</td>
+                                        <td className="px-4 py-2 text-right">{formatCurrency(row.real)}&nbsp;$</td>
+                                        <td className="px-4 py-2 text-right">{formatCurrency(row.theoretical)}&nbsp;$</td>
+                                        <td className="px-4 py-2 text-right">{row.diff >= 0 ? '+' : ''}{formatCurrency(row.diff)}&nbsp;$</td>
                                         <td className="px-4 py-2 text-right">
-                                            {row.diffPercent != null ? `${row.diffPercent >= 0 ? '+' : ''}${formatNumber((row.diffPercent * 100), 1)} %` : '—'}
+                                            {row.diffPercent != null ? `${row.diffPercent >= 0 ? '+' : ''}${formatNumber((row.diffPercent * 100), 1)}\u00A0%` : '—'}
                                         </td>
                                     </tr>
                                 );

@@ -65,7 +65,7 @@ export const partie1 = {
                     type: 'table', head: ['Famille', 'Ce que c\'est', 'Exemple', 'Nature'], wrapCells: true, rows: [
                         ['Matières', 'Les ingrédients et matières premières qui entrent dans le produit.', 'Farine, viande, concentré de jus, huile', 'Charge directe'],
                         ['Emballage', 'Tout ce qui contient, protège ou présente le produit.', 'Bouteille, bouchon, étiquette, boîte, palette', 'Charge directe'],
-                        ['Main-d\'œuvre', 'Le temps de travail consacré à fabriquer le produit, au coût réel de l\'employeur.', 'Opérateur de ligne, cuisinier, contrôleur qualité', 'Charge directe'],
+                        ['Main-d\'œuvre', 'Le temps de travail consacré à fabriquer le produit, au coût réel de l\'employeur.', 'Opérateur de ligne, préparateur, contrôleur qualité', 'Charge directe'],
                         ['Sous-traitance', 'Une opération de fabrication confiée à un tiers.', 'Pasteurisation externe, surgélation, embouteillage', 'Charge directe'],
                         ['Vieillissement', 'Le coût d\'immobiliser de l\'argent dans un produit qui doit mûrir avant d\'être vendu.', 'Fromage affiné, salaison, vin', 'Charge financière'],
                     ],
@@ -133,11 +133,11 @@ export const partie1 = {
                 { type: 'h', id: 'guide-concept-prix-unitaire', text: 'Du prix d\'achat au prix unitaire' },
                 { type: 'p', text: `Un ingrédient s'achète souvent par format : un sac de 25 kg, un seau de 5 L. Pour calculer le coût d'une recette, il faut son **prix unitaire** : le prix d'achat divisé par la quantité du format. Exemple tiré du projet démo : un format de ${BOEUF.format} kg de bœuf haché à ${money(BOEUF.prixAchat)} donne un prix unitaire de ${money(BOEUF.prixAchat)} ÷ ${BOEUF.format} = **${money(BOEUF.prixUnitaire)} le kilogramme**.` },
 
-                { type: 'h', id: 'guide-concept-prix-efficace', text: 'Le prix efficace : ce que coûte vraiment un kilo utilisable' },
-                { type: 'p', text: `Si 8 % de ce bœuf se perd avant utilisation, vous n'avez payé ${money(BOEUF.prixUnitaire)} que pour 92 % de ce que vous avez acheté. Le **prix efficace** est le prix d'un kilogramme qui arrive réellement à la production : prix unitaire ÷ (1 − taux de perte) = ${money(BOEUF.prixUnitaire)} ÷ 0,92 = **${money(BOEUF.prixUnitaire / (1 - BOEUF.perte))}**.` },
+                { type: 'h', id: 'guide-concept-prix-efficace', text: 'Le prix effectif : ce que coûte vraiment un kilo utilisable' },
+                { type: 'p', text: `Si 8 % de ce bœuf se perd avant utilisation, vous n'avez payé ${money(BOEUF.prixUnitaire)} que pour 92 % de ce que vous avez acheté. Le **prix effectif** est le prix d'un kilogramme qui arrive réellement à la production : prix unitaire ÷ (1 − taux de perte) = ${money(BOEUF.prixUnitaire)} ÷ 0,92 = **${money(BOEUF.prixUnitaire / (1 - BOEUF.perte))}**.` },
                 { type: 'callout', kind: 'exemple', blocks: [
                     { type: 'p', text: `Deux fournisseurs vendent le même ingrédient. Le fournisseur A affiche ${money(9.75)} le kilogramme avec 8 % de perte ; le fournisseur B affiche ${money(10.1)} avec 2 % de perte (produit plus frais, mieux emballé).` },
-                    { type: 'p', text: `Prix efficace de A : ${money(efficaceB(9.75, 0.08))}. Prix efficace de B : ${money(efficaceB(10.1, 0.02))}. Le fournisseur qui paraît plus cher est en réalité **moins cher** d'environ ${money(efficaceB(9.75, 0.08) - efficaceB(10.1, 0.02))} par kilogramme utilisable. C'est exactement ce que l'outil de comparaison de l'onglet Ingrédients vous montre.` },
+                    { type: 'p', text: `Prix effectif de A : ${money(efficaceB(9.75, 0.08))}. Prix effectif de B : ${money(efficaceB(10.1, 0.02))}. Le fournisseur qui paraît plus cher est en réalité **moins cher** d'environ ${money(efficaceB(9.75, 0.08) - efficaceB(10.1, 0.02))} par kilogramme utilisable. C'est exactement ce que l'outil de comparaison de l'onglet Ingrédients vous montre.` },
                 ] },
 
                 { type: 'h', id: 'guide-concept-rendement', text: 'Le rendement : ce qui reste après la transformation' },
@@ -154,11 +154,11 @@ export const partie1 = {
                     { type: 'p', text: `Il faut donc acheter ${num(CAROTTES.kgAcheter, 1)} kg de carottes pour en obtenir ${num(CAROTTES.quantite)} kg épluchés, et la recette coûte ${money(CAROTTES.final)}, non ${money(CAROTTES.base)}.` },
                 ] },
                 { type: 'callout', kind: 'attention', text: 'Ne comptez pas la même perte deux fois. L\'épluchage appartient au rendement (sur la ligne de la recette), pas au taux de perte de la fiche de l\'ingrédient. Le taux de perte de la fiche ne sert qu\'à ce qui se perd **avant** la production : péremption, casse, déclassement.' },
-                { type: 'callout', kind: 'retenir', text: 'Prix unitaire = prix d\'achat ÷ quantité du format. Prix efficace = prix unitaire ÷ (1 − perte en stock). Dans une recette, un rendement inférieur à 100 % augmente la quantité à acheter. Ces deux pertes sont distinctes : ne les confondez pas.' },
+                { type: 'callout', kind: 'retenir', text: 'Prix unitaire = prix d\'achat ÷ quantité du format. Prix effectif = prix unitaire ÷ (1 − perte en stock). Dans une recette, un rendement inférieur à 100 % augmente la quantité à acheter. Ces deux pertes sont distinctes : ne les confondez pas.' },
                 { type: 'words', items: [
                     { term: 'Format d\'achat', def: 'la quantité contenue dans l\'unité que vous achetez (ex. 25 kg par sac).' },
                     { term: 'Prix unitaire', def: 'le prix d\'achat ramené à l\'unité de base (ex. au kilogramme).' },
-                    { term: 'Prix efficace', def: 'le prix unitaire corrigé du taux de perte en stock.' },
+                    { term: 'Prix effectif', def: 'le prix unitaire corrigé du taux de perte en stock.' },
                     { term: 'Rendement', def: 'la part de l\'ingrédient qui reste après la transformation.' },
                 ] },
             ],
@@ -344,7 +344,7 @@ export const partie1 = {
             id: 'guide-concept-mix',
             title: '9. La répartition des ventes et la moyenne pondérée',
             blocks: [
-                { type: 'p', text: 'Une entreprise vend rarement un seul produit. Le **répartition des ventes** décrit la part de chaque produit dans les ventes : par exemple, 40 % de produit A, 30 % de produit B et 30 % de produit C. Il compte pour deux raisons. D\'abord parce qu\'il donne le « poids » de chaque produit quand on veut une vue d\'ensemble. Ensuite parce que sa somme doit faire 100 % : si elle ne le fait pas, la vue d\'ensemble est faussée.' },
+                { type: 'p', text: 'Une entreprise vend rarement un seul produit. La **répartition des ventes** décrit la part de chaque produit dans les ventes : par exemple, 40 % de produit A, 30 % de produit B et 30 % de produit C. Elle compte pour deux raisons. D\'abord parce qu\'elle donne le « poids » de chaque produit quand on veut une vue d\'ensemble. Ensuite parce que sa somme doit faire 100 % : si elle ne le fait pas, la vue d\'ensemble est faussée.' },
                 { type: 'p', text: 'Pour résumer plusieurs produits en un seul chiffre (une marge moyenne des produits actifs, un coût matière moyen), on calcule une **moyenne pondérée** : chaque produit y compte selon son importance, non à égalité avec les autres. La difficulté est de choisir le poids.' },
                 { type: 'callout', kind: 'exemple', blocks: [
                     { type: 'p', text: 'Trois produits ont les ventes suivantes.' },
@@ -465,7 +465,7 @@ export const partie1 = {
                         ['**Peu populaire**', '**Dilemme** — rentables mais peu vendus : travaillez leur visibilité, leur présentation, leur promotion.', '**Poids mort** — ils se vendent peu et rapportent peu : réinventez-les ou retirez-les pour simplifier la production.'],
                     ],
                 },
-                { type: 'callout', kind: 'attention', text: 'La classification est relative : un produit est « rentable » par rapport à la moyenne **de vos produits**, pas par rapport à un standard extérieur. Un ensemble de produits tous sont très rentables aura quand même des « poids morts », puisque la moyenne bougera. Utilisez la matrice pour comparer vos produits entre eux, pas pour juger la santé absolue de l\'entreprise.' },
+                { type: 'callout', kind: 'attention', text: 'La classification est relative : un produit est « rentable » par rapport à la moyenne **de vos produits**, pas par rapport à un standard extérieur. Un ensemble de produits tous très rentables aura quand même des « poids morts », puisque la moyenne bougera. Utilisez la matrice pour comparer vos produits entre eux, pas pour juger la santé absolue de l\'entreprise.' },
                 { type: 'callout', kind: 'retenir', text: 'Étoiles : à protéger. Vaches à lait : à améliorer en marge. Dilemmes : à mieux vendre. Poids morts : à repenser ou à retirer. Le chapitre [[guide-rapport-vue-ensemble|Vue d\'ensemble]] montre la matrice du projet démo.' },
                 { type: 'words', items: [
                     { term: 'Matrice stratégique', def: 'méthode qui classe les produits selon leur popularité et leur rentabilité.' },

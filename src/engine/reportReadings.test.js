@@ -19,8 +19,8 @@ describe('« Ce que cela veut dire » (démo)', () => {
         expect(rec[2]).toMatch(/4 000 \$\) est sous le modèle de 2 299 \$ ; l'écart vient surtout des charges directes/);
     });
     it('évolution : sommet, creux, remontée, écart à 12 mois', () => {
-        expect(r.evolution[0]).toContain('culminé à 46,0 %');
-        expect(r.evolution[0]).toContain('creux à 41,5 %');
+        expect(r.evolution[0]).toContain('culminé à 46,0\u00A0%');
+        expect(r.evolution[0]).toContain('creux à 41,5\u00A0%');
         expect(r.evolution[1]).toContain('remonte de 1,6 point');
         expect(r.evolution[2]).toMatch(/2,1 points sous son niveau d'il y a 12 mois/);
     });
@@ -41,7 +41,7 @@ describe('une seule moyenne de bénéfice brut par heure : celle de l\'écran Ma
         const c = demoContext();
         expect(c.growth.grossProfitPerHour).toBeCloseTo(87.39, 2);
         const all = computeKeyFindings(c, { entities: true }).all;
-        expect(all.find(f => f.id === 'product-best-hour').detail).toContain('moyenne : 87');
+        expect(all.find(f => f.id === 'product-best-hour').detail).toContain('moyenne\u00A0: 87');
         const hours = all.filter(f => f.id.startsWith('sku-hour-'));
         expect(hours.length).toBeGreaterThan(0);
         hours.forEach(f => { expect(f.detail).toContain('87'); expect(f.detail).not.toContain('108'); });

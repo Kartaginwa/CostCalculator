@@ -26,7 +26,7 @@ describe('computeSkuCascade — Chili con carne mijoté (démo)', () => {
         expect(c.channels.map(x => x.channelName)).toEqual(chili(rows).channelBreakdown.map(cb => cb.channelName));
     });
 
-    it('écart en $ de chaque maillon et total par canal (vente directe : 0 $, une vraie valeur)', () => {
+    it('écart en $ de chaque maillon et total par canal (vente directe : 0 $, une vraie valeur)', () => {
         const { s, rows } = demo();
         const [direct, epiceries, grandes] = computeSkuCascade(chili(rows), s.salesChannels).channels;
         expect(direct.totalDelta).toBe(0);
@@ -40,7 +40,7 @@ describe('computeSkuCascade — Chili con carne mijoté (démo)', () => {
         expect(grandes.netPrice).toBeCloseTo(8.99 - 3.53, 2);
     });
 
-    it('frais fixes, coût net, marges, seuil de rentabilité : mêmes valeurs que l\'écran', () => {
+    it('frais fixes, coût net, marges, seuil de rentabilité : mêmes valeurs que l\'écran', () => {
         const { s, rows } = demo();
         const [direct, epiceries, grandes] = computeSkuCascade(chili(rows), s.salesChannels).channels;
         expect(direct.fixedGeneral).toBeCloseTo(0.71, 2);
@@ -58,8 +58,8 @@ describe('computeSkuCascade — Chili con carne mijoté (démo)', () => {
     });
 });
 
-describe('computeSkuCascade — données absentes : jamais un zéro inventé', () => {
-    it('sans PDS : écarts et totaux des maillons absents (null), sauf si le canal n\'a aucun maillon… qui reste absent aussi', () => {
+describe('computeSkuCascade — données absentes : jamais un zéro inventé', () => {
+    it('sans PDS : écarts et totaux des maillons absents (null), sauf si le canal n\'a aucun maillon… qui reste absent aussi', () => {
         const { s, rows } = demo();
         const row = chili(rows);
         const noPds = { ...row, format: { ...row.format, pds: '' } };
@@ -71,7 +71,7 @@ describe('computeSkuCascade — données absentes : jamais un zéro inventé', (
         });
     });
 
-    it('sans volume réel dans un canal : revenu, frais et bénéfice totaux absents (null)', () => {
+    it('sans volume réel dans un canal : revenu, frais et bénéfice totaux absents (null)', () => {
         const { s, rows } = demo();
         const row = chili(rows);
         const noVolume = { ...row, channelBreakdown: row.channelBreakdown.map(cb => ({ ...cb, volume: 0 })) };
@@ -82,7 +82,7 @@ describe('computeSkuCascade — données absentes : jamais un zéro inventé', (
         });
     });
 
-    it('un SKU rattaché à aucun canal : aucune colonne, aucun maillon', () => {
+    it('un SKU rattaché à aucun canal : aucune colonne, aucun maillon', () => {
         const { s, rows } = demo();
         const c = computeSkuCascade({ ...chili(rows), channelBreakdown: [] }, s.salesChannels);
         expect(c.channels).toEqual([]);

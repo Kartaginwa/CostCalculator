@@ -15,7 +15,7 @@ export function computeGlobalSeries(points = []) {
         const kpis = computeSnapshotMenuKpis(point.productsWithCosts);
         const base = { name: pointName(point), label: point.name, note: point.note };
         if (!kpis) {
-            return { ...base, 'Point Mort Global': null, 'Marge Brute Moyenne': null, 'Coût Matière Moyen': null, 'Coût Emballage Moyen': null, "Coût Main-d'œuvre Moyen": null };
+            return { ...base, 'Point mort global': null, 'Marge brute moyenne': null, 'Coût matière moyen': null, 'Coût emballage moyen': null, "Coût main-d'œuvre moyen": null };
         }
         const { weightedGrossMargin, weightedMaterialCost, weightedPackagingCost, weightedLaborCost } = kpis;
         // Même formule que la tuile « Point mort » (main-d'œuvre traitée comme un coût fixe) : la courbe rejoint la valeur actuelle.
@@ -23,11 +23,11 @@ export function computeGlobalSeries(points = []) {
             ?? (weightedGrossMargin > 0 ? parseLocaleNumber(point.generalInfo.totalIndirects) / weightedGrossMargin : 0);
         return {
             ...base,
-            'Point Mort Global': breakEven,
-            'Marge Brute Moyenne': weightedGrossMargin * 100,
-            'Coût Matière Moyen': weightedMaterialCost * 100,
-            'Coût Emballage Moyen': weightedPackagingCost * 100,
-            "Coût Main-d'œuvre Moyen": weightedLaborCost * 100,
+            'Point mort global': breakEven,
+            'Marge brute moyenne': weightedGrossMargin * 100,
+            'Coût matière moyen': weightedMaterialCost * 100,
+            'Coût emballage moyen': weightedPackagingCost * 100,
+            "Coût main-d'œuvre moyen": weightedLaborCost * 100,
         };
     });
 }
@@ -41,7 +41,7 @@ export function computeProductSeries(points = [], productId) {
         if (!productData) {
             return {
                 ...base,
-                'Coût matière (%)': null, 'Coût emballage (%)': null, "Coût main-d'œuvre (%)": null, 'Coût frais indirects (%)': null, 'Marge nette (%)': null,
+                'Coût matière (%)': null, 'Coût emballage (%)': null, "Coût main-d'œuvre (%)": null, 'Coût des frais indirects (%)': null, 'Marge nette (%)': null,
                 'Coût matière ($/u.)': null, 'Coût emballage ($/u.)': null, "Coût main-d'œuvre ($/u.)": null, 'Coût de revient ($/u.)': null,
             };
         }
@@ -51,7 +51,7 @@ export function computeProductSeries(points = [], productId) {
             'Coût matière (%)': c.costMatierePercent * 100,
             'Coût emballage (%)': c.costPackagingPercent * 100,
             "Coût main-d'œuvre (%)": c.costLaborPercent * 100,
-            'Coût frais indirects (%)': c.costIndirectPercent * 100,
+            'Coût des frais indirects (%)': c.costIndirectPercent * 100,
             'Marge nette (%)': c.margeNettePercent * 100,
             'Coût matière ($/u.)': c.costMatierePerPortion,
             'Coût emballage ($/u.)': c.costPackagingPerPortion,

@@ -70,7 +70,7 @@ test('Une valeur saisie dans la fenêtre est celle de Paramètres (une seule sou
 test('Désactiver un objectif le rend muet sans effacer sa valeur ; le réactiver le rétablit', async ({ page }) => {
     await startDemo(page);
     await page.locator('#tab-summary').click();
-    const tile = page.locator('[data-tour="kpi-tiles"] > div', { hasText: 'Marge Brute Moyenne Pondérée' });
+    const tile = page.locator('[data-tour="kpi-tiles"] > div', { hasText: 'Marge brute moyenne pondérée' });
     await expect(tile.locator('svg[aria-label*="Objectif"]')).toHaveCount(1);
     const obj = page.getByTestId('findings-group-objectif');
     await expect(obj).toContainText('Marge brute : objectif atteint');
@@ -124,16 +124,16 @@ test('Objectifs sur mesure : ajout, indicateur, sens au choix, constat, suppress
     await expect(d2).toContainText('Maximum atteint');
 });
 
-test('Voyants : marge brute (tuile), utilisation et paie non utilisée (Main-d\'œuvre), perte stock (Ingrédients)', async ({ page }) => {
+test('Voyants : marge brute (tuile), utilisation et paie non utilisée (Main-d\'œuvre), perte en stock (Ingrédients)', async ({ page }) => {
     await startDemo(page);
     await page.locator('#tab-summary').click();
     await page.locator('[data-tour="subtab-labor"]').click();
     await expect(page.locator('tfoot svg[aria-label*="Objectif"]')).toHaveCount(1);
     await expect(page.locator('p:has-text("Part de la paie non utilisée") , div:has(> h3:has-text("Part de la paie non utilisée"))').first().locator('svg[aria-label*="Objectif"]')).toHaveCount(1);
     await page.locator('[data-tour="subtab-ingredients"]').click();
-    await expect(page.locator('div:has(> h3:has-text("Coût total de la perte stock"))').first().locator('svg[aria-label*="Objectif"]')).toHaveCount(1);
+    await expect(page.locator('div:has(> h3:has-text("Coût total de la perte en stock"))').first().locator('svg[aria-label*="Objectif"]')).toHaveCount(1);
     await page.locator('[data-tour="subtab-packaging"]').click();
-    await expect(page.locator('div:has(> h3:has-text("Coût total de la perte stock"))').first().locator('svg[aria-label*="Objectif"]')).toHaveCount(0);
+    await expect(page.locator('div:has(> h3:has-text("Coût total de la perte en stock"))').first().locator('svg[aria-label*="Objectif"]')).toHaveCount(0);
 });
 
 test('Projet vierge : aucun objectif actif, suggestions en grisé, la fenêtre s\'ouvre sans erreur', async ({ page }) => {

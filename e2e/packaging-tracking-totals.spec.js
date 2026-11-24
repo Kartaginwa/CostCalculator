@@ -5,7 +5,7 @@
 // orange depuis le 06/10 (permutée avec « 4. Coûts additionnels », qui est passée au rose).
 import { test, expect } from '@playwright/test';
 
-test('section Emballage de Recette & Calcul : totaux complets (base, perte stock, recette, unité) en orange', async ({ page }) => {
+test('section Emballage de Recette & Calcul : totaux complets (base, perte en stock, recette, unité) en orange', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -26,17 +26,17 @@ test('section Emballage de Recette & Calcul : totaux complets (base, perte stock
     await packagingSection.locator('#tutorial-add-packaging-to-recipe').click();
     await page.waitForTimeout(200);
     const newRow = packagingSection.locator('tbody tr').last();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').click();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').fill('Pot de verre 500 ml');
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').click();
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').fill('Pot de verre 500 ml');
     await page.locator('li:has-text("Pot de verre 500 ml")').first().click();
     await newRow.locator('input[inputmode="decimal"]').first().fill('1');
     await page.waitForTimeout(300);
 
     // Les 4 valeurs attendues, à l'image de la section Ingrédients.
-    await expect(packagingSection.getByText(/Coût Emballage \(base\):/)).toBeVisible();
-    await expect(packagingSection.getByText(/Coût des Pertes \(stock\):/)).toBeVisible();
-    await expect(packagingSection.getByText(/Total Coût Emballage \(recette\):/)).toBeVisible();
-    await expect(packagingSection.getByText(/Coût Emballage \(unité\):/)).toBeVisible();
+    await expect(packagingSection.getByText(/Coût emballage \(base\)\u00A0:/)).toBeVisible();
+    await expect(packagingSection.getByText(/Coût des pertes en stock\u00A0:/)).toBeVisible();
+    await expect(packagingSection.getByText(/Total coût emballage \(recette\)\u00A0:/)).toBeVisible();
+    await expect(packagingSection.getByText(/Coût emballage \(unité\)\u00A0:/)).toBeVisible();
     // Plus aucune mention de "portion" dans cette section.
     await expect(packagingSection.getByText(/portion/i)).toHaveCount(0);
 

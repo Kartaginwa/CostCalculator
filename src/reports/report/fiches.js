@@ -52,16 +52,16 @@ function recipeDetail(F) {
     if (!ingredients.length && !packaging.length && !steps.length) return '';
     const k = F.costs;
     const ing = ingredients.length ? recipeTable('green', '<th style="text-align:left">Ingrédient</th><th>Qté</th><th>Total</th>',
-        ingredients.map(i => `<tr><td class="l">${esc(i.name)}</td><td>${f(i.quantity, i.quantity % 1 ? 2 : 0)} ${esc(i.unit)}</td><td>${f(i.finalCost, 2)} $</td></tr>`).join(''),
-        `<td class="l" colspan="2">Matières <span class="mut">(dont perte ${f(k.totalLoss, 2)} $)</span></td><td>${f(k.totalMaterial, 2)} $</td>`) : '';
+        ingredients.map(i => `<tr><td class="l">${esc(i.name)}</td><td>${f(i.quantity, i.quantity % 1 ? 2 : 0)} ${esc(i.unit)}</td><td>${f(i.finalCost, 2)}\u00A0$</td></tr>`).join(''),
+        `<td class="l" colspan="2">Matières <span class="mut">(dont perte ${f(k.totalLoss, 2)}\u00A0$)</span></td><td>${f(k.totalMaterial, 2)}\u00A0$</td>`) : '';
     const pkg = packaging.length ? recipeTable('pink', '<th style="text-align:left">Emballage</th><th>Qté</th><th>Total</th>',
-        packaging.map(i => `<tr><td class="l">${esc(i.name)}</td><td>${f(i.quantity, i.quantity % 1 ? 2 : 0)}</td><td>${f(i.finalCost, 2)} $</td></tr>`).join(''),
-        `<td class="l" colspan="2">Emballage</td><td>${f(k.totalPackaging, 2)} $</td>`) : '';
+        packaging.map(i => `<tr><td class="l">${esc(i.name)}</td><td>${f(i.quantity, i.quantity % 1 ? 2 : 0)}</td><td>${f(i.finalCost, 2)}\u00A0$</td></tr>`).join(''),
+        `<td class="l" colspan="2">Emballage</td><td>${f(k.totalPackaging, 2)}\u00A0$</td>`) : '';
     const lab = steps.length ? recipeTable('yellow', '<th style="text-align:left">Étape</th><th>Durée</th><th>Total</th>',
         steps.map(s => {
             const crew = Object.entries(s.postIds.reduce((q, x) => { q[x] = (q[x] || 0) + 1; return q; }, {})).map(([x, n]) => `${n}× ${esc(x)}`).join(', ');
-            return `<tr><td class="l">${esc(s.name)}${crew ? `<br><span class="mut">${crew}</span>` : ''}</td><td>${f(s.durationSeconds / 60, 1)} min</td><td>${f(s.totalCost, 2)} $</td></tr>`;
-        }).join(''), `<td class="l" colspan="2">Main-d’œuvre</td><td>${f(k.totalLabor, 2)} $</td>`) : '';
+            return `<tr><td class="l">${esc(s.name)}${crew ? `<br><span class="mut">${crew}</span>` : ''}</td><td>${f(s.durationSeconds / 60, 1)} min</td><td>${f(s.totalCost, 2)}\u00A0$</td></tr>`;
+        }).join(''), `<td class="l" colspan="2">Main-d’œuvre</td><td>${f(k.totalLabor, 2)}\u00A0$</td>`) : '';
     return h3('Recette détaillée', `coût total par ligne, lot de ${f(F.nbPortions)}`) + `<div class="rc"><div class="rcg">${ing || '<div></div>'}<div>${pkg}</div><div>${lab}</div></div></div>`;
 }
 
@@ -71,7 +71,7 @@ function evolution(F, m) {
     if (!ser.length || ser.filter(s => finite(s['Coût matière (%)']) || finite(s['Coût matière ($/u.)'])).length < 2) return '';
     const labels = m.trend.labels;
     const spec = F.priced
-        ? [['Coût matière (%)', 'Coût matière', '#10B981', 0], ['Coût frais indirects (%)', 'Frais fixes', '#8B5CF6', 0], ['Marge nette (%)', 'Marge nette', '#2563EB', 0], ['Coût emballage (%)', 'Emballage', '#DB2777', -6], ["Coût main-d'œuvre (%)", 'Main-d’œuvre', '#F59E0B', 6]]
+        ? [['Coût matière (%)', 'Coût matière', '#10B981', 0], ['Coût des frais indirects (%)', 'Frais fixes', '#8B5CF6', 0], ['Marge nette (%)', 'Marge nette', '#2563EB', 0], ['Coût emballage (%)', 'Emballage', '#DB2777', -6], ["Coût main-d'œuvre (%)", 'Main-d’œuvre', '#F59E0B', 6]]
         : [['Coût matière ($/u.)', 'Coût matière', '#10B981', 0], ['Coût emballage ($/u.)', 'Emballage', '#DB2777', -6], ["Coût main-d'œuvre ($/u.)", 'Main-d’œuvre', '#F59E0B', 6], ['Coût de revient ($/u.)', 'Coût de revient', '#2563EB', 0]];
     const unit = F.priced ? '%' : '$';
     const all = spec.flatMap(([key]) => ser.map(s => s[key]));
@@ -79,7 +79,7 @@ function evolution(F, m) {
     const last = (key) => [...ser.map(s => s[key])].reverse().find(finite);
     const series = spec.map(([key, name, color, ly]) => ({ name: `${name} ${f(last(key), F.priced ? 1 : 2)} ${unit}`, color, vals: ser.map(s => s[key]), endLabel: '', ly }));
     return h3('Évolution des indicateurs du produit', F.priced ? `% du prix de vente, ${ser.length} relevés` : `$ par unité, ${ser.length} relevés`)
-        + `<div>${lineChart({ h: 175, padR: 128, labels, series, ymin: sc.min, ymax: sc.max, ystep: sc.step, yfmt: v => (F.priced ? `${f(v)} %` : `${f(v, 2)} $`), xEvery: Math.max(1, Math.ceil(labels.length / 6)) })}</div>`;
+        + `<div>${lineChart({ h: 175, padR: 128, labels, series, ymin: sc.min, ymax: sc.max, ystep: sc.step, yfmt: v => (F.priced ? `${f(v)}\u00A0%` : `${f(v, 2)}\u00A0$`), xEvery: Math.max(1, Math.ceil(labels.length / 6)) })}</div>`;
 }
 
 /** Une fiche. Le premier bloc porte le saut de page forcé et le repère de la fiche. */
@@ -87,12 +87,12 @@ export function ficheHtml(F, m) {
     const k = F.costs, cls = F.cls ? CLASSES[F.cls] : null;
     const status = F.status === 'resale' ? LABELS.statusResale : F.status === 'sub' ? LABELS.statusSub : LABELS.statusFinished;
     const hasRecipe = F.lines.ingredients.length || F.lines.packaging.length || F.lines.steps.length;
-    const top = F.topIngredients.length ? `Principaux ingrédients : ${F.topIngredients.map(i => `${esc(i.name)} ${c2(i.cost)}${i.share != null ? ` (${f(i.share * 100)} % de la matière)` : ''}`).join(' · ')}. ` : '';
-    const comp = hasRecipe ? `<div style="margin:1.6mm 0 0;font-size:7.4pt;color:var(--secondary)">${top}${F.minutes > 0 ? `Main-d’œuvre : ${f(F.minutes, 1)} min par lot de ${f(F.nbPortions)}. ` : ''}${finite(k.contribution) ? `Marge de contribution : ${c2(k.contribution)}${finite(k.contributionPct) ? ` (${pc(k.contributionPct, 1)})` : ''}.` : ''}</div>` : '';
+    const top = F.topIngredients.length ? `Principaux ingrédients\u00A0: ${F.topIngredients.map(i => `${esc(i.name)} ${c2(i.cost)}${i.share != null ? ` (${f(i.share * 100)}\u00A0% de la matière)` : ''}`).join(' · ')}. ` : '';
+    const comp = hasRecipe ? `<div style="margin:1.6mm 0 0;font-size:7.4pt;color:var(--secondary)">${top}${F.minutes > 0 ? `Main-d’œuvre\u00A0: ${f(F.minutes, 1)} min par lot de ${f(F.nbPortions)}. ` : ''}${finite(k.contribution) ? `Marge de contribution\u00A0: ${c2(k.contribution)}${finite(k.contributionPct) ? ` (${pc(k.contributionPct, 1)})` : ''}.` : ''}</div>` : '';
     const tileCost = (label, v, p) => `<div class="tile" style="min-height:10mm"><div class="l">${label}</div><div class="v" style="font-size:11pt">${c2(v)}</div>${finite(p) ? `<div class="c mut">${pc(p, 1)} du prix</div>` : ''}</div>`;
     let h = `<div data-break="before" data-keep="next">${mark(F.mark)}<div class="fiche-head nx"><div><div style="font-size:14pt;font-weight:700">${esc(F.name)}</div>`
         + `<div class="mut">Lot de ${f(F.nbPortions)} portions de ${esc(String(F.portionSize))} ${esc(F.portionUnit)}${F.activity ? ` · ${esc(F.activity)}` : ''}</div></div>${cls ? `<span class="badge ${cls.css}">${cls.label}</span>` : ''}</div></div>`;
-    h += `<table class="tb" data-keep="next" style="font-size:7.8pt;margin-bottom:1.2mm;--pad:1.1mm"><tbody><tr><td class="l">PDS : <b>${F.pds ? c2(F.pds) : '—'}</b></td><td class="l">Unités produites : <b>${f(F.nbPortions)}</b></td><td class="l">Format par portion : <b>${esc(String(F.portionSize))} ${esc(F.portionUnit)}</b></td><td class="l">Statut : <b>${status}</b></td><td class="l">Allergènes : <b>${F.allergens.length ? esc(F.allergens.join(', ')) : LABELS.noAllergen}</b></td></tr></tbody></table>`;
+    h += `<table class="tb" data-keep="next" style="font-size:7.8pt;margin-bottom:1.2mm;--pad:1.1mm"><tbody><tr><td class="l">PDS\u00A0: <b>${F.pds ? c2(F.pds) : '—'}</b></td><td class="l">Unités produites\u00A0: <b>${f(F.nbPortions)}</b></td><td class="l">Format par portion\u00A0: <b>${esc(String(F.portionSize))} ${esc(F.portionUnit)}</b></td><td class="l">Statut\u00A0: <b>${status}</b></td><td class="l">Allergènes\u00A0: <b>${F.allergens.length ? esc(F.allergens.join(', ')) : LABELS.noAllergen}</b></td></tr></tbody></table>`;
     h += `<div class="mut" data-keep="next" style="font-size:7.2pt;margin:2.6mm 0 1mm">Coût de production (identique dans tous les canaux)</div>`
         + `<div class="tiles4" style="grid-template-columns:repeat(${k.subcontracting > 0 ? 5 : 4},1fr)">`
         + tileCost('Coût matière', k.material, k.materialPct) + tileCost('Emballage', k.packaging, k.packagingPct) + tileCost('Main-d’œuvre', k.labor, k.laborPct)
@@ -110,11 +110,11 @@ export function ficheHtml(F, m) {
 export function ficheIntro(m, map) {
     return h3('Comment lire une fiche', null, { first: true }) + `<div class="card"><ol style="margin:0;padding-left:4.4mm">`
         + `<li><b>Bandeau</b> : le produit, son format, sa classe stratégique, ses paramètres (PDS, unités, statut, allergènes).</li>`
-        + `<li><b>Coût de production</b>, puis la <b>cascade de marge par canal</b>, identique à l’écran Par SKU : du PDS jusqu’à la marge nette et au point mort.</li>`
+        + `<li><b>Coût de production</b>, puis la <b>cascade de marge par canal</b>, identique à l’écran Par SKU\u00A0: du PDS jusqu’à la marge nette et au point mort.</li>`
         + `<li><b>Constats du produit</b> : les règles des constats clés, appliquées à ce format.</li>`
         + `<li><b>Détail de la recette</b> : matières premières, emballage, main-d’œuvre par étape, avec le coût de chaque ligne.</li>`
         + `<li><b>Évolution</b> du produit sur les points de référence.</li></ol>`
-        + `<p style="margin:2mm 0 0"><b>Chaque fiche commence sur sa propre page.</b> Si une fiche est longue, ses tableaux se coupent proprement (en-tête répété, « suite » au titre) et la cascade ne se coupe qu’entre deux sections.</p></div>`
-        + h3('Fiches de ce chapitre', `une par format ; marges et classes : tableau de la ${pageRef(map, 'skutable')}`)
+        + `<p style="margin:2mm 0 0"><b>Chaque fiche commence sur sa propre page.</b> Si une fiche est longue, ses tableaux se coupent proprement (en-tête répété, «\u00A0suite\u00A0» au titre) et la cascade ne se coupe qu’entre deux sections.</p></div>`
+        + h3('Fiches de ce chapitre', `une par format\u00A0; marges et classes\u00A0: tableau de la ${pageRef(map, 'skutable')}`)
         + `<div class="idx" data-split="items">${m.fiches.map(F => `<div><span>${esc(F.name)}</span><b>${pageRef(map, F.mark)}</b></div>`).join('')}</div>`;
 }

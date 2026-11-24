@@ -375,7 +375,7 @@ export const MAJOR_ALLERGENS = [
     { key: 'peanuts', name: 'Arachides' }, { key: 'soybeans', name: 'Soja' },
     { key: 'milk', name: 'Lait' }, { key: 'nuts', name: 'Noix' },
     { key: 'celery', name: 'Céleri' }, { key: 'mustard', name: 'Moutarde' },
-    { key: 'sesame', name: 'Sésame' }, { key: 'sulphites', name: 'Sulphites' },
+    { key: 'sesame', name: 'Sésame' }, { key: 'sulphites', name: 'Sulfites' },
     { key: 'lupin', name: 'Lupin' }, { key: 'molluscs', name: 'Mollusques' },
 ];
 
@@ -393,7 +393,7 @@ export const SALES_REPORT_APP_FIELDS = [
     { key: 'prixVente', label: "Prix net ($)", required: true, keywords: ['prix', 'vente', 'price', 'cost', '$', 'revenue', 'net'] },
     { key: 'quantitySold', label: "Quantité vendue (unités)", required: true, keywords: ['quantité', 'qty', 'vendue', 'sold', 'unités', 'mix'] },
     { key: 'transactionDate', label: "Date de transaction", keywords: ['date', 'jour', 'transaction'] },
-    { key: 'totalNetPrice', label: "Total Net Ligne ($)", keywords: ['total', 'net', 'montant'] }
+    { key: 'totalNetPrice', label: "Total net de la ligne ($)", keywords: ['total', 'net', 'montant'] }
 ];
 
 // Phase 4.7 : assistant d'import de l'état des résultats (Revenus + Frais fixes), voir
@@ -464,11 +464,11 @@ export const parsePdfStatementLine = (rawLine) => {
 
 export const APP_FIELDS = [
     { key: 'name', label: "Nom de l'ingrédient", required: true, keywords: ['nom', 'item', 'produit', 'ingrédient', 'description'] },
-    { key: 'uniqueId', label: "Identifiant Unique (SKU/PLU)", keywords: ['sku', 'plu', 'id', 'code', 'identifiant', 'unique'] },
+    { key: 'uniqueId', label: "Identifiant unique (SKU/PLU)", keywords: ['sku', 'plu', 'id', 'code', 'identifiant', 'unique'] },
     { key: 'provider', label: 'Fournisseur', keywords: ['fournisseur', 'provider', 'distributeur'] },
-    { key: 'purchaseFormat', label: "Format d'Achat", keywords: ['format', 'taille', 'poids net', 'purchase format'] },
-    { key: 'unit', label: "Unité de Base", keywords: ['unité', 'unit', 'uom'] },
-    { key: 'purchasePrice', label: "Prix d'Achat", required: true, keywords: ['prix', 'coût', 'price', 'cost', '$'] },
-    { key: 'quantityAndUnit', label: "Quantité et Unité Combinées (ex: '20 kg')", keywords: ['quantité', 'unité', 'combiné', 'format', 'poids', 'volume'] },
+    { key: 'purchaseFormat', label: "Format d'achat", keywords: ['format', 'taille', 'poids net', 'purchase format'] },
+    { key: 'unit', label: "Unité de base", keywords: ['unité', 'unit', 'uom'] },
+    { key: 'purchasePrice', label: "Prix d'achat", required: true, keywords: ['prix', 'coût', 'price', 'cost', '$'] },
+    { key: 'quantityAndUnit', label: "Quantité et unité combinées (ex. : « 20 kg »)", keywords: ['quantité', 'unité', 'combiné', 'format', 'poids', 'volume'] },
     { key: 'lossPercentage', label: 'Taux de perte (%)', keywords: ['perte', 'loss', 'gaspillage', 'waste'] },
 ];

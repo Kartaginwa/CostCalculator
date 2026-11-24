@@ -14,10 +14,10 @@ const LineChartTooltip = ({ active, payload, label }) => {
                 {pointData && <p className="text-xs text-gray-500 mb-2">{pointData.name}</p>}
                 {payload.map(pld => (
                     <p key={pld.dataKey} style={{ color: pld.color }}>
-                        {`${pld.name}: ${formatNumber(pld.value, 2)}${pld.payload[pld.dataKey + "_unit"] || ''}`}
+                        {`${pld.name}\u00A0: ${formatNumber(pld.value, 2)}${pld.payload[pld.dataKey + "_unit"] || ''}`}
                     </p>
                 ))}
-                 {pointData && pointData.note && <p className="text-xs text-gray-600 mt-2 border-t pt-2">Note: {pointData.note}</p>}
+                 {pointData && pointData.note && <p className="text-xs text-gray-600 mt-2 border-t pt-2">Note&nbsp;: {pointData.note}</p>}
             </div>
         );
     }

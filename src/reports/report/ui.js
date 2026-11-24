@@ -12,7 +12,7 @@ export const mark = (key) => `<div data-mark="${esc(key)}" data-keep="next" styl
 /** Bandeau de départ d'un chapitre. */
 export const chapterBanner = (id) => {
     const c = CHAPTERS.find(x => x.id === String(id));
-    return `<div class="chap" data-keep="next"><div class="num">${esc(c.n)}</div><div><div class="t">${esc(c.title)}</div><div class="q">Question : ${esc(c.question)}</div></div></div>`;
+    return `<div class="chap" data-keep="next"><div class="num">${esc(c.n)}</div><div><div class="t">${esc(c.title)}</div><div class="q">Question\u00A0: ${esc(c.question)}</div></div></div>`;
 };
 /** Renvoi de page : « p. 12 » ; « p. … » tant que la carte des pages n'est pas connue (première passe). */
 export const pageRef = (map, key) => `p.${' '}${map?.marks?.[key] ?? '…'}`;

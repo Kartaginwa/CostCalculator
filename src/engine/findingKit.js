@@ -5,13 +5,13 @@ import { parseLocaleNumber as P, formatNumber } from '../utils.js';
 import { REPORT_THRESHOLDS as T } from './reportThresholds.js';
 
 export const SUBTAB_LABELS = {
-    overview: 'Vue d\'ensemble', portfolio: 'Portefeuille', bySku: 'Par SKU', byActivity: 'Par Activité', byChannel: 'Par Canal',
+    overview: 'Vue d\'ensemble', portfolio: 'Portefeuille', bySku: 'Par SKU', byActivity: 'Par activité', byChannel: 'Par canal',
     ingredients: 'Ingrédients', packaging: 'Emballages', labor: 'Main-d\'œuvre', simulation: 'Simulation',
 };
 
-export const pct = (ratio, d = 1) => `${formatNumber(ratio * 100, d)} %`;
+export const pct = (ratio, d = 1) => `${formatNumber(ratio * 100, d)}\u00A0%`;
 // Montant en $ avec le séparateur de milliers de l'application (ex. 11 071 $).
-export const usd = (v, d = 0) => `${v.toLocaleString('fr-CA', { minimumFractionDigits: d, maximumFractionDigits: d })} $`;
+export const usd = (v, d = 0) => `${v.toLocaleString('fr-CA', { minimumFractionDigits: d, maximumFractionDigits: d })}\u00A0$`;
 export const names = (list, max = 3) => (list.length > max ? [...list.slice(0, max), `${list.length - max} autre${list.length - max > 1 ? 's' : ''}`] : list).join(', ');
 
 // `impact` : montant en $ en jeu, quand la règle sait le calculer (sert à classer et à fixer la gravité).

@@ -24,18 +24,18 @@ test('section Emballage de Recette & Calcul : ajout d\'un emballage et coût ref
     await packagingSection.locator('#tutorial-add-packaging-to-recipe').click();
     await page.waitForTimeout(200);
     const newRow = packagingSection.locator('tbody tr').last();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').click();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').fill('Pot de verre 500 ml');
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').click();
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').fill('Pot de verre 500 ml');
     await page.locator('li:has-text("Pot de verre 500 ml")').first().click();
     await newRow.locator('input[inputmode="decimal"]').first().fill('1');
     await page.waitForTimeout(300);
 
-    // Coût Emballage (unité) doit maintenant être non nul.
-    await expect(packagingSection.getByText(/Coût Emballage \(unité\): 0\.00 \$/)).toHaveCount(0);
+    // Coût emballage (unité) doit maintenant être non nul.
+    await expect(packagingSection.getByText(/Coût emballage \(unité\)\u00A0: 0\.00 \$/)).toHaveCount(0);
 
-    // Le récapitulatif affiche bien un 4e poste "Coût Emballage (%)" non nul.
+    // Le récapitulatif affiche bien un 4e poste "Coût emballage (%)" non nul.
     await page.locator('h2:has-text("5. Récapitulatif")').scrollIntoViewIfNeeded();
-    await expect(page.getByText('Coût Emballage (%)')).toBeVisible();
+    await expect(page.getByText('Coût emballage (%)')).toBeVisible();
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

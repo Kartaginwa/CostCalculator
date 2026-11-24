@@ -43,12 +43,12 @@ const ALLOCATION_EPSILON = 0.005;
 const VOLUME_CICI_FAMILIES = ['g', 'ml'];
 const AllocationCheckBadge = ({ diff }) => {
     if (Math.abs(diff) < ALLOCATION_EPSILON) {
-        return <CheckCircle2 size={14} className="text-green-600 shrink-0" title="Répartition complète : la somme des contenants (Activités + Canaux) égale le Montant." />;
+        return <CheckCircle2 size={14} className="text-green-600 shrink-0" title="Répartition complète&nbsp;: la somme des contenants (Activités + Canaux) égale le Montant." />;
     }
     const message = diff > 0
-        ? `Il reste ${formatCurrency(diff)} $ à répartir (Activités + Canaux confondus).`
-        : `La répartition dépasse le Montant de ${formatCurrency(Math.abs(diff))} $ (Activités + Canaux confondus).`;
-    return <AlertCircle size={14} className="text-amber-500 shrink-0" title={`${message} Purement informatif : rien n'empêche de laisser des contenants non applicables à cette ligne.`} />;
+        ? `Il reste ${formatCurrency(diff)}\u00A0$ à répartir (Activités + Canaux confondus).`
+        : `La répartition dépasse le Montant de ${formatCurrency(Math.abs(diff))}\u00A0$ (Activités + Canaux confondus).`;
+    return <AlertCircle size={14} className="text-amber-500 shrink-0" title={`${message} Purement informatif\u00A0: rien n'empêche de laisser des contenants non applicables à cette ligne.`} />;
 };
 
 // Largeurs de colonne communes aux 3 tableaux zonés (Revenus, Charges directes, Frais fixes) —
@@ -113,13 +113,13 @@ const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues
                 <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-l-lg">
                     <span className="flex items-center justify-end">{label}{tooltip && <Tooltip tip={tooltip} />}</span>
                 </td>
-                <td className={`px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 ${montantIsLast ? 'rounded-r-lg' : ''}`}>{formatCurrency(total)} $</td>
+                <td className={`px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 ${montantIsLast ? 'rounded-r-lg' : ''}`}>{formatCurrency(total)}&nbsp;$</td>
                 <td className="w-2 p-0" aria-hidden="true" />
                 {activityBuckets.map((b, i) => {
                     const isLast = showActivityBuckets && i === activityBuckets.length - 1 && !hasVisibleChannels;
                     return (
                         <td key={b.key} className={`px-2 py-1.5 text-right text-xs ${showActivityBuckets ? 'text-yellow-800 bg-yellow-50' : ''} ${isLast ? 'rounded-r-lg' : ''}`}>
-                            {showActivityBuckets ? `${formatCurrency(bucketValues[b.key] || 0)} $` : ''}
+                            {showActivityBuckets ? `${formatCurrency(bucketValues[b.key] || 0)}\u00A0$` : ''}
                         </td>
                     );
                 })}
@@ -129,7 +129,7 @@ const ProfitSummaryBar = ({ label, tooltip, total, activityBuckets, bucketValues
                     const isLast = showSalesChannels && i === salesChannels.length - 1;
                     return (
                         <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic ${showSalesChannels ? 'text-blue-800 bg-blue-50' : ''} ${isLast ? 'rounded-r-lg' : ''}`}>
-                            {showSalesChannels ? (v != null ? `${formatCurrency(v)} $` : '—') : ''}
+                            {showSalesChannels ? (v != null ? `${formatCurrency(v)}\u00A0$` : '—') : ''}
                         </td>
                     );
                 })}
@@ -203,7 +203,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                 <p className="text-sm text-gray-500 mb-4">
                     Une clé définit une ventilation en % réutilisable sur plusieurs lignes de frais fixes — sur
                     les activités et/ou les canaux, dans un seul bassin partagé (la somme des deux groupes ne
-                    devrait pas dépasser 100 %). Une ligne qui applique cette clé est entièrement verrouillée ;
+                    devrait pas dépasser 100&nbsp;%). Une ligne qui applique cette clé est entièrement verrouillée ;
                     repasser cette ligne en Manuel la rend de nouveau librement modifiable. Les % n'ont pas
                     besoin de totaliser 100 — c'est purement informatif, jamais bloquant.
                 </p>
@@ -224,7 +224,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                                     {activityBuckets.map((b) => (
                                         <div key={b.key} className="flex items-center justify-between gap-2">
                                             <span className="text-xs text-gray-600 truncate">{b.label}</span>
-                                            <span className="text-xs text-gray-500">{pct[b.key] !== undefined ? `${formatNumber(pct[b.key], 1)} %` : '—'}</span>
+                                            <span className="text-xs text-gray-500">{pct[b.key] !== undefined ? `${formatNumber(pct[b.key], 1)}\u00A0%` : '—'}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -257,7 +257,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <div className="text-xs font-semibold text-yellow-800 mb-1.5">Activités — {formatNumber(activityTotal, 1)} %</div>
+                                        <div className="text-xs font-semibold text-yellow-800 mb-1.5">Activités — {formatNumber(activityTotal, 1)}&nbsp;%</div>
                                         <div className="space-y-1">
                                             {activityBuckets.map((b) => (
                                                 <div key={b.key} className="flex items-center justify-between gap-2">
@@ -278,7 +278,7 @@ const RepartitionKeysModal = ({ isOpen, onClose, repartitionKeys, onUpdateRepart
                                         </div>
                                     </div>
                                     <div>
-                                        <div className="text-xs font-semibold text-blue-800 mb-1.5">Canaux — {formatNumber(channelTotal, 1)} %</div>
+                                        <div className="text-xs font-semibold text-blue-800 mb-1.5">Canaux — {formatNumber(channelTotal, 1)}&nbsp;%</div>
                                         <div className="space-y-1">
                                             {salesChannels.length === 0 && <p className="text-xs text-gray-400 italic">Aucun canal de vente défini — ajoutez-en dans Paramètres → Produits et SKUs.</p>}
                                             {salesChannels.map((c) => (
@@ -402,7 +402,7 @@ export const IncomeStatementTab = () => {
         const originalList = [...revenueLines];
         onUpdateRevenueLines(revenueLines.filter(line => line.id !== id));
         showNotification({
-            message: `Le revenu "${lineToDelete.label || 'Sans nom'}" a été supprimé.`,
+            message: `Le revenu «\u00A0${lineToDelete.label || 'Sans nom'}\u00A0» a été supprimé.`,
             type: 'info',
             onUndo: () => {
                 onUpdateRevenueLines(originalList);
@@ -425,7 +425,7 @@ export const IncomeStatementTab = () => {
         const originalList = [...expenseLines];
         onUpdateExpenseLines(expenseLines.filter(line => line.id !== id));
         showNotification({
-            message: `La dépense "${lineToDelete.label || 'Sans nom'}" a été supprimée.`,
+            message: `La dépense «\u00A0${lineToDelete.label || 'Sans nom'}\u00A0» a été supprimée.`,
             type: 'info',
             onUndo: () => {
                 onUpdateExpenseLines(originalList);
@@ -450,7 +450,7 @@ export const IncomeStatementTab = () => {
         const originalList = [...directCostLines];
         onUpdateDirectCostLines(directCostLines.filter(line => line.id !== id));
         showNotification({
-            message: `La charge directe "${lineToDelete.label || 'Sans nom'}" a été supprimée.`,
+            message: `La charge directe «\u00A0${lineToDelete.label || 'Sans nom'}\u00A0» a été supprimée.`,
             type: 'info',
             onUndo: () => {
                 onUpdateDirectCostLines(originalList);
@@ -723,11 +723,11 @@ export const IncomeStatementTab = () => {
                             <thead>
                                 <tr>
                                     <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 bg-green-50 rounded-t-lg">&nbsp;</th>
-                                    <th className="w-2 p-0" aria-hidden="true" />
+                                    <th className="w-2 p-0 text-center" aria-hidden="true" />
                                     <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">Activités de production</th>
                                     {salesChannels.length > 0 && (
                                         <>
-                                            <th className="w-2 p-0" aria-hidden="true" />
+                                            <th className="w-2 p-0 text-center" aria-hidden="true" />
                                             <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente (indicatif)
@@ -736,7 +736,7 @@ export const IncomeStatementTab = () => {
                                             </th>
                                         </>
                                     )}
-                                    <th rowSpan={2} className="w-10 px-1 py-1" aria-hidden="true" />
+                                    <th rowSpan={2} className="w-10 px-1 py-1 text-center" aria-hidden="true" />
                                 </tr>
                                 <tr>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Poste de revenu</th>
@@ -753,7 +753,7 @@ export const IncomeStatementTab = () => {
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
-                                    <th className="w-2 p-0" aria-hidden="true" />
+                                    <th className="w-2 p-0 text-center" aria-hidden="true" />
                                     {activityBuckets.map((b) => (
                                         <th key={b.key} className="px-2 py-1 text-center text-xs font-normal text-yellow-800 bg-yellow-50">
                                             {b.key === 'general' ? (
@@ -764,7 +764,7 @@ export const IncomeStatementTab = () => {
                                             ) : b.label}
                                         </th>
                                     ))}
-                                    {salesChannels.length > 0 && <th className="w-2 p-0" aria-hidden="true" />}
+                                    {salesChannels.length > 0 && <th className="w-2 p-0 text-center" aria-hidden="true" />}
                                     {salesChannels.map((c) => (
                                         <th key={c.id} className="px-2 py-1 text-center text-xs font-normal italic text-blue-800 bg-blue-50">{c.name}</th>
                                     ))}
@@ -802,7 +802,7 @@ export const IncomeStatementTab = () => {
                                             </td>
                                             <td className={`px-1 py-1 bg-green-50 ${rowBorder}`}>
                                                 {isManual ? (
-                                                    <span className="block w-full p-1 text-xs text-right font-semibold text-gray-800">{formatCurrency(lineTotal)} $</span>
+                                                    <span className="block w-full p-1 text-xs text-right font-semibold text-gray-800">{formatCurrency(lineTotal)}&nbsp;$</span>
                                                 ) : (
                                                     <input
                                                         type="text"
@@ -830,7 +830,7 @@ export const IncomeStatementTab = () => {
                                                             />
                                                         ) : (
                                                             <span className={b.key === line.repartition ? 'font-medium text-gray-800' : 'text-gray-400'}>
-                                                                {b.key === line.repartition ? `${formatCurrency(lineTotal)} $` : '—'}
+                                                                {b.key === line.repartition ? `${formatCurrency(lineTotal)}\u00A0$` : '—'}
                                                             </span>
                                                         )}
                                                     </td>
@@ -847,7 +847,7 @@ export const IncomeStatementTab = () => {
                                                 }
                                                 return (
                                                     <td key={c.id} className={`px-2 py-1 text-right text-xs text-gray-500 italic bg-blue-50 ${rowBorder}`}>
-                                                        {hasShare ? `${formatCurrency(channelTotal)} $` : '—'}
+                                                        {hasShare ? `${formatCurrency(channelTotal)}\u00A0$` : '—'}
                                                     </td>
                                                 );
                                             })}
@@ -863,7 +863,7 @@ export const IncomeStatementTab = () => {
                             <tfoot>
                                 <tr className="font-bold">
                                     <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-bl-lg">Sous-total</td>
-                                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-br-lg">{formatCurrency(totalRevenue)} $</td>
+                                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-br-lg">{formatCurrency(totalRevenue)}&nbsp;$</td>
                                     <td className="w-2 p-0" aria-hidden="true" />
                                     {activityBuckets.map((b, i) => {
                                         const isFirst = i === 0;
@@ -881,7 +881,7 @@ export const IncomeStatementTab = () => {
                                         const ct = channelTotals[c.id];
                                         return (
                                             <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic text-blue-800 bg-blue-50 ${isFirst ? 'rounded-bl-lg' : ''} ${isLast ? 'rounded-br-lg' : ''}`}>
-                                                {ct.hasShare ? `${formatCurrency(ct.total)} $` : '—'}
+                                                {ct.hasShare ? `${formatCurrency(ct.total)}\u00A0$` : '—'}
                                             </td>
                                         );
                                     })}
@@ -908,7 +908,7 @@ export const IncomeStatementTab = () => {
                             <thead>
                                 <tr>
                                     <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 bg-green-50 rounded-t-lg">&nbsp;</th>
-                                    <th className="w-2 p-0" aria-hidden="true" />
+                                    <th className="w-2 p-0 text-center" aria-hidden="true" />
                                     <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">
                                         <span className="flex items-center justify-center">
                                             Activités de production (indicatif)
@@ -917,7 +917,7 @@ export const IncomeStatementTab = () => {
                                     </th>
                                     {salesChannels.length > 0 && (
                                         <>
-                                            <th className="w-2 p-0" aria-hidden="true" />
+                                            <th className="w-2 p-0 text-center" aria-hidden="true" />
                                             <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente (indicatif)
@@ -926,7 +926,7 @@ export const IncomeStatementTab = () => {
                                             </th>
                                         </>
                                     )}
-                                    <th rowSpan={2} className="w-10 px-1 py-1" aria-hidden="true" />
+                                    <th rowSpan={2} className="w-10 px-1 py-1 text-center" aria-hidden="true" />
                                 </tr>
                                 <tr>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Poste de charge directe</th>
@@ -943,7 +943,7 @@ export const IncomeStatementTab = () => {
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
-                                    <th className="w-2 p-0" aria-hidden="true" />
+                                    <th className="w-2 p-0 text-center" aria-hidden="true" />
                                     {activityBuckets.map((b) => (
                                         <th key={b.key} className="px-2 py-1 text-center text-xs font-normal text-yellow-800 bg-yellow-50">
                                             {b.key === 'general' ? (
@@ -954,7 +954,7 @@ export const IncomeStatementTab = () => {
                                             ) : b.label}
                                         </th>
                                     ))}
-                                    {salesChannels.length > 0 && <th className="w-2 p-0" aria-hidden="true" />}
+                                    {salesChannels.length > 0 && <th className="w-2 p-0 text-center" aria-hidden="true" />}
                                     {salesChannels.map((c) => (
                                         <th key={c.id} className="px-2 py-1 text-center text-xs font-normal italic text-blue-800 bg-blue-50">{c.name}</th>
                                     ))}
@@ -1001,7 +1001,7 @@ export const IncomeStatementTab = () => {
                                             <td className="w-2 p-0" aria-hidden="true" />
                                             {activityBuckets.map((b) => (
                                                 <td key={b.key} className={`px-2 py-1 text-right text-xs text-gray-500 italic bg-yellow-50 ${rowBorder}`}>
-                                                    {activityAmounts[b.key] > 0 ? `${formatCurrency(activityAmounts[b.key])} $` : '—'}
+                                                    {activityAmounts[b.key] > 0 ? `${formatCurrency(activityAmounts[b.key])}\u00A0$` : '—'}
                                                 </td>
                                             ))}
                                             {salesChannels.length > 0 && <td className="w-2 p-0" aria-hidden="true" />}
@@ -1009,7 +1009,7 @@ export const IncomeStatementTab = () => {
                                                 const ch = channelAmounts[c.id];
                                                 return (
                                                     <td key={c.id} className={`px-2 py-1 text-right text-xs text-gray-500 italic bg-blue-50 ${rowBorder}`}>
-                                                        {ch?.hasShare ? `${formatCurrency(ch.total)} $` : '—'}
+                                                        {ch?.hasShare ? `${formatCurrency(ch.total)}\u00A0$` : '—'}
                                                     </td>
                                                 );
                                             })}
@@ -1025,7 +1025,7 @@ export const IncomeStatementTab = () => {
                             <tfoot>
                                 <tr className="font-bold">
                                     <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-bl-lg">Sous-total</td>
-                                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-br-lg">{formatCurrency(totalDirectCosts)} $</td>
+                                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-br-lg">{formatCurrency(totalDirectCosts)}&nbsp;$</td>
                                     <td className="w-2 p-0" aria-hidden="true" />
                                     {activityBuckets.map((b, i) => {
                                         const isFirst = i === 0;
@@ -1043,7 +1043,7 @@ export const IncomeStatementTab = () => {
                                         const ct = directCostChannelTotals[c.id];
                                         return (
                                             <td key={c.id} className={`px-2 py-1.5 text-right text-xs italic text-blue-800 bg-blue-50 ${isFirst ? 'rounded-bl-lg' : ''} ${isLast ? 'rounded-br-lg' : ''}`}>
-                                                {ct.hasShare ? `${formatCurrency(ct.total)} $` : '—'}
+                                                {ct.hasShare ? `${formatCurrency(ct.total)}\u00A0$` : '—'}
                                             </td>
                                         );
                                     })}
@@ -1082,7 +1082,7 @@ export const IncomeStatementTab = () => {
                         <AlertCircle className="h-5 w-5 flex-shrink-0 text-amber-600 mt-0.5" />
                         <div className="flex-1">
                             <p>
-                                {suspectLaborLines.map(l => `« ${l.label.trim()} »`).join(', ')} ressemble{suspectLaborLines.length > 1 ? 'nt' : ''} à de la main-d'œuvre de production. Si ce personnel est dans l'onglet Main-d'œuvre, son coût est déjà compté dans chaque recette : saisissez-le plutôt dans Charges directes réelles → Main-d'œuvre directe, sinon il serait compté deux fois.
+                                {suspectLaborLines.map(l => `« ${l.label.trim()} »`).join(', ')} ressemble{suspectLaborLines.length > 1 ? 'nt' : ''} à de la main-d'œuvre de production. Si ce personnel est dans l'onglet Main-d'œuvre, son coût est déjà compté dans chaque recette&nbsp;: saisissez-le plutôt dans Charges directes réelles → Main-d'œuvre directe, sinon il serait compté deux fois.
                             </p>
                             <div className="mt-2 flex gap-4">
                                 <button type="button" onClick={() => openGuide('guide-ff-liste')} className="text-blue-700 hover:text-blue-900 underline">Voir le guide</button>
@@ -1097,7 +1097,7 @@ export const IncomeStatementTab = () => {
                             <thead>
                                 <tr>
                                     <th colSpan={4} className="px-2 py-1.5 text-center text-xs font-bold text-green-700 bg-green-50 rounded-t-lg">&nbsp;</th>
-                                    <th className="w-2 p-0" aria-hidden="true" />
+                                    <th className="w-2 p-0 text-center" aria-hidden="true" />
                                     <th colSpan={activityBuckets.length} className="px-2 py-1.5 text-center text-xs font-bold text-yellow-700 bg-yellow-50 rounded-t-lg">
                                         <span className="flex items-center justify-center">
                                             Activités de production
@@ -1106,7 +1106,7 @@ export const IncomeStatementTab = () => {
                                     </th>
                                     {salesChannels.length > 0 && (
                                         <>
-                                            <th className="w-2 p-0" aria-hidden="true" />
+                                            <th className="w-2 p-0 text-center" aria-hidden="true" />
                                             <th colSpan={salesChannels.length} className="px-2 py-1.5 text-center text-xs font-bold text-blue-700 bg-blue-50 rounded-t-lg">
                                                 <span className="flex items-center justify-center">
                                                     Canaux de vente
@@ -1115,7 +1115,7 @@ export const IncomeStatementTab = () => {
                                             </th>
                                         </>
                                     )}
-                                    <th rowSpan={2} className="w-10 px-1 py-1" aria-hidden="true" />
+                                    <th rowSpan={2} className="w-10 px-1 py-1 text-center" aria-hidden="true" />
                                 </tr>
                                 <tr>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Poste de dépense</th>
@@ -1132,7 +1132,7 @@ export const IncomeStatementTab = () => {
                                         </span>
                                     </th>
                                     <th className="px-2 py-1 text-center text-xs font-semibold text-green-800 bg-green-50">Montant ($)</th>
-                                    <th className="w-2 p-0" aria-hidden="true" />
+                                    <th className="w-2 p-0 text-center" aria-hidden="true" />
                                     {activityBuckets.map((b) => (
                                         <th key={b.key} className="px-2 py-1 text-center text-xs font-normal text-yellow-800 bg-yellow-50">
                                             {b.key === 'general' ? (
@@ -1143,7 +1143,7 @@ export const IncomeStatementTab = () => {
                                             ) : b.label}
                                         </th>
                                     ))}
-                                    {salesChannels.length > 0 && <th className="w-2 p-0" aria-hidden="true" />}
+                                    {salesChannels.length > 0 && <th className="w-2 p-0 text-center" aria-hidden="true" />}
                                     {salesChannels.map((c) => (
                                         <th key={c.id} className="px-2 py-1 text-center text-xs font-normal italic text-blue-800 bg-blue-50">{c.name}</th>
                                     ))}
@@ -1226,7 +1226,7 @@ export const IncomeStatementTab = () => {
                                                 <td key={b.key} className={`px-2 py-1 text-right text-xs bg-yellow-50 ${rowBorder}`}>
                                                     {effective.locked ? (
                                                         <span className="text-gray-500" title="Valeur dérivée de la clé de répartition — passer en Manuel pour modifier.">
-                                                            {effective.activityAllocations[b.key] !== undefined ? `${formatCurrency(effective.activityAllocations[b.key])} $` : '—'}
+                                                            {effective.activityAllocations[b.key] !== undefined ? `${formatCurrency(effective.activityAllocations[b.key])}\u00A0$` : '—'}
                                                         </span>
                                                     ) : (
                                                         <input
@@ -1245,7 +1245,7 @@ export const IncomeStatementTab = () => {
                                                 <td key={c.id} className={`px-2 py-1 text-right text-xs bg-blue-50 ${rowBorder}`}>
                                                     {effective.locked ? (
                                                         <span className="text-gray-500" title="Valeur dérivée de la clé de répartition — passer en Manuel pour modifier.">
-                                                            {effective.channelAllocations[c.id] !== undefined ? `${formatCurrency(effective.channelAllocations[c.id])} $` : '—'}
+                                                            {effective.channelAllocations[c.id] !== undefined ? `${formatCurrency(effective.channelAllocations[c.id])}\u00A0$` : '—'}
                                                         </span>
                                                     ) : (
                                                         <input
@@ -1271,7 +1271,7 @@ export const IncomeStatementTab = () => {
                             <tfoot>
                                 <tr className="font-bold">
                                     <td colSpan={3} className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-bl-lg">Sous-total</td>
-                                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-br-lg">{formatCurrency(generalInfo.totalIndirects)} $</td>
+                                    <td className="px-2 py-1.5 text-right text-xs text-green-800 bg-green-50 rounded-br-lg">{formatCurrency(generalInfo.totalIndirects)}&nbsp;$</td>
                                     <td className="w-2 p-0" aria-hidden="true" />
                                     {activityBuckets.map((b, i) => {
                                         const isFirst = i === 0;

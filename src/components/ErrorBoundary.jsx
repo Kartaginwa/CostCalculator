@@ -17,7 +17,7 @@ export class ErrorBoundary extends React.Component {
 
     componentDidCatch(error, errorInfo) {
         // Journalise pour le diagnostic (visible dans la console dev / les logs Electron).
-        console.error('ErrorBoundary a intercepté une erreur :', error, errorInfo);
+        console.error('ErrorBoundary a intercepté une erreur :', error, errorInfo);
     }
 
     handleReset = () => {
@@ -35,8 +35,8 @@ export class ErrorBoundary extends React.Component {
                     <h1 className="text-xl font-bold text-gray-800 mb-2">Une erreur inattendue est survenue</h1>
                     <p className="text-sm text-gray-600 mb-4">
                         L'application a rencontré un problème et n'a pas pu afficher cette section.
-                        Vos données en cours n'ont pas été perdues : vous pouvez réessayer, ou recharger
-                        l'application. Pensez à sauvegarder votre projet (bouton « Sauvegarder ») dès que
+                        Vos données en cours n'ont pas été perdues&nbsp;: vous pouvez réessayer, ou recharger
+                        l'application. Pensez à sauvegarder votre projet (bouton «&nbsp;Sauvegarder&nbsp;») dès que
                         possible.
                     </p>
                     {this.state.error && (

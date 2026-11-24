@@ -20,13 +20,13 @@
 
 export const CHAPTERS = [
     { id: 'bienvenue', title: 'Bienvenue', sub: '', narration: `Bienvenue dans TransfoCalculateur. [pause] Un outil pour connaître vos coûts de revient et fixer vos prix en confiance.` },
-    { id: 'entreprise', title: 'Votre entreprise', sub: 'Qui vous êtes, ce que vous vendez, et à qui', narration: `Première étape : votre entreprise. Qui vous êtes, ce que vous vendez, et à qui.` },
-    { id: 'intrants', title: 'Vos intrants', sub: 'Ce que vous achetez, ce que vous payez', narration: `Deuxième étape : vos intrants. Ce que vous achetez, et ce que vous payez.` },
+    { id: 'entreprise', title: 'Votre entreprise', sub: 'Qui vous êtes, ce que vous vendez, et à qui', narration: `Première étape\u00A0: votre entreprise. Qui vous êtes, ce que vous vendez, et à qui.` },
+    { id: 'intrants', title: 'Vos intrants', sub: 'Ce que vous achetez, ce que vous payez', narration: `Deuxième étape\u00A0: vos intrants. Ce que vous achetez, et ce que vous payez.` },
     { id: 'produit', title: 'Un produit, de A à Z', sub: 'De la recette au prix de revient', narration: `Un produit, du début à la fin. De la recette jusqu'au prix de revient.` },
     { id: 'frais', title: 'Vos frais', sub: 'Ce qui ne dépend d\'aucun produit en particulier', narration: `Vos frais. Tout ce qui ne dépend d'aucun produit en particulier, et la façon de les répartir.` },
     { id: 'portrait', title: 'Le portrait de votre entreprise', sub: 'Où vous en êtes, et ce qui change', narration: `Le portrait de votre entreprise. Où vous en êtes, et ce qui change.` },
     { id: 'detail', title: 'Zoom sur vos produits', sub: 'Par produit, par activité, par canal', narration: `Zoom sur vos produits. Par produit, par activité, par canal.` },
-    { id: 'coulisses', title: 'Les coulisses', sub: 'Vos achats, votre équipe, vos « et si »', narration: `Les coulisses. Vos achats, votre équipe, vos simulations.` },
+    { id: 'coulisses', title: 'Les coulisses', sub: 'Vos achats, votre équipe, vos « et si »', narration: `Les coulisses. Vos achats, votre équipe, vos simulations.` },
     { id: 'partage', title: 'Pour le dire aux autres', sub: 'Un rapport PDF, un classeur Excel', narration: `Pour le dire aux autres. Un rapport complet, et un classeur Excel.` },
     { id: 'aide', title: 'Jamais perdu', sub: 'Où trouver l\'aide quand on en a besoin', narration: `Jamais perdu. Où trouver de l'aide, quand on en a besoin.` },
 ];
@@ -47,7 +47,7 @@ const FIND_OBJ = '#tutorial-section-findings-objectif';
 const FIND_EVO = '#tutorial-section-findings-evolution';
 const FINDINGS = '#tutorial-section-key-findings';
 const RECON = '#tutorial-section-reconciliation';
-const NON_PRODUCTIF = { text: 'Total Coût du temps non productif', within: '#tutorial-section-recipe-labor' };
+const NON_PRODUCTIF = { text: 'Total coût du temps non productif', within: '#tutorial-section-recipe-labor' };
 const CHART = '#tutorial-section-tracking-global .recharts-wrapper';
 const MODAL = '.fixed.inset-0.z-50';
 const subNote = (at, to, text) => [{ at, do: 'point', target: `[data-tour="subtab-${to}"]` }, { at: at + 100, do: 'note', id: `sub-${to}`, target: `[data-tour="subtab-${to}"]`, text, side: 'bottom' }];
@@ -60,7 +60,7 @@ export const SCENES = [
     // --- 0. Bienvenue ---------------------------------------------------------------------------------------
     {
         id: 'accueil', chapter: 0, tab: 'info', introTitle: 'Le vrai coût de chaque produit', introSub: 'Visite guidée',
-        caption: `Imaginez une petite entreprise qui fabrique des repas surgelés. Chaque mois, la même question la ronge : [pause] **combien** coûte vraiment chaque produit, et **lesquels** rapportent de l'argent ? Cette visite y répond.`,
+        caption: `Imaginez une petite entreprise qui fabrique des repas surgelés. Chaque mois, la même question la ronge\u00A0: [pause] **combien** coûte vraiment chaque produit, et **lesquels** rapportent de l'argent\u00A0? Cette visite y répond.`,
         steps: [
             { at: 400, do: 'highlight', target: 'img[alt^="Logo"]' },
             { at: 8400, do: 'note', id: 'bar', target: '#tutorial-tab-bar', text: 'Tout se passe dans ces sept onglets', side: 'bottom' },
@@ -76,7 +76,7 @@ export const SCENES = [
             // à son arrivée ; les onglets sont espacés d'au moins 0,8 s, calés sur les propositions de la voix (« de gauche à droite », « ce que vous achetez », « la fabrication », « ce qui s'y ajoute », « ce que tout cela vous rapporte ») pour que le balayage reste lisible
             ...[[2200, 'info', '① Vos produits'], [3500, 'ingredients', '② Ce que vous achetez'], [4300, 'packaging', '③ Contenants et cartons'],
                 [5300, 'labor', '④ Qui fabrique, à quel coût'], [6100, 'recipe', '⑤ La recette de chaque produit'],
-                [7300, 'income-statement', '⑥ Vos frais fixes'], [8700, 'summary', '⑦ Les résultats !']]
+                [7300, 'income-statement', '⑥ Vos frais fixes'], [8700, 'summary', '⑦ Les résultats !']]
                 .flatMap(([at, t, txt], i) => [...(i ? [{ at: at - 80, do: 'unnote' }] : []),
                     { at: at - 600, do: 'point', target: `#tab-${t}` }, { at, do: 'note', id: `tab-${t}`, target: `#tab-${t}`, text: txt, side: 'bottom' }]),
         ],
@@ -85,26 +85,26 @@ export const SCENES = [
     // --- 1. Votre entreprise ----------------------------------------------------------------------------------
     {
         id: 'entreprise', chapter: 1, tab: 'info',
-        caption: `Commençons par **vous**. Le nom de l'entreprise, d'abord. [pause] Puis vos cibles : la part du prix de vente que vous acceptez de consacrer aux ingrédients. Chaque résultat sera comparé à vos objectifs.`,
+        caption: `Commençons par **vous**. Le nom de l'entreprise, d'abord. [pause] Puis vos cibles\u00A0: la part du prix de vente que vous acceptez de consacrer aux ingrédients. Chaque résultat sera comparé à vos objectifs.`,
         steps: [
             { at: 1300, do: 'note', id: 'nom', target: '#tutorial-company-name', text: 'Le nom de votre entreprise', side: 'right' },
             { at: 1500, do: 'type', target: '#tutorial-company-name', text: 'Boréal Mets Préparés inc.', rate: 70 },
             { at: 4600, do: 'unnote' },
             { at: 4600, do: 'scroll', target: '#tutorial-section-info-objectifs' },
-            { at: 5500, do: 'note', id: 'cible', target: '#foodCostTarget', text: 'Votre cible : le coût des ingrédients ne devrait pas dépasser ce %', side: 'top' },
+            { at: 5500, do: 'note', id: 'cible', target: '#foodCostTarget', text: 'Votre cible : le coût des ingrédients ne devrait pas dépasser ce %', side: 'top' },
             { at: 6300, do: 'type', target: '#foodCostTarget', text: '30', rate: 220 },
             { at: 9800, do: 'highlight', target: '#tutorial-section-info-objectifs' },
         ],
     },
     {
         id: 'objectifs', chapter: 1, tab: 'info',
-        caption: `Vos cibles ne se limitent pas aux coûts. Neuf objectifs sont déjà prêts : marge nette, paie non utilisée, frais fixes. Fixez une valeur, et chaque résultat dira s'il est atteint. [pause] Vous pouvez aussi créer les vôtres : un indicateur, un sens, une valeur.`,
+        caption: `Vos cibles ne se limitent pas aux coûts. Neuf objectifs sont déjà prêts\u00A0: marge nette, paie non utilisée, frais fixes. Fixez une valeur, et chaque résultat dira s'il est atteint. [pause] Vous pouvez aussi créer les vôtres\u00A0: un indicateur, un sens, une valeur.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-info-objectifs' },
             { at: 700, do: 'click', target: { btn: 'Gérer les objectifs' } },
             { at: 1900, do: 'note', id: 'ob1', target: { sel: '[data-testid="objectives-default"]' }, text: 'Neuf objectifs prêts à l\'emploi', side: 'top' },
             { at: 8300, do: 'unnote' },
-            { at: 8500, do: 'note', id: 'ob2', target: { sel: '[data-testid="objective-margeNette"] > div:nth-child(2)' }, text: 'Fixez une valeur : la ligne passe au vert quand elle est atteinte', side: 'right' },
+            { at: 8500, do: 'note', id: 'ob2', target: { sel: '[data-testid="objective-margeNette"] > div:nth-child(2)' }, text: 'Fixez une valeur : la ligne passe au vert quand elle est atteinte', side: 'right' },
             { at: 8700, do: 'type', target: { sel: '[data-testid="objective-margeNette"] input[inputmode="decimal"]' }, text: '5', rate: 300 },
             { at: 12700, do: 'unnote' },
             // L'arrêt sur la création d'un objectif sur mesure : on l'ajoute, on choisit l'indicateur et la valeur, puis on le retire
@@ -121,11 +121,11 @@ export const SCENES = [
     },
     {
         id: 'activites', chapter: 1, tab: 'info',
-        caption: `Vous fabriquez plusieurs familles de produits ? Ce sont vos **activités** : mets surgelés, soupes, sauces. [pause] Elles servent à répartir les frais, et chaque produit appartient à l'une d'elles.`,
+        caption: `Vous fabriquez plusieurs familles de produits\u00A0? Ce sont vos **activités** : mets surgelés, soupes, sauces. [pause] Elles servent à répartir les frais, et chaque produit appartient à l'une d'elles.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-info-activites' },
             { at: 700, do: 'highlight', target: '#tutorial-section-info-activites' },
-            { at: 2600, do: 'note', id: 'act', target: '#tutorial-section-info-activites', text: 'Activités : « qui consomme quels frais ? »', side: 'top' },
+            { at: 2600, do: 'note', id: 'act', target: '#tutorial-section-info-activites', text: 'Activités : « qui consomme quels frais ? »', side: 'top' },
             { at: 6800, do: 'unnote' }, { at: 8900, do: 'note', id: 'act2', target: { sel: '#tutorial-section-info-activites input', nth: 0 }, text: 'Chaque produit appartient à l\'une d\'elles', side: 'top' },
             { at: 8800, do: 'point', target: { sel: '#tutorial-section-info-activites input', nth: 0 } },
         ],
@@ -139,7 +139,7 @@ export const SCENES = [
             // le cadre bleu ne doit pas rester sur la page quand la fenêtre s'ouvre devant elle
             { at: 2900, do: 'highlight', target: null },
             { at: 3000, do: 'click', target: { btn: 'Gérer les maillons', within: '#tutorial-section-info-channels', nth: 1 } },
-            { at: 5400, do: 'note', id: 'm1', target: { sel: `${MODAL} input`, nth: 0 }, text: 'Un maillon : par exemple un distributeur', side: 'bottom' },
+            { at: 5400, do: 'note', id: 'm1', target: { sel: `${MODAL} input`, nth: 0 }, text: 'Un maillon : par exemple un distributeur', side: 'bottom' },
             { at: 7600, do: 'unnote' }, { at: 7800, do: 'note', id: 'm2', target: { sel: `${MODAL} select`, nth: 0 }, text: 'Il prend une marge… ou une majoration', side: 'bottom' },
             { at: 8600, do: 'pick', target: { sel: `${MODAL} select`, nth: 0 }, option: 'Majoration' },
             { at: 10000, do: 'pick', target: { sel: `${MODAL} select`, nth: 0 }, option: 'Marge' },
@@ -149,7 +149,7 @@ export const SCENES = [
     },
     {
         id: 'produits', chapter: 1, tab: 'info',
-        caption: `Voici **vos produits**, chacun avec ses formats, son prix et sa part des ventes. Une longue liste ? Tapez quelques lettres, et le produit que vous cherchez apparaît. [pause] Vous pouvez aussi filtrer par activité.`,
+        caption: `Voici **vos produits**, chacun avec ses formats, son prix et sa part des ventes. Une longue liste\u00A0? Tapez quelques lettres, et le produit que vous cherchez apparaît. [pause] Vous pouvez aussi filtrer par activité.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-info-menu', block: 'start' },
             { at: 5300, do: 'note', id: 'rech', target: '#filterPlatName', text: 'La recherche filtre la liste en direct', side: 'right' },
@@ -177,7 +177,7 @@ export const SCENES = [
     // --- 2. Vos intrants --------------------------------------------------------------------------------------
     {
         id: 'ingredient-saisie', chapter: 2, tab: 'ingredients',
-        caption: `Maintenant, ce que vous **achetez**. Ajoutons de la farine : son fournisseur, son format, son prix, sa perte. [pause] L'application calcule seule le coût réel de chaque kilo, perte comprise.`,
+        caption: `Maintenant, ce que vous **achetez**. Ajoutons de la farine\u00A0: son fournisseur, son format, son prix, sa perte. [pause] L'application calcule seule le coût réel de chaque kilo, perte comprise.`,
         steps: [
             { at: 300, do: 'click', target: '#tutorial-add-ingredient' },
             { at: 1100, do: 'scroll', target: NEW_ING },
@@ -187,7 +187,7 @@ export const SCENES = [
             { at: 3300, do: 'type', target: { sel: `${NEW_ING} input`, nth: 2 }, text: '10', rate: 220 },
             { at: 4100, do: 'type', target: { sel: `${NEW_ING} input`, nth: 3 }, text: '18,50', rate: 120 },
             { at: 5000, do: 'type', target: { sel: `${NEW_ING} input`, nth: 6 }, text: '3', rate: 220 },
-            { at: 6400, do: 'note', id: 'pu', target: { sel: `${NEW_ING} input`, nth: 7 }, text: 'Coût unitaire : {v} $ par kg', side: 'top', read: { sel: `${NEW_ING} input`, nth: 7 } },
+            { at: 6400, do: 'note', id: 'pu', target: { sel: `${NEW_ING} input`, nth: 7 }, text: 'Coût unitaire : {v} $ par kg', side: 'top', read: { sel: `${NEW_ING} input`, nth: 7 } },
             { at: 6600, do: 'point', target: { sel: `${NEW_ING} input`, nth: 7 } },
             // « perte comprise » : on revient sur la perte au moment où la voix le dit
             { at: 9900, do: 'unnote' },
@@ -196,7 +196,7 @@ export const SCENES = [
     },
     {
         id: 'allergenes', chapter: 2, tab: 'ingredients',
-        caption: `Un détail qui change tout pour l'étiquetage : les **allergènes**. Cochez-les une seule fois sur l'ingrédient, et ils remontent d'eux-mêmes jusqu'à la recette.`,
+        caption: `Un détail qui change tout pour l'étiquetage\u00A0: les **allergènes**. Cochez-les une seule fois sur l'ingrédient, et ils remontent d'eux-mêmes jusqu'à la recette.`,
         steps: [
             { at: 300, do: 'scroll', target: '#tutorial-section-ingredients-db tbody tr:first-child' },
             { at: 1200, do: 'note', id: 'al0', target: '#tutorial-section-ingredients-db tbody tr:first-child button[title="Gérer les allergènes"]', text: 'Le bouton des allergènes', side: 'left' },
@@ -204,25 +204,25 @@ export const SCENES = [
             { at: 2500, do: 'unnote' },
             { at: 2700, do: 'note', id: 'al1', target: { sel: `${MODAL} label`, nth: 0 }, text: 'Les 14 allergènes majeurs', side: 'top' },
             { at: 3300, do: 'click', target: { sel: `${MODAL} label`, nth: 0 } },
-            { at: 5400, do: 'unnote' }, { at: 5600, do: 'note', id: 'al2', target: { btn: 'Terminé' }, text: 'Rien d\'autre à faire : la recette les détecte', side: 'top' },
+            { at: 5400, do: 'unnote' }, { at: 5600, do: 'note', id: 'al2', target: { btn: 'Terminé' }, text: 'Rien d\'autre à faire : la recette les détecte', side: 'top' },
             { at: 6600, do: 'click', target: { btn: 'Terminé' } },
         ],
     },
     {
         id: 'emballage', chapter: 2, tab: 'packaging',
-        caption: `Les contenants, les étiquettes, les cartons : l'**emballage** fonctionne comme les ingrédients. [pause] Et si vos prix dorment déjà dans un chiffrier, importez-les d'un seul coup.`,
+        caption: `Les contenants, les étiquettes, les cartons\u00A0: l'**emballage** fonctionne comme les ingrédients. [pause] Et si vos prix dorment déjà dans un chiffrier, importez-les d'un seul coup.`,
         steps: [
             { at: 500, do: 'highlight', target: '#tutorial-section-packaging-db' },
-            { at: 3100, do: 'note', id: 'pk', target: { sel: '#tutorial-section-packaging-db tbody tr:first-child input', nth: 3 }, text: 'Le prix d\'achat : le coût unitaire suit', side: 'top' },
+            { at: 3100, do: 'note', id: 'pk', target: { sel: '#tutorial-section-packaging-db tbody tr:first-child input', nth: 3 }, text: 'Le prix d\'achat : le coût unitaire suit', side: 'top' },
             { at: 3400, do: 'type', target: { sel: '#tutorial-section-packaging-db tbody tr:first-child input', nth: 3 }, text: '92,40', rate: 230 },
             { at: 5600, do: 'unnote' },
-            { at: 5800, do: 'note', id: 'imp', target: { btn: 'Importer une liste' }, text: 'Une longue liste ? Importez-la depuis Excel', side: 'bottom' },
+            { at: 5800, do: 'note', id: 'imp', target: { btn: 'Importer une liste' }, text: 'Une longue liste ? Importez-la depuis Excel', side: 'bottom' },
             { at: 8800, do: 'point', target: { btn: 'Importer une liste' } },
         ],
     },
     {
         id: 'main-oeuvre', chapter: 2, tab: 'labor',
-        caption: `Et les gens qui fabriquent ? Un poste, ses employés, leur salaire, leurs charges. [pause] Chaque employé a aussi un temps productif attendu : la part des heures payées qui sert vraiment à produire. Modifiez un salaire, et le **coût horaire du poste** suit aussitôt.`,
+        caption: `Et les gens qui fabriquent\u00A0? Un poste, ses employés, leur salaire, leurs charges. [pause] Chaque employé a aussi un temps productif attendu\u00A0: la part des heures payées qui sert vraiment à produire. Modifiez un salaire, et le **coût horaire du poste** suit aussitôt.`,
         steps: [
             { at: 300, do: 'highlight', target: '#tutorial-section-labor-db' },
             { at: 3300, do: 'note', id: 'sal', target: { sel: '#tutorial-section-labor-db input', nth: 2 }, text: 'Salaire horaire de cet employé', side: 'top' },
@@ -231,14 +231,14 @@ export const SCENES = [
             { at: 6300, do: 'point', target: { text: '% Temps productif attendu', within: '#tutorial-section-labor-db' } },
             { at: 11700, do: 'unnote' },
             { at: 11800, do: 'type', target: { sel: '#tutorial-section-labor-db input', nth: 2 }, text: '36', rate: 260 },
-            { at: 13700, do: 'note', id: 'cout', target: { text: 'Coût Moyen Pondéré du Poste' }, text: 'Coût du poste : {v}', side: 'top', read: { label: 'Coût Moyen Pondéré du Poste' } },
+            { at: 13700, do: 'note', id: 'cout', target: { text: 'Coût moyen pondéré du poste' }, text: 'Coût du poste : {v}', side: 'top', read: { label: 'Coût moyen pondéré du poste' } },
         ],
     },
 
     // --- 3. Un produit, de A à Z : les cinq parties de l'onglet Production, dans l'ordre ---------------------------------
     {
         id: 'recette', chapter: 3, tab: 'recipe',
-        caption: `Place à la **recette**. Choisissez un produit : tout ce qu'il faut pour le fabriquer se présente en cinq parties, dans l'ordre. [pause] Ici, un lot de vingt unités de chili.`,
+        caption: `Place à la **recette**. Choisissez un produit\u00A0: tout ce qu'il faut pour le fabriquer se présente en cinq parties, dans l'ordre. [pause] Ici, un lot de vingt unités de chili.`,
         steps: [
             { at: 900, do: 'pick', target: 'select', option: 'Chili con carne mijoté' },
             // « cinq parties, dans l'ordre » : on les survole une à une, au rythme de la voix, puis on revient à l'en-tête
@@ -252,7 +252,7 @@ export const SCENES = [
     },
     {
         id: 'recette-direct', chapter: 3, tab: 'recipe',
-        caption: `**Première partie**, les ingrédients. Chacun vient de votre base de données, et tout se recalcule **en direct**. [pause] Un peu plus de bœuf ? Regardez le coût des ingrédients grimper.`,
+        caption: `**Première partie**, les ingrédients. Chacun vient de votre base de données, et tout se recalcule **en direct**. [pause] Un peu plus de bœuf\u00A0? Regardez le coût des ingrédients grimper.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#tutorial-section-recipe-ingredients', block: 'start' },
@@ -262,12 +262,12 @@ export const SCENES = [
             { at: 4700, do: 'note', id: 'q', target: '#tutorial-section-recipe-ingredients input[inputmode="decimal"]', text: 'Quantité de bœuf (g)', side: 'top' },
             { at: 5000, do: 'type', target: '#tutorial-section-recipe-ingredients input[inputmode="decimal"]', text: '4800', rate: 230 },
             { at: 8300, do: 'unnote' },
-            { at: 8400, do: 'note', id: 'cm', target: { text: 'Coût Matières (unité)', within: '#tutorial-section-recipe-ingredients' }, text: 'Coût des ingrédients, par unité : {v}', side: 'top', read: { label: 'Coût Matières (unité)', within: '#tutorial-section-recipe-ingredients' } },
+            { at: 8400, do: 'note', id: 'cm', target: { text: 'Coût matières (unité)', within: '#tutorial-section-recipe-ingredients' }, text: 'Coût des ingrédients, par unité : {v}', side: 'top', read: { label: 'Coût matières (unité)', within: '#tutorial-section-recipe-ingredients' } },
         ],
     },
     {
         id: 'recette-emballage', chapter: 3, tab: 'recipe',
-        caption: `**Deuxième partie**, l'emballage : les contenants, les étiquettes, les cartons de ce produit. Même principe, avec ses propres pertes. [pause] Et le coût par unité se met à jour aussitôt.`,
+        caption: `**Deuxième partie**, l'emballage\u00A0: les contenants, les étiquettes, les cartons de ce produit. Même principe, avec ses propres pertes. [pause] Et le coût par unité se met à jour aussitôt.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#tutorial-section-recipe-packaging', block: 'start' },
@@ -275,12 +275,12 @@ export const SCENES = [
             { at: 3000, do: 'note', id: 'pk', target: { sel: '#tutorial-section-recipe-packaging input[inputmode="decimal"]', nth: 0 }, text: 'Combien de contenants par lot', side: 'top' },
             { at: 6700, do: 'type', target: { sel: '#tutorial-section-recipe-packaging input[inputmode="decimal"]', nth: 0 }, text: '25', rate: 250 },
             { at: 8800, do: 'unnote' },
-            { at: 8900, do: 'note', id: 'cu', target: { text: 'Coût Emballage (unité)', within: '#tutorial-section-recipe-packaging' }, text: 'Emballage, par unité : {v}', side: 'top', read: { label: 'Coût Emballage (unité)', within: '#tutorial-section-recipe-packaging' } },
+            { at: 8900, do: 'note', id: 'cu', target: { text: 'Coût emballage (unité)', within: '#tutorial-section-recipe-packaging' }, text: 'Emballage, par unité : {v}', side: 'top', read: { label: 'Coût emballage (unité)', within: '#tutorial-section-recipe-packaging' } },
         ],
     },
     {
         id: 'etapes', chapter: 3, tab: 'recipe',
-        caption: `**Troisième partie**, les étapes : qui travaille, quand, et pendant combien de temps. [pause] C'est de là que vient le coût de main-d'œuvre, y compris celui des heures payées qui ne servent pas à produire.`,
+        caption: `**Troisième partie**, les étapes\u00A0: qui travaille, quand, et pendant combien de temps. [pause] C'est de là que vient le coût de main-d'œuvre, y compris celui des heures payées qui ne servent pas à produire.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#tutorial-section-recipe-labor', block: 'start' },
@@ -290,12 +290,12 @@ export const SCENES = [
             { at: 5900, do: 'unnote' },
             { at: 7600, do: 'scroll', target: NON_PRODUCTIF },
             { at: 8300, do: 'highlight', target: NON_PRODUCTIF },
-            { at: 8600, do: 'note', id: 'np', target: NON_PRODUCTIF, text: 'Heures payées mais non productives : {v}', side: 'top', read: { label: 'Total Coût du temps non productif (absorbé)', within: '#tutorial-section-recipe-labor' } },
+            { at: 8600, do: 'note', id: 'np', target: NON_PRODUCTIF, text: 'Heures payées mais non productives : {v}', side: 'top', read: { label: 'Total coût du temps non productif (absorbé)', within: '#tutorial-section-recipe-labor' } },
         ],
     },
     {
         id: 'couts-additionnels', chapter: 3, tab: 'recipe',
-        caption: `**Quatrième partie**, les coûts additionnels. Deux options, selon votre cas : la sous-traitance, quand une étape est confiée à un tiers, et le vieillissement, pour un produit qui mûrit avant d'être vendu.`,
+        caption: `**Quatrième partie**, les coûts additionnels. Deux options, selon votre cas\u00A0: la sous-traitance, quand une étape est confiée à un tiers, et le vieillissement, pour un produit qui mûrit avant d'être vendu.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#tutorial-section-recipe-additional', block: 'start' },
@@ -307,26 +307,26 @@ export const SCENES = [
     },
     {
         id: 'cascade', chapter: 3, tab: 'recipe',
-        caption: `**Cinquième et dernière partie**, le récapitulatif : du coût de revient complet jusqu'au point mort. [pause] Et selon le canal de vente, la marge change. Essayons les épiceries.`,
+        caption: `**Cinquième et dernière partie**, le récapitulatif\u00A0: du coût de revient complet jusqu'au point mort. [pause] Et selon le canal de vente, la marge change. Essayons les épiceries.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: '#recap-section', block: 'start' },
-            { at: 3300, do: 'highlight', target: { text: 'Coût de Production', within: '#recap-section', up: 1 } },
-            { at: 3500, do: 'note', id: 'cp', target: { text: 'Coût de Production', within: '#recap-section', up: 1 }, text: 'Ce que coûte une unité', side: 'right' },
+            { at: 3300, do: 'highlight', target: { text: 'Coût de production', within: '#recap-section', up: 1 } },
+            { at: 3500, do: 'note', id: 'cp', target: { text: 'Coût de production', within: '#recap-section', up: 1 }, text: 'Ce que coûte une unité', side: 'right' },
             { at: 4900, do: 'unnote' },
-            { at: 5200, do: 'highlight', target: { text: 'Point Mort', within: '#recap-section', up: 1 } },
-            { at: 5300, do: 'note', id: 'pm', target: { text: 'Point Mort', within: '#recap-section', up: 1 }, text: 'Unités à vendre pour couvrir les frais', side: 'top' },
+            { at: 5200, do: 'highlight', target: { text: 'Point mort', within: '#recap-section', up: 1 } },
+            { at: 5300, do: 'note', id: 'pm', target: { text: 'Point mort', within: '#recap-section', up: 1 }, text: 'Unités à vendre pour couvrir les frais', side: 'top' },
             { at: 6900, do: 'unnote' },
             { at: 7100, do: 'note', id: 'cn', target: '#recap-section select', text: 'Le canal de vente', side: 'bottom' },
             { at: 9300, do: 'pick', target: '#recap-section select', option: 'Épiceries' },
             { at: 10200, do: 'unnote' },
             { at: 10300, do: 'highlight', target: { text: 'Marge brute', within: '#recap-section', up: 1 } },
-            { at: 10500, do: 'note', id: 'canal', target: { text: 'Marge brute', within: '#recap-section', up: 1 }, text: 'Autre canal, autre marge : {v}', side: 'top', read: { label: 'Marge brute', within: '#recap-section' } },
+            { at: 10500, do: 'note', id: 'canal', target: { text: 'Marge brute', within: '#recap-section', up: 1 }, text: 'Autre canal, autre marge : {v}', side: 'top', read: { label: 'Marge brute', within: '#recap-section' } },
         ],
     },
     {
         id: 'simulation-prix', chapter: 3, tab: 'recipe',
-        caption: `Et si vous changiez le **prix de vente** ? Testez-le sans toucher au vrai prix : les marges et le point mort se recalculent. [pause] Descendez trop bas, et la marge s'effondre.`,
+        caption: `Et si vous changiez le **prix de vente** ? Testez-le sans toucher au vrai prix\u00A0: les marges et le point mort se recalculent. [pause] Descendez trop bas, et la marge s'effondre.`,
         steps: [
             PRODUCT,
             { at: 300, do: 'scroll', target: { btn: 'Simuler un nouveau prix' } },
@@ -334,7 +334,7 @@ export const SCENES = [
             { at: 2800, do: 'scroll', target: '#simulatedPrice' },
             { at: 3300, do: 'note', id: 'sp', target: '#simulatedPrice', text: 'Le prix que vous voulez tester', side: 'top' },
             { at: 3900, do: 'type', target: '#simulatedPrice', text: '9,50', rate: 260 },
-            { at: 5800, do: 'note', id: 'sm', target: { text: 'Marge brute', within: '#recap-section', up: 1 }, text: 'Marge brute : {v}', side: 'bottom', read: { label: 'Marge brute', within: '#recap-section' } },
+            { at: 5800, do: 'note', id: 'sm', target: { text: 'Marge brute', within: '#recap-section', up: 1 }, text: 'Marge brute : {v}', side: 'bottom', read: { label: 'Marge brute', within: '#recap-section' } },
             { at: 7800, do: 'type', target: '#simulatedPrice', text: '6,20', rate: 260 },
         ],
     },
@@ -342,7 +342,7 @@ export const SCENES = [
     // --- 4. Vos frais : le réel, les frais fixes, leurs clés de répartition et le coefficient d'imputation ---------------------
     {
         id: 'revenus', chapter: 4, tab: 'income-statement',
-        caption: `Jusqu'ici, c'était le modèle. [pause] Voici maintenant le **réel**, comme votre comptable le présente : ce que vous avez encaissé, puis ce que la fabrication vous a coûté.`,
+        caption: `Jusqu'ici, c'était le modèle. [pause] Voici maintenant le **réel**, comme votre comptable le présente\u00A0: ce que vous avez encaissé, puis ce que la fabrication vous a coûté.`,
         steps: [
             { at: 3000, do: 'highlight', target: '#tutorial-section-revenue' },
             { at: 6200, do: 'note', id: 'rev', target: '#tutorial-section-revenue', text: 'Ce que vous avez encaissé', side: 'top' },
@@ -366,7 +366,7 @@ export const SCENES = [
             // La nouvelle dépense doit être rattachée à un contenant : sans cela l'application signale des frais « non répartis »
             // (bandeau « points à vérifier ») pour tout le reste de la visite. On la range dans « Général ».
             { at: 8200, do: 'pick', target: { sel: `${NEW_EXPENSE} select`, nth: 1 }, option: 'Général' },
-            { at: 9000, do: 'note', id: 'tot', target: { text: 'Sous-total', within: '#tutorial-section-expenses' }, text: 'Total des frais fixes : {v}', side: 'top', read: { label: 'Sous-total', within: '#tutorial-section-expenses' } },
+            { at: 9000, do: 'note', id: 'tot', target: { text: 'Sous-total', within: '#tutorial-section-expenses' }, text: 'Total des frais fixes : {v}', side: 'top', read: { label: 'Sous-total', within: '#tutorial-section-expenses' } },
         ],
     },
     {
@@ -375,27 +375,27 @@ export const SCENES = [
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-expenses', block: 'start' },
             { at: 500, do: 'highlight', target: { text: 'Clé de répartition', within: '#tutorial-section-expenses' } },
-            { at: 700, do: 'note', id: 'cle', target: { text: 'Clé de répartition', within: '#tutorial-section-expenses' }, text: 'Qui supporte ce frais ?', side: 'top' },
+            { at: 700, do: 'note', id: 'cle', target: { text: 'Clé de répartition', within: '#tutorial-section-expenses' }, text: 'Qui supporte ce frais ?', side: 'top' },
             { at: 4800, do: 'unnote' },
             { at: 4900, do: 'highlight', target: null },
-            { at: 5200, do: 'note', id: 'k1', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(1) select', nth: 1 }, text: 'Manuel : vous répartissez vous-même', side: 'top' },
+            { at: 5200, do: 'note', id: 'k1', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(1) select', nth: 1 }, text: 'Manuel : vous répartissez vous-même', side: 'top' },
             { at: 8700, do: 'unnote' },
             { at: 8800, do: 'note', id: 'k2', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(2) select', nth: 1 }, text: 'Selon les charges directes', side: 'top' },
             { at: 10300, do: 'unnote' },
             { at: 10400, do: 'note', id: 'k3', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(3) select', nth: 1 }, text: 'Manuel, canal par canal', side: 'top' },
             { at: 12600, do: 'unnote' },
             { at: 12800, do: 'pick', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(2) select', nth: 1 }, option: 'Selon les ventes' },
-            { at: 13500, do: 'note', id: 'k4', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(2) select', nth: 1 }, text: 'Autre clé : les montants se redistribuent', side: 'bottom' },
+            { at: 13500, do: 'note', id: 'k4', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(2) select', nth: 1 }, text: 'Autre clé : les montants se redistribuent', side: 'bottom' },
             { at: 14500, do: 'pick', target: { sel: '#tutorial-section-expenses tbody tr:nth-child(2) select', nth: 1 }, option: 'Selon les charges directes' },
         ],
     },
     {
         id: 'repartition', chapter: 4, tab: 'income-statement',
-        caption: `Dernière étape : le **coefficient d'imputation des charges indirectes**. Pour chaque activité, vous choisissez la règle qui partage les frais : selon les coûts directs, le temps de production ou le volume fabriqué. [pause] Changez-la, et la part de chaque produit change.`,
+        caption: `Dernière étape\u00A0: le **coefficient d'imputation des charges indirectes**. Pour chaque activité, vous choisissez la règle qui partage les frais\u00A0: selon les coûts directs, le temps de production ou le volume fabriqué. [pause] Changez-la, et la part de chaque produit change.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-cici', block: 'start' },
             { at: 700, do: 'highlight', target: '#tutorial-section-cici' },
-            { at: 1300, do: 'note', id: 'cici', target: '#tutorial-section-cici', text: 'CICI : la règle de partage des frais indirects', side: 'top' },
+            { at: 1300, do: 'note', id: 'cici', target: '#tutorial-section-cici', text: 'CICI : la règle de partage des frais indirects', side: 'top' },
             { at: 2900, do: 'unnote' }, { at: 3100, do: 'note', id: 'cici2', target: { sel: '#tutorial-section-cici select', nth: 1 }, text: 'Une règle par activité', side: 'top' },
             { at: 6400, do: 'point', target: { sel: '#tutorial-section-cici select', nth: 1 } },
             { at: 11900, do: 'pick', target: { sel: '#tutorial-section-cici select', nth: 1 }, option: 'Au prorata du temps de production' },
@@ -407,7 +407,7 @@ export const SCENES = [
     // --- 5. Le portrait de votre entreprise (Rapport et suivi : Vue d'ensemble) ---------------------------------------
     {
         id: 'rapport-carte', chapter: 5, tab: 'summary', subtab: 'overview',
-        caption: `Tout converge ici, dans **Rapport et suivi**. Neuf sous-onglets, mais quatre idées : [pause] le portrait de l'entreprise, vos produits, vos achats et votre équipe, vos simulations.`,
+        caption: `Tout converge ici, dans **Rapport et suivi**. Neuf sous-onglets, mais quatre idées\u00A0: [pause] le portrait de l'entreprise, vos produits, vos achats et votre équipe, vos simulations.`,
         steps: [
             { at: 1500, do: 'highlight', target: SUBBAR },
             ...subNote(5600, 'overview', 'Le portrait de l\'entreprise'),
@@ -421,13 +421,13 @@ export const SCENES = [
     },
     {
         id: 'indicateurs', chapter: 5, tab: 'summary', subtab: 'overview',
-        caption: `D'abord, le portrait d'ensemble : six chiffres comparés à vos objectifs. Un triangle rouge signale des ingrédients plus coûteux que prévu. [pause] La **marge de sécurité**, elle, dit de combien les ventes peuvent baisser avant la perte.`,
+        caption: `D'abord, le portrait d'ensemble\u00A0: six chiffres comparés à vos objectifs. Un triangle rouge signale des ingrédients plus coûteux que prévu. [pause] La **marge de sécurité**, elle, dit de combien les ventes peuvent baisser avant la perte.`,
         steps: [
             { at: 300, do: 'scroll', target: KPI }, { at: 800, do: 'highlight', target: KPI },
-            { at: 2300, do: 'note', id: 'k1', target: `${KPI} > div:first-child`, text: 'Coût matière moyen : {v}', side: 'top', read: { label: 'Coût Matière Moyen Pondéré' } },
+            { at: 2300, do: 'note', id: 'k1', target: `${KPI} > div:first-child`, text: 'Coût matière moyen : {v}', side: 'top', read: { label: 'Coût matière moyen pondéré' } },
             // Le triangle rouge est sur le coût matière (au-dessus de la cible) ; les deux autres coûts sont sous leur cible (crochet vert).
             { at: 3000, do: 'unnote' },
-            { at: 3200, do: 'note', id: 'k2', target: `${KPI} > div:first-child`, text: 'Triangle rouge : au-dessus de votre cible', side: 'top' },
+            { at: 3200, do: 'note', id: 'k2', target: `${KPI} > div:first-child`, text: 'Triangle rouge : au-dessus de votre cible', side: 'top' },
             { at: 9400, do: 'unnote' },
             { at: 9600, do: 'highlight', target: `${KPI} > div:nth-child(6)` },
             { at: 11400, do: 'note', id: 'k6', target: `${KPI} > div:nth-child(6)`, text: 'Vos ventes peuvent baisser de {v} avant la perte', side: 'top', read: { label: 'Marge de sécurité', within: KPI } },
@@ -435,7 +435,7 @@ export const SCENES = [
     },
     {
         id: 'points-reference', chapter: 5, tab: 'summary', subtab: 'overview',
-        caption: `Pour voir le temps passer, prenez une **photo** de votre projet : un point de référence. [pause] Chaque photo ajoute un point aux courbes, et vos coûts et vos marges se mettent enfin à bouger sous vos yeux.`,
+        caption: `Pour voir le temps passer, prenez une **photo** de votre projet\u00A0: un point de référence. [pause] Chaque photo ajoute un point aux courbes, et vos coûts et vos marges se mettent enfin à bouger sous vos yeux.`,
         steps: [
             { at: 700, do: 'click', target: '#tutorial-snapshot' },
             { at: 1700, do: 'click', target: { btn: 'Nouveau point de référence' } },
@@ -454,11 +454,11 @@ export const SCENES = [
     },
     {
         id: 'constats', chapter: 5, tab: 'summary', subtab: 'overview',
-        caption: `Pas envie de fouiller dans les chiffres ? Les **constats clés** le font pour vous : [pause] vos objectifs atteints ou non, ce qui s'améliore ou se détériore, vos forces et vos faiblesses.`,
+        caption: `Pas envie de fouiller dans les chiffres\u00A0? Les **constats clés** le font pour vous\u00A0: [pause] vos objectifs atteints ou non, ce qui s'améliore ou se détériore, vos forces et vos faiblesses.`,
         steps: [
             { at: 300, do: 'scroll', target: FIND_OBJ, block: 'start' },
             { at: 1500, do: 'highlight', target: FIND_OBJ },
-            { at: 3600, do: 'note', id: 'c1', target: { text: 'Objectifs stratégiques', within: FIND_OBJ }, text: 'Vos cibles : atteintes ou non', side: 'right' },
+            { at: 3600, do: 'note', id: 'c1', target: { text: 'Objectifs stratégiques', within: FIND_OBJ }, text: 'Vos cibles : atteintes ou non', side: 'right' },
             { at: 5500, do: 'unnote' }, { at: 5600, do: 'scroll', target: FIND_EVO, block: 'start' },
             { at: 5900, do: 'note', id: 'c2', target: { text: 'Amélioration / détérioration', within: FIND_EVO }, text: 'Ce qui bouge depuis vos derniers points de référence', side: 'right' },
             { at: 7700, do: 'unnote' }, { at: 7800, do: 'scroll', target: FINDINGS, block: 'start' },
@@ -467,21 +467,21 @@ export const SCENES = [
     },
     {
         id: 'reconciliation', chapter: 5, tab: 'summary', subtab: 'overview',
-        caption: `Dernier regard sur l'ensemble : la **réconciliation**. [pause] Ce que vous encaissez vraiment, contre ce que votre modèle de recettes prévoit. L'écart, c'est là qu'il faut chercher les pertes invisibles.`,
+        caption: `Dernier regard sur l'ensemble\u00A0: la **réconciliation**. [pause] Ce que vous encaissez vraiment, contre ce que votre modèle de recettes prévoit. L'écart, c'est là qu'il faut chercher les pertes invisibles.`,
         steps: [
             { at: 300, do: 'scroll', target: RECON, block: 'start' },
             { at: 1700, do: 'highlight', target: RECON },
             { at: 4000, do: 'note', id: 'rec', target: { text: 'Réconciliation réel / théorique', within: RECON }, text: 'Réel contre théorique', side: 'right' },
             { at: 7900, do: 'unnote' },
             { at: 8300, do: 'highlight', target: { sel: `${RECON} tbody tr:last-child` } },
-            { at: 8500, do: 'note', id: 'ecart', target: { sel: `${RECON} tbody tr:last-child` }, text: 'Écart du bénéfice net : {v}', side: 'bottom', read: { sel: `${RECON} tbody tr:last-child td`, nth: 3 } },
+            { at: 8500, do: 'note', id: 'ecart', target: { sel: `${RECON} tbody tr:last-child` }, text: 'Écart du bénéfice net : {v}', side: 'bottom', read: { sel: `${RECON} tbody tr:last-child td`, nth: 3 } },
         ],
     },
 
-    // --- 6. Zoom sur vos produits (Portefeuille, Par SKU, Par Activité, Par Canal) ------------------------------------
+    // --- 6. Zoom sur vos produits (Portefeuille, Par SKU, Par activité, Par canal) ------------------------------------
     {
         id: 'matrice', chapter: 6, tab: 'summary', subtab: 'portfolio',
-        caption: `Vos produits ne se valent pas. La **matrice stratégique** les range selon leur popularité et leur rentabilité : étoiles, vaches à lait, dilemmes, poids morts. [pause] Et si vous changiez de canal ? Essayons les épiceries : le classement bouge.`,
+        caption: `Vos produits ne se valent pas. La **matrice stratégique** les range selon leur popularité et leur rentabilité\u00A0: étoiles, vaches à lait, dilemmes, poids morts. [pause] Et si vous changiez de canal\u00A0? Essayons les épiceries\u00A0: le classement bouge.`,
         steps: [
             { at: 300, do: 'scroll', target: '[data-tour="bcg-title"]', block: 'start' },
             { at: 2100, do: 'highlight', target: '[data-tour="bcg-matrix"]' },
@@ -493,7 +493,7 @@ export const SCENES = [
             { at: 9900, do: 'unnote' },
             { at: 10400, do: 'note', id: 'chg', target: '#bcgChannelFilter', text: 'Choisissez un canal', side: 'right' },
             { at: 11750, do: 'pick', target: '#bcgChannelFilter', option: 'Épiceries' },
-            { at: 13000, do: 'unnote' }, { at: 13300, do: 'note', id: 'chg2', target: '#bcgChannelFilter', text: 'Mêmes produits, autre canal : le classement bouge', side: 'right' },
+            { at: 13000, do: 'unnote' }, { at: 13300, do: 'note', id: 'chg2', target: '#bcgChannelFilter', text: 'Mêmes produits, autre canal : le classement bouge', side: 'right' },
         ],
     },
     {
@@ -509,7 +509,7 @@ export const SCENES = [
     },
     {
         id: 'par-activite', chapter: 6, tab: 'summary', subtab: 'byActivity',
-        caption: `Reculez d'un cran : une **colonne** par activité. [pause] Laquelle porte l'entreprise, laquelle rapporte le moins ? Tout se lit d'un seul coup d'œil.`,
+        caption: `Reculez d'un cran\u00A0: une **colonne** par activité. [pause] Laquelle porte l'entreprise, laquelle rapporte le moins\u00A0? Tout se lit d'un seul coup d'œil.`,
         steps: [
             { at: 400, do: 'highlight', target: '#tutorial-section-summary-byactivity' },
             { at: 1300, do: 'note', id: 'ba', target: '#tutorial-section-summary-byactivity', text: 'Une colonne par activité', side: 'top' },
@@ -520,7 +520,7 @@ export const SCENES = [
     },
     {
         id: 'par-canal', chapter: 6, tab: 'summary', subtab: 'byChannel',
-        caption: `Et la même chose par **canal**. Quel circuit de vente rapporte vraiment, et lequel coûte presque autant qu'il rapporte ?`,
+        caption: `Et la même chose par **canal**. Quel circuit de vente rapporte vraiment, et lequel coûte presque autant qu'il rapporte\u00A0?`,
         steps: [
             { at: 300, do: 'highlight', target: '#tutorial-section-summary-bychannel' },
             { at: 700, do: 'note', id: 'bc', target: '#tutorial-section-summary-bychannel', text: 'Une colonne par canal de vente', side: 'top' },
@@ -530,11 +530,11 @@ export const SCENES = [
     },
     {
         id: 'constats-onglet', chapter: 6, tab: 'summary', subtab: 'byChannel',
-        caption: `Chaque sous-onglet se termine par ses propres constats. Ici, ceux des canaux : les forces à gauche, les faiblesses à droite, les plus graves en premier. [pause] Voilà par où commencer.`,
+        caption: `Chaque sous-onglet se termine par ses propres constats. Ici, ceux des canaux\u00A0: les forces à gauche, les faiblesses à droite, les plus graves en premier. [pause] Voilà par où commencer.`,
         steps: [
             { at: 300, do: 'scroll', target: '#tutorial-section-findings-byChannel', block: 'start' },
             { at: 2700, do: 'highlight', target: '#tutorial-section-findings-byChannel' },
-            { at: 3000, do: 'note', id: 'cb', target: { text: 'Constats : Par Canal', within: '#tutorial-section-findings-byChannel' }, text: 'Les constats propres à ce sous-onglet', side: 'right' },
+            { at: 3000, do: 'note', id: 'cb', target: { text: 'Constats : Par canal', within: '#tutorial-section-findings-byChannel' }, text: 'Les constats propres à ce sous-onglet', side: 'right' },
             { at: 4100, do: 'unnote' },
             // le cadre bleu s'efface avant l'ouverture : il ne doit pas passer par-dessus la fenêtre
             { at: 4200, do: 'highlight', target: null },
@@ -546,11 +546,11 @@ export const SCENES = [
     // --- 7. Les coulisses (Ingrédients, Emballages, Main-d'œuvre, Simulation) -------------------------------------------
     {
         id: 'achats-ingredients', chapter: 7, tab: 'summary', subtab: 'ingredients',
-        caption: `Dans les coulisses, vos achats. L'analyse ABC montre les ingrédients qui pèsent le plus lourd. [pause] Plus bas, vos fournisseurs : quand un seul pèse la moitié des achats, c'est une dépendance.`,
+        caption: `Dans les coulisses, vos achats. L'analyse ABC montre les ingrédients qui pèsent le plus lourd. [pause] Plus bas, vos fournisseurs\u00A0: quand un seul pèse la moitié des achats, c'est une dépendance.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-ingredients-abc' },
             { at: 700, do: 'highlight', target: '#tutorial-section-ingredients-abc' },
-            { at: 2500, do: 'note', id: 'a', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 0 }, text: 'Catégorie A : les gros postes de dépense', side: 'top' },
+            { at: 2500, do: 'note', id: 'a', target: { sel: '#tutorial-section-ingredients-abc h3', nth: 0 }, text: 'Catégorie A : les gros postes de dépense', side: 'top' },
             { at: 6300, do: 'unnote' },
             { at: 6700, do: 'scroll', target: { text: 'Achats par fournisseur', within: '#tutorial-section-ingredients-rapport' } },
             { at: 7500, do: 'highlight', target: { text: 'Achats par fournisseur', within: '#tutorial-section-ingredients-rapport', up: 1 } },
@@ -560,7 +560,7 @@ export const SCENES = [
     },
     {
         id: 'intrants', chapter: 7, tab: 'summary', subtab: 'ingredients',
-        caption: `Chaque prix a son histoire. Choisissez un ingrédient : son prix à chaque point de référence. [pause] Quand un prix s'envole, la **volatilité** vous le signale.`,
+        caption: `Chaque prix a son histoire. Choisissez un ingrédient\u00A0: son prix à chaque point de référence. [pause] Quand un prix s'envole, la **volatilité** vous le signale.`,
         steps: [
             { at: 300, do: 'scroll', target: '#tutorial-section-tracking-ingredient', block: 'start' },
             { at: 700, do: 'highlight', target: '#tutorial-section-tracking-ingredient select' },
@@ -592,31 +592,31 @@ export const SCENES = [
     },
     {
         id: 'main-oeuvre-rapport', chapter: 7, tab: 'summary', subtab: 'labor',
-        caption: `Reste votre équipe. Combien d'heures payées servent vraiment ? [pause] L'écart, c'est de la **paie non utilisée**. Et ces heures libres sont des ventes possibles en plus : votre marge de croissance.`,
+        caption: `Reste votre équipe. Combien d'heures payées servent vraiment\u00A0? [pause] L'écart, c'est de la **paie non utilisée**. Et ces heures libres sont des ventes possibles en plus\u00A0: votre marge de croissance.`,
         steps: [
             { at: 200, do: 'scroll', target: '#tutorial-section-labor-rapport' },
             { at: 700, do: 'highlight', target: '#tutorial-section-labor-rapport' },
-            { at: 1800, do: 'note', id: 'ecart', target: { text: 'Taux d\'Utilisation', within: '#tutorial-section-labor-rapport' }, text: 'Sous 100 % : des heures payées, mais inutilisées', side: 'top' },
+            { at: 1800, do: 'note', id: 'ecart', target: { text: 'Taux d\'utilisation', within: '#tutorial-section-labor-rapport' }, text: 'Sous 100 % : des heures payées, mais inutilisées', side: 'top' },
             { at: 4500, do: 'unnote' },
             { at: 4600, do: 'scroll', target: '#tutorial-section-labor-paie' },
             { at: 5200, do: 'highlight', target: '#tutorial-section-labor-paie' },
-            { at: 5400, do: 'note', id: 'pn', target: { text: 'Paie non utilisée', within: '#tutorial-section-labor-paie' }, text: 'Paie non utilisée : {v}', side: 'top', read: { label: 'Paie non utilisée', within: '#tutorial-section-labor-paie' } },
+            { at: 5400, do: 'note', id: 'pn', target: { text: 'Paie non utilisée', within: '#tutorial-section-labor-paie' }, text: 'Paie non utilisée : {v}', side: 'top', read: { label: 'Paie non utilisée', within: '#tutorial-section-labor-paie' } },
             { at: 6900, do: 'unnote' },
             { at: 7000, do: 'scroll', target: '#tutorial-section-labor-croissance' },
             { at: 7700, do: 'highlight', target: '#tutorial-section-labor-croissance' },
-            { at: 9800, do: 'note', id: 'cr', target: { text: 'Ventes additionnelles possibles', within: '#tutorial-section-labor-croissance' }, text: 'Ventes additionnelles possibles : {v}', side: 'top', read: { label: 'Ventes additionnelles possibles', within: '#tutorial-section-labor-croissance' } },
+            { at: 9800, do: 'note', id: 'cr', target: { text: 'Ventes additionnelles possibles', within: '#tutorial-section-labor-croissance' }, text: 'Ventes additionnelles possibles : {v}', side: 'top', read: { label: 'Ventes additionnelles possibles', within: '#tutorial-section-labor-croissance' } },
         ],
     },
     {
         id: 'simulation', chapter: 7, tab: 'summary', subtab: 'simulation',
-        caption: `Et si vos prix d'achat montaient de huit pour cent ? Puis de quinze ? Le simulateur montre l'effet sur la **marge**, le point mort et chaque activité, avant que cela n'arrive.`,
+        caption: `Et si vos prix d'achat montaient de huit pour cent\u00A0? Puis de quinze\u00A0? Le simulateur montre l'effet sur la **marge**, le point mort et chaque activité, avant que cela n'arrive.`,
         steps: [
             { at: 200, do: 'click', target: { btn: 'Ajouter un choc' }, unless: '[data-tour="shock-row"]' },
             { at: 1000, do: 'note', id: 'pct', target: SHOCK_PCT, text: 'Hausse des prix d\'achat (%)', side: 'top' },
             { at: 1300, do: 'type', target: SHOCK_PCT, text: '8', rate: 300 },
             { at: 3900, do: 'scroll', target: '[data-tour="shock-results"]', block: 'start' },
             { at: 4300, do: 'highlight', target: '[data-tour="shock-results"]' },
-            { at: 4600, do: 'note', id: 'mg', target: { text: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' }, text: 'Marge brute : {v}', side: 'top', read: { label: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' } },
+            { at: 4600, do: 'note', id: 'mg', target: { text: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' }, text: 'Marge brute : {v}', side: 'top', read: { label: 'Marge brute moyenne pondérée', within: '[data-tour="shock-results"]' } },
             { at: 6400, do: 'unnote' },
             { at: 6500, do: 'note', id: 'pmort', target: { text: 'Point mort des produits actifs', within: '[data-tour="shock-results"]' }, text: 'Le point mort bouge aussi', side: 'top' },
             { at: 7600, do: 'unnote' },
@@ -629,7 +629,7 @@ export const SCENES = [
     // --- 8. Pour le dire aux autres (exports) -------------------------------------------------------------------------------
     {
         id: 'export-pdf', chapter: 8, tab: 'summary', subtab: 'overview',
-        caption: `Un banquier, un partenaire, votre équipe veulent voir vos résultats ? Le rapport complet les met en page, prêt à imprimer. [pause] Choisissez les chapitres, ajoutez votre commentaire, et le tour est joué.`,
+        caption: `Un banquier, un partenaire, votre équipe veulent voir vos résultats\u00A0? Le rapport complet les met en page, prêt à imprimer. [pause] Choisissez les chapitres, ajoutez votre commentaire, et le tour est joué.`,
         steps: [
             { at: 300, do: 'scroll', target: { btn: 'Générer un rapport PDF' } },
             { at: 3500, do: 'click', target: { btn: 'Générer un rapport PDF' } },
@@ -645,7 +645,7 @@ export const SCENES = [
     },
     {
         id: 'export-excel', chapter: 8, tab: 'summary', subtab: 'overview',
-        caption: `Pour aller plus loin avec vos propres outils, le classeur Excel : toutes vos données, une feuille par sujet, avec un dictionnaire des colonnes. [pause] Votre comptable s'y retrouvera tout de suite.`,
+        caption: `Pour aller plus loin avec vos propres outils, le classeur Excel\u00A0: toutes vos données, une feuille par sujet, avec un dictionnaire des colonnes. [pause] Votre comptable s'y retrouvera tout de suite.`,
         steps: [
             { at: 300, do: 'scroll', target: { btn: 'Exporter vers Excel' } },
             { at: 2300, do: 'highlight', target: { btn: 'Exporter vers Excel' } },
@@ -658,7 +658,7 @@ export const SCENES = [
     // --- 9. Jamais perdu ---------------------------------------------------------------------------------------------------
     {
         id: 'infobulles', chapter: 9, tab: 'summary', subtab: 'overview',
-        caption: `Un mot vous échappe ? Passez la souris sur le point d'interrogation : une courte explication s'affiche, avec un lien « En savoir plus ».`,
+        caption: `Un mot vous échappe\u00A0? Passez la souris sur le point d'interrogation\u00A0: une courte explication s'affiche, avec un lien «\u00A0En savoir plus\u00A0».`,
         steps: [
             { at: 300, do: 'scroll', target: KPI },
             { at: 1300, do: 'point', target: `${KPI} [data-testid="tooltip-trigger"]` },
@@ -669,14 +669,14 @@ export const SCENES = [
     },
     {
         id: 'guide-plan', chapter: 9, tab: 'summary', subtab: 'overview',
-        caption: `Le **guide** se divise en quatre parties : les notions de base, l'utilisation de chaque onglet, la lecture des résultats, puis le glossaire et les questions fréquentes. [pause] À gauche, la table des matières vous mène au bon chapitre.`,
+        caption: `Le **guide** se divise en quatre parties\u00A0: les notions de base, l'utilisation de chaque onglet, la lecture des résultats, puis le glossaire et les questions fréquentes. [pause] À gauche, la table des matières vous mène au bon chapitre.`,
         steps: [
             { at: 300, do: 'guideOpen', unless: '[aria-label="Fermer le guide"]' },
             { at: 700, do: 'click', target: { sel: '[aria-label="Table des matières"] li li a', nth: 1 } },
             { at: 1700, do: 'highlight', target: { sel: '#guide-intro-parties + ul' } },
             { at: 2000, do: 'note', id: 'gp', target: { sel: '#guide-intro-parties + ul' }, text: 'Quatre parties, de la théorie à la pratique', side: 'top' },
             { at: 10300, do: 'unnote' },
-            { at: 11000, do: 'note', id: 'toc', target: { sel: '[aria-label="Table des matières"]' }, text: 'La table des matières : un chapitre, un clic', side: 'right' },
+            { at: 11000, do: 'note', id: 'toc', target: { sel: '[aria-label="Table des matières"]' }, text: 'La table des matières : un chapitre, un clic', side: 'right' },
             { at: 10500, do: 'highlight', target: { sel: '[aria-label="Table des matières"]' } },
         ],
     },
@@ -687,16 +687,16 @@ export const SCENES = [
             { at: 300, do: 'click', target: { sel: '[aria-label="Table des matières"] li li a', nth: 3 } },
             { at: 1400, do: 'scroll', target: '#guide-intro-encadres', block: 'start' },
             { at: 2300, do: 'highlight', target: { sel: '#guide-intro-encadres ~ aside[data-callout="retenir"]' } },
-            { at: 2400, do: 'note', id: 'e1', target: { sel: '#guide-intro-encadres ~ aside[data-callout="retenir"]' }, text: 'À retenir : l\'essentiel', side: 'right' },
+            { at: 2400, do: 'note', id: 'e1', target: { sel: '#guide-intro-encadres ~ aside[data-callout="retenir"]' }, text: 'À retenir : l\'essentiel', side: 'right' },
             { at: 3700, do: 'unnote' },
             { at: 3800, do: 'highlight', target: { sel: '#guide-intro-encadres ~ aside[data-callout="exemple"]' } },
-            { at: 3900, do: 'note', id: 'e2', target: { sel: '#guide-intro-encadres ~ aside[data-callout="exemple"]' }, text: 'Exemple : des chiffres à refaire', side: 'right' },
+            { at: 3900, do: 'note', id: 'e2', target: { sel: '#guide-intro-encadres ~ aside[data-callout="exemple"]' }, text: 'Exemple : des chiffres à refaire', side: 'right' },
             { at: 5100, do: 'unnote' },
             { at: 5300, do: 'highlight', target: { sel: '#guide-intro-encadres ~ aside[data-callout="attention"]' } },
-            { at: 5400, do: 'note', id: 'e3', target: { sel: '#guide-intro-encadres ~ aside[data-callout="attention"]' }, text: 'Attention : un piège à éviter', side: 'right' },
+            { at: 5400, do: 'note', id: 'e3', target: { sel: '#guide-intro-encadres ~ aside[data-callout="attention"]' }, text: 'Attention : un piège à éviter', side: 'right' },
             { at: 7200, do: 'unnote' },
             { at: 7300, do: 'highlight', target: { sel: '#guide-intro-encadres ~ aside[data-callout="astuce"]' } },
-            { at: 7400, do: 'note', id: 'e4', target: { sel: '#guide-intro-encadres ~ aside[data-callout="astuce"]' }, text: 'Astuce : gagner du temps', side: 'right' },
+            { at: 7400, do: 'note', id: 'e4', target: { sel: '#guide-intro-encadres ~ aside[data-callout="astuce"]' }, text: 'Astuce : gagner du temps', side: 'right' },
             { at: 8300, do: 'unnote' },
             { at: 8450, do: 'highlight', target: { sel: '#guide-intro-encadres ~ aside[data-callout="pourquoi"]' } },
             { at: 8550, do: 'note', id: 'e5', target: { sel: '#guide-intro-encadres ~ aside[data-callout="pourquoi"]' }, text: 'Pourquoi c\'est important', side: 'right' },
@@ -722,13 +722,13 @@ export const SCENES = [
     },
     {
         id: 'depart', chapter: 9, tab: 'info',
-        caption: `À vous de jouer ! Commencez par **Paramètres** : nommez votre entreprise, puis passez aux ingrédients. [pause] Avancez de gauche à droite, le reste suivra tout seul.`,
+        caption: `À vous de jouer\u00A0! Commencez par **Paramètres** : nommez votre entreprise, puis passez aux ingrédients. [pause] Avancez de gauche à droite, le reste suivra tout seul.`,
         steps: [
             { at: 0, do: 'guideClose' },
             { at: 300, do: 'scrollTop' }, // on revient sur Paramètres, que l'application rouvre là où on l'avait laissé : on repart du haut
             { at: 600, do: 'highlight', target: '#tutorial-tab-bar' },
             { at: 1300, do: 'point', target: '#tab-info' },
-            { at: 1700, do: 'note', id: 'go', target: '#tab-info', text: 'Votre premier arrêt : Paramètres', side: 'bottom' },
+            { at: 1700, do: 'note', id: 'go', target: '#tab-info', text: 'Votre premier arrêt : Paramètres', side: 'bottom' },
             { at: 3000, do: 'unnote' }, { at: 3400, do: 'note', id: 'go2', target: '#tab-ingredients', text: 'Puis Ingrédients… et on avance vers la droite', side: 'bottom' },
             { at: 3100, do: 'point', target: '#tab-ingredients' },
             // « Avancez de gauche à droite » : le pointeur file jusqu'au dernier onglet, puis une dernière étiquette

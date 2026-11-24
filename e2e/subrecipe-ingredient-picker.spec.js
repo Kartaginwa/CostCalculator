@@ -39,12 +39,12 @@ test("une sous-recette sélectionnée via le sélecteur d'ingrédient coûte cor
     await page.locator('#isIngredient').check();
     await page.locator('#tutorial-add-ingredient-to-recipe').click();
     const ingredientsSection = page.locator('#tutorial-section-recipe-ingredients');
-    const combo1 = ingredientsSection.locator('input[placeholder="Saisir ou sélectionner..."]').first();
+    const combo1 = ingredientsSection.locator('input[placeholder="Saisir ou sélectionner…"]').first();
     await combo1.click();
     await combo1.fill('Farine');
     await page.locator('li:has-text("Farine Test")').first().click();
     await ingredientsSection.locator('tbody tr').last().locator('input[inputmode="decimal"]').first().fill('2');
-    await expect(ingredientsSection.getByText('Total Coûts Matières (recette): 5,00 $')).toBeVisible();
+    await expect(ingredientsSection.getByText('Total coûts matières (recette) : 5,00 $')).toBeVisible();
 
     // Produit 2 : "Plat Final", utilise "Sauce Base" comme ingrédient via le même sélecteur.
     await page.locator('button:has-text("Paramètres")').click();
@@ -56,14 +56,14 @@ test("une sous-recette sélectionnée via le sélecteur d'ingrédient coûte cor
     await expect(page.locator('h1:has-text("Production pour")').locator('~ select').first()).toHaveValue(/.*/);
     await page.locator('#tutorial-add-ingredient-to-recipe').click();
     const ingredientsSection2 = page.locator('#tutorial-section-recipe-ingredients');
-    const combo2 = ingredientsSection2.locator('input[placeholder="Saisir ou sélectionner..."]').first();
+    const combo2 = ingredientsSection2.locator('input[placeholder="Saisir ou sélectionner…"]').first();
     await combo2.click();
     await combo2.fill('Sauce');
     await page.locator('li:has-text("Sauce Base")').first().click();
     await ingredientsSection2.locator('tbody tr').last().locator('input[inputmode="decimal"]').first().fill('1');
 
     // Si la régression était présente, le coût matière du plat parent resterait à 0.00 $.
-    await expect(ingredientsSection2.getByText('Total Coûts Matières (recette): 0,00 $')).toHaveCount(0);
+    await expect(ingredientsSection2.getByText('Total coûts matières (recette) : 0,00 $')).toHaveCount(0);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

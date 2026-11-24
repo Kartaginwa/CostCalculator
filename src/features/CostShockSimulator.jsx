@@ -39,9 +39,9 @@ const DeltaRow = ({ label, current, shocked, unit, tooltip, higherIsWorse = true
     const negligible = Math.abs(delta) < 1e-9;
     const isWorse = higherIsWorse ? delta > 0 : delta < 0;
     const overTarget = targetPct > 0 && shocked * 100 > targetPct;
-    const fmt = (v) => unit === '$' ? `${formatCurrency(v)} $` : `${formatNumber((v * 100), 1)} %`;
+    const fmt = (v) => unit === '$' ? `${formatCurrency(v)}\u00A0$` : `${formatNumber((v * 100), 1)}\u00A0%`;
     const fmtDelta = unit === '$'
-        ? `${delta >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(delta))} $`
+        ? `${delta >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(delta))}\u00A0$`
         : `${delta >= 0 ? '▲' : '▼'} ${formatNumber((Math.abs(delta) * 100), 1)} pt`;
     return (
         <div className="flex items-center justify-between py-1.5 border-b border-gray-100 text-sm">
@@ -83,10 +83,10 @@ const ImpactGroupTable = ({ title, tooltip, rows }) => (
         <table className="min-w-full text-sm">
             <thead>
                 <tr className="text-left text-gray-500 border-b">
-                    <th className="py-1.5 pr-3">Nom</th>
-                    <th className="py-1.5 px-3 text-right">Marge brute</th>
-                    <th className="py-1.5 px-3 text-right"><span className="inline-flex items-center">Coût matière<Tooltip tip="sim.colMatiere" /></span></th>
-                    <th className="py-1.5 pl-3 text-right"><span className="inline-flex items-center">Coût main-d'œuvre<Tooltip tip="sim.colMo" /></span></th>
+                    <th className="py-1.5 pr-3 text-center">Nom</th>
+                    <th className="py-1.5 px-3 text-center">Marge brute</th>
+                    <th className="py-1.5 px-3 text-center"><span className="inline-flex items-center">Coût matière<Tooltip tip="sim.colMatiere" /></span></th>
+                    <th className="py-1.5 pl-3 text-center"><span className="inline-flex items-center">Coût main-d'œuvre<Tooltip tip="sim.colMo" /></span></th>
                 </tr>
             </thead>
             <tbody>
@@ -215,20 +215,20 @@ export const CostShockSimulator = ({ collapsible = true }) => {
     const shockLabel = (s) => {
         const pct = parseLocaleNumber(s.percent);
         const sign = pct > 0 ? '+' : '';
-        const typeLabel = s.type === 'labor' ? 'MO' : 'Intrants';
+        const typeLabel = s.type === 'labor' ? 'Main-d\'œuvre' : 'Intrants';
         let scope;
-        if (s.scope === 'all') scope = s.type === 'labor' ? "toute la MO" : 'tous les ingrédients';
+        if (s.scope === 'all') scope = s.type === 'labor' ? "toute la main-d'œuvre" : 'tous les ingrédients';
         else if (s.scope === 'provider') scope = s.target;
         else if (s.scope === 'post') scope = postsById[s.target] || 'poste';
         else if (s.scope === 'format') scope = formatOptions.find(f => f.id === s.target)?.name || 'format';
         else if (s.scope === 'activity') scope = activitiesById[s.target] || 'activité';
         else scope = `${s.selectedIds.length} sélectionné(s)`;
-        return `${typeLabel} · ${scope} ${sign}${pct} %`;
+        return `${typeLabel} · ${scope} ${sign}${pct}\u00A0%`;
     };
 
     const headerContent = (
         <span className="text-lg font-bold text-indigo-800 flex items-center">
-            Simulation — choc sur les coûts (intrants & main-d'œuvre)
+            Simulation — choc sur les coûts (intrants et main-d'œuvre)
             <Tooltip tip="sim.titre" />
             {activeShocks.length > 0 && (
                 <span className="ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
@@ -337,7 +337,7 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                 <div className="mt-5" data-tour="shock-results">
                                     <div className="p-2 mb-4 bg-amber-100 text-amber-900 rounded-md text-sm flex items-center flex-wrap gap-x-2">
                                         <AlertTriangle className="inline h-4 w-4" />
-                                        <span className="font-semibold">Scénario actif :</span>
+                                        <span className="font-semibold">Scénario actif&nbsp;:</span>
                                         {activeShocks.map((s, i) => (<span key={s.id}>{shockLabel(s)}{i < activeShocks.length - 1 ? ' ·' : ''}</span>))}
                                     </div>
 
@@ -359,7 +359,7 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                             )}
                                             {channelImpact.length > 0 && (
                                                 <ImpactGroupTable
-                                                    title="Impact par circuit de vente"
+                                                    title="Impact par canal de vente"
                                                     tooltip="sim.impactCanal"
                                                     rows={channelImpact}
                                                 />
@@ -372,10 +372,10 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                         <table className="min-w-full text-sm">
                                             <thead>
                                                 <tr className="text-left text-gray-500 border-b">
-                                                    <th className="py-2 pr-4">Produit</th>
-                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette actuelle<Tooltip tip="sim.margeActuelle" /></span></th>
-                                                    <th className="py-2 px-4 text-right"><span className="inline-flex items-center">Marge nette scénario<Tooltip tip="sim.margeScenario" /></span></th>
-                                                    <th className="py-2 pl-4 text-right"><span className="inline-flex items-center">Écart<Tooltip tip="sim.ecart" /></span></th>
+                                                    <th className="py-2 pr-4 text-center">Produit</th>
+                                                    <th className="py-2 px-4 text-center"><span className="inline-flex items-center">Marge nette actuelle<Tooltip tip="sim.margeActuelle" /></span></th>
+                                                    <th className="py-2 px-4 text-center"><span className="inline-flex items-center">Marge nette scénario<Tooltip tip="sim.margeScenario" /></span></th>
+                                                    <th className="py-2 pl-4 text-center"><span className="inline-flex items-center">Écart<Tooltip tip="sim.ecart" /></span></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -385,11 +385,11 @@ export const CostShockSimulator = ({ collapsible = true }) => {
                                                             {d.name}
                                                             {d.becomesNegative && <span className="ml-2 text-xs font-semibold text-red-600">devient déficitaire ✗</span>}
                                                         </td>
-                                                        <td className="py-2 px-4 text-right text-gray-500">{formatCurrency(d.currentMargin)} $</td>
-                                                        <td className={`py-2 px-4 text-right font-semibold ${d.negative ? 'text-red-600' : 'text-gray-800'}`}>{formatCurrency(d.shockedMargin)} $</td>
+                                                        <td className="py-2 px-4 text-right text-gray-500">{formatCurrency(d.currentMargin)}&nbsp;$</td>
+                                                        <td className={`py-2 px-4 text-right font-semibold ${d.negative ? 'text-red-600' : 'text-gray-800'}`}>{formatCurrency(d.shockedMargin)}&nbsp;$</td>
                                                         <td className={`py-2 pl-4 text-right ${d.shockedMargin < d.currentMargin ? 'text-red-600' : 'text-green-600'}`}>
                                                             {d.shockedMargin <= d.currentMargin ? '▼' : '▲'} {formatCurrency(Math.abs(d.shockedMargin - d.currentMargin))} $
-                                                            {d.deltaPercent !== null && ` (${formatNumber(d.deltaPercent, 1)} %)`}
+                                                            {d.deltaPercent !== null && ` (${formatNumber(d.deltaPercent, 1)}\u00A0%)`}
                                                         </td>
                                                     </tr>
                                                 ))}

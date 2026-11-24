@@ -332,9 +332,9 @@ export const DEMO_RAPPORT = {
 
 const R = DEMO_RAPPORT;
 DEMO_SCREEN_CHECKS['summary:Par SKU'].push(...Object.values(R.bySkuDetail));
-DEMO_SCREEN_CHECKS['summary:Par Activité'] = Object.values(R.activites).flatMap((o) => Object.values(o));
-DEMO_SCREEN_CHECKS['summary:Par Activité'].push(DEMO.mo.heureActivite.plats, DEMO.mo.heureActivite.soupes, DEMO.mo.heureActivite.sauces);
-DEMO_SCREEN_CHECKS['summary:Par Canal'] = Object.values(R.canaux).flatMap((o) => Object.values(o));
+DEMO_SCREEN_CHECKS['summary:Par activité'] = Object.values(R.activites).flatMap((o) => Object.values(o));
+DEMO_SCREEN_CHECKS['summary:Par activité'].push(DEMO.mo.heureActivite.plats, DEMO.mo.heureActivite.soupes, DEMO.mo.heureActivite.sauces);
+DEMO_SCREEN_CHECKS['summary:Par canal'] = Object.values(R.canaux).flatMap((o) => Object.values(o));
 DEMO_SCREEN_CHECKS['summary:Emballages'] = ['77.3% des coûts']; // catégorie A de l'emballage (sous-onglet Emballages)
 DEMO_SCREEN_CHECKS['summary:Portefeuille'] = Object.values(R.bcg); // matrice stratégique : sous-onglet Portefeuille (21/11)
 // Heures par activité (sous-onglet Main-d'œuvre) citées en toutes lettres dans la partie 3.

@@ -62,14 +62,14 @@ test("État des résultats : l'import détecte automatiquement la période depui
     const modal = page.locator('div.fixed.inset-0.bg-black');
     const fixturePath = path.join(process.cwd(), 'e2e', 'fixtures', 'income-statement-sample.csv');
     await modal.locator('input[type="file"]').setInputFiles(fixturePath);
-    await expect(modal.getByText('Étape 2: Correspondance des colonnes')).toBeVisible();
+    await expect(modal.getByText('Étape 2 : Correspondance des colonnes')).toBeVisible();
     // Pas de colonne Date dans cette fixture (voir income-statement-import.spec.js) : les dates
     // ne doivent PAS changer après cet import — vérifié ci-dessous après confirmation.
     await modal.getByRole('button', { name: 'Suivant' }).click();
-    await expect(modal.getByText('Étape 3: Prévisualisation et résolution')).toBeVisible();
+    await expect(modal.getByText('Étape 3 : Prévisualisation et résolution')).toBeVisible();
     await modal.getByRole('button', { name: 'Suivant' }).click();
-    await expect(modal.getByText('Étape 4: Confirmation')).toBeVisible();
-    await modal.getByText('Confirmer et Importer').click();
+    await expect(modal.getByText('Étape 4 : Confirmation')).toBeVisible();
+    await modal.getByText('Confirmer et importer').click();
     await expect(page.getByText(/importé\(s\)\./)).toBeVisible();
 
     await expect(periodSection.locator('#startDate')).toHaveValue('');
@@ -93,12 +93,12 @@ test("État des résultats : une colonne Date mappée renseigne les bonnes dates
     const modal = page.locator('div.fixed.inset-0.bg-black');
     const fixturePath = path.join(process.cwd(), 'e2e', 'fixtures', 'income-statement-sample-with-dates.csv');
     await modal.locator('input[type="file"]').setInputFiles(fixturePath);
-    await expect(modal.getByText('Étape 2: Correspondance des colonnes')).toBeVisible();
+    await expect(modal.getByText('Étape 2 : Correspondance des colonnes')).toBeVisible();
     // La colonne Date se mappe automatiquement par mot-clé (INCOME_STATEMENT_APP_FIELDS).
     await modal.getByRole('button', { name: 'Suivant' }).click();
-    await expect(modal.getByText('Étape 3: Prévisualisation et résolution')).toBeVisible();
+    await expect(modal.getByText('Étape 3 : Prévisualisation et résolution')).toBeVisible();
     await modal.getByRole('button', { name: 'Suivant' }).click();
-    await modal.getByText('Confirmer et Importer').click();
+    await modal.getByText('Confirmer et importer').click();
     await expect(page.getByText(/importé\(s\)\./)).toBeVisible();
 
     // Note : `new Date('2025-01-05')` (chaîne ISO sans heure) est interprétée en UTC puis relue en

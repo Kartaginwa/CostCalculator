@@ -14,10 +14,10 @@ const nf = (v) => formatNumber(v, 0);
 
 // ---------- formats : alimentent les fiches produits ----------
 const CLASS_TEXT = {
-    stars: ['force', 50, 'une étoile', 'Très populaire et très rentable : à protéger.'],
-    questions: ['faiblesse', 40, 'un dilemme', 'Rentable, mais peu vendu : à promouvoir ou à abandonner.'],
-    cows: ['faiblesse', 42, 'une vache à lait', 'Très vendu, mais peu rentable : à optimiser.'],
-    dogs: ['faiblesse', 48, 'un poids mort', 'Peu populaire et peu rentable : à repenser ou à retirer.'],
+    stars: ['force', 50, 'une étoile', 'Très populaire et très rentable : à protéger.'],
+    questions: ['faiblesse', 40, 'un dilemme', 'Rentable, mais peu vendu : à promouvoir ou à abandonner.'],
+    cows: ['faiblesse', 42, 'une vache à lait', 'Très vendu, mais peu rentable : à optimiser.'],
+    dogs: ['faiblesse', 48, 'un poids mort', 'Peu populaire et peu rentable : à repenser ou à retirer.'],
 };
 
 const formatRules = (c) => {
@@ -36,7 +36,7 @@ const formatRules = (c) => {
         const sub = subject('format', p.id, p.displayName), q = `« ${p.displayName} »`;
         // Classe stratégique du format
         const k = classOf.get(String(p.id));
-        if (k) { const [tone, weight, label, detail] = CLASS_TEXT[k]; out.push(finding(`sku-class-${p.id}`, tone, 'Produits', weight, `${q} : ${label}`, detail, 'bySku', null, sub)); }
+        if (k) { const [tone, weight, label, detail] = CLASS_TEXT[k]; out.push(finding(`sku-class-${p.id}`, tone, 'Produits', weight, `${q}\u00A0: ${label}`, detail, 'bySku', null, sub)); }
         // Marge nette par canal : déficit ou rentabilité partout
         const margins = (p.channelBreakdown || []).filter(cb => Number.isFinite(cb.margeNettePercent))
             .map(cb => ({ channel: c.channelNames[cb.channelId] || 'canal', pct: cb.margeNettePercent, profit: cb.margeNetteDollar * P(cb.volume), hasVolume: P(cb.volume) > 0 }));
@@ -47,7 +47,7 @@ const formatRules = (c) => {
                 const loss = -neg.filter(x => x.hasVolume).reduce((s, x) => s + x.profit, 0);
                 out.push(weak(`sku-loss-${p.id}`, 'Produits', all ? 80 : 70,
                     all ? `${q} est déficitaire dans tous ses canaux` : `${q} perd de l'argent dans ${neg.length > 1 ? `${neg.length} canaux` : '1 canal'} sur ${margins.length}`,
-                    neg.map(x => `${x.channel} : ${pct(x.pct)}`).join(' · '), 'bySku', loss > 0 ? loss : null, sub));
+                    neg.map(x => `${x.channel}\u00A0: ${pct(x.pct)}`).join(' · '), 'bySku', loss > 0 ? loss : null, sub));
             } else {
                 const lo = Math.min(...margins.map(x => x.pct)), hi = Math.max(...margins.map(x => x.pct));
                 out.push(force(`sku-positive-${p.id}`, 'Produits', 45, `${q} est rentable dans ${margins.length > 1 ? 'tous ses canaux' : 'son canal'}`,
@@ -56,13 +56,13 @@ const formatRules = (c) => {
         }
         // Coût matière au-dessus de la cible (règle 80, version par format)
         if (target > 0 && p.costs && p.costs.costMatierePercent * 100 > target) {
-            out.push(weak(`sku-over-cost-${p.id}`, 'Coûts', 50, `${q} : coût matière au-dessus de la cible`, `${pct(p.costs.costMatierePercent, 1)} contre une cible de ${nf(target)} %.`, 'bySku', null, sub));
+            out.push(weak(`sku-over-cost-${p.id}`, 'Coûts', 50, `${q}\u00A0: coût matière au-dessus de la cible`, `${pct(p.costs.costMatierePercent, 1)} contre une cible de ${nf(target)}\u00A0%.`, 'bySku', null, sub));
         }
         // Bénéfice brut par heure de main-d'œuvre, comparé à la moyenne de l'équipe
         const gph = hourOf.get(String(p.id));
         if (gph != null && avgHour != null) {
             if (gph < avgHour * T.productHourLow) out.push(weak(`sku-hour-${p.id}`, 'Main-d\'œuvre', 45, `${q} rapporte peu à l'heure`, `${usd(gph)} de bénéfice brut par heure, contre ${usd(avgHour)} en moyenne.`, 'labor', null, sub));
-            else if (gph >= avgHour * T.productHourHigh) out.push(force(`sku-hour-${p.id}`, 'Main-d\'œuvre', 40, `${q} : un bon usage du temps`, `${usd(gph)} de bénéfice brut par heure, contre ${usd(avgHour)} en moyenne.`, 'labor', null, sub));
+            else if (gph >= avgHour * T.productHourHigh) out.push(force(`sku-hour-${p.id}`, 'Main-d\'œuvre', 40, `${q}\u00A0: un bon usage du temps`, `${usd(gph)} de bénéfice brut par heure, contre ${usd(avgHour)} en moyenne.`, 'labor', null, sub));
         }
     }
     // Écart de marge entre les formats d'un même produit (règle 27, version par produit)
@@ -87,7 +87,7 @@ export const deficitCells = (c) => {
     }
     return out;
 };
-const cellRules = (c) => deficitCells(c).map(({ act, ch, cell }) => weak(`cell-deficit-${act.id}-${ch.id}`, 'Activités', 60, `${act.name} en ${ch.name} : perd de l'argent`,
+const cellRules = (c) => deficitCells(c).map(({ act, ch, cell }) => weak(`cell-deficit-${act.id}-${ch.id}`, 'Activités', 60, `${act.name} en ${ch.name}\u00A0: perd de l'argent`,
     `Bénéfice net de ${usd(cell.margeNetteTotal)} (${pct(cell.margeNettePercent)} de marge nette).`, 'byActivity', Math.abs(cell.margeNetteTotal), subject('activité × canal', `${act.id}:${ch.id}`, `${act.name} × ${ch.name}`)));
 
 // ---------- postes de production ----------
@@ -95,9 +95,9 @@ const postRules = (c) => {
     const out = [];
     for (const r of (c.info.productivityReport?.rows || []).filter(x => x.actual > 0 && x.expected > 0)) {
         const u = r.utilization / 100, sub = subject('poste', r.postName, r.postName);
-        if (u > 1) out.push(weak(`post-state-${r.postName}`, 'Main-d\'œuvre', 56, `${r.postName} : surchargé (${nf(r.utilization)} %)`, 'La capacité réelle est dépassée.', 'labor', null, sub));
-        else if (u < T.postUnderUsed) out.push(weak(`post-state-${r.postName}`, 'Main-d\'œuvre', 48, `${r.postName} : utilisé à ${nf(r.utilization)} %`, `Moins de ${pct(T.postUnderUsed, 0)} d'utilisation : de la capacité inutilisée.`, 'labor', null, sub));
-        else if (u >= T.postWellUsed) out.push(force(`post-state-${r.postName}`, 'Main-d\'œuvre', 40, `${r.postName} : ${nf(r.utilization)} % d'utilisation`, 'Poste de production bien occupé.', 'labor', null, sub));
+        if (u > 1) out.push(weak(`post-state-${r.postName}`, 'Main-d\'œuvre', 56, `${r.postName}\u00A0: surchargé (${nf(r.utilization)}\u00A0%)`, 'La capacité réelle est dépassée.', 'labor', null, sub));
+        else if (u < T.postUnderUsed) out.push(weak(`post-state-${r.postName}`, 'Main-d\'œuvre', 48, `${r.postName}\u00A0: utilisé à ${nf(r.utilization)}\u00A0%`, `Moins de ${pct(T.postUnderUsed, 0)} d'utilisation\u00A0: de la capacité inutilisée.`, 'labor', null, sub));
+        else if (u >= T.postWellUsed) out.push(force(`post-state-${r.postName}`, 'Main-d\'œuvre', 40, `${r.postName}\u00A0: ${nf(r.utilization)}\u00A0% d'utilisation`, 'Poste de production bien occupé.', 'labor', null, sub));
     }
     return out;
 };
@@ -112,17 +112,17 @@ const supplyEntityRules = (c) => {
     for (const [key, noun, itemType, shares, vol, abc, report, subTab, k] of sets) {
         // Chaque fournisseur en dépendance (pas seulement le premier)
         (shares?.rows || []).filter(r => r.isDependent).forEach(r => out.push(weak(`supplier-dep-${key}-${r.provider}`, 'Approvisionnement', Math.round(75 * k),
-            `${r.provider} : ${pct(r.share, 0)} des achats ${noun}`, 'Une dépendance à un seul fournisseur.', subTab, null, subject('fournisseur', r.provider, r.provider))));
+            `${r.provider}\u00A0: ${pct(r.share, 0)} des achats ${noun}`, 'Une dépendance à un seul fournisseur.', subTab, null, subject('fournisseur', r.provider, r.provider))));
         // Chaque élément de classe A à prix volatil
         if (vol?.hasEnoughData) {
             (abc?.A || []).filter(i => vol.byName[i.name]?.isVolatile).forEach(i => out.push(weak(`volatile-item-${key}-${i.id ?? i.name}`, 'Approvisionnement', Math.round(60 * k),
-                `${i.name} : prix volatil`, `Amplitude de ${nf(vol.byName[i.name].amplitudePercent)} % sur ${vol.pointCount} relevés ; élément de classe A.`, subTab, null, subject(itemType, i.id ?? i.name, i.name))));
+                `${i.name}\u00A0: prix volatil`, `Amplitude de ${nf(vol.byName[i.name].amplitudePercent)}\u00A0% sur ${vol.pointCount} relevés\u00A0; élément de classe A.`, subTab, null, subject(itemType, i.id ?? i.name, i.name))));
         }
         // Chaque ingrédient qui pèse lourd dans la perte stock prévue (ingrédients seulement, comme la règle agrégée)
         const loss = report?.grandTotal;
         if (key === 'ing' && loss && loss.loss > 0) {
             Object.values(report.groupedByProvider || {}).flatMap(g => g.items).filter(i => i.lossCost / loss.loss >= T.lossItemShare)
-                .forEach(i => out.push(weak(`loss-item-${i.id}`, 'Approvisionnement', 40, `${i.name} : ${usd(i.lossCost)} de perte stock`, `${pct(i.lossCost / loss.loss, 0)} de la perte stock prévue.`, subTab, i.lossCost, subject('ingrédient', i.id, i.name))));
+                .forEach(i => out.push(weak(`loss-item-${i.id}`, 'Approvisionnement', 40, `${i.name}\u00A0: ${usd(i.lossCost)} de perte en stock`, `${pct(i.lossCost / loss.loss, 0)} de la perte en stock prévue.`, subTab, i.lossCost, subject('ingrédient', i.id, i.name))));
         }
     }
     return out;

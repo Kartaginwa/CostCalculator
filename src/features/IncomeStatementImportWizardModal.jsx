@@ -334,17 +334,17 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                     </button>
                 </div>
                 <div className="p-6 flex-1 overflow-y-auto">
-                    {isLoading && <div className="text-center"><p>Lecture du fichier en cours...</p></div>}
+                    {isLoading && <div className="text-center"><p>Lecture du fichier en cours…</p></div>}
 
                     {!isLoading && step === 1 && (
                         <div className="text-center">
-                            <h3 className="text-xl font-semibold mb-4">Étape 1: Téléverser votre état des résultats</h3>
+                            <h3 className="text-xl font-semibold mb-4">Étape 1&nbsp;: Téléverser votre état des résultats</h3>
                             <p className="text-gray-600 mb-8">
-                                Le cas le plus courant : un <strong>PDF textuel</strong> (export natif de votre
+                                Le cas le plus courant&nbsp;: un <strong>PDF textuel</strong> (export natif de votre
                                 comptable ou de votre logiciel comptable). Un export comptable structuré
-                                (QuickBooks, Odoo...) en CSV/Excel fonctionne aussi.
+                                (QuickBooks, Odoo…) en CSV/Excel fonctionne aussi.
                                 <br />
-                                Formats supportés : .pdf, .csv, .xls, .xlsx. Pas de PDF scanné/image (sans texte
+                                Formats pris en charge&nbsp;: .pdf, .csv, .xls, .xlsx. Pas de PDF scanné/image (sans texte
                                 reconnaissable).
                             </p>
                             <input
@@ -366,11 +366,11 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
 
                     {!isLoading && step === 2 && (
                         <div>
-                            <h3 className="text-xl font-semibold mb-2">Étape 2: Correspondance des colonnes</h3>
+                            <h3 className="text-xl font-semibold mb-2">Étape 2&nbsp;: Correspondance des colonnes</h3>
                             <p className="text-gray-600 mb-6">
                                 Associez les colonnes de votre fichier <span className="font-semibold text-gray-800">{fileName}</span> aux
                                 champs de l'application. Les champs marqués d'un astérisque (*) sont obligatoires. Type, Catégorie et
-                                Produit/SKU sont optionnels : la Catégorie et le Type de chaque ligne peuvent être devinés et corrigés à
+                                Produit/SKU sont facultatifs&nbsp;: la Catégorie et le Type de chaque ligne peuvent être devinés et corrigés à
                                 l'étape suivante.
                             </p>
                             <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
@@ -399,15 +399,15 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
 
                     {!isLoading && step === 3 && (
                         <div>
-                            <h3 className="text-xl font-semibold mb-2">Étape 3: Prévisualisation et résolution</h3>
+                            <h3 className="text-xl font-semibold mb-2">Étape 3&nbsp;: Prévisualisation et résolution</h3>
                             <p className="text-gray-600 mb-6">
-                                Vérifiez chaque ligne : le Poste et le Montant restent modifiables (utile surtout pour un PDF, où le
+                                Vérifiez chaque ligne&nbsp;: le Poste et le Montant restent modifiables (utile surtout pour un PDF, où le
                                 texte est reconstruit automatiquement), puis Revenu ou Dépense, et enfin sa catégorie (Dépense) ou
-                                l'activité de production visée (Revenu — « Général » si aucun produit n'a été reconnu). Une ligne à
-                                0 $ est désélectionnée par défaut.
+                                l'activité de production visée (Revenu — «&nbsp;Général&nbsp;» si aucun produit n'a été reconnu). Une ligne à
+                                0&nbsp;$ est désélectionnée par défaut.
                             </p>
                             <div className="flex items-center space-x-4 mb-4 p-2 bg-gray-50 rounded-md">
-                                <span className="text-sm font-medium text-gray-700">Sélections rapides:</span>
+                                <span className="text-sm font-medium text-gray-700">Sélections rapides&nbsp;:</span>
                                 <button onClick={handleDeselectAll} className="text-sm text-red-600 hover:underline">
                                     Tout désélectionner
                                 </button>
@@ -419,10 +419,10 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                                             <th className="p-2 w-12 text-center">
                                                 <input type="checkbox" checked={selectedItems.size === processedData.length && processedData.length > 0} onChange={handleSelectAll} className="h-4 w-4" />
                                             </th>
-                                            <th className="p-2 text-left">Poste</th>
-                                            <th className="p-2 text-right">Montant</th>
-                                            <th className="p-2 text-left">Type</th>
-                                            <th className="p-2 text-left">Catégorie / Activité</th>
+                                            <th className="p-2 text-center">Poste</th>
+                                            <th className="p-2 text-center">Montant</th>
+                                            <th className="p-2 text-center">Type</th>
+                                            <th className="p-2 text-center">Catégorie / Activité</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
@@ -436,7 +436,7 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                                                         type="text"
                                                         value={item.label}
                                                         onChange={(e) => handleRowFieldChange(item.id, 'label', e.target.value)}
-                                                        title={item.skuText ? `Produit/SKU source : ${item.skuText}` : ''}
+                                                        title={item.skuText ? `Produit/SKU source\u00A0: ${item.skuText}` : ''}
                                                         className="w-full p-1 border border-gray-300 rounded-md text-xs font-medium"
                                                     />
                                                 </td>
@@ -473,15 +473,15 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                                 </table>
                             </div>
                             <div className="mt-4 text-right text-sm font-semibold">
-                                <p>{selectedItems.size} item(s) sélectionné(s) pour l'importation.</p>
+                                <p>{selectedItems.size} élément(s) sélectionné(s) pour l'importation.</p>
                             </div>
                         </div>
                     )}
                     {!isLoading && step === 4 && (
                         <div className="text-center">
-                            <h3 className="text-xl font-semibold mb-4">Étape 4: Confirmation</h3>
+                            <h3 className="text-xl font-semibold mb-4">Étape 4&nbsp;: Confirmation</h3>
                             <div className="p-4 bg-gray-100 rounded-lg space-y-3 text-left max-w-md mx-auto">
-                                <p>Vous êtes sur le point d'ajouter :</p>
+                                <p>Vous êtes sur le point d'ajouter&nbsp;:</p>
                                 <ul className="list-disc list-inside">
                                     <li><strong>{selectedRevenueCount}</strong> ligne(s) de revenu.</li>
                                     <li><strong>{selectedExpenseCount}</strong> ligne(s) de frais fixes.</li>
@@ -515,13 +515,13 @@ export const IncomeStatementImportWizardModal = ({ isOpen, onClose, onImportComp
                             </button>
                         )}
                         {step === 3 && (
-                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un item." : ""}>
+                            <button onClick={() => setStep(4)} disabled={isNextStepDisabled} className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400" title={isNextStepDisabled ? "Veuillez sélectionner au moins un élément." : ""}>
                                 Suivant
                             </button>
                         )}
                         {step === 4 && (
                             <button onClick={handleConfirmImport} className="px-4 py-2 border rounded-md text-xs text-white bg-green-600 hover:bg-green-700">
-                                Confirmer et Importer
+                                Confirmer et importer
                             </button>
                         )}
                     </div>

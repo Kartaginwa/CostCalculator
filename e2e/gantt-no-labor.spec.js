@@ -18,7 +18,7 @@ test('Une étape sans personnel apparaît dans la ligne « Sans main-d\'œuvre �
     await expect(row.getByText('Sans main-d\'œuvre')).toBeVisible();
     await expect(row.getByText('Refroidissement rapide')).toBeVisible();
     // Les étapes avec personnel gardent leur ligne de poste
-    await expect(page.getByTestId('gantt-row').filter({ hasText: 'Cuisinier de production' })).toBeVisible();
+    await expect(page.getByTestId('gantt-row').filter({ hasText: 'Opérateur de production' })).toBeVisible();
 });
 
 test('Sans étape sans personnel, la ligne n\'existe pas ; en ajouter une la fait apparaître', async ({ page }) => {

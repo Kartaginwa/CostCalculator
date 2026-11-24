@@ -22,47 +22,47 @@ describe('computeGlobalSeries', () => {
         const { s } = demo();
         const series = computeGlobalSeries(s.trackingPoints);
         expect(series).toHaveLength(s.trackingPoints.length);
-        expect(Object.keys(series[0])).toEqual(expect.arrayContaining(['label', 'Marge Brute Moyenne', 'Coût Matière Moyen', 'Coût Emballage Moyen', "Coût Main-d'œuvre Moyen", 'Point Mort Global']));
+        expect(Object.keys(series[0])).toEqual(expect.arrayContaining(['label', 'Marge brute moyenne', 'Coût matière moyen', 'Coût emballage moyen', "Coût main-d'œuvre moyen", 'Point mort global']));
         expect(series[0].label).toBe(s.trackingPoints[0].name);
     });
 
     it('le dernier point du graphique rejoint les tuiles de la Vue d\'ensemble (même pondération)', () => {
         const { s, a } = demo();
         const last = computeGlobalSeries(s.trackingPoints).at(-1);
-        expect(last['Marge Brute Moyenne']).toBeCloseTo(a.weightedGrossMargin * 100, 1);
-        expect(last['Coût Matière Moyen']).toBeCloseTo(a.weightedMaterialCost * 100, 1);
-        expect(last['Coût Emballage Moyen']).toBeCloseTo(a.weightedPackagingCost * 100, 1);
-        expect(last["Coût Main-d'œuvre Moyen"]).toBeCloseTo(a.weightedLaborCost * 100, 1);
+        expect(last['Marge brute moyenne']).toBeCloseTo(a.weightedGrossMargin * 100, 1);
+        expect(last['Coût matière moyen']).toBeCloseTo(a.weightedMaterialCost * 100, 1);
+        expect(last['Coût emballage moyen']).toBeCloseTo(a.weightedPackagingCost * 100, 1);
+        expect(last["Coût main-d'œuvre moyen"]).toBeCloseTo(a.weightedLaborCost * 100, 1);
     });
 
     it('un point sans produit actif pondérable donne des valeurs absentes (null), jamais 0', () => {
         const point = { timestamp: '2026-01-01T00:00:00Z', name: 'Vide', note: '', productsWithCosts: [], generalInfo: { totalIndirects: 0 } };
         const [row] = computeGlobalSeries([point]);
-        expect(row['Marge Brute Moyenne']).toBeNull();
-        expect(row['Coût Emballage Moyen']).toBeNull();
-        expect(row['Point Mort Global']).toBeNull();
+        expect(row['Marge brute moyenne']).toBeNull();
+        expect(row['Coût emballage moyen']).toBeNull();
+        expect(row['Point mort global']).toBeNull();
     });
 
-    it('sans point de référence : aucune série', () => {
+    it('sans point de référence : aucune série', () => {
         expect(computeGlobalSeries([])).toEqual([]);
         expect(computeGlobalSeries()).toEqual([]);
     });
 });
 
 describe('computeProductSeries et isProductPriced', () => {
-    it('un SKU : cinq variables en % (dont l\'emballage) et quatre en $/unité, une ligne par point', () => {
+    it('un SKU : cinq variables en % (dont l\'emballage) et quatre en $/unité, une ligne par point', () => {
         const { s, a } = demo();
         const chili = a.activeProducts.find(r => r.displayName.startsWith('Chili'));
         const series = computeProductSeries(s.trackingPoints, chili.id);
         expect(series).toHaveLength(s.trackingPoints.length);
         expect(Object.keys(series[0])).toEqual(expect.arrayContaining([
-            'Coût matière (%)', 'Coût emballage (%)', "Coût main-d'œuvre (%)", 'Coût frais indirects (%)', 'Marge nette (%)',
+            'Coût matière (%)', 'Coût emballage (%)', "Coût main-d'œuvre (%)", 'Coût des frais indirects (%)', 'Marge nette (%)',
             'Coût matière ($/u.)', 'Coût emballage ($/u.)', "Coût main-d'œuvre ($/u.)", 'Coût de revient ($/u.)',
         ]));
         expect(series.every(r => typeof r['Marge nette (%)'] === 'number')).toBe(true);
     });
 
-    it('sans SKU choisi : aucune série ; un SKU absent d\'un point : valeurs null', () => {
+    it('sans SKU choisi : aucune série ; un SKU absent d\'un point : valeurs null', () => {
         const { s } = demo();
         expect(computeProductSeries(s.trackingPoints, null)).toEqual([]);
         const rows = computeProductSeries(s.trackingPoints, 'inconnu');
@@ -81,7 +81,7 @@ describe('computeProductSeries et isProductPriced', () => {
 });
 
 describe('computeIngredientPriceEffect (effet des variations de prix)', () => {
-    it('démo : une économie d\'environ 918 $ sur les 3 derniers relevés (4,8 % des achats)', () => {
+    it('démo : une économie d\'environ 918 $ sur les 3 derniers relevés (4,8 % des achats)', () => {
         const { s, a } = demo();
         const ctx = buildKeyFindingsContext({ analysisData: a, trackingPoints: s.trackingPoints, baseIngredients: s.ingredientsList });
         const pe = computeIngredientPriceEffect(a.purchasingReportData, ctx.ingredientVolatilityRecent);
@@ -91,7 +91,7 @@ describe('computeIngredientPriceEffect (effet des variations de prix)', () => {
         expect(pe.base).toBeGreaterThan(0);
     });
 
-    it('sans historique suffisant : null (la règle se tait)', () => {
+    it('sans historique suffisant : null (la règle se tait)', () => {
         const { a } = demo();
         expect(computeIngredientPriceEffect(a.purchasingReportData, { hasEnoughData: false, byName: {} })).toBeNull();
         expect(computeIngredientPriceEffect(a.purchasingReportData, undefined)).toBeNull();

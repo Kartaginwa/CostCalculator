@@ -24,7 +24,7 @@ test('prix par canal dans Produits et SKUs : ajout, canal principal, retrait, fo
     // automatiquement, son détail s'affiche directement dans le panneau de droite (vue
     // maître-détail, refonte du 19/10).
     const menuSection = page.locator('#tutorial-section-info-menu');
-    await menuSection.getByRole('button', { name: 'Ajouter un item' }).click();
+    await menuSection.getByRole('button', { name: 'Ajouter un produit' }).click();
     await page.waitForTimeout(300);
     const newSection = menuSection.locator('#product-detail-pane');
     await newSection.locator('input[type="text"]').first().fill('Nouveau produit test');

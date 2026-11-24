@@ -26,7 +26,7 @@ describe('catalogue', () => {
         expect(DEFAULT_OBJECTIVES.filter(o => o.principal).map(o => o.id)).toEqual(['matiere', 'emballage', 'mo', 'margeBrute']);
         expect(MAX_CUSTOM_OBJECTIVES).toBe(20);
     });
-    it('le sens naturel : un coût « au plus », une marge « au moins »', () => {
+    it('le sens naturel : un coût « au plus », une marge « au moins »', () => {
         expect(INDICATORS.matiere.dir).toBe('max');
         expect(INDICATORS.perteStock.dir).toBe('max');
         expect(INDICATORS.margeBrute.dir).toBe('min');
@@ -40,30 +40,30 @@ describe('évaluation', () => {
         for (const o of list) { expect(o.met).toBeNull(); expect(o.gap).toBeNull(); }
         expect(list.every(o => o.hasTarget === false)).toBe(true);
     });
-    it('« au plus » : atteint quand la valeur est sous la cible, manqué sinon, avec l\'écart', () => {
+    it('« au plus » : atteint quand la valeur est sous la cible, manqué sinon, avec l\'écart', () => {
         const list = evaluateObjectives(baseCtx({ foodCostTarget: '32', packagingCostTarget: '8' }));
         expect(byKey(list, 'matiere')).toMatchObject({ met: false, dir: 'max', target: 32 });
         expect(byKey(list, 'matiere').gap).toBeCloseTo(1, 6);
         expect(byKey(list, 'emballage').met).toBe(true);
     });
-    it('« au moins » : la marge brute et le taux d\'utilisation (ligne Total de Main-d\'œuvre)', () => {
+    it('« au moins » : la marge brute et le taux d\'utilisation (ligne Total de Main-d\'œuvre)', () => {
         const list = evaluateObjectives(baseCtx({ grossMarginTarget: '40', utilizationTarget: '95' }));
         expect(byKey(list, 'margeBrute')).toMatchObject({ met: true, current: expect.closeTo(42, 6) });
         expect(byKey(list, 'utilisation')).toMatchObject({ met: false, current: 90 });
         expect(byKey(list, 'utilisation').gap).toBeCloseTo(5, 6);
     });
-    it('reprend les valeurs déjà calculées : paie non utilisée, perte stock, frais fixes, marge nette', () => {
+    it('reprend les valeurs déjà calculées : paie non utilisée, perte en stock, frais fixes, marge nette', () => {
         const list = evaluateObjectives(baseCtx({ unusedPayTarget: '15', lossTarget: '5', fixedShareTarget: '35', netMarginTarget: '10' }));
         expect(byKey(list, 'paieNonUtilisee')).toMatchObject({ met: false, current: expect.closeTo(18, 6) });
         expect(byKey(list, 'perteStock')).toMatchObject({ met: true, current: expect.closeTo(4, 6) });
         expect(byKey(list, 'fraisFixes')).toMatchObject({ met: true, current: expect.closeTo(30, 6) });
         expect(byKey(list, 'margeNette')).toMatchObject({ met: false, current: expect.closeTo(8, 6) });
     });
-    it('sans donnée, l\'objectif reste muet même avec une valeur : une donnée absente reste absente', () => {
+    it('sans donnée, l\'objectif reste muet même avec une valeur : une donnée absente reste absente', () => {
         const ctx = baseCtx({ utilizationTarget: '85', productivityReport: { rows: [], totals: { expected: 0, actual: 0, utilization: 0 } } });
         expect(byKey(evaluateObjectives(ctx), 'utilisation')).toMatchObject({ met: null, current: null });
     });
-    it('désactivé sans être supprimé : la valeur est gardée, mais l\'objectif n\'agit plus', () => {
+    it('désactivé sans être supprimé : la valeur est gardée, mais l\'objectif n\'agit plus', () => {
         const info = { foodCostTarget: '32', objectivesOff: ['matiere'] };
         expect(isObjectiveOff(info, 'matiere')).toBe(true);
         expect(activeTarget(info, 'matiere')).toBe('');
@@ -99,12 +99,12 @@ describe('objectifs sur mesure', () => {
 
 describe('constats des objectifs', () => {
     const find = (r, id) => r.all.find(f => f.id === id);
-    it('atteint : une force ; manqué : une faiblesse avec l\'écart ; dans le groupe des objectifs, de portée générale', () => {
+    it('atteint : une force ; manqué : une faiblesse avec l\'écart ; dans le groupe des objectifs, de portée générale', () => {
         const r = computeKeyFindings(baseCtx({ grossMarginTarget: '40', netMarginTarget: '10', fraisFixes: undefined }));
         const ok = find(r, 'obj-margeBrute'), ko = find(r, 'obj-margeNette');
         expect(ok).toMatchObject({ tone: 'force', group: 'objectif', scope: 'general' });
-        expect(ok.title).toBe('Marge brute : objectif atteint');
-        expect(ok.detail).toContain('au moins 40,0 %');
+        expect(ok.title).toBe('Marge brute : objectif atteint');
+        expect(ok.detail).toContain('au moins 40,0 %');
         expect(ko).toMatchObject({ tone: 'faiblesse', group: 'objectif' });
         expect(ko.title).toBe('Marge nette sous l\'objectif');
     });
@@ -118,15 +118,15 @@ describe('constats des objectifs', () => {
     });
     it('un objectif sur mesure produit un constat à son nom', () => {
         const rows = [{ channelId: 'a', channelName: 'A', revenueTotal: 7000, totalIndirectTotal: 0, margeNetteTotal: 700 }, { channelId: 'b', channelName: 'B', revenueTotal: 3000, totalIndirectTotal: 0, margeNetteTotal: 300 }];
-        const r = computeKeyFindings(baseCtx({ customObjectives: [{ id: 'custom_9', indicator: 'partCanal', dir: 'max', value: '30', name: 'Pas plus de 30 % chez un canal' }] }, {}, { channelSummaries: rows }));
-        expect(find(r, 'obj-custom_9').title).toContain('Pas plus de 30 % chez un canal');
+        const r = computeKeyFindings(baseCtx({ customObjectives: [{ id: 'custom_9', indicator: 'partCanal', dir: 'max', value: '30', name: 'Pas plus de 30 % chez un canal' }] }, {}, { channelSummaries: rows }));
+        expect(find(r, 'obj-custom_9').title).toContain('Pas plus de 30 % chez un canal');
         expect(find(r, 'obj-custom_9').tone).toBe('faiblesse');
     });
-    it('les identifiants obj-* sont classés (portée générale) : aucun constat sans classement', () => {
+    it('les identifiants obj-* sont classés (portée générale) : aucun constat sans classement', () => {
         expect(classifyFinding('obj-margeBrute')).toEqual({ scope: 'general', subjectType: 'objectif' });
         expect(classifyFinding('obj-custom_1')).toEqual({ scope: 'general', subjectType: 'objectif' });
     });
-    it('sur le projet démo : les nouveaux objectifs donnent des constats atteints et à atteindre', () => {
+    it('sur le projet démo : les nouveaux objectifs donnent des constats atteints et à atteindre', () => {
         const all = computeKeyFindings(demoContext(), { entities: true }).all.filter(f => f.id.startsWith('obj-'));
         expect(all.length).toBeGreaterThanOrEqual(4);
         expect(all.some(f => f.tone === 'force')).toBe(true);

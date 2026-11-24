@@ -117,7 +117,7 @@ export const partie0 = {
                 { type: 'callout', kind: 'astuce', text: 'Sauvegardez à la fin de chaque séance de saisie, et conservez des copies datées du fichier (par exemple en ajoutant la date à son nom). Si vous faites une erreur importante, vous pourrez revenir à une version antérieure. Ne modifiez jamais le fichier à la main : seule l\'application sait le relire correctement.' },
 
                 { type: 'h', id: 'guide-gestion-accueil', text: 'L\'écran d\'accueil et la visite guidée' },
-                { type: 'p', text: 'Au démarrage, l\'application propose trois choix : {{Créer un nouveau projet}}, {{Ouvrir un projet}} sauvegardé, ou {{Explorer un projet démo}}. À la création d\'un nouveau projet, une **visite guidée** vous est proposée : une démonstration d\'environ sept minutes qui se joue toute seule, sur une copie du projet démo, sans toucher à votre travail. Vous pouvez la lancer ({{Commencer la visite}}) ou la passer ({{Explorer par moi-même}}). Elle reste disponible à tout moment : [[action-visite|lancer la visite guidée]].' },
+                { type: 'p', text: 'Au démarrage, l\'application propose trois choix : {{Créer un nouveau projet}}, {{Ouvrir un projet}} sauvegardé, ou {{Explorer un projet démo}}. À la création d\'un nouveau projet, une **visite guidée** vous est proposée : une démonstration d\'environ neuf minutes qui se joue toute seule, sur une copie du projet démo, sans toucher à votre travail. Vous pouvez la lancer ({{Commencer la visite}}) ou la passer ({{Explorer par moi-même}}). Elle reste disponible à tout moment : [[action-visite|lancer la visite guidée]].' },
 
                 { type: 'h', id: 'guide-gestion-confort', text: 'Les petits conforts à connaître' },
                 {

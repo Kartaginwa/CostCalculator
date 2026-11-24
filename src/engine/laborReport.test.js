@@ -13,7 +13,7 @@ describe('computeSafetyMargin — marge de sécurité', () => {
     it('négative quand les ventes sont sous le point mort', () => {
         expect(computeSafetyMargin(75366, 76656).ratio).toBeLessThan(0);
     });
-    it('absente (null) sans ventes prévues ou sans point mort : jamais forcée à 0', () => {
+    it('absente (null) sans ventes prévues ou sans point mort : jamais forcée à 0', () => {
         expect(computeSafetyMargin(0, 1000)).toBeNull();
         expect(computeSafetyMargin(50000, 0)).toBeNull();
         expect(computeSafetyMargin(50000, NaN)).toBeNull();
@@ -23,7 +23,7 @@ describe('computeSafetyMargin — marge de sécurité', () => {
 
 describe('computeProviderShares — part des achats par fournisseur', () => {
     const report = { groupedByProvider: { A: { totalCost: 500 }, B: { totalCost: 300 }, C: { totalCost: 200 } } };
-    it('les parts somment à 100 % et sont triées', () => {
+    it('les parts somment à 100 % et sont triées', () => {
         const { rows, total } = computeProviderShares(report);
         expect(total).toBe(1000);
         expect(rows.map(r => r.provider)).toEqual(['A', 'B', 'C']);
@@ -34,7 +34,7 @@ describe('computeProviderShares — part des achats par fournisseur', () => {
         expect(rows.map(r => r.isDependent)).toEqual([true, false, false]);
         expect(computeProviderShares(report).rows[0].isDependent).toBe(true); // seuil par défaut : 40 %
     });
-    it('rapport vide : aucune ligne, aucune part inventée', () => {
+    it('rapport vide : aucune ligne, aucune part inventée', () => {
         expect(computeProviderShares({ groupedByProvider: {} })).toEqual({ rows: [], total: 0 });
         expect(computeProviderShares(null).rows).toEqual([]);
     });
@@ -44,7 +44,7 @@ describe('computeLaborCascade — où va la paie', () => {
     // Un poste : 2 employés, 100 h payées chacun, 20 $/h chargé, 80 % productif → 200 h payées, 160 h attendues, paie 4 000 $.
     const emp = { workedHours: '100', hourlyRate: '20', socialCharges: '0', vacationPercentage: '0', productiveTimePercentage: '80' };
     const db = [{ id: 'p1', postName: 'Cuisine', employees: [emp, { ...emp }] }, { id: 'p2', postName: 'Gestion', employees: [{ ...emp, workedHours: '10', productiveTimePercentage: '100' }] }];
-    it('heures payées = utilisées + inutilisées + non productives ; paie = somme des trois coûts', () => {
+    it('heures payées = utilisées + inutilisées + non productives ; paie = somme des trois coûts', () => {
         const c = computeLaborCascade(db, [{ postName: 'Cuisine', actual: 120 }, { postName: 'Gestion', actual: 0 }]);
         expect(c.paidHours).toBeCloseTo(210, 8);
         expect(c.usedHours + c.idleHours + c.nonProductiveHours).toBeCloseTo(c.paidHours, 8);
@@ -70,7 +70,7 @@ describe('computeLaborCascade — où va la paie', () => {
         expect(c.idleHours).toBeGreaterThanOrEqual(0);
         expect(c.overloadHours).toBeCloseTo(40, 8);
     });
-    it('sans postes ou sans heures : valeurs absentes (null), pas de division par zéro', () => {
+    it('sans postes ou sans heures : valeurs absentes (null), pas de division par zéro', () => {
         const c = computeLaborCascade([], []);
         expect(c.unusedShare).toBeNull(); expect(c.effectiveHourlyCost).toBeNull(); expect(c.averageLoadedRate).toBeNull();
     });
@@ -84,7 +84,7 @@ const product = (id, activityId, resale, rows) => ({
 describe('rentabilité de l\'heure de main-d\'œuvre', () => {
     const products = [product('a', 'act1', false, [[10, 100, 4]]), product('b', 'act1', false, [[20, 50, 8]]), product('r', 'act1', true, [[5, 1000, 2]])];
     const hoursByFormat = { f_a: 10, f_b: 5 };
-    it('par produit : bénéfice brut ÷ heures ; un produit de revente reste listé sans ratio', () => {
+    it('par produit : bénéfice brut ÷ heures ; un produit de revente reste listé sans ratio', () => {
         const rows = computeProductLaborProfitability(products, hoursByFormat);
         expect(rows.find(r => r.id === 'a').grossProfitPerHour).toBeCloseTo(400 / 10, 8);
         expect(rows.find(r => r.id === 'b').grossProfitPerHour).toBeCloseTo(400 / 5, 8);
@@ -92,7 +92,7 @@ describe('rentabilité de l\'heure de main-d\'œuvre', () => {
         expect(resale.isResale).toBe(true);
         expect(resale.grossProfitPerHour).toBeNull();
     });
-    it('par activité : les produits de revente sont exclus du revenu et du bénéfice brut', () => {
+    it('par activité : les produits de revente sont exclus du revenu et du bénéfice brut', () => {
         const [a] = computeActivityLaborRatios(products, { act1: 20 }, [{ id: 'act1', name: 'Activité 1' }]);
         expect(a.revenue).toBeCloseTo(1000 + 1000, 8);          // a + b, sans la revente (5 000 $)
         expect(a.grossProfit).toBeCloseTo(800, 8);
@@ -103,14 +103,14 @@ describe('rentabilité de l\'heure de main-d\'œuvre', () => {
         const [a] = computeActivityLaborRatios(products, {}, [{ id: 'act1', name: 'Activité 1' }]);
         expect(a.revenuePerHour).toBeNull(); expect(a.grossProfitPerHour).toBeNull();
     });
-    it('marge de croissance : heures libres × revenu et bénéfice brut moyens par heure, hors revente', () => {
+    it('marge de croissance : heures libres × revenu et bénéfice brut moyens par heure, hors revente', () => {
         const rows = computeProductLaborProfitability(products, hoursByFormat);
         const g = computeGrowthMargin(15, rows);               // sans total d'heures : repli sur les heures des produits fabriqués (15 h)
         expect(g.revenuePerHour).toBeCloseTo(2000 / 15, 8);
         expect(g.additionalRevenue).toBeCloseTo(2000, 8);
         expect(g.additionalGrossProfit).toBeCloseTo(800, 8);
     });
-    it('marge de croissance : le revenu par heure se calcule sur TOUTES les heures de production (sous-recettes comprises)', () => {
+    it('marge de croissance : le revenu par heure se calcule sur TOUTES les heures de production (sous-recettes comprises)', () => {
         const rows = computeProductLaborProfitability(products, hoursByFormat);   // les produits fabriqués ne comptent que 15 h…
         const g = computeGrowthMargin(15, rows, 20);                                // …mais l'équipe en travaille 20 (5 h de sous-recettes)
         expect(g.revenuePerHour).toBeCloseTo(2000 / 20, 8);

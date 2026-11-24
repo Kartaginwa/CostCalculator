@@ -179,7 +179,7 @@ export function buildReportModel({ project, analysisData: a, calculatedGeneralIn
     // ---------- disponibilité des chapitres (pour grisage dans la fenêtre d'export) ----------
     const availability = {
         '1': revenue ? null : 'Aucun produit actif avec des ventes prévues.',
-        '2': cascade ? null : 'Aucune vente prévue : la cascade du revenu au bénéfice est vide.',
+        '2': cascade ? null : 'Aucune vente prévue : la cascade du revenu au bénéfice est vide.',
         '3': rows.length ? null : 'Aucun produit actif.',
         '4': ctx.channelSummaries.length ? null : 'Aucun canal avec des ventes prévues.',
         '5': supply.ing.hasData || supply.pkg.hasData ? null : 'Aucun achat prévu (aucun ingrédient ni emballage utilisé par un produit actif).',

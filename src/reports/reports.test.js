@@ -16,7 +16,7 @@ afterEach(() => {
     delete globalThis.XLSX;
 });
 
-describe('modules du rapport PDF : importables sans navigateur', () => {
+describe('modules du rapport PDF : importables sans navigateur', () => {
     it('le modèle, les gabarits, le flux d\'export et le pont d\'impression se chargent', async () => {
         const [model, build, flow, print] = await Promise.all([import('./report/model.js'), import('./report/buildReport.js'), import('./exportFlow.js'), import('./exportPdf.js')]);
         expect(typeof model.buildReportModel).toBe('function');

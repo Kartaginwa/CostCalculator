@@ -88,6 +88,6 @@ export const SCENARIOS = {
 /** Les entrées d'un scénario, ou une erreur claire s'il n'existe pas. */
 export const scenarioInputs = (name) => {
     const sc = SCENARIOS[name];
-    if (!sc) throw new Error(`Scénario inconnu : ${name}`);
+    if (!sc) throw new Error(`Scénario inconnu\u00A0: ${name}`);
     return inputsFromState(sc.state());
 };

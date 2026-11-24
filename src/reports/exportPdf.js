@@ -24,7 +24,7 @@ function printInHiddenFrame(html) {
                 frame.contentWindow.print();
                 resolve({ status: 'browser-print' });
             } catch (err) {
-                resolve({ status: 'error', message: `L’impression du rapport a échoué : ${err.message}` });
+                resolve({ status: 'error', message: `L’impression du rapport a échoué\u00A0: ${err.message}` });
             }
             cleanup();
         };
@@ -39,7 +39,7 @@ export async function saveReportPdf(html, suggestedName) {
         if (hasPrintBridge()) return await window.reportBridge.printToPdf(html, suggestedName);
         return await printInHiddenFrame(html);
     } catch (err) {
-        return { status: 'error', message: `L’impression du rapport a échoué : ${err && err.message ? err.message : 'erreur inconnue'}` };
+        return { status: 'error', message: `L’impression du rapport a échoué\u00A0: ${err && err.message ? err.message : 'erreur inconnue'}` };
     }
 }
 

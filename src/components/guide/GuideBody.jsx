@@ -72,7 +72,7 @@ const Table = ({ block, term, onLink }) => (
             <thead className="bg-gray-100">
                 <tr>
                     {block.head.map((h, i) => (
-                        <th key={i} className={`px-3 py-2 border-b border-gray-300 font-semibold ${i === 0 || block.wrapCells ? 'text-left' : 'text-right'}`}>
+                        <th key={i} className={`px-3 py-2 border-b border-gray-300 font-semibold text-center`}>
                             <Inline text={h} term={term} onLink={onLink} />
                         </th>
                     ))}
@@ -138,7 +138,7 @@ const Blocks = ({ blocks, term, onLink }) => (
                             <dl className="space-y-1">
                                 {block.items.map((w, j) => (
                                     <div key={j}>
-                                        <dt className="inline font-semibold"><Inline text={w.term} term={term} onLink={onLink} /> : </dt>
+                                        <dt className="inline font-semibold"><Inline text={w.term} term={term} onLink={onLink} />&nbsp;: </dt>
                                         <dd className="inline"><Inline text={w.def} term={term} onLink={onLink} /></dd>
                                     </div>
                                 ))}

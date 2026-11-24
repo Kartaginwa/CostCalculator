@@ -25,10 +25,10 @@ const CascadeCard = ({ color, label, tip, hours, cost, hoursShare, payShare }) =
         <div className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 gap-y-1">
             <span className="text-xs text-gray-500">Heures</span>
             <span className="text-xl font-bold text-gray-800">{formatNumber(hours, 1)} h</span>
-            <span className="text-xs text-gray-500">{formatNumber(hoursShare * 100, 1)} % des heures payées</span>
+            <span className="text-xs text-gray-500">{formatNumber(hoursShare * 100, 1)}&nbsp;% des heures payées</span>
             <span className="text-xs text-gray-500">Coût</span>
-            <span className="text-xl font-bold text-gray-800">{formatCurrency(cost)} $</span>
-            <span className="text-xs text-gray-500">{formatNumber(payShare * 100, 1)} % de la paie</span>
+            <span className="text-xl font-bold text-gray-800">{formatCurrency(cost)}&nbsp;$</span>
+            <span className="text-xs text-gray-500">{formatNumber(payShare * 100, 1)}&nbsp;% de la paie</span>
         </div>
     </div>
 );
@@ -78,10 +78,10 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                         <thead className="bg-gray-100">
                             <tr>
                                 <SortableTh label="Poste" sortKey="postName" sort={postSort} onSort={onPostSort} isText />
-                                <SortableTh label="Heures Productives Attendues" sortKey="expected" sort={postSort} onSort={onPostSort} tip="mo.attendues" />
-                                <SortableTh label="Heures Productives Réelles" sortKey="actual" sort={postSort} onSort={onPostSort} tip="mo.reelles" />
+                                <SortableTh label="Heures productives attendues" sortKey="expected" sort={postSort} onSort={onPostSort} tip="mo.attendues" />
+                                <SortableTh label="Heures productives réelles" sortKey="actual" sort={postSort} onSort={onPostSort} tip="mo.reelles" />
                                 <SortableTh label="Différence (h)" sortKey="difference" sort={postSort} onSort={onPostSort} tip="mo.difference" />
-                                <SortableTh label="Taux d'Utilisation (%)" sortKey="utilization" sort={postSort} onSort={onPostSort} tip="mo.utilisation" />
+                                <SortableTh label="Taux d'utilisation (%)" sortKey="utilization" sort={postSort} onSort={onPostSort} tip="mo.utilisation" />
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -91,7 +91,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                                     <td className={td}>{formatNumber(row.expected, 2)} h</td>
                                     <td className={td}>{formatNumber(row.actual, 2)} h</td>
                                     <td className={td}>{formatNumber(row.difference, 2)} h</td>
-                                    <td className={td}>{formatNumber(row.utilization, 2)} %</td>
+                                    <td className={td}>{formatNumber(row.utilization, 2)}&nbsp;%</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -101,7 +101,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                                 <td className={td}>{formatNumber(productivityReport.totals.expected, 2)} h</td>
                                 <td className={td}>{formatNumber(productivityReport.totals.actual, 2)} h</td>
                                 <td className={td}>{formatNumber(productivityReport.totals.difference, 2)} h</td>
-                                <td className={td}><span className="inline-flex items-center">{formatNumber(productivityReport.totals.utilization, 2)} %<ObjectiveBadge id="utilisation" value={productivityReport.totals.expected > 0 ? productivityReport.totals.utilization : NaN} /></span></td>
+                                <td className={td}><span className="inline-flex items-center">{formatNumber(productivityReport.totals.utilization, 2)}&nbsp;%<ObjectiveBadge id="utilisation" value={productivityReport.totals.expected > 0 ? productivityReport.totals.utilization : NaN} /></span></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -111,15 +111,15 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                     <div id="tutorial-section-labor-paie" className="mt-4 p-4 bg-blue-100 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                         <div>
                             <h3 className="text-lg font-semibold text-blue-800">Paie totale du personnel</h3>
-                            <p className="text-2xl font-bold text-blue-900">{formatCurrency(cascade.payroll)} $</p>
+                            <p className="text-2xl font-bold text-blue-900">{formatCurrency(cascade.payroll)}&nbsp;$</p>
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-red-800 flex items-center justify-center">Paie non utilisée<Tooltip tip="mo.paieNonUtilisee" /></h3>
-                            <p className="text-2xl font-bold text-red-900">{formatCurrency(cascade.unusedPay)} $</p>
+                            <p className="text-2xl font-bold text-red-900">{formatCurrency(cascade.unusedPay)}&nbsp;$</p>
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-gray-800">Part de la paie non utilisée</h3>
-                            <p className="text-2xl font-bold text-gray-900 flex items-center justify-center">{formatNumber(cascade.unusedShare * 100, 1)} %<ObjectiveBadge id="paieNonUtilisee" value={cascade.unusedShare * 100} /></p>
+                            <p className="text-2xl font-bold text-gray-900 flex items-center justify-center">{formatNumber(cascade.unusedShare * 100, 1)}&nbsp;%<ObjectiveBadge id="paieNonUtilisee" value={cascade.unusedShare * 100} /></p>
                         </div>
                     </div>
                 )}
@@ -135,13 +135,13 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                             </div>
                             <div className="p-4 bg-white rounded-lg shadow">
                                 <div className="text-sm text-gray-500">Ventes additionnelles possibles</div>
-                                <p className="text-3xl font-bold text-blue-600">{roundedDollars(growth.additionalRevenue)} $</p>
-                                <p className="text-xs text-gray-500 mt-1">{formatCurrency(growth.revenuePerHour)} $ de revenu par heure</p>
+                                <p className="text-3xl font-bold text-blue-600">{roundedDollars(growth.additionalRevenue)}&nbsp;$</p>
+                                <p className="text-xs text-gray-500 mt-1">{formatCurrency(growth.revenuePerHour)}&nbsp;$ de revenu par heure</p>
                             </div>
                             <div className="p-4 bg-white rounded-lg shadow">
                                 <div className="text-sm text-gray-500">Bénéfice brut additionnel</div>
-                                <p className="text-3xl font-bold text-blue-600">{roundedDollars(growth.additionalGrossProfit)} $</p>
-                                <p className="text-xs text-gray-500 mt-1">{formatCurrency(growth.grossProfitPerHour)} $ de bénéfice brut par heure</p>
+                                <p className="text-3xl font-bold text-blue-600">{roundedDollars(growth.additionalGrossProfit)}&nbsp;$</p>
+                                <p className="text-xs text-gray-500 mt-1">{formatCurrency(growth.grossProfitPerHour)}&nbsp;$ de bénéfice brut par heure</p>
                             </div>
                         </div>
                     </div>
@@ -166,7 +166,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <div className="p-4 bg-white rounded-lg shadow text-center">
                                 <div className="text-sm text-gray-500 flex items-center justify-center">Coût réel d'une heure productive<Tooltip tip="mo.coutHeureReel" /></div>
                                 <p className="text-3xl font-bold text-blue-600">{formatCurrency(cascade.effectiveHourlyCost)} $/h</p>
-                                <p className="text-xs text-gray-500 mt-1">{formatNumber((cascade.effectiveHourlyCost / cascade.averageLoadedRate - 1) * 100, 0)} % de plus que le taux moyen chargé</p>
+                                <p className="text-xs text-gray-500 mt-1">{formatNumber((cascade.effectiveHourlyCost / cascade.averageLoadedRate - 1) * 100, 0)}&nbsp;% de plus que le taux moyen chargé</p>
                             </div>
                             <div className="p-4 bg-white rounded-lg shadow text-center">
                                 <div className="text-sm text-gray-500 flex items-center justify-center">Taux horaire moyen chargé<Tooltip tip="mo.tauxHoraireMoyen" /></div>
@@ -190,7 +190,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <thead className="bg-gray-100">
                                 <tr>
                                     <SortableTh label="Activité" sortKey="activityName" sort={activitySort} onSort={onActivitySort} isText />
-                                    <SortableTh label="Heures Productives Réelles" sortKey="hours" sort={activitySort} onSort={onActivitySort} tip="mo.chargeHeures" />
+                                    <SortableTh label="Heures productives réelles" sortKey="hours" sort={activitySort} onSort={onActivitySort} tip="mo.chargeHeures" />
                                     <SortableTh label="Part du total" sortKey="sharePercent" sort={activitySort} onSort={onActivitySort} tip="mo.chargePart" />
                                     <SortableTh label="Revenu / heure" sortKey="revenuePerHour" sort={activitySort} onSort={onActivitySort} tip="mo.revenuHeure" />
                                     <SortableTh label="Bénéfice brut / heure" sortKey="grossProfitPerHour" sort={activitySort} onSort={onActivitySort} tip="mo.beneficeBrutHeure" />
@@ -201,9 +201,9 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                                     <tr key={row.activityId}>
                                         <td className={`${td} font-medium`}>{row.activityName}</td>
                                         <td className={td}>{formatNumber(row.hours, 2)} h</td>
-                                        <td className={td}>{formatNumber(row.sharePercent, 2)} %</td>
-                                        <td className={td}>{row.revenuePerHour != null ? `${formatCurrency(row.revenuePerHour)} $` : '—'}</td>
-                                        <td className={`${td} font-semibold`}>{row.grossProfitPerHour != null ? `${formatCurrency(row.grossProfitPerHour)} $` : '—'}</td>
+                                        <td className={td}>{formatNumber(row.sharePercent, 2)}&nbsp;%</td>
+                                        <td className={td}>{row.revenuePerHour != null ? `${formatCurrency(row.revenuePerHour)}\u00A0$` : '—'}</td>
+                                        <td className={`${td} font-semibold`}>{row.grossProfitPerHour != null ? `${formatCurrency(row.grossProfitPerHour)}\u00A0$` : '—'}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -220,7 +220,7 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                             <thead className="bg-gray-100">
                                 <tr>
                                     <SortableTh label="Produit" sortKey="name" sort={productSort} onSort={onProductSort} isText />
-                                    <SortableTh label="Heures de MO" sortKey="hours" sort={productSort} onSort={onProductSort} tip="mo.heuresProduit" />
+                                    <SortableTh label="Heures de main-d'œuvre" sortKey="hours" sort={productSort} onSort={onProductSort} tip="mo.heuresProduit" />
                                     <SortableTh label="Bénéfice brut total" sortKey="grossProfit" sort={productSort} onSort={onProductSort} />
                                     <SortableTh label="Bénéfice brut / heure" sortKey="grossProfitPerHour" sort={productSort} onSort={onProductSort} tip="mo.beneficeBrutHeure" />
                                 </tr>
@@ -230,9 +230,9 @@ export const LaborReport = ({ itemsPerPage, onItemsPerPageChange }) => {
                                     <tr key={row.id}>
                                         <td className={`${td} font-medium`}>{row.name}</td>
                                         <td className={td}>{row.hours > 0 ? `${formatNumber(row.hours, 1)} h` : '—'}</td>
-                                        <td className={td}>{formatCurrency(row.grossProfit)} $</td>
+                                        <td className={td}>{formatCurrency(row.grossProfit)}&nbsp;$</td>
                                         <td className={`${td} font-semibold`}>
-                                            {row.grossProfitPerHour != null ? `${formatCurrency(row.grossProfitPerHour)} $/h` : <span className="font-normal text-gray-500" title={row.isResale ? 'Produit de revente : aucune main-d\'œuvre' : 'Aucune heure de main-d\'œuvre pour ce produit'}>{row.isResale ? 'Revente' : '—'}</span>}
+                                            {row.grossProfitPerHour != null ? `${formatCurrency(row.grossProfitPerHour)} $/h` : <span className="font-normal text-gray-500" title={row.isResale ? 'Produit de revente : aucune main-d\'œuvre' : 'Aucune heure de main-d\'œuvre pour ce produit'}>{row.isResale ? 'Revente' : '—'}</span>}
                                         </td>
                                     </tr>
                                 ))}

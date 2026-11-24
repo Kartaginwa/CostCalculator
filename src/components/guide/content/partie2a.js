@@ -50,7 +50,7 @@ export const chapitreParametres = {
                 ['Marge nette', 'Le bénéfice net prévu divisé par les ventes prévues, tous coûts et frais fixes déduits : le chiffre du constat « Bénéfice net prévu ».', 'Au moins'],
                 ['Taux d\'utilisation des postes', 'La ligne Total du tableau « Taux d\'Utilisation (%) » de Main-d\'œuvre : les heures réelles de production divisées par les heures attendues.', 'Au moins'],
                 ['Paie non utilisée', 'La part de la paie versée sans produire, affichée dans « Utilisation de la masse salariale » (Main-d\'œuvre). Elle comprend les heures payées mais non productives ; elle diffère donc du taux d\'utilisation, qui ne compte que les heures de production.', 'Au plus'],
-                ['Perte stock', 'La perte stock prévue divisée par les achats d\'ingrédients, comme dans le rapport d\'achats.', 'Au plus'],
+                ['Perte en stock', 'La perte en stock prévue divisée par les achats d\'ingrédients, comme dans le rapport d\'achats.', 'Au plus'],
                 ['Frais fixes', 'Les frais fixes répartis divisés par les revenus prévus.', 'Au plus'],
             ],
         },
@@ -83,7 +83,7 @@ export const chapitreParametres = {
             type: 'table', head: ['Famille', 'Unités disponibles', 'Particularité'], wrapCells: true, rows: [
                 ['Masse', 'g, kg, oz, lb, tonne', 'Les conversions entre unités d\'une même famille sont automatiques (1 kg = 1 000 g).'],
                 ['Volume', 'ml, L, cl, hL, fl oz US, gal US, fl oz imp, gal imp', 'Idem au sein de la famille. Les gallons et les onces liquides existent en version américaine (US : 1 gal = 3,785 L) et impériale (imp : 1 gal = 4,546 L, courante au Canada) : choisissez celle de votre fournisseur.'],
-                ['Discrètes (comptables)', 'unité, douzaine', 'Se comptent entier. Une quantité produite exprimée en unités doit être un nombre entier ; en kg ou en L, elle peut avoir des décimales.'],
+                ['Discrètes (comptables)', 'unité, douzaine', 'Se comptent en nombres entiers. Une quantité produite exprimée en unités doit être un nombre entier ; en kg ou en L, elle peut avoir des décimales.'],
             ],
         },
         { type: 'callout', kind: 'attention', text: 'L\'application ne convertit **jamais** entre familles : on ne passe pas de kilogrammes à des litres, car cela demanderait la densité du produit, une donnée qu\'elle ne peut pas deviner. Si vous achetez de l\'huile au litre, vos recettes devront donc l\'exprimer en volume (ml, L…) et non en poids : seules les unités de la même famille que celle de l\'ingrédient sont proposées. Si vous changez plus tard l\'unité d\'un ingrédient déjà utilisé pour celle d\'une autre famille, l\'application vous avertit et le panneau {{Points à vérifier}} signale les recettes à corriger : sans cela, le coût serait calculé avec une densité de 1.' },
@@ -124,7 +124,7 @@ export const chapitreParametres = {
         { type: 'h', id: 'guide-param-produits-creer', text: 'Créer un produit, étape par étape', level: 5 },
         {
             type: 'steps', items: [
-                'Cliquez sur {{Ajouter un item}}. Le nouveau produit est sélectionné et le curseur se place sur son nom.',
+                'Cliquez sur {{Ajouter un produit}}. Le nouveau produit est sélectionné et le curseur se place sur son nom.',
                 'Saisissez le **nom**, choisissez l\'**activité de production** et la **catégorie** (vous pouvez en taper une nouvelle ; les catégories existantes sont proposées).',
                 'Dans le tableau des formats, renseignez la **quantité et l\'unité** du premier format (par exemple 400 g). Le **SKU** se génère seul.',
                 'Saisissez le **PDS** ($), le prix de détail suggéré au consommateur. Une seule valeur par format, quel que soit le canal.',

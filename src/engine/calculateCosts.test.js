@@ -264,7 +264,7 @@ describe('calculateCosts - méthodes d\'allocation des frais indirects', () => {
             expect(costs.indirectCostTotal).toBeCloseTo(10);
         });
 
-        it("sans AUCUNE donnée réelle (ni portionsSold ni volume par canal), le coût indirect 'ventes' reste absent (0 $), jamais une estimation délirante", () => {
+        it("sans AUCUNE donnée réelle (ni portionsSold ni volume par canal), le coût indirect 'ventes' reste absent (0 $), jamais une estimation délirante", () => {
             // Bug trouvé le 18/10 : un repli à 1 unité (avant correction) faisait diviser tout le
             // pool par une seule portion — un coût indirect de plusieurs centaines/milliers de $
             // par portion, au lieu de rester simplement absent tant qu'aucune vente réelle
@@ -459,7 +459,7 @@ describe('calculateCosts - marges', () => {
         expect(costs.margeNettePercent).toBeCloseTo(0.75);
     });
 
-    it("expose les trois niveaux de marge : contribution (matière) > coût primaire (MO) > nette", () => {
+    it("expose les trois niveaux de marge : contribution (matière) > coût primaire (MO) > nette", () => {
         // prix 20 ; matière 4 ; MO directe 6 (0,1 h × 60 $/h) ; indirect 1 (salesAllocation).
         const baseIngredients = [{ id: 'farine', unitPrice: 4, lossPercentage: 0, unit: 'kg' }];
         const laborDatabase = [{ postName: 'C', employees: [{ hourlyRate: 60, socialCharges: 0, vacationPercentage: 0, workedHours: 1 }] }];
@@ -503,14 +503,14 @@ describe('calculateCosts - formats (Phase 1.4)', () => {
         expect(costsBig.margeNetteDollar).toBeCloseTo(19.5); // 20 - (2$ / 4 portions = 0.5$)
     });
 
-    it('sous-traitance désactivée par défaut : aucun impact sur le coût', () => {
+    it('sous-traitance désactivée par défaut : aucun impact sur le coût', () => {
         const product = baseProduct({ prixVente: 20 });
         const costs = calculateCosts(product, baseGeneralInfo(), [], [product], []);
         expect(costs.totalSubcontractingCost).toBe(0);
         expect(costs.costSubcontractingPerPortion).toBe(0);
     });
 
-    it('sous-traitance activée : son coût rejoint les coûts directs (marge brute)', () => {
+    it('sous-traitance activée : son coût rejoint les coûts directs (marge brute)', () => {
         const product = baseProduct({
             prixVente: 20, nbPortions: 1,
             formats: [{ id: 'fmt-1', prixVente: 20, nbPortions: 1, portionSize: 1, indirectCosts: {}, subcontracting: { enabled: true, items: [{ id: 's1', name: 'Embouteillage', cost: 3 }] } }],
@@ -520,13 +520,13 @@ describe('calculateCosts - formats (Phase 1.4)', () => {
         expect(costs.margeBruteDollar).toBeCloseTo(17); // 20 - 3
     });
 
-    it('vieillissement désactivé par défaut : aucun impact sur le coût', () => {
+    it('vieillissement désactivé par défaut : aucun impact sur le coût', () => {
         const product = baseProduct({ prixVente: 20 });
         const costs = calculateCosts(product, baseGeneralInfo(), [], [product], []);
         expect(costs.totalAgingCost).toBe(0);
     });
 
-    it('vieillissement activé : charge un intérêt de portage sur les charges directes, hors marge brute', () => {
+    it('vieillissement activé : charge un intérêt de portage sur les charges directes, hors marge brute', () => {
         const baseIngredients = [{ id: 'farine', unitPrice: 10, lossPercentage: 0, unit: 'kg' }];
         const product = baseProduct({
             prixVente: 50, nbPortions: 1,
@@ -556,7 +556,7 @@ describe('calculateCosts - formats (Phase 1.4)', () => {
         expect(costs.costMatierePerPortion).toBeCloseTo(100 / 47.3);
     });
 
-    it('grille de rendement activée : calcule le nombre de portions plutôt que la valeur saisie manuellement', () => {
+    it('grille de rendement activée : calcule le nombre de portions plutôt que la valeur saisie manuellement', () => {
         const baseIngredients = [{ id: 'farine', unitPrice: 1, lossPercentage: 0, unit: 'kg' }];
         const product = baseProduct({
             prixVente: 10,
@@ -682,7 +682,7 @@ describe('computeChannelBreakdown (Phase 3.3)', () => {
         expect(breakdown[0].breakEvenUnits).toBeNull();
     });
 
-    it("traite la main-d'œuvre comme un coût FIXE pour le point mort (20/10, retour utilisateur) : exclue du dénominateur, pas l'inverse", () => {
+    it("traite la main-d'œuvre comme un coût FIXE pour le point mort (20/10, retour utilisateur) : exclue du dénominateur, pas l'inverse", () => {
         const laborDatabase = [{ postName: 'Cuisinier', employees: [{ hourlyRate: 10, socialCharges: 0, vacationPercentage: 0, workedHours: 10 }] }];
         const product = baseProduct({
             formats: [{
@@ -766,7 +766,7 @@ describe("calculateCosts - nature des coûts d'une sous-recette (audit 20/11, co
         expect(c.totalDirectCostPerPortion).toBeCloseTo(1 + 1 + 0.4 + 6, 8);
         expect(c.costMatierePerPortion + c.costPackagingPerPortion + c.costLaborPerPortion + c.costSubcontractingPerPortion).toBeCloseTo(c.totalDirectCostPerPortion, 8);
     });
-    it("la main-d'œuvre « directe » du parent inclut celle de la sous-recette (l'écart avec le total reste la capacité inutilisée)", () => {
+    it("la main-d'œuvre « directe » du parent inclut celle de la sous-recette (l'écart avec le total reste la capacité inutilisée)", () => {
         const c = run();
         expect(c.totalDirectLaborCost).toBeCloseTo(6, 8);
         expect(c.totalLaborCost).toBeCloseTo(6, 8);
@@ -827,11 +827,11 @@ describe("computeChannelBreakdown - le vieillissement sort de la marge de contri
     });
     const prices = [{ channelId: 'c', netPrice: 10, volume: 5 }];
     const channels = [{ id: 'c', name: 'Canal' }];
-    it("sans vieillissement : frais fixes ÷ (prix − coûts directs)", () => {
+    it("sans vieillissement : frais fixes ÷ (prix − coûts directs)", () => {
         const [row] = computeChannelBreakdown(costs(0), prices, channels, 100);
         expect(row.breakEvenUnits).toBe(Math.ceil(100 / 6));
     });
-    it("avec vieillissement : frais fixes ÷ (prix − coûts directs − vieillissement), et la marge nette au point mort est nulle", () => {
+    it("avec vieillissement : frais fixes ÷ (prix − coûts directs − vieillissement), et la marge nette au point mort est nulle", () => {
         const [row] = computeChannelBreakdown(costs(1), prices, channels, 100);
         expect(row.breakEvenUnits).toBe(20); // 100 ÷ (10 − 4 − 1)
         // À 20 unités : 20 × (10 − 4 − 1) − 100 = 0 de profit net, vieillissement compris.

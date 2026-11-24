@@ -120,7 +120,7 @@ test('Electron, de bout en bout par l\'interface : bouton, fenêtre d\'export, c
         await dialog.getByRole('button', { name: /1\. Synthèse/ }).click();
         await dialog.getByLabel(/Commentaire de la direction/).fill('Commentaire de bout en bout.');
         await dialog.getByRole('button', { name: 'Générer le PDF' }).click();
-        await expect(win.getByText(/Rapport enregistré :/)).toBeVisible({ timeout: 120000 });
+        await expect(win.getByText(/Rapport enregistré\s:/)).toBeVisible({ timeout: 120000 });
         await expect(dialog).toHaveCount(0);
 
         const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -163,7 +163,7 @@ test('Application EMPAQUETÉE (exécutable construit par electron-builder, code 
         const dialog = win.getByRole('dialog', { name: 'Exporter le rapport PDF' });
         await expect(dialog).toBeVisible();
         await dialog.getByRole('button', { name: 'Générer le PDF' }).click();
-        await expect(win.getByText(/Rapport enregistré :/)).toBeVisible({ timeout: 120000 });
+        await expect(win.getByText(/Rapport enregistré\s:/)).toBeVisible({ timeout: 120000 });
         const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
         const doc = await pdfjs.getDocument({ data: new Uint8Array(fs.readFileSync(target)), useSystemFonts: true }).promise;
         expect(doc.numPages).toBeGreaterThan(35);

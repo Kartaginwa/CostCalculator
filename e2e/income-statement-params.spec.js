@@ -239,7 +239,7 @@ test("réconciliation réel/théorique dans Rapport et suivi, Vue d'ensemble (Ph
 
     // Bénéfice net = Bénéfice brut - frais fixes totaux (28 000 $ dans la démo, même total
     // soustrait des deux côtés) - coût de vieillissement théorique (révisé le 02/11, retour
-    // utilisateur : manquait entièrement jusqu'ici, alors que le réel bottom-up — Par Activité/
+    // utilisateur : manquait entièrement jusqu'ici, alors que le réel bottom-up — Par activité/
     // Canal/SKU — le déduit déjà ; 34 357.24 - 28 000 - ~58 $ de vieillissement = 6 299.48 $ ; chiffres révisés le 19/11 : toute la paie est absorbée par les produits).
     const netProfitRow = section.locator('tbody tr', { hasText: 'Bénéfice net' });
     await expect(netProfitRow.getByText('4 000,00 $', { exact: true })).toBeVisible();

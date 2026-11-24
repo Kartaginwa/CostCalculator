@@ -36,7 +36,7 @@ test('Sous-onglets : aucun trait vertical, les neuf onglets sont entièrement vi
     expect(await bar.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
 });
 
-test('Ingrédients : part des achats par fournisseur (dépendance) et détail unique trié sur le coût de la perte stock', async ({ page }) => {
+test('Ingrédients : part des achats par fournisseur (dépendance) et détail unique trié sur le coût de la perte en stock', async ({ page }) => {
     await startDemo(page);
     await page.locator('[data-tour="subtab-ingredients"]').click();
     const shares = page.getByTestId('provider-shares');
@@ -96,15 +96,15 @@ test('Main-d\'œuvre : paie non utilisée, marge de croissance, cascade, coût r
     expect(errors, errors.join('\n')).toEqual([]);
 });
 
-test('Par Activité : le tableau d\'origine reste intact, la section Main-d\'œuvre s\'ajoute dessous', async ({ page }) => {
+test('Par activité : le tableau d\'origine reste intact, la section Main-d\'œuvre s\'ajoute dessous', async ({ page }) => {
     await startDemo(page);
     await page.locator('[data-tour="subtab-byActivity"]').click();
     const original = page.locator('#tutorial-section-summary-byactivity');
     await expect(original.getByText('Point mort', { exact: true })).toBeVisible();
     await expect(original.getByText('Frais fixes', { exact: true })).toBeVisible();
     const section = page.locator('#tutorial-section-summary-byactivity-mo');
-    await expect(section.getByText('Heures de MO réelles')).toBeVisible();
-    await expect(section.getByText('Bénéfice brut par heure de MO')).toBeVisible();
+    await expect(section.getByText('Heures de main-d\'œuvre réelles')).toBeVisible();
+    await expect(section.getByText('Bénéfice brut par heure de main-d\'œuvre')).toBeVisible();
     await expect(section).toContainText('164,46 $');
 });
 
@@ -133,10 +133,10 @@ test("Main-d'œuvre : les tableaux se trient par colonne (valeurs absentes toujo
     // Productivité : tri sur le taux d'utilisation (colonne numérique : le plus grand d'abord, puis inversé).
     const posts = page.locator('#tutorial-section-labor-rapport table').first();
     const utilization = async () => (await posts.locator('tbody tr').evaluateAll((trs) => trs.map((tr) => tr.querySelectorAll('td')[4].innerText))).map(num);
-    await posts.getByRole('button', { name: /Taux d'Utilisation/ }).click();
+    await posts.getByRole('button', { name: /Taux d'utilisation/ }).click();
     const desc = await utilization();
     expect(desc).toEqual([...desc].sort((a, b) => b - a));
-    await posts.getByRole('button', { name: /Taux d'Utilisation/ }).click();
+    await posts.getByRole('button', { name: /Taux d'utilisation/ }).click();
     const asc = await utilization();
     expect(asc).toEqual([...asc].sort((a, b) => a - b));
     // Le total reste en bas, hors du tri.

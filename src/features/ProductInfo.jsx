@@ -177,7 +177,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             onUpdateProducts(products.map(p => (p.activityId === id ? { ...p, activityId: fallbackActivity.id } : p)));
         }
         showNotification({
-            message: `L'activité de production "${activityToDelete.name || 'Sans nom'}" a été supprimée.${movedCount > 0 ? ` ${movedCount} produit${movedCount > 1 ? 's ont été déplacés' : ' a été déplacé'} vers « ${fallbackActivity.name || 'Sans nom'} ».` : ''}`,
+            message: `L'activité de production «\u00A0${activityToDelete.name || 'Sans nom'}\u00A0» a été supprimée.${movedCount > 0 ? ` ${movedCount} produit${movedCount > 1 ? 's ont été déplacés' : ' a été déplacé'} vers « ${fallbackActivity.name || 'Sans nom'} ».` : ''}`,
             type: 'info',
             onUndo: () => {
                 onUpdateProductionActivities(originalList);
@@ -202,7 +202,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
 
     const handleRemoveChannel = (channelId) => {
         if (salesChannels.length <= 1) {
-            showNotification({ message: "Vous devez conserver au moins un circuit de vente.", type: 'error' });
+            showNotification({ message: "Vous devez conserver au moins un canal de vente.", type: 'error' });
             return;
         }
         const channelToDelete = salesChannels.find(c => c.id === channelId);
@@ -213,7 +213,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         const { products: cleanedProducts, removedCount } = removeChannelFromProducts(products, channelId);
         if (removedCount > 0) onUpdateProducts(cleanedProducts);
         showNotification({
-            message: `Le circuit de vente "${channelToDelete.name || 'Sans nom'}" a été supprimé.${removedCount > 0 ? ` ${removedCount} prix et volume${removedCount > 1 ? 's' : ''} de vente associé${removedCount > 1 ? 's' : ''} ${removedCount > 1 ? 'ont été retirés' : 'a été retiré'}.` : ''}`,
+            message: `Le canal de vente «\u00A0${channelToDelete.name || 'Sans nom'}\u00A0» a été supprimé.${removedCount > 0 ? ` ${removedCount} prix et volume${removedCount > 1 ? 's' : ''} de vente associé${removedCount > 1 ? 's' : ''} ${removedCount > 1 ? 'ont été retirés' : 'a été retiré'}.` : ''}`,
             type: 'info',
             onUndo: () => {
                 onUpdateSalesChannels(originalList);
@@ -426,7 +426,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                     placeholder="Nom du canal (ex. Vente directe à la ferme)"
                                     id={`channel-name-${channel.id}`} onBlur={() => touchName(channel.id)} className={`flex-1 p-1 border rounded font-medium ${!isNotEmpty(channel.name) && isNameTouched(channel.id) ? 'border-red-500' : 'border-gray-300'}`}
                                 />
-                                <button onClick={() => handleRemoveChannel(channel.id)} title="Supprimer le circuit de vente" className="text-red-500 hover:text-red-700 p-1 rounded-full">
+                                <button onClick={() => handleRemoveChannel(channel.id)} title="Supprimer le canal de vente" className="text-red-500 hover:text-red-700 p-1 rounded-full">
                                     <Trash2 size={20} />
                                 </button>
                             </div>
@@ -460,7 +460,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                             <Upload className="h-4 w-4 mr-2" /> Importer un rapport de ventes
                         </button>
                         <button id="tutorial-add-item" onClick={handleAddItem} className="inline-flex items-center px-4 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                            <PlusCircle className="h-4 w-4 mr-2" /> Ajouter un item
+                            <PlusCircle className="h-4 w-4 mr-2" /> Ajouter un produit
                         </button>
                     </div>
                 </div>
@@ -468,7 +468,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                 {allRows.length > 0 && totalSalesMix > 0 && Math.round(totalSalesMix) !== 100 && (
                     <div className="p-3 mb-4 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm flex items-center justify-center">
                         <AlertTriangle className="inline h-4 w-4 mr-2"/>
-                        Attention : Le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}%. Pour une analyse précise, il devrait être de 100%.
+                        Attention&nbsp;: le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}&nbsp;%. Pour une analyse précise, il devrait être de 100&nbsp;%.
                     </div>
                 )}
 
@@ -488,7 +488,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                     value={filterName}
                                     onChange={e => setFilterName(e.target.value)}
                                     className="block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm"
-                                    placeholder="Rechercher un produit..."
+                                    placeholder="Rechercher un produit…"
                                 />
                             </div>
                             <div>
@@ -578,7 +578,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                         {!selectedProduct ? (
                             <div className="flex items-center justify-center h-40 text-gray-500 text-sm border border-dashed border-gray-300 rounded-lg bg-white">
                                 {products.length === 0
-                                    ? <>Aucun produit — cliquez sur « Ajouter un item » pour commencer.</>
+                                    ? <>Aucun produit — cliquez sur «&nbsp;Ajouter un produit&nbsp;» pour commencer.</>
                                     : <>Sélectionnez un produit dans la liste à gauche.</>}
                             </div>
                         ) : (() => {
@@ -646,33 +646,33 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
-                                            <div className="flex items-center">
+                                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
+                                            <div className="flex items-center justify-center">
                                                 Format
                                                 <Tooltip tip="param.format" />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
-                                            <div className="flex items-center">
+                                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
+                                            <div className="flex items-center justify-center">
                                                 SKU
                                                 <Tooltip tip="param.sku" />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
-                                            <div className="flex items-center">
+                                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
+                                            <div className="flex items-center justify-center">
                                                 PDS ($)
                                                 <Tooltip tip="param.pds" />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
-                                            <div className="flex items-center">
+                                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">
+                                            <div className="flex items-center justify-center">
                                                 Canaux
                                                 <Tooltip tip="param.canauxFormat" />
                                             </div>
                                         </th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Part des ventes (%)</th>
-                                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Actif</th>
-                                        <th className="relative px-2 py-2"><span className="sr-only">Actions</span></th>
+                                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">Part des ventes (%)</th>
+                                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 whitespace-nowrap">Actif</th>
+                                        <th className="relative px-2 py-2 text-center"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-100">
@@ -705,7 +705,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                 <input type="text" value={format.sku || ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'sku', e.target.value)} placeholder="ex. CONF-250ML" className="w-28 p-1 border rounded border-gray-300 text-sm" />
                                             </td>
                                             <td className="px-2 py-2">
-                                                <input type="text" inputMode="decimal" value={format.pds ?? ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', e.target.value)} onBlur={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', parseLocaleNumber(e.target.value) || '')} placeholder="PDS $" title="Prix de détail suggéré au consommateur, saisi manuellement — sert à générer le prix net de chaque canal (bouton « Générer », section Canaux de vente)." className="w-16 p-1 border rounded text-right text-sm border-gray-300" />
+                                                <input type="text" inputMode="decimal" value={format.pds ?? ''} onChange={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', e.target.value)} onBlur={(e) => handleFormatValueChange(productIndex, formatIndex, 'pds', parseLocaleNumber(e.target.value) || '')} placeholder="PDS $" title="Prix de détail suggéré au consommateur, saisi manuellement — sert à générer le prix net de chaque canal (bouton «&nbsp;Générer&nbsp;», section Canaux de vente)." className="w-16 p-1 border rounded text-right text-sm border-gray-300" />
                                             </td>
                                             <td className="px-2 py-2">
                                                 <button onClick={() => toggleFormatExpanded(format.id)} className={`inline-flex items-center gap-1 px-1.5 py-1 rounded text-xs whitespace-nowrap ${channelPrices.length === 0 ? 'text-orange-700 bg-orange-50' : 'text-gray-700 bg-gray-100'} hover:bg-gray-200`}>
@@ -803,7 +803,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
                                                                         />
                                                                     </div>
                                                                     {channel?.links?.length > 0 && (
-                                                                        <Tooltip text={`Cascade de ce canal : ${channel.links.map(l => `${l.name || '(sans nom)'} ${l.type === 'markup' ? 'majoration' : 'marge'} ${l.percent || 0}%`).join(' → ')}.`} guide="guide-param-canaux" />
+                                                                        <Tooltip text={`Cascade de ce canal\u00A0: ${channel.links.map(l => `${l.name || '(sans nom)'} ${l.type === 'markup' ? 'majoration' : 'marge'} ${l.percent || 0}%`).join(' → ')}.`} guide="guide-param-canaux" />
                                                                     )}
                                                                     <button onClick={() => handleRemoveChannelPrice(productIndex, formatIndex, format, cp.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={14} /></button>
                                                                 </div>

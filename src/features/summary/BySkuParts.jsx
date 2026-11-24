@@ -1,4 +1,4 @@
-// Cascade de rentabilité d'un SKU et tableau de résumé par segment (Par SKU, Par Activité, Par Canal). Extrait de SummaryTable.jsx le 24/11 (audit) : déplacement de code, aucune logique modifiée.
+// Cascade de rentabilité d'un SKU et tableau de résumé par segment (Par SKU, Par activité, Par canal). Extrait de SummaryTable.jsx le 24/11 (audit) : déplacement de code, aucune logique modifiée.
 import { useMemo } from 'react';
 import { formatCurrency, formatPercent } from '../../utils.js';
 import { Tooltip, CostNatureBadge } from '../../components/common.jsx';
@@ -72,27 +72,27 @@ export const BySkuWaterfall = ({ row, productionActivities = [], salesChannels =
             {/* Coût de production : fixe, peu importe le canal — jamais de frais indirects ici. */}
             <div className={`grid grid-cols-2 ${hasSubcontracting ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-3 mb-6`}>
                 <div className="p-3 bg-gray-50 rounded-lg text-center">
-                    <p className="text-xs text-gray-500">Coût Matière</p>
-                    <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costMatierePerPortion)} $</p>
+                    <p className="text-xs text-gray-500">Coût matière</p>
+                    <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costMatierePerPortion)}&nbsp;$</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg text-center">
                     <p className="text-xs text-gray-500">Emballage</p>
-                    <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costPackagingPerPortion)} $</p>
+                    <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costPackagingPerPortion)}&nbsp;$</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg text-center">
                     <p className="text-xs text-gray-500">Main-d'œuvre</p>
-                    <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costLaborPerPortion)} $</p>
+                    <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costLaborPerPortion)}&nbsp;$</p>
                 </div>
                 {hasSubcontracting && (
                     <div className="p-3 bg-gray-50 rounded-lg text-center">
                         <p className="text-xs text-gray-500 truncate" title={subcontractingLabel}>{subcontractingLabel}</p>
                         <p className="text-[10px] leading-none -mt-0.5 mb-0.5"><CostNatureBadge nature="direct" /></p>
-                        <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costSubcontractingPerPortion)} $</p>
+                        <p className="text-lg font-semibold text-gray-800">{formatCurrency(costs.costSubcontractingPerPortion)}&nbsp;$</p>
                     </div>
                 )}
                 <div className="p-3 bg-white border-2 border-gray-300 rounded-lg text-center col-span-2 sm:col-span-1">
-                    <p className="text-xs text-gray-500 flex items-center justify-center">Coût de Production (total) <Tooltip tip="sku.coutProduction" /></p>
-                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(costs.totalDirectCostPerPortion)} $</p>
+                    <p className="text-xs text-gray-500 flex items-center justify-center">Coût de production (total) <Tooltip tip="sku.coutProduction" /></p>
+                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(costs.totalDirectCostPerPortion)}&nbsp;$</p>
                 </div>
             </div>
 
@@ -103,9 +103,9 @@ export const BySkuWaterfall = ({ row, productionActivities = [], salesChannels =
                     <table className="min-w-full text-sm">
                         <thead className="bg-gray-100">
                             <tr>
-                                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 sticky left-0 bg-gray-100">Canal</th>
+                                <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 sticky left-0 bg-gray-100">Canal</th>
                                 {channelBreakdown.map(cb => (
-                                    <th key={cb.channelId} className="px-4 py-2.5 text-right text-sm font-semibold text-gray-800 whitespace-nowrap">{cb.channelName}</th>
+                                    <th key={cb.channelId} className="px-4 py-2.5 text-center text-sm font-semibold text-gray-800 whitespace-nowrap">{cb.channelName}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -113,7 +113,7 @@ export const BySkuWaterfall = ({ row, productionActivities = [], salesChannels =
                             <BySkuSectionHeader label="PDS et frais de mise en marché" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="PDS" tooltip="sku.pds" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                    {pds > 0 ? `${formatCurrency(pds)} $` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
+                                    {pds > 0 ? `${formatCurrency(pds)}\u00A0$` : <span className="text-gray-400" title="PDS non saisi pour ce format">—</span>}
                                 </td>
                             ))} />
                             {linkRows.map(linkRow => (
@@ -121,7 +121,7 @@ export const BySkuWaterfall = ({ row, productionActivities = [], salesChannels =
                                     const delta = getLinkDelta(cb, linkRow);
                                     return (
                                         <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                            {delta != null ? `${formatCurrency(delta)} $` : <span className="text-gray-400" title="Ce canal ne passe pas par ce maillon, ou PDS non saisi pour ce format">—</span>}
+                                            {delta != null ? `${formatCurrency(delta)}\u00A0$` : <span className="text-gray-400" title="Ce canal ne passe pas par ce maillon, ou PDS non saisi pour ce format">—</span>}
                                         </td>
                                     );
                                 })} />
@@ -130,66 +130,66 @@ export const BySkuWaterfall = ({ row, productionActivities = [], salesChannels =
                                 const totalDelta = getTotalLinkDelta(cb);
                                 return (
                                     <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">
-                                        {totalDelta != null ? `${formatCurrency(totalDelta)} $` : <span className="text-gray-400 font-normal" title="PDS non saisi pour ce format">—</span>}
+                                        {totalDelta != null ? `${formatCurrency(totalDelta)}\u00A0$` : <span className="text-gray-400 font-normal" title="PDS non saisi pour ce format">—</span>}
                                     </td>
                                 );
                             })} />
 
                             <BySkuSectionHeader label="Marge brute" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Prix de vente" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-medium text-gray-800">{formatCurrency(cb.netPrice)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-medium text-gray-800">{formatCurrency(cb.netPrice)}&nbsp;$</td>
                             ))} />
                             <BySkuRow label="Bénéfice brut" tooltip="sku.beneficeBrut" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatCurrency(cb.margeBruteDollar)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatCurrency(cb.margeBruteDollar)}&nbsp;$</td>
                             ))} />
                             <BySkuRow label="Marge brute" tooltip="sku.margeBrute" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatPercent(cb.margeBrutePercent)} %</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeBrutePercent)}>{formatPercent(cb.margeBrutePercent)}&nbsp;%</td>
                             ))} />
 
                             <BySkuSectionHeader label="Répartition des charges fixes" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Frais fixes — Général" tooltip="sku.ffGeneral" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedGeneral)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedGeneral)}&nbsp;$</td>
                             ))} />
                             <BySkuRow label={`Frais fixes — Activité${activityName ? ` (${activityName})` : ''}`} tooltip="sku.ffActivite" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedActivity)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedActivity)}&nbsp;$</td>
                             ))} />
                             <BySkuRow label="Frais fixes — Canal" tooltip="sku.ffCanal" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedChannel)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).fixedChannel)}&nbsp;$</td>
                             ))} />
                             <BySkuRow label="Frais fixes totaux par unité" tooltip="sku.ffTotal" emphasis render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cascadeOf(cb).fixedTotal)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(cascadeOf(cb).fixedTotal)}&nbsp;$</td>
                             ))} />
 
                             <BySkuSectionHeader label="Coût net et marge nette" colSpan={channelBreakdown.length + 1} />
                             {(costs.costAgingPerPortion || 0) > 0 && (
                                 <BySkuRow label={<>Vieillissement <CostNatureBadge nature="financial" /></>} tooltip="sku.vieillissement" render={channelBreakdown.map(cb => (
-                                    <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costAgingPerPortion)} $</td>
+                                    <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(costs.costAgingPerPortion)}&nbsp;$</td>
                                 ))} />
                             )}
                             <BySkuRow label="Coût net" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).netCost)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(cascadeOf(cb).netCost)}&nbsp;$</td>
                             ))} />
                             <BySkuRow label="Bénéfice net" tooltip="sku.beneficeNet" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatCurrency(cb.margeNetteDollar)} $</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatCurrency(cb.margeNetteDollar)}&nbsp;$</td>
                             ))} />
                             <BySkuRow label="Marge nette" tooltip="sku.margeNette" render={channelBreakdown.map(cb => (
-                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatPercent(cb.margeNettePercent)} %</td>
+                                <td key={cb.channelId} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(cb.margeNettePercent)}>{formatPercent(cb.margeNettePercent)}&nbsp;%</td>
                             ))} />
 
                             <BySkuSectionHeader label="Seuil de rentabilité par canal de vente" colSpan={channelBreakdown.length + 1} />
                             <BySkuRow label="Revenu total" tooltip="sku.revenuTotal" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                    {cascadeOf(cb).revenueTotal != null ? `${formatCurrency(cascadeOf(cb).revenueTotal)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                    {cascadeOf(cb).revenueTotal != null ? `${formatCurrency(cascadeOf(cb).revenueTotal)}\u00A0$` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
                             <BySkuRow label="Frais totaux" tooltip="sku.fraisTotaux" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right text-gray-600">
-                                    {cascadeOf(cb).costTotal != null ? `${formatCurrency(cascadeOf(cb).costTotal)} $` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                    {cascadeOf(cb).costTotal != null ? `${formatCurrency(cascadeOf(cb).costTotal)}\u00A0$` : <span className="text-gray-400" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
                             <BySkuRow label="Bénéfices / Pertes" tooltip="sku.beneficePerte" render={channelBreakdown.map(cb => (
                                 <td key={cb.channelId} className="px-4 py-2.5 text-right font-bold" style={cb.volume > 0 ? getMarginCellStyle(cb.margeNettePercent) : undefined}>
-                                    {cascadeOf(cb).profitTotal != null ? `${formatCurrency(cascadeOf(cb).profitTotal)} $` : <span className="text-gray-400 font-normal" title="Aucun volume réel saisi pour ce canal">—</span>}
+                                    {cascadeOf(cb).profitTotal != null ? `${formatCurrency(cascadeOf(cb).profitTotal)}\u00A0$` : <span className="text-gray-400 font-normal" title="Aucun volume réel saisi pour ce canal">—</span>}
                                 </td>
                             ))} />
                             <BySkuRow label="Point mort" tooltip="sku.pointMort" emphasis render={channelBreakdown.map(cb => (
@@ -205,11 +205,11 @@ export const BySkuWaterfall = ({ row, productionActivities = [], salesChannels =
     );
 };
 
-// Rapport agrégé Par Activité / Par Canal (révisé le 02/11, retour utilisateur) — une LIGNE par
+// Rapport agrégé Par activité / Par canal (révisé le 02/11, retour utilisateur) — une LIGNE par
 // activité (ou par canal), chacune réduite à son propre TOTAL ; jamais ventilée par l'autre axe.
 // Version précédente (24/10) : un sélecteur + une colonne par canal/activité, comme BySkuWaterfall
 // — retour utilisateur immédiat, « on dirait une simple répétition de deux rapports identiques »
-// (Par Activité transposé de Par Canal), alors que le vrai intérêt était LE TOTAL de chaque ligne,
+// (Par activité transposé de Par canal), alors que le vrai intérêt était LE TOTAL de chaque ligne,
 // pas sa répartition par l'autre axe. Voir Projet_Claude/03-Feuille-de-route.md. Même principe
 // qu'ailleurs dans ce fichier (« Classement par contribution totale ») : classée par Bénéfice net $
 // décroissant, pour que le segment le plus/moins profitable saute aux yeux sans tri manuel. Tous
@@ -237,36 +237,36 @@ export const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) =
             <table className="min-w-full text-sm">
                 <thead className="bg-gray-100">
                     <tr>
-                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 sticky left-0 bg-gray-100">{nameColumnLabel}</th>
+                        <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-500 sticky left-0 bg-gray-100">{nameColumnLabel}</th>
                         {sortedRows.map(row => (
-                            <th key={row[idKey]} className="px-4 py-2.5 text-right text-sm font-semibold text-gray-800 whitespace-nowrap">{row[nameKey]}</th>
+                            <th key={row[idKey]} className="px-4 py-2.5 text-center text-sm font-semibold text-gray-800 whitespace-nowrap">{row[nameKey]}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                     <BySkuSectionHeader label="Marge brute" colSpan={sortedRows.length + 1} />
                     <BySkuRow label="Revenu total" tooltip="seg.revenu" render={sortedRows.map(row => (
-                        <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.revenueTotal)} $</td>
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.revenueTotal)}&nbsp;$</td>
                     ))} />
                     <BySkuRow label="Coût de production" tooltip="seg.cout" render={sortedRows.map(row => (
-                        <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.totalDirectCostTotal)} $</td>
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right text-gray-600">{formatCurrency(row.totalDirectCostTotal)}&nbsp;$</td>
                     ))} />
                     <BySkuRow label="Bénéfice brut" tooltip="seg.brut" render={sortedRows.map(row => (
-                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatCurrency(row.margeBruteTotal)} $</td>
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatCurrency(row.margeBruteTotal)}&nbsp;$</td>
                     ))} />
                     <BySkuRow label="Marge brute" tooltip="seg.margeBrute" render={sortedRows.map(row => (
-                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatPercent(row.margeBrutePercent)} %</td>
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeBrutePercent)}>{formatPercent(row.margeBrutePercent)}&nbsp;%</td>
                     ))} />
 
                     <BySkuSectionHeader label="Frais fixes et marge nette" colSpan={sortedRows.length + 1} />
                     <BySkuRow label="Frais fixes" tooltip="seg.fraisFixes" render={sortedRows.map(row => (
-                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(row.totalIndirectTotal)} $</td>
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold text-gray-800">{formatCurrency(row.totalIndirectTotal)}&nbsp;$</td>
                     ))} />
                     <BySkuRow label="Bénéfice net" tooltip="seg.net" render={sortedRows.map(row => (
-                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatCurrency(row.margeNetteTotal)} $</td>
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatCurrency(row.margeNetteTotal)}&nbsp;$</td>
                     ))} />
                     <BySkuRow label="Marge nette" tooltip="seg.margeNette" render={sortedRows.map(row => (
-                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatPercent(row.margeNettePercent)} %</td>
+                        <td key={row[idKey]} className="px-4 py-2.5 text-right font-semibold" style={getMarginCellStyle(row.margeNettePercent)}>{formatPercent(row.margeNettePercent)}&nbsp;%</td>
                     ))} />
 
                     <BySkuSectionHeader label="Seuil de rentabilité" colSpan={sortedRows.length + 1} />
@@ -276,7 +276,7 @@ export const SegmentSummaryTable = ({ rows, nameColumnLabel, idKey, nameKey }) =
                         emphasis
                         render={sortedRows.map(row => (
                             <td key={row[idKey]} className="px-4 py-2.5 text-right font-bold text-indigo-700">
-                                {row.breakEvenRevenue != null ? `${formatCurrency(row.breakEvenRevenue)} $` : 'N/A'}
+                                {row.breakEvenRevenue != null ? `${formatCurrency(row.breakEvenRevenue)}\u00A0$` : 'N/A'}
                             </td>
                         ))}
                     />

@@ -12,7 +12,7 @@ export function coverHtml(m, o) {
         + (o.appLogo ? `<img src="${esc(o.appLogo)}" alt="" style="position:absolute;top:80mm;left:45mm;width:120mm">` : '')
         + `<div style="position:absolute;top:140mm;left:20mm;right:20mm;text-align:center;font-size:28pt;font-weight:700;line-height:1.15">${esc((o.title || '').trim() || COVER.title)}</div>`
         + `<div style="position:absolute;top:196mm;left:20mm;right:20mm;text-align:center;font-size:18pt;color:var(--secondary)">${esc(who ? COVER.presentedTo(who) : COVER.defaultLine(company(m)))}</div>`
-        + `<div style="position:absolute;bottom:30mm;left:0;right:0;text-align:center;font-size:12pt;color:var(--gray)">Date : ${esc(longDate(o.generatedOn))}</div></div>`;
+        + `<div style="position:absolute;bottom:30mm;left:0;right:0;text-align:center;font-size:12pt;color:var(--gray)">Date\u00A0: ${esc(longDate(o.generatedOn))}</div></div>`;
 }
 
 const row = (label, value) => `<tr><td class="l">${esc(label)}</td><td>${value}</td></tr>`;
@@ -20,7 +20,7 @@ const row = (label, value) => `<tr><td class="l">${esc(label)}</td><td>${value}<
 /** Sommaire (numéros de page de la carte des pages) et « À propos de ce rapport ». Les chapitres exclus n'y figurent pas. */
 export function tocHtml(m, map, included) {
     const s = m.scope, t = m.targets;
-    const targets = [['matière', t.material], ['emballage', t.packaging], ['MO', t.labor], ['marge brute min.', t.grossMargin]].filter(([, v]) => v).map(([n, v]) => `${n} ${f(v)} %`).join(' · ');
+    const targets = [['matière', t.material], ['emballage', t.packaging], ['main-d\'œuvre', t.labor], ['marge brute min.', t.grossMargin]].filter(([, v]) => v).map(([n, v]) => `${n} ${f(v)}\u00A0%`).join(' · ');
     const about = [
         m.period ? row('Période analysée', esc(m.period)) : '',
         row('Portée', `${f(s.products)} produit${s.products > 1 ? 's' : ''} · ${f(s.channels)} canal${s.channels > 1 ? 'ux' : ''} · ${f(s.activities)} activité${s.activities > 1 ? 's' : ''}`),

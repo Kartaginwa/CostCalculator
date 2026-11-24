@@ -28,7 +28,7 @@ export const resolveEl = (root, target) => {
     return null;
 };
 
-// Lit une valeur affichée : le contenu d'un champ, ou le nombre qui suit une étiquette (« Coût Matière (%) » → « 34,86% »).
+// Lit une valeur affichée : le contenu d'un champ, ou le nombre qui suit une étiquette (« Coût matière (%) » → « 34,86% »).
 // `makeReader(root, spec)` renvoie une fonction qui relit la valeur à la demande ; l'élément d'étiquette n'est cherché
 // qu'une fois (puis seulement s'il disparaît), pour que la lecture en direct reste légère.
 // `spec` : { sel, nth } pour un champ ; { label, within?, nth? } pour un nombre à côté d'une étiquette.

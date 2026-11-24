@@ -358,7 +358,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
         updateFormat(f => ({ ...f, [key]: (f[key] || []).filter((_, index) => index !== indexToRemove) }));
 
         showNotification({
-            message: `L'ingrédient "${itemName}" a été retiré de la recette.`,
+            message: `L'ingrédient «\u00A0${itemName}\u00A0» a été retiré de la recette.`,
             type: 'info',
             onUndo: () => {
                 onUpdateProducts(originalProducts);
@@ -434,7 +434,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
         updateFormat(f => ({ ...f, productionSteps: (f.productionSteps || []).filter((_, i) => i !== stepIndex) }));
 
         showNotification({
-            message: `L'étape "${stepToDelete.stepName}" a été supprimée.`,
+            message: `L'étape «\u00A0${stepToDelete.stepName}\u00A0» a été supprimée.`,
             type: 'info',
             onUndo: () => {
                 onUpdateProducts(originalProducts);
@@ -498,7 +498,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
         updateFormat(f => ({ ...f, packagingItems: (f.packagingItems || []).filter((_, index) => index !== indexToRemove) }));
 
         showNotification({
-            message: `L'emballage "${itemName}" a été retiré de la recette.`,
+            message: `L'emballage «\u00A0${itemName}\u00A0» a été retiré de la recette.`,
             type: 'info',
             onUndo: () => {
                 onUpdateProducts(originalProducts);
@@ -599,7 +599,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
             handleFormatChange('prixVente', simulatedPrice);
             setIsSimulating(false);
             setSimulatedPrice('');
-            showNotification({ message: `Prix de vente de "${product.platName}" mis à jour.`, type: 'success' });
+            showNotification({ message: `Prix de vente de «\u00A0${product.platName}\u00A0» mis à jour.`, type: 'success' });
         }
     };
 
@@ -644,7 +644,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 onUpdatePersonnel={handlePersonnelChange}
             />
             <div className="flex items-center gap-4">
-                <h1 className="text-3xl font-bold text-gray-800">Production pour :</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Production pour&nbsp;:</h1>
                 <select value={editingProductIndex} onChange={(e) => onSelectProduct(parseInt(e.target.value, 10))} className="flex-1 p-2 border rounded-md">
                     {products.map((p, index) => <option key={p.id || index} value={index}>{p.platName || unnamedLabel(index)}</option>)}
                 </select>
@@ -703,7 +703,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
 
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <p className="text-sm text-gray-500">
-                    Format de ce SKU : <span className="font-medium text-gray-700">{formatQuantityLabel(format.portionSize, format.portionUnit) || 'non défini'}</span> — modifiable dans Paramètres → Produits et SKUs.
+                    Format de ce SKU&nbsp;: <span className="font-medium text-gray-700">{formatQuantityLabel(format.portionSize, format.portionUnit) || 'non défini'}</span> — modifiable dans Paramètres → Produits et SKUs.
                 </p>
                 <CopyFromFormatControl formats={formats} currentFormatId={format.id} onCopy={copyYieldFrom} label="le nombre d'unités et le rendement" />
             </div>
@@ -759,10 +759,10 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-600">Taux de rejet des produits finis (%)</label>
-                            <p className="text-xs text-gray-500 mb-1">Distinct d'une perte de procédé : des unités déjà produites, retirées après coup (ex. contrôle qualité).</p>
+                            <p className="text-xs text-gray-500 mb-1">Distinct d'une perte de procédé&nbsp;: des unités déjà produites, retirées après coup (ex. contrôle qualité).</p>
                             <input type="text" inputMode="decimal" value={format.yieldGrid.rejectRate || ''} onChange={(e) => handleFormatNestedChange('yieldGrid', 'rejectRate', e.target.value)} className="w-32 p-1.5 border rounded text-right text-sm" />
                         </div>
-                        <p className="text-sm font-semibold text-gray-700">Quantité produite calculée : {formatNumber(computedYieldUnits ?? 0, 2)}</p>
+                        <p className="text-sm font-semibold text-gray-700">Quantité produite calculée&nbsp;: {formatNumber(computedYieldUnits ?? 0, 2)}</p>
                     </div>
                 )}
             </div>
@@ -770,7 +770,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
             <div className="mt-2">
                 <label htmlFor="isIngredient" className="flex items-center text-sm font-medium text-gray-700">
                     <input type="checkbox" id="isIngredient" checked={product.isIngredient} onChange={(e) => handleProductChange('isIngredient', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"/>
-                    Considérer comme une sous-recette (mise en place) / un ingrédient
+                    Considérer comme une sous-recette / un ingrédient
                     <Tooltip tip="prod.sousRecette" />
                 </label>
             </div>
@@ -825,19 +825,19 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <table className="min-w-full">
                          <thead className="bg-green-100">
                             <tr>
-                                <th className="px-2 py-2 w-12"></th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Ingrédient</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Quantité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût U. ($)</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">
-                                    <div className="flex items-center whitespace-nowrap">
+                                <th className="px-2 py-2 w-12 text-center"></th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Ingrédient</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Quantité</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Unité</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Coût U. ($)</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">
+                                    <div className="flex items-center whitespace-nowrap justify-center">
                                         Rendement (%)
                                         <Tooltip tip="prod.rendement" />
                                     </div>
                                 </th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût total ($)</th>
-                                <th className="relative px-2 py-2"></th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Coût total ($)</th>
+                                <th className="relative px-2 py-2 text-center"></th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -905,16 +905,16 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 </div>
                 <button id="tutorial-add-ingredient-to-recipe" onClick={() => addRow('ingredients')} className="mt-4 text-sm text-green-600 hover:text-green-800">+ Ajouter un ingrédient</button>
                 {baseIngredients.length === 0 && (
-                    <p className="mt-2 text-xs text-amber-700">Votre base d'ingrédients est vide : les lignes ne pourront pas être liées à un ingrédient. <button type="button" onClick={() => goToTab('ingredients')} className="underline hover:text-amber-900">Aller à l'onglet Ingrédients</button></p>
+                    <p className="mt-2 text-xs text-amber-700">Votre base d'ingrédients est vide&nbsp;: les lignes ne pourront pas être liées à un ingrédient. <button type="button" onClick={() => goToTab('ingredients')} className="underline hover:text-amber-900">Aller à l'onglet Ingrédients</button></p>
                 )}
                 <div className="mt-4 p-3 bg-green-100 rounded-md space-y-2">
                     <div className="grid grid-cols-2 gap-4">
-                        <p className="text-green-800">Coût Matières (base): <span>{formatCurrency(costs.totalBaseIngredientsCost)} $</span></p>
-                        <p className="text-green-800">Coût des Pertes (stock): <span>{formatCurrency(costs.totalLossCost)} $</span></p>
+                        <p className="text-green-800">Coût matières (base)&nbsp;: <span>{formatCurrency(costs.totalBaseIngredientsCost)}&nbsp;$</span></p>
+                        <p className="text-green-800">Coût des pertes en stock&nbsp;: <span>{formatCurrency(costs.totalLossCost)}&nbsp;$</span></p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 border-t border-green-200 pt-2">
-                        <p className="font-bold text-green-800">Total Coûts Matières (recette): <span>{formatCurrency(costs.totalIngredientsCost)} $</span></p>
-                        <p className="font-bold text-green-800">Coût Matières (unité): <span>{formatCurrency(costs.costMatierePerPortion)} $</span></p>
+                        <p className="font-bold text-green-800">Total coûts matières (recette)&nbsp;: <span>{formatCurrency(costs.totalIngredientsCost)}&nbsp;$</span></p>
+                        <p className="font-bold text-green-800">Coût matières (unité)&nbsp;: <span>{formatCurrency(costs.costMatierePerPortion)}&nbsp;$</span></p>
                     </div>
                 </div>
                 </div>
@@ -954,8 +954,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         {!isValidNumber(format.purchaseCost) && <ValidationMessage message="Veuillez entrer un nombre positif." />}
                     </div>
                     <div className="mt-4 p-3 bg-green-100 rounded-md grid grid-cols-2 gap-4">
-                        <p className="font-bold text-green-800">Total Coût Direct: <span>{formatCurrency(costs.totalDirectCostPerPortion)} $</span></p>
-                        <p className="font-bold text-green-800">Coût par Unité: <span>{formatCurrency(costs.totalDirectCostPerPortion)} $</span></p>
+                        <p className="font-bold text-green-800">Total coût direct&nbsp;: <span>{formatCurrency(costs.totalDirectCostPerPortion)}&nbsp;$</span></p>
+                        <p className="font-bold text-green-800">Coût par unité&nbsp;: <span>{formatCurrency(costs.totalDirectCostPerPortion)}&nbsp;$</span></p>
                     </div>
                     {/* NOUVEAU: Gestion des allergènes pour les produits de revente */}
                     {format.isResaleProduct && (
@@ -1007,12 +1007,12 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <table className="min-w-full">
                         <thead className="bg-orange-100">
                             <tr>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Emballage</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Quantité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Unité</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût U. ($)</th>
-                                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Coût total ($)</th>
-                                <th className="relative px-2 py-2"></th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Emballage</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Quantité</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Unité</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Coût U. ($)</th>
+                                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500">Coût total ($)</th>
+                                <th className="relative px-2 py-2 text-center"></th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -1071,12 +1071,12 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 )}
                 <div className="mt-4 p-3 bg-orange-100 rounded-md space-y-2">
                     <div className="grid grid-cols-2 gap-4">
-                        <p className="text-orange-800">Coût Emballage (base): <span>{formatCurrency(costs.totalBasePackagingCost)} $</span></p>
-                        <p className="text-orange-800">Coût des Pertes (stock): <span>{formatCurrency(costs.totalPackagingLossCost)} $</span></p>
+                        <p className="text-orange-800">Coût emballage (base)&nbsp;: <span>{formatCurrency(costs.totalBasePackagingCost)}&nbsp;$</span></p>
+                        <p className="text-orange-800">Coût des pertes en stock&nbsp;: <span>{formatCurrency(costs.totalPackagingLossCost)}&nbsp;$</span></p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 border-t border-orange-200 pt-2">
-                        <p className="font-bold text-orange-800">Total Coût Emballage (recette): <span>{formatCurrency(costs.totalPackagingCost)} $</span></p>
-                        <p className="font-bold text-orange-800">Coût Emballage (unité): <span>{formatCurrency(costs.costPackagingPerPortion)} $</span></p>
+                        <p className="font-bold text-orange-800">Total coût emballage (recette)&nbsp;: <span>{formatCurrency(costs.totalPackagingCost)}&nbsp;$</span></p>
+                        <p className="font-bold text-orange-800">Coût emballage (unité)&nbsp;: <span>{formatCurrency(costs.costPackagingPerPortion)}&nbsp;$</span></p>
                     </div>
                 </div>
                 </div>
@@ -1107,15 +1107,15 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-yellow-100">
                             <tr>
-                                <th className="px-2 py-2 w-12 align-middle"></th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 align-middle">
-                                    <div className="flex items-center">
+                                <th className="px-2 py-2 w-12 align-middle text-center"></th>
+                                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
+                                    <div className="flex items-center justify-center">
                                         Étape de production
                                         <Tooltip tip="prod.etape" />
                                     </div>
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 align-middle">
-                                    <div className="flex items-center">
+                                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
+                                    <div className="flex items-center justify-center">
                                         Personnel
                                         <Tooltip tip="prod.personnel" />
                                     </div>
@@ -1135,22 +1135,22 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                 <th className="w-28 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">Fin</th>
                                 <th className="w-32 px-2 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
-                                        <div className="flex flex-col items-center"><span>Coût temps</span><span>productif ($)</span></div>
+                                        <div className="flex flex-col items-center justify-center"><span>Coût temps</span><span>productif ($)</span></div>
                                         <Tooltip tip="prod.coutDirect" />
                                     </div>
                                 </th>
                                 <th className="w-40 px-2 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
-                                        <div className="flex flex-col items-center"><span>Coût temps</span><span>non productif ($)</span></div>
+                                        <div className="flex flex-col items-center justify-center"><span>Coût temps</span><span>non productif ($)</span></div>
                                         <Tooltip tip="prod.coutIndirect" />
                                     </div>
                                 </th>
                                 <th className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 align-middle">
                                     <div className="flex items-center justify-center">
-                                        <div className="flex flex-col items-center"><span>Coût</span><span>Total ($)</span></div>
+                                        <div className="flex flex-col items-center justify-center"><span>Coût</span><span>Total ($)</span></div>
                                     </div>
                                 </th>
-                                <th className="relative px-2 py-2 w-12"></th>
+                                <th className="relative px-2 py-2 w-12 text-center"></th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -1230,14 +1230,14 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     <div className="flex space-x-4 text-right">
                         <div>
                             <p className="text-xs text-gray-500 flex items-center justify-end">
-                                Durée Processus
+                                Durée du processus
                                 <Tooltip tip="prod.dureeProcessus" />
                             </p>
                             <p className="font-semibold text-sm text-gray-800">{formatNumber((productionSummary.totalProductionTime / 60), 1)} min</p>
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 flex items-center justify-end">
-                                Temps Personnel
+                                Temps de personnel
                                 <Tooltip tip="prod.tempsPersonnel" />
                             </p>
                             <p className="font-semibold text-sm text-gray-800">{formatNumber((productionSummary.totalLaborTime / 60), 1)} min</p>
@@ -1257,12 +1257,12 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     </div>
                 <div className="mt-4 p-3 bg-yellow-100 rounded-md space-y-2">
                     <div className="grid grid-cols-2 gap-4">
-                        <p className="text-yellow-800">Total Coût du temps productif: <span>{formatCurrency(costs.totalDirectLaborCost)} $</span></p>
-                        <p className="text-yellow-800">Total Coût du temps non productif (absorbé): <span>{formatCurrency(costs.totalLaborCost - costs.totalDirectLaborCost)} $</span></p>
+                        <p className="text-yellow-800">Total coût du temps productif&nbsp;: <span>{formatCurrency(costs.totalDirectLaborCost)}&nbsp;$</span></p>
+                        <p className="text-yellow-800">Total coût du temps non productif (absorbé)&nbsp;: <span>{formatCurrency(costs.totalLaborCost - costs.totalDirectLaborCost)}&nbsp;$</span></p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 border-t border-yellow-200 pt-2">
-                        <p className="font-bold text-yellow-800">Total Main-d'œuvre (recette): <span>{formatCurrency(costs.totalLaborCost)} $</span></p>
-                        <p className="font-bold text-yellow-800">Coût Main-d'œuvre (unité): <span>{formatCurrency(costs.costLaborPerPortion)} $</span></p>
+                        <p className="font-bold text-yellow-800">Total main-d'œuvre (recette)&nbsp;: <span>{formatCurrency(costs.totalLaborCost)}&nbsp;$</span></p>
+                        <p className="font-bold text-yellow-800">Coût main-d'œuvre (unité)&nbsp;: <span>{formatCurrency(costs.costLaborPerPortion)}&nbsp;$</span></p>
                     </div>
                     </div>
                 </div>
@@ -1297,7 +1297,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                             portage sur le capital déjà immobilisé dans les charges directes), qui ne
                             touche que la marge nette. Voir les infobulles de chaque case ci-dessous. */}
                         <p className="text-xs text-gray-500 -mt-2">
-                            Ces deux coûts sont regroupés ici parce qu'ils sont optionnels — pas parce qu'ils se comptabilisent de la même façon : la <strong>sous-traitance</strong> est un coût de production (charge directe) alors que le <strong>vieillissement</strong> est une charge financière (intérêt sur le capital immobilisé), qui n'affecte que la marge nette.
+                            Ces deux coûts sont regroupés ici parce qu'ils sont facultatifs — pas parce qu'ils se comptabilisent de la même façon&nbsp;: la <strong>sous-traitance</strong> est un coût de production (charge directe) alors que le <strong>vieillissement</strong> est une charge financière (intérêt sur le capital immobilisé), qui n'affecte que la marge nette.
                         </p>
                         <div className="flex justify-end">
                             <CopyFromFormatControl formats={formats} currentFormatId={format.id} onCopy={copyAdditionalCostsFrom} label="les coûts additionnels" />
@@ -1319,7 +1319,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                         </div>
                                     ))}
                                     <button onClick={handleAddSubcontractingItem} className="text-xs text-blue-600 hover:text-blue-800">+ Ajouter une opération</button>
-                                    <p className="text-sm font-semibold text-gray-700 pt-1">Total sous-traitance : {formatCurrency(costs.totalSubcontractingCost)} $</p>
+                                    <p className="text-sm font-semibold text-gray-700 pt-1">Total sous-traitance&nbsp;: {formatCurrency(costs.totalSubcontractingCost)}&nbsp;$</p>
                                 </div>
                             )}
                         </div>
@@ -1339,7 +1339,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                                         <label className="block text-xs font-medium text-gray-600">Durée (mois)</label>
                                         <input type="text" inputMode="decimal" value={format.aging.months || ''} onChange={(e) => handleFormatNestedChange('aging', 'months', e.target.value)} className="mt-1 w-full p-1.5 border rounded text-right text-sm" />
                                     </div>
-                                    <p className="col-span-2 text-sm font-semibold text-gray-700">Coût de vieillissement : {formatCurrency(costs.totalAgingCost)} $</p>
+                                    <p className="col-span-2 text-sm font-semibold text-gray-700">Coût de vieillissement&nbsp;: {formatCurrency(costs.totalAgingCost)}&nbsp;$</p>
                                 </div>
                             )}
                         </div>
@@ -1369,7 +1369,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     principal uniquement). */}
                 {!isSimulating && channelBreakdown.length > 0 && (
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <span className="text-sm font-medium text-gray-700">Canal :</span>
+                        <span className="text-sm font-medium text-gray-700">Canal&nbsp;:</span>
                         {channelBreakdown.length > 1 ? (
                             <select
                                 value={selectedChannelData?.channelId || ''}
@@ -1386,7 +1386,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-4">
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
-                            Coût Matière (%)
+                            Coût matière (%)
                             <Tooltip tip="prod.tuileMatiere" />
                             {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costMatierePercent : marginView.costMatierePercent, activeTarget(generalInfo, 'matiere'))}
                         </div>
@@ -1398,7 +1398,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     </div>
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
-                            Coût Emballage (%)
+                            Coût emballage (%)
                             <Tooltip tip="prod.tuileEmballage" />
                             {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costPackagingPercent : marginView.costPackagingPercent, activeTarget(generalInfo, 'emballage'))}
                         </div>
@@ -1410,7 +1410,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     </div>
                     <div className="p-3 bg-white rounded-lg shadow">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
-                            Coût Main-d'œuvre (%)
+                            Coût main-d'œuvre (%)
                             <Tooltip tip="prod.tuileMo" />
                             {hasSalePrice && getCostTargetIndicator(simulatedCosts ? simulatedCosts.costLaborPercent : marginView.costLaborPercent, activeTarget(generalInfo, 'mo'))}
                         </div>
@@ -1426,8 +1426,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     leur place dans cet onglet — voir Résumé → Par SKU. */}
                 <div className="flex justify-center mb-4">
                     <div className={`w-full md:w-1/2 p-3 bg-white rounded-lg shadow text-center ${flashTotalCost ? 'animate-flash' : ''}`}>
-                        <div className="text-sm text-gray-500 flex items-center justify-center">Coût de Production <Tooltip tip="prod.coutProduction" /></div>
-                        <p className="text-2xl font-bold text-gray-800">{formatCurrency(costs.totalDirectCostPerPortion)} $</p>
+                        <div className="text-sm text-gray-500 flex items-center justify-center">Coût de production <Tooltip tip="prod.coutProduction" /></div>
+                        <p className="text-2xl font-bold text-gray-800">{formatCurrency(costs.totalDirectCostPerPortion)}&nbsp;$</p>
                     </div>
                 </div>
                 {/* Marge de contribution et marge brute (= coût primaire), par canal sélectionné
@@ -1473,11 +1473,11 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                     du canal sélectionné ci-dessus hors simulation. */}
                 <div className="flex justify-center mt-4">
                     <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center border-l-4 border-blue-500">
-                        <p className="text-sm text-gray-500">Prix de Vente</p>
+                        <p className="text-sm text-gray-500">Prix de vente</p>
                         <p className="text-2xl font-bold text-blue-800">
                             {simulatedCosts
                                 ? renderComparison(parseLocaleNumber(format.prixVente), parseLocaleNumber(simulatedPrice), formatCurrency, true, ' $')
-                                : `${formatCurrency(selectedChannelData ? selectedChannelData.netPrice : parseLocaleNumber(format.prixVente))} $`}
+                                : `${formatCurrency(selectedChannelData ? selectedChannelData.netPrice : parseLocaleNumber(format.prixVente))}\u00A0$`}
                         </p>
                     </div>
                 </div>
@@ -1490,7 +1490,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 <div className="flex justify-center mt-4">
                     <div className="w-full md:w-1/3 p-3 bg-white rounded-lg shadow text-center">
                         <div className="text-sm text-gray-500 flex items-center justify-center">
-                            Point Mort
+                            Point mort
                             <Tooltip tip="prod.pointMort" />
                         </div>
                         <p className="text-xl font-bold text-gray-800">
@@ -1514,7 +1514,7 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                         </div>
                     ) : (
                         <div className="p-3 bg-indigo-50 rounded-lg">
-                            <h3 className="text-md font-semibold text-indigo-800 mb-2 text-center">Mode Simulation</h3>
+                            <h3 className="text-md font-semibold text-indigo-800 mb-2 text-center">Mode simulation</h3>
                             <div className="flex items-center justify-center gap-4">
                                 <label htmlFor="simulatedPrice" className="text-sm font-medium text-gray-700">Prix de vente simulé ($):</label>
                                 <input

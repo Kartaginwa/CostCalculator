@@ -29,7 +29,7 @@ export const sortRows = (rows, sort, accessors = {}) => {
 export const SortableTh = ({ label, sortKey, sort, onSort, tip, isText = false, align = 'left', className = 'px-4 py-2 text-xs font-medium text-gray-500' }) => {
     const active = sort && sort.key === sortKey;
     return (
-        <th className={`${className} ${align === 'right' ? 'text-right' : 'text-left'}`} aria-sort={active ? sort.direction : 'none'}>
+        <th className={`${className} ${align === 'right' ? 'text-center' : 'text-center'}`} aria-sort={active ? sort.direction : 'none'}>
             <span className={`inline-flex items-center ${align === 'right' ? 'flex-row-reverse' : ''}`}>
                 <button type="button" onClick={() => onSort(sortKey, isText)} className="inline-flex items-center hover:text-gray-800">
                     {label}

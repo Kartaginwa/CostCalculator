@@ -28,8 +28,8 @@ test("État des résultats : assistant d'import reconnaît un PDF textuel sans �
     // Étape 1 : un PDF saute directement à l'étape 3 — jamais la correspondance de colonnes (pas
     // de vraies colonnes dans un PDF textuel).
     await modal.locator('input[type="file"]').setInputFiles(fixturePath);
-    await expect(modal.getByText('Étape 3: Prévisualisation et résolution')).toBeVisible({ timeout: 10000 });
-    await expect(modal.getByText('Étape 2: Correspondance des colonnes')).toHaveCount(0);
+    await expect(modal.getByText('Étape 3 : Prévisualisation et résolution')).toBeVisible({ timeout: 10000 });
+    await expect(modal.getByText('Étape 2 : Correspondance des colonnes')).toHaveCount(0);
 
     // Les 4 lignes du PDF sont reconstruites avec leur poste ET leur montant malgré les deux
     // `.text()` séparés (label à gauche, montant à droite, même hauteur dans la fixture).
@@ -49,16 +49,16 @@ test("État des résultats : assistant d'import reconnaît un PDF textuel sans �
 
     // "Précédent" depuis l'étape 3 ramène à l'étape 1 (pas 2, qui n'existe pas pour ce fichier).
     await modal.getByRole('button', { name: 'Précédent' }).click();
-    await expect(modal.getByText('Étape 1: Téléverser votre état des résultats')).toBeVisible();
+    await expect(modal.getByText('Étape 1 : Téléverser votre état des résultats')).toBeVisible();
 
     // Reprendre l'import jusqu'à la confirmation.
     await modal.locator('input[type="file"]').setInputFiles(fixturePath);
-    await expect(modal.getByText('Étape 3: Prévisualisation et résolution')).toBeVisible({ timeout: 10000 });
+    await expect(modal.getByText('Étape 3 : Prévisualisation et résolution')).toBeVisible({ timeout: 10000 });
     await modal.getByRole('button', { name: 'Suivant' }).click();
-    await expect(modal.getByText('Étape 4: Confirmation')).toBeVisible();
+    await expect(modal.getByText('Étape 4 : Confirmation')).toBeVisible();
     await expect(modal.getByText('2 ligne(s) de revenu.')).toBeVisible();
     await expect(modal.getByText('2 ligne(s) de frais fixes.')).toBeVisible();
-    await modal.getByText('Confirmer et Importer').click();
+    await modal.getByText('Confirmer et importer').click();
     await expect(page.getByText('2 revenu(s) et 2 dépense(s) importé(s).')).toBeVisible();
 
     const revenueSection = page.locator('#tutorial-section-revenue');

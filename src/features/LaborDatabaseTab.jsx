@@ -69,7 +69,7 @@ useEffect(() => {
     };
 
     const addPost = () => {
-        const newPost = { id: `post_${Date.now()}`, postName: 'Nouveau Poste', employees: [] };
+        const newPost = { id: `post_${Date.now()}`, postName: 'Nouveau poste', employees: [] };
         setNewlyAddedPostId(newPost.id); // Met en mémoire l'ID pour le useEffect
         onUpdateLaborDatabase([...laborDatabase, newPost]);
     };
@@ -83,7 +83,7 @@ useEffect(() => {
         onUpdateLaborDatabase(newList);
 
         showNotification({
-            message: `Le poste "${postToDelete.postName}" a été supprimé.`,
+            message: `Le poste «\u00A0${postToDelete.postName}\u00A0» a été supprimé.`,
             type: 'info',
             onUndo: () => {
                 onUpdateLaborDatabase(originalList);
@@ -129,7 +129,7 @@ useEffect(() => {
         onUpdateLaborDatabase(newList);
 
         showNotification({
-            message: `L'employé "${employeeName}" a été supprimé.`,
+            message: `L'employé «\u00A0${employeeName}\u00A0» a été supprimé.`,
             type: 'info',
             onUndo: () => {
                 onUpdateLaborDatabase(originalList);
@@ -228,23 +228,23 @@ useEffect(() => {
                                     {/* ... thead ... */}
                                     <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Employé</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">Salaire Horaire ($)<Tooltip tip="mo.salaire" /></div>
+                                            <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">Employé</th>
+                                            <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">
+                                                <div className="flex items-center justify-center">Salaire horaire ($)<Tooltip tip="mo.salaire" /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">Charges (%)<Tooltip tip="mo.charges" /></div>
+                                            <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">
+                                                <div className="flex items-center justify-center">Charges (%)<Tooltip tip="mo.charges" /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">Vacances (%)<Tooltip tip="mo.vacances" /></div>
+                                            <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">
+                                                <div className="flex items-center justify-center">Vacances (%)<Tooltip tip="mo.vacances" /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">% Temps productif attendu<Tooltip tip="mo.tempsProductif" /></div>
+                                            <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">
+                                                <div className="flex items-center justify-center">% Temps productif attendu<Tooltip tip="mo.tempsProductif" /></div>
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
-                                                <div className="flex items-center">Heures Travaillées<Tooltip tip="mo.heures" /></div>
+                                            <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">
+                                                <div className="flex items-center justify-center">Heures travaillées<Tooltip tip="mo.heures" /></div>
                                             </th>
-                                            <th className="relative px-4 py-2"></th>
+                                            <th className="relative px-4 py-2 text-center"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
@@ -276,7 +276,7 @@ useEffect(() => {
                         </button>
                         {/* Coût moyen en bas à droite */}
                         <div className="text-right">
-                            <p className="text-sm text-gray-600">Coût Moyen Pondéré du Poste</p>
+                            <p className="text-sm text-gray-600">Coût moyen pondéré du poste</p>
                             <p className="text-xl font-bold text-gray-800">{formatCurrency(weightedAverageCost)} $/h</p>
                         </div>
                     </div>

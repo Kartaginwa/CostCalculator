@@ -15,7 +15,7 @@ test('Supprimer un ingrédient utilisé demande une confirmation, puis le pannea
     await deleteButton.click();
     const dialog = page.getByText('Supprimer cet ingrédient ?');
     await expect(dialog).toBeVisible();
-    await expect(page.getByText(/est utilisé dans :/)).toBeVisible();
+    await expect(page.getByText(/est utilisé dans\u00A0:/)).toBeVisible();
 
     // Annuler : rien n'est supprimé
     await page.getByRole('button', { name: 'Annuler' }).click();

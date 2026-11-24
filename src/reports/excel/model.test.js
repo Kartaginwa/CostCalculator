@@ -41,7 +41,7 @@ describe('structure du classeur', () => {
     it('aucune feuille ne contient d\'objets de l\'ancien export (pas de résumé, pas de fiche par format)', () => {
         expect(model.sheets.some(s => /^Fiche|^Résumé|^Tableau de Bord/.test(s.name))).toBe(false);
     });
-    it('chaque colonne a un libellé unique dans sa feuille, une nature et une définition ; chaque ligne n\'utilise que des colonnes connues', () => {
+    it('chaque colonne a un libellé unique dans sa feuille, une nature et une définition ; chaque ligne n\'utilise que des colonnes connues', () => {
         for (const sh of model.sheets) {
             const labels = sh.cols.map(c => c.label);
             expect(new Set(labels).size, sh.name).toBe(labels.length);
@@ -50,7 +50,7 @@ describe('structure du classeur', () => {
             for (const r of sh.rows) for (const k of Object.keys(r)) expect(keys.has(k), `${sh.name}.${k}`).toBe(true);
         }
     });
-    it('aucune valeur n\'est NaN, infinie ou undefined : une donnée absente est null', () => {
+    it('aucune valeur n\'est NaN, infinie ou undefined : une donnée absente est null', () => {
         for (const sh of model.sheets) for (const r of sh.rows) for (const [k, v] of Object.entries(r)) {
             expect(v === undefined, `${sh.name}.${k} undefined`).toBe(false);
             if (typeof v === 'number') expect(Number.isFinite(v), `${sh.name}.${k}`).toBe(true);
@@ -66,7 +66,7 @@ describe('structure du classeur', () => {
 
 describe('parité avec les calculs de l\'application', () => {
     const rows = analysisData.productsWithCosts;
-    it('Formats : une ligne par format, avec le coût de revient de l\'application', () => {
+    it('Formats : une ligne par format, avec le coût de revient de l\'application', () => {
         expect(byName['Formats'].rows.length).toBe(rows.length);
         for (const r of rows) {
             const line = byName['Formats'].rows.find(x => x.format_id === r.id);
@@ -80,7 +80,7 @@ describe('parité avec les calculs de l\'application', () => {
             expect(sum, l.format_id).toBeCloseTo(l.cout_revient, 6);
         }
     });
-    it('Base_à_plat : une ligne par format et par canal, valeurs de channelBreakdown reprises telles quelles ; un format sans canal garde un canal et un prix vides', () => {
+    it('Base_à_plat : une ligne par format et par canal, valeurs de channelBreakdown reprises telles quelles ; un format sans canal garde un canal et un prix vides', () => {
         const flat = byName['Base_à_plat'].rows;
         expect(flat.length).toBe(rows.reduce((n, r) => n + Math.max(1, r.channelBreakdown.length), 0));
         for (const r of rows) for (const cb of r.channelBreakdown) {
@@ -91,33 +91,33 @@ describe('parité avec les calculs de l\'application', () => {
         expect(noChannel.length).toBeGreaterThan(0);
         for (const r of noChannel) { const l = flat.find(x => x.format_id === r.id); expect(l.canal).toBeNull(); expect(l.prix).toBeNull(); expect(l.mn_p).toBeNull(); }
     });
-    it('Lignes_recette : le coût total des lignes d\'un format égale le coût des ingrédients de l\'application', () => {
+    it('Lignes_recette : le coût total des lignes d\'un format égale le coût des ingrédients de l\'application', () => {
         for (const r of rows) {
             const lines = byName['Lignes_recette'].rows.filter(x => x.format_id === r.id);
             if (!lines.length) continue;
             expect(lines.reduce((s, l) => s + l.matiere, 0), r.displayName).toBeCloseTo(r.costs.totalIngredientsCost, 6);
         }
     });
-    it('Étapes_production : le coût d\'une étape est celui du moteur, la durée reste en secondes', () => {
+    it('Étapes_production : le coût d\'une étape est celui du moteur, la durée reste en secondes', () => {
         const steps = byName['Étapes_production'].rows;
         expect(steps.length).toBeGreaterThan(0);
         for (const s of steps) { expect(s.duree).toBeGreaterThan(0); expect(s.total).toBeGreaterThanOrEqual(s.direct); }
     });
-    it('Ingrédients : un ingrédient acheté porte la quantité et le coût du rapport d\'achats', () => {
+    it('Ingrédients : un ingrédient acheté porte la quantité et le coût du rapport d\'achats', () => {
         const poulet = byName['Ingrédients'].rows.find(x => x.id === 'ing_poulet');
         const item = Object.values(analysisData.purchasingReportData.groupedByProvider).flatMap(g => g.items).find(i => i.id === 'ing_poulet');
         expect(poulet.cout).toBe(item.totalCost); expect(poulet.qte).toBe(item.totalQuantity); expect(poulet.perte).toBeCloseTo(0.06, 10);
     });
-    it('Employés : taux chargé et coût total viennent de loadedHourlyRate', () => {
+    it('Employés : taux chargé et coût total viennent de loadedHourlyRate', () => {
         const e = byName['Employés'].rows.find(x => x.nom === 'Mireille');
         expect(e.taux).toBe(32); expect(e.ch).toBeCloseTo(0.16, 10); expect(e.charge).toBeGreaterThan(32); expect(e.total).toBeCloseTo(e.charge * e.h, 8);
     });
-    it('Postes : l\'utilisation est celle du rapport de productivité, en fraction', () => {
+    it('Postes : l\'utilisation est celle du rapport de productivité, en fraction', () => {
         const rowsP = calculatedGeneralInfo.productivityReport.rows;
         expect(byName['Postes'].rows.length).toBe(rowsP.length);
         for (const r of rowsP) expect(byName['Postes'].rows.find(x => x.poste === r.postName).util).toBeCloseTo(r.utilization / 100, 10);
     });
-    it('Frais_répartition : la répartition reprend celle de l\'écran État des résultats et couvre le montant de chaque frais', () => {
+    it('Frais_répartition : la répartition reprend celle de l\'écran État des résultats et couvre le montant de chaque frais', () => {
         const fixed = byName['Frais_fixes'].rows;
         for (const f of fixed) {
             const parts = byName['Frais_répartition'].rows.filter(x => x.id === f.id);
@@ -126,16 +126,16 @@ describe('parité avec les calculs de l\'application', () => {
         const loyer = byName['Frais_répartition'].rows.filter(x => x.id === 'exp_loyer_prod');
         expect(loyer.map(x => `${x.cible}:${x.montant}`).sort()).toEqual(['Mets principaux surgelés:5000', 'Sauces et accompagnements:1500', 'Soupes et potages:2500'].sort());
     });
-    it('Frais_fixes : la clé de répartition est lisible, jamais un code interne', () => {
+    it('Frais_fixes : la clé de répartition est lisible, jamais un code interne', () => {
         for (const f of byName['Frais_fixes'].rows) expect(f.cle).not.toMatch(/^(manual|sales|directCosts|activity:|channel:|custom:)/);
     });
-    it('Suivi_global : une ligne par relevé, dans l\'ordre ; Suivi_formats : marges vides pour un format sans prix', () => {
+    it('Suivi_global : une ligne par relevé, dans l\'ordre ; Suivi_formats : marges vides pour un format sans prix', () => {
         expect(byName['Suivi_global'].rows.map(r => r.nom)).toEqual(trackingPoints.map(t => t.name));
         const sf = byName['Suivi_formats'].rows;
         expect(sf.length).toBeGreaterThan(0);
         for (const r of sf) if (r.prix == null) { expect(r.mb).toBeNull(); expect(r.mn).toBeNull(); }
     });
-    it('Canaux : une cascade de prix affiche « marge » ou « majoration » en français', () => {
+    it('Canaux : une cascade de prix affiche « marge » ou « majoration » en français', () => {
         const types = new Set(byName['Canaux'].rows.map(r => r.type).filter(Boolean));
         expect([...types].sort()).toEqual(['majoration', 'marge']);
     });
@@ -144,7 +144,7 @@ describe('parité avec les calculs de l\'application', () => {
 describe('les feuilles se relient par leurs identifiants', () => {
     const formatIds = idsOf('Formats', 'format_id');
     it('chaque format_id d\'une feuille de détail existe dans Formats', () => {
-        for (const n of ['Base_à_plat', 'Lignes_recette', 'Lignes_emballage', 'Étapes_production', 'Allergènes']) for (const r of byName[n].rows) expect(formatIds.has(r.format_id), `${n} : ${r.format_id}`).toBe(true);
+        for (const n of ['Base_à_plat', 'Lignes_recette', 'Lignes_emballage', 'Étapes_production', 'Allergènes']) for (const r of byName[n].rows) expect(formatIds.has(r.format_id), `${n}\u00A0: ${r.format_id}`).toBe(true);
     });
     it('chaque ingrédient d\'une recette est dans Ingrédients ou est un format (sous-recette)', () => {
         const ing = idsOf('Ingrédients', 'id'), productIds = idsOf('Formats', 'produit_id');
@@ -189,9 +189,9 @@ describe('une donnée absente reste absente', () => {
     });
     it('un nom de produit avec des caractères spéciaux passe tel quel', () => {
         const s = structuredClone(state);
-        s.products.find(x => !x.isIngredient).platName = 'Crème brûlée « maison » / 50 % : œuf';
+        s.products.find(x => !x.isIngredient).platName = 'Crème brûlée « maison » / 50 % : œuf';
         const { model: m } = buildFor(s, trackingPoints);
-        expect(m.sheets.find(x => x.name === 'Formats').rows.some(r => r.produit.includes('Crème brûlée « maison » / 50 % : œuf'))).toBe(true);
+        expect(m.sheets.find(x => x.name === 'Formats').rows.some(r => r.produit.includes('Crème brûlée « maison » / 50 % : œuf'))).toBe(true);
     });
 });
 
@@ -199,11 +199,11 @@ describe('classeur écrit', () => {
     const wb = buildWorkbook(XLSX, model);
     const bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const back = XLSX.read(bytes, { type: 'array', cellStyles: true });
-    it('relu : mêmes feuilles, même nombre de lignes de données', () => {
+    it('relu : mêmes feuilles, même nombre de lignes de données', () => {
         expect(back.SheetNames).toEqual(model.sheets.map(s => s.name));
         for (const sh of model.sheets) expect(XLSX.utils.sheet_to_json(back.Sheets[sh.name]).length, sh.name).toBe(sh.rows.length);
     });
-    it('les en-têtes sont colorés : bleu pour une colonne saisie, gris pour une colonne calculée', () => {
+    it('les en-têtes sont colorés : bleu pour une colonne saisie, gris pour une colonne calculée', () => {
         const ws = back.Sheets['Formats'];
         const cols = byName['Formats'].cols;
         const fill = (i) => (ws[XLSX.utils.encode_cell({ r: 0, c: i })].s?.fgColor?.rgb || '').toUpperCase().slice(-6);

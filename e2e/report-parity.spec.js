@@ -59,7 +59,7 @@ test('parité : tout ce que l\'ancien PDF imprimait se retrouve dans le nouveau 
     has('Classement ABC');
     facts.ingredients.forEach(n => has(n, `ABC ingrédient ${n}`)); facts.packaging.forEach(n => has(n, `ABC emballage ${n}`));
     // Synthèse des achats : coût net, perte stock, achat requis ; fournisseurs
-    for (const k of ['Coût net (ingrédients)', 'Perte stock prévue', 'Achat requis (ingrédients)', 'Coût net (emballages)', 'Achat requis (emballages)', 'Fournisseurs']) has(k, `achats ${k}`);
+    for (const k of ['Coût net (ingrédients)', 'Perte en stock prévue', 'Achat requis (ingrédients)', 'Coût net (emballages)', 'Achat requis (emballages)', 'Fournisseurs']) has(k, `achats ${k}`);
     facts.providers.forEach(n => has(n, `fournisseur ${n}`));
     // Rapport de productivité par poste : mêmes colonnes
     has('Rapport de productivité par poste');

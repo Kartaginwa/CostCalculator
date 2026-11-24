@@ -27,7 +27,7 @@ describe('composeDocument', () => {
         expect(r.passes).toBe(2);
     });
 
-    it('un renvoi plus long peut déplacer un repère : la carte est recalculée jusqu\'à ce qu\'elle se stabilise', async () => {
+    it('un renvoi plus long peut déplacer un repère : la carte est recalculée jusqu\'à ce qu\'elle se stabilise', async () => {
         // Le texte du renvoi vers « m » passe à deux chiffres quand m est à la page 10 ou plus : l'unité a gagne alors une page.
         const seen = [];
         const r = await composeDocument({
@@ -47,7 +47,7 @@ describe('composeDocument', () => {
         expect(r.passes).toBe(3);
     });
 
-    it('sans unité : aucune page, total nul', async () => {
+    it('sans unité : aucune page, total nul', async () => {
         const r = await composeDocument({ build: () => [], paginate: () => [] });
         expect(r.pages).toEqual([]);
         expect(r.map.total).toBe(0);

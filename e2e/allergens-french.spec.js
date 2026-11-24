@@ -40,6 +40,6 @@ test('rapport PDF : « Allergènes : Soja » sur la fiche, jamais « soy »', as
         const holder = document.createElement('div'); holder.innerHTML = html;
         return holder.textContent.replace(/\s+/g, ' ');
     });
-    expect(text).toMatch(/Allergènes : [^A-Z]*Soja/);
+    expect(text).toMatch(/Allergènes\s*: [^A-Z]*Soja/);
     expect(text).not.toMatch(/\bsoy\b|soybeans/);
 });

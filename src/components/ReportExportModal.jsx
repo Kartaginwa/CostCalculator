@@ -80,7 +80,7 @@ const ReportExportContent = ({ onClose, onConfirm, options, availability, period
                         <div className="md:col-span-3 border rounded-md p-4 bg-gray-50 min-h-[14rem]" aria-live="polite">
                             <h4 className="text-sm font-semibold text-gray-800">{selected.id === 'A' ? 'Annexes et méthodes' : `${selected.n}. ${selected.title}`}</h4>
                             <p className="text-xs text-gray-600 mt-1">{selected.question}</p>
-                            <p className="text-xs text-gray-500 mt-1">Onglet : {selected.tab}</p>
+                            <p className="text-xs text-gray-500 mt-1">Onglet&nbsp;: {selected.tab}</p>
                             {unavailable(selected.id) ? (
                                 <p className="mt-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2 flex gap-2"><AlertTriangle className="h-4 w-4 flex-shrink-0" />{unavailable(selected.id)}</p>
                             ) : commentable ? (
@@ -89,7 +89,7 @@ const ReportExportContent = ({ onClose, onConfirm, options, availability, period
                                     <textarea id="reportComment" rows={5} value={commentText} onChange={(e) => setComment(selected.id, e.target.value)}
                                         className="mt-1 w-full p-2 border rounded-md border-gray-300 text-sm" placeholder="Votre lecture de ces résultats, imprimée à la fin du chapitre." />
                                     <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                        <span>Sans texte, rien n’est imprimé : aucune case vide.</span>
+                                        <span>Sans texte, rien n’est imprimé&nbsp;: aucune case vide.</span>
                                         <span>{commentText.length} / {MAX_COMMENT_LENGTH}</span>
                                     </div>
                                 </div>
@@ -99,7 +99,7 @@ const ReportExportContent = ({ onClose, onConfirm, options, availability, period
                                         <input type="checkbox" className="mt-1" checked={draft.includeSalaries} onChange={(e) => setDraft(d => ({ ...d, includeSalaries: e.target.checked }))} />
                                         <span>Inclure les salaires individuels (annexe C)<Tooltip tip="export.salaires" /></span>
                                     </label>
-                                    <p className="text-xs text-gray-500 mt-1 ml-6">Décoché par défaut : un rapport transmis à un banquier ou à un investisseur ne doit pas contenir les salaires sans que vous l’ayez voulu.</p>
+                                    <p className="text-xs text-gray-500 mt-1 ml-6">Décoché par défaut&nbsp;: un rapport transmis à un banquier ou à un investisseur ne doit pas contenir les salaires sans que vous l’ayez voulu.</p>
                                 </div>
                             )}
                         </div>
@@ -108,7 +108,7 @@ const ReportExportContent = ({ onClose, onConfirm, options, availability, period
                     {!period && (
                         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2 flex gap-2" role="note">
                             <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                            <span>Les dates de début et de fin de la période ne sont pas saisies (État des résultats) : la période ne sera pas imprimée dans le rapport.</span>
+                            <span>Les dates de début et de fin de la période ne sont pas saisies (État des résultats)&nbsp;: la période ne sera pas imprimée dans le rapport.</span>
                         </p>
                     )}
                 </div>

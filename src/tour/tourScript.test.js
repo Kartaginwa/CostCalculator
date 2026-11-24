@@ -9,12 +9,12 @@ const KNOWN = new Set(['tab', 'subtab', 'scroll', 'scrollTop', 'highlight', 'poi
 const REPORT_SUBTABS = ['overview', 'portfolio', 'bySku', 'byActivity', 'byChannel', 'ingredients', 'packaging', 'labor', 'simulation'];
 const SCENE_COUNT = 45;
 
-describe('Visite guidée : scénario', () => {
+describe('Visite guidée : scénario', () => {
     it('dure entre 5 et 10 minutes à vitesse normale (plus vite à 1,5×)', () => {
         expect(TOTAL_DURATION).toBeGreaterThanOrEqual(300000);
         expect(TOTAL_DURATION).toBeLessThanOrEqual(600000);
     });
-    it('laisse le temps de lire : chaque scène dure au moins le temps de lecture de son sous-titre, et chaque titre de chapitre au moins 2,5 s', () => {
+    it('laisse le temps de lire : chaque scène dure au moins le temps de lecture de son sous-titre, et chaque titre de chapitre au moins 2,5 s', () => {
         SCENES.forEach((sc) => expect(sc.duration, sc.id).toBeGreaterThanOrEqual(readingMs(sc.caption)));
         expect(INTRO_MS).toBeGreaterThanOrEqual(2500);
     });
@@ -33,9 +33,9 @@ describe('Visite guidée : scénario', () => {
             expect(s.duration, s.id).toBeGreaterThanOrEqual(5500);
             expect(s.duration, s.id).toBeLessThanOrEqual(21000);
             expandSteps(s.steps).forEach((g) => {
-                expect(KNOWN.has(g.do), `${s.id} : geste inconnu « ${g.do} »`).toBe(true);
+                expect(KNOWN.has(g.do), `${s.id}\u00A0: geste inconnu « ${g.do} »`).toBe(true);
                 expect(g.at, s.id).toBeGreaterThanOrEqual(0);
-                expect(g.at, `${s.id} : geste après la fin de la scène`).toBeLessThan(s.duration);
+                expect(g.at, `${s.id}\u00A0: geste après la fin de la scène`).toBeLessThan(s.duration);
             });
         });
     });
@@ -45,11 +45,11 @@ describe('Visite guidée : scénario', () => {
             expect(ats, s.id).toEqual([...ats].sort((a, b) => a - b));
         });
     });
-    it("chaque scène déclare son onglet ; Rapport et suivi peut en plus déclarer son sous-onglet", () => {
+    it("chaque scène déclare son onglet ; Rapport et suivi peut en plus déclarer son sous-onglet", () => {
         const TABS = ['info', 'ingredients', 'packaging', 'labor', 'recipe', 'income-statement', 'summary'];
         SCENES.forEach((sc) => { expect(TABS, sc.id).toContain(sc.tab); if (sc.subtab) expect(sc.tab, sc.id).toBe('summary'); });
     });
-    it("suit l'ordre des onglets : Production avant État des résultats, puis le rapport", () => {
+    it("suit l'ordre des onglets : Production avant État des résultats, puis le rapport", () => {
         const order = SCENES.map((sc) => sc.tab);
         expect(order.indexOf('recipe')).toBeLessThan(order.indexOf('income-statement'));
         expect(order.lastIndexOf('income-statement')).toBeLessThan(order.indexOf('summary'));
@@ -70,7 +70,7 @@ describe('Visite guidée : scénario', () => {
         // la réconciliation n'est plus présentée dans l'État des résultats
         SCENES.filter((s) => s.tab === 'income-statement').forEach((s) => expect(JSON.stringify(s.steps), s.id).not.toContain('reconciliation'));
     });
-    it("chaque nouveauté demandée est jouée dans l'application : objectif sur mesure, canaux d'un produit, temps productif attendu, cinq parties de Production, clés de répartition, essai de chaque liste déroulante", () => {
+    it("chaque nouveauté demandée est jouée dans l'application : objectif sur mesure, canaux d'un produit, temps productif attendu, cinq parties de Production, clés de répartition, essai de chaque liste déroulante", () => {
         const steps = (id) => JSON.stringify(SCENES.find((s) => s.id === id).steps);
         expect(steps('objectifs')).toContain('Ajouter un objectif sur mesure');
         expect(steps('produits-canaux')).toContain('canaux');
@@ -98,7 +98,7 @@ describe('Visite guidée : scénario', () => {
         const pdf = SCENES.find((s) => s.id === 'export-pdf');
         expect(`${narrationOf(pdf)} ${JSON.stringify(pdf.steps)}`).not.toMatch(/salaire/i);
     });
-    it('présente les dernières améliorations : objectifs stratégiques, constats de fin de sous-onglet, temps non productif, exports PDF et Excel', () => {
+    it('présente les dernières améliorations : objectifs stratégiques, constats de fin de sous-onglet, temps non productif, exports PDF et Excel', () => {
         const sceneOf = (id) => SCENES.find((s) => s.id === id);
         expect(sceneOf('objectifs').tab).toBe('info');
         expect(JSON.stringify(sceneOf('objectifs').steps)).toContain('Gérer les objectifs');
@@ -111,14 +111,14 @@ describe('Visite guidée : scénario', () => {
         expect(JSON.stringify(sceneOf('export-pdf').steps)).toContain('Générer un rapport PDF');
         expect(JSON.stringify(sceneOf('export-excel').steps)).toContain('Exporter vers Excel');
     });
-    it("aucune scène ne remonte la page en haut d'elle-même : seul un changement d'onglet le fait", () => {
+    it("aucune scène ne remonte la page en haut d'elle-même : seul un changement d'onglet le fait", () => {
         // seule exception : « depart » revient sur Paramètres, que l'application rouvre là où on l'avait laissé
         SCENES.filter((sc) => sc.id !== 'depart').forEach((sc) => expect(sc.steps.some((g) => g.do === 'scrollTop'), sc.id).toBe(false));
     });
 });
 
-describe('Visite guidée : style', () => {
-    it("chaque scène s'accompagne d'au moins une étiquette explicative ou d'une saisie (pas de scène « muette »)", () => {
+describe('Visite guidée : style', () => {
+    it("chaque scène s'accompagne d'au moins une étiquette explicative ou d'une saisie (pas de scène « muette »)", () => {
         SCENES.forEach((s) => expect(s.steps.some((g) => g.do === 'note' || g.do === 'type' || g.do === 'hover'), s.id).toBe(true));
     });
     it("au moins 10 scènes tapent des mots ou des chiffres dans l'application", () => {
@@ -129,18 +129,18 @@ describe('Visite guidée : style', () => {
     });
 });
 
-describe('Visite guidée : narration prête pour une voix', () => {
+describe('Visite guidée : narration prête pour une voix', () => {
     it('chaque sous-titre est une suite de phrases complètes, de 15 à 45 mots', () => {
         SCENES.forEach((s) => {
             const text = narrationOf(s);
             const n = text.split(/\s+/).filter(Boolean).length;
-            expect(n, `${s.id} : ${n} mots`).toBeGreaterThanOrEqual(15);
-            expect(n, `${s.id} : ${n} mots`).toBeLessThanOrEqual(45);
+            expect(n, `${s.id}\u00A0: ${n} mots`).toBeGreaterThanOrEqual(15);
+            expect(n, `${s.id}\u00A0: ${n} mots`).toBeLessThanOrEqual(45);
             expect(text, s.id).toMatch(/[.?!…]$/);
             expect(text[0], s.id).toMatch(/[A-ZÀÂÉÈÊÎÔÙÛ]/);
         });
     });
-    it('aucun symbole ni sigle qu\'une voix devrait épeler (« % », « $ », « SKU », « ABC » mis à part), pas de parenthèse ni de flèche', () => {
+    it('aucun symbole ni sigle qu\'une voix devrait épeler (« % », « $ », « SKU », « ABC » mis à part), pas de parenthèse ni de flèche', () => {
         SCENES.forEach((s) => {
             const text = narrationOf(s).replace(/\bABC\b/g, '');
             expect(text, s.id).not.toMatch(/[%$→←↓↑#@=<>()[\]{}|]/);
@@ -148,34 +148,34 @@ describe('Visite guidée : narration prête pour une voix', () => {
             expect(text, s.id).not.toMatch(/\b[A-Z]{2,}\b/);
         });
     });
-    it('vocabulaire de l\'application : jamais « plat » ni « menu » ; un segment est une colonne, jamais une ligne', () => {
+    it('vocabulaire de l\'application : jamais « plat » ni « menu » ; un segment est une colonne, jamais une ligne', () => {
         SCENES.forEach((s) => {
             const text = `${narrationOf(s)} ${JSON.stringify(s.steps.filter((g) => g.do === 'note').map((g) => g.text))}`;
             expect(text, s.id).not.toMatch(/\bplats?\b|\bmenus?\b/i);
             expect(text, s.id).not.toMatch(/une ligne par (activité|canal)/i);
         });
     });
-    it('le ton reste vivant : au moins douze sous-titres s\'adressent directement au lecteur ou lui posent une question', () => {
+    it('le ton reste vivant : au moins douze sous-titres s\'adressent directement au lecteur ou lui posent une question', () => {
         const direct = SCENES.filter((s) => /\bvous\b|\bvos?\b|\?|Imaginez|Regardez|Essayez|Choisissez|Cherchez|Testez|Commençons|Passez/i.test(narrationOf(s)));
         expect(direct.length).toBeGreaterThanOrEqual(12);
         expect(SCENES.filter((s) => /\?/.test(narrationOf(s))).length).toBeGreaterThanOrEqual(6);
     });
-    it('aucune consigne procédurale (« cliquez sur », « ouvrez l\'onglet », « sélectionnez ») dans la narration', () => {
+    it('aucune consigne procédurale (« cliquez sur », « ouvrez l\'onglet », « sélectionnez ») dans la narration', () => {
         SCENES.forEach((s) => expect(narrationOf(s), s.id).not.toMatch(/cliquez|ouvrez l|sélectionnez|appuyez|dans le menu/i));
     });
-    it('chaque carte de titre de chapitre a son texte : de 8 à 25 mots, phrases complètes, sans symbole ni sigle', () => {
+    it('chaque carte de titre de chapitre a son texte : de 8 à 25 mots, phrases complètes, sans symbole ni sigle', () => {
         CHAPTERS.forEach((c, i) => {
             const text = introNarrationOf(i);
             const n = text.split(/\s+/).filter(Boolean).length;
-            expect(n, `${c.id} : ${n} mots`).toBeGreaterThanOrEqual(8);
-            expect(n, `${c.id} : ${n} mots`).toBeLessThanOrEqual(25);
+            expect(n, `${c.id}\u00A0: ${n} mots`).toBeGreaterThanOrEqual(8);
+            expect(n, `${c.id}\u00A0: ${n} mots`).toBeLessThanOrEqual(25);
             expect(text, c.id).toMatch(/[.?!]$/);
             expect(text, c.id).not.toMatch(/[%$→←↓↑#@=<>()[\]{}|]/);
             expect(text, c.id).not.toMatch(/\b[A-Z]{2,}\b/);
             expect(text, c.id).not.toMatch(/\bplats?\b|\bmenus?\b/i);
         });
     });
-    it('les pauses pour la voix : au plus deux par texte, jamais en début ni en fin, jamais affichées', () => {
+    it('les pauses pour la voix : au plus deux par texte, jamais en début ni en fin, jamais affichées', () => {
         const texts = [...SCENES.map(voiceOf), ...CHAPTERS.map((c) => c.narration)];
         texts.forEach((t) => {
             const pauses = t.match(/\[(?:long )?pause\]/g) || [];

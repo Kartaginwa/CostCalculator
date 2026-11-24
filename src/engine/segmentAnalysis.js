@@ -66,7 +66,7 @@ export function computeChannelImpact(activeProducts, salesChannels = []) {
     return result;
 }
 
-// Rapport Par Activité / Par Canal (24/10, retour utilisateur) — agrégation de plusieurs SKU×canal
+// Rapport Par activité / Par canal (24/10, retour utilisateur) — agrégation de plusieurs SKU×canal
 // en un seul segment, par SOMME des $ déjà calculés (jamais une moyenne de pourcentages, voir
 // commentaire plus bas) : revenu, chaque poste de coût direct, et chaque pool indirect (Général/
 // Activité/Canal), tous multipliés par le volume RÉEL de cette ligne puis sommés sur le segment. Un
@@ -132,11 +132,11 @@ function aggregateSegmentRows(rows) {
     };
 }
 
-// Rapport Par Activité (révisé le 02/11, retour utilisateur) : UNE ligne par activité, réduite à
+// Rapport Par activité (révisé le 02/11, retour utilisateur) : UNE ligne par activité, réduite à
 // son propre TOTAL agrégé — tous canaux confondus, jamais ventilée par canal. Version précédente
 // (24/10) : une activité choisie, ventilée par canal en colonnes — retour utilisateur immédiat,
-// « on dirait une simple répétition de deux rapports identiques » (« Par Activité » transposé de
-// « Par Canal »), alors que le vrai intérêt était LE TOTAL de chaque ligne, pas sa répartition par
+// « on dirait une simple répétition de deux rapports identiques » (« Par activité » transposé de
+// « Par canal »), alors que le vrai intérêt était LE TOTAL de chaque ligne, pas sa répartition par
 // canal/activité. Voir Projet_Claude/03-Feuille-de-route.md pour la discussion complète. Une
 // activité sans aucun volume réel vendu en est simplement absente (jamais une ligne à 0).
 export function computeActivitySummaries(productsWithCosts, productionActivities = []) {
@@ -158,7 +158,7 @@ export function computeActivitySummaries(productsWithCosts, productionActivities
     return result;
 }
 
-// Rapport Par Canal : la transposée exacte du rapport ci-dessus (même fonction d'agrégation) — une
+// Rapport Par canal : la transposée exacte du rapport ci-dessus (même fonction d'agrégation) — une
 // ligne par canal, réduite à son propre total, toutes activités confondues. Un SKU sans activité
 // assignée en est exclu (donnée absente — cas qui ne devrait de toute façon jamais se produire,
 // une activité étant obligatoire à la création d'un produit).
@@ -185,7 +185,7 @@ export function computeChannelSummaries(productsWithCosts, salesChannels = []) {
 // de chaque activité, pour chacun de ses canaux de vente — même principe que la matrice SKU ×
 // Canal déjà dans Vue d'ensemble (computeAnalysisData, `productsWithCosts[].channelBreakdown`), à
 // l'échelle de l'activité plutôt que du SKU. Réutilise `aggregateSegmentRows` (même agrégation $
-// sommés puis divisés que Par Activité/Par Canal, jamais une moyenne de % individuels) — une
+// sommés puis divisés que Par activité/Par canal, jamais une moyenne de % individuels) — une
 // combinaison (activité, canal) sans aucun volume réel en est simplement absente de la matrice
 // (jamais une cellule à 0 $). Métrique en $ plutôt qu'en % (révision du 02/11, retour utilisateur) :
 // une ligne/colonne Total n'a de sens que pour un $ (sommable) — une moyenne ou une somme de %
@@ -286,7 +286,7 @@ export function computeNetProfitTotals({ activityBuckets, salesChannels, grossPr
 // ci-dessus, jamais de ce total commun.
 // Coût de vieillissement théorique (02/11, retour utilisateur) : manquait entièrement de ce
 // tableau depuis sa création (20/10), alors qu'il est bien soustrait côté réel indirectement —
-// `aggregateSegmentRows` (Par Activité/Canal/SKU) le déduit dans `margeNetteTotal`, séparément des
+// `aggregateSegmentRows` (Par activité/Canal/SKU) le déduit dans `margeNetteTotal`, séparément des
 // charges directes et des frais fixes (`calculateCosts.js` : `totalCostPerPortion =
 // totalDirectCostPerPortion + costIndirectPerPortion + costAgingPerPortion`, 3 postes distincts).
 // Sans ce correctif, le Bénéfice net théorique SURESTIME le profit de tout produit avec

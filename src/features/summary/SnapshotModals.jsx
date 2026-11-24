@@ -40,13 +40,13 @@ export const SnapshotDetailsModal = ({ isOpen, onClose, onSave, initialData }) =
                         />
                     </div>
                     <div>
-                        <label htmlFor="snapshotNote" className="block text-sm font-medium text-gray-700">Note descriptive (optionnel)</label>
+                        <label htmlFor="snapshotNote" className="block text-sm font-medium text-gray-700">Note descriptive (facultative)</label>
                         <textarea
                             id="snapshotNote"
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             className="mt-1 w-full p-2 border rounded-md border-gray-300"
-                            placeholder="Ex: Promotion estivale, nouveau fournisseur..."
+                            placeholder="Ex. : Promotion estivale, nouveau fournisseur…"
                             rows="3"
                         />
                     </div>
@@ -139,14 +139,14 @@ export const ManagePointsModal = ({ isOpen, onClose, trackingPoints, selectedSna
                                     { key: 'note', label: 'Note' },
                                     { key: 'timestamp', label: 'Date de création' },
                                 ].map(col => (
-                                    <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-gray-500">
+                                    <th key={col.key} className="px-4 py-3 text-center text-xs font-medium text-gray-500">
                                         <button onClick={() => requestSnapSort(col.key)} className="inline-flex items-center gap-1 uppercase hover:text-gray-800">
                                             {col.label}
                                             <ArrowUpDown className={`h-3.5 w-3.5 ${snapSort.key === col.key ? 'text-blue-600' : 'text-gray-300'}`} />
                                         </button>
                                     </th>
                                 ))}
-                                <th className="relative px-4 py-3"></th>
+                                <th className="relative px-4 py-3 text-center"></th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">

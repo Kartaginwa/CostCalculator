@@ -18,8 +18,8 @@ const SCREENS = {
         const idx = await sel.evaluate((s) => [...s.options].findIndex((o) => o.text.trim().startsWith('Chili con carne')));
         await sel.selectOption({ index: idx });
     },
-    'summary:Par Activité': async (page) => { await page.locator('#tab-summary').click(); await page.getByRole('button', { name: 'Par Activité', exact: true }).click(); },
-    'summary:Par Canal': async (page) => { await page.locator('#tab-summary').click(); await page.getByRole('button', { name: 'Par Canal', exact: true }).click(); },
+    'summary:Par activité': async (page) => { await page.locator('#tab-summary').click(); await page.getByRole('button', { name: 'Par activité', exact: true }).click(); },
+    'summary:Par canal': async (page) => { await page.locator('#tab-summary').click(); await page.getByRole('button', { name: 'Par canal', exact: true }).click(); },
     "summary:Vue d'ensemble": async (page) => { await page.locator('#tab-summary').click(); await page.getByRole('button', { name: "Vue d'ensemble", exact: true }).click(); },
     'income-statement': async (page) => { await page.locator('#tab-income-statement').click(); },
     labor: async (page) => { await page.locator('#tab-labor').click(); },
@@ -37,7 +37,7 @@ for (const [screen, strings] of Object.entries(DEMO_SCREEN_CHECKS)) {
         expect(SCREENS[screen], `écran inconnu : ${screen}`).toBeTruthy();
         await SCREENS[screen](page);
         await page.waitForTimeout(500);
-        const text = await page.evaluate(() => document.body.innerText);
+        const text = await page.evaluate(() => document.body.innerText.replace(/\u00A0/g, ' '));
         // Les chaînes de référence sont écrites avec le point ; l'écran affiche la virgule décimale.
         const missing = [...new Set(strings.map((s) => s.replace(/(\d)\.(\d)/g, '$1,$2')))].filter((s) => !text.includes(s));
         expect(missing, `chiffres du guide introuvables à l'écran « ${screen} »`).toEqual([]);

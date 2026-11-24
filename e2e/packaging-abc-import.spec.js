@@ -20,8 +20,8 @@ test('analyse ABC et rapport d\'achats du Packaging reflètent un emballage rée
     await packagingSection.locator('#tutorial-add-packaging-to-recipe').click();
     await page.waitForTimeout(200);
     const newRow = packagingSection.locator('tbody tr').last();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').click();
-    await newRow.locator('input[placeholder="Saisir ou sélectionner..."]').fill('Pot de verre 500 ml');
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').click();
+    await newRow.locator('input[placeholder="Saisir ou sélectionner…"]').fill('Pot de verre 500 ml');
     await page.locator('li:has-text("Pot de verre 500 ml")').first().click();
     await newRow.locator('input[inputmode="decimal"]').first().fill('1');
     await page.waitForTimeout(300);
@@ -34,7 +34,7 @@ test('analyse ABC et rapport d\'achats du Packaging reflètent un emballage rée
     await expect(page.getByText('Analyse ABC des emballages')).toBeVisible();
     await expect(page.getByText('Pot de verre 500 ml').first()).toBeVisible();
 
-    await expect(page.getByText('Rapport d\'achats et perte stock pour la période')).toBeVisible();
+    await expect(page.getByText('Rapport d\'achats et perte en stock pour la période')).toBeVisible();
     await page.locator('#reportFilterProviderPackaging').selectOption('all');
     await page.waitForTimeout(200);
     await expect(page.getByText('Coût d\'Achat Total Requis')).toBeVisible();
@@ -54,9 +54,9 @@ test('assistant d\'import du Packaging : ouverture, mapping, import d\'un nouvel
     await page.waitForTimeout(300);
 
     await page.getByText('Importer une liste').click();
-    await expect(page.getByText(/Assistant d'Importation d'Emballages/)).toBeVisible();
+    await expect(page.getByText(/Assistant d'importation d'Emballages/)).toBeVisible();
     await page.getByText('Annuler').first().click();
-    await expect(page.getByText(/Assistant d'Importation d'Emballages/)).toHaveCount(0);
+    await expect(page.getByText(/Assistant d'importation d'Emballages/)).toHaveCount(0);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);
 });

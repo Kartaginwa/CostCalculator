@@ -21,7 +21,7 @@ test('Recette & Calcul : le récapitulatif reflète le canal sélectionné, sans
     // Nouveau produit, prix net sur les deux canaux — sélectionné automatiquement, son détail
     // s'affiche directement dans le panneau de droite (vue maître-détail, refonte du 19/10).
     const menuSection = page.locator('#tutorial-section-info-menu');
-    await menuSection.getByRole('button', { name: 'Ajouter un item' }).click();
+    await menuSection.getByRole('button', { name: 'Ajouter un produit' }).click();
     await page.waitForTimeout(300);
     const section = menuSection.locator('#product-detail-pane');
     await section.locator('input[type="text"]').first().fill('Produit Multi');
@@ -46,7 +46,7 @@ test('Recette & Calcul : le récapitulatif reflète le canal sélectionné, sans
     await page.waitForTimeout(300);
 
     await expect(recap.getByText('Marge Nette')).toHaveCount(0);
-    await expect(recap.getByText('Prix de Vente')).toBeVisible();
+    await expect(recap.getByText('Prix de vente')).toBeVisible();
     await expect(recap.getByText('20,00 $').first()).toBeVisible();
 
     // Bascule vers le 2e canal : prix net et marges passent à 15 $.

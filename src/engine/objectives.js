@@ -34,7 +34,7 @@ export const INDICATORS = {
     },
     utilisation: {
         label: 'Taux d\'utilisation des postes', unit: '%', dir: 'min', theme: 'Main-d\'œuvre', subTab: 'labor',
-        // La ligne Total du tableau « Taux d'Utilisation (%) » de Main-d'œuvre : heures réelles ÷ heures attendues des postes de production.
+        // La ligne Total du tableau « Taux d'utilisation (%) » de Main-d'œuvre : heures réelles ÷ heures attendues des postes de production.
         value: (c) => { const t = c.info?.productivityReport?.totals; return t && t.expected > 0 ? finite(t.utilization) : null; },
     },
     paieNonUtilisee: {
@@ -43,7 +43,7 @@ export const INDICATORS = {
         value: (c) => (c.cascade?.payroll > 0 ? finite(c.cascade.unusedShare * 100) : null),
     },
     perteStock: {
-        label: 'Perte stock', unit: '%', dir: 'max', theme: 'Approvisionnement', subTab: 'ingredients',
+        label: 'Perte en stock', unit: '%', dir: 'max', theme: 'Approvisionnement', subTab: 'ingredients',
         value: (c) => { const g = c.analysis.purchasingReportData?.grandTotal; return g ? finite(ratio(g.loss, g.total) * 100) : null; },
     },
     fraisFixes: {
@@ -127,12 +127,12 @@ Object.assign(INDICATORS, {
     // Un ingrédient
     ingPart: E('ingredient', 'Part dans les achats d\'ingrédients', '%', 'max', 'Approvisionnement', 'ingredients', (c, id) => purchaseShare(c.analysis.purchasingReportData, id)),
     ingDepense: E('ingredient', 'Achats prévus', '$', 'max', 'Approvisionnement', 'ingredients', itemValue('purchasingReportData', 'purchaseCost')),
-    ingPerte: E('ingredient', 'Perte stock prévue', '$', 'max', 'Approvisionnement', 'ingredients', itemValue('purchasingReportData', 'lossCost')),
+    ingPerte: E('ingredient', 'Perte en stock prévue', '$', 'max', 'Approvisionnement', 'ingredients', itemValue('purchasingReportData', 'lossCost')),
     ingVolatilite: E('ingredient', 'Amplitude du prix', '%', 'max', 'Approvisionnement', 'ingredients', (c, id) => volatilityOf(c.ingredientVolatility, id)),
     // Un emballage
     pkgPart: E('emballage', 'Part dans les achats d\'emballages', '%', 'max', 'Approvisionnement', 'packaging', (c, id) => purchaseShare(c.analysis.packagingPurchasingReportData, id)),
     pkgDepense: E('emballage', 'Achats prévus', '$', 'max', 'Approvisionnement', 'packaging', itemValue('packagingPurchasingReportData', 'purchaseCost')),
-    pkgPerte: E('emballage', 'Perte stock prévue', '$', 'max', 'Approvisionnement', 'packaging', itemValue('packagingPurchasingReportData', 'lossCost')),
+    pkgPerte: E('emballage', 'Perte en stock prévue', '$', 'max', 'Approvisionnement', 'packaging', itemValue('packagingPurchasingReportData', 'lossCost')),
     pkgVolatilite: E('emballage', 'Amplitude du prix', '%', 'max', 'Approvisionnement', 'packaging', (c, id) => volatilityOf(c.packagingVolatility, id)),
     // Un fournisseur
     fournIngPart: E('fournisseurIng', 'Part des achats d\'ingrédients', '%', 'max', 'Approvisionnement', 'ingredients', (c, id) => pctOf(shareRow(c.ingredientShares, id)?.share)),
@@ -177,7 +177,7 @@ export const CUSTOM_INDICATOR_IDS = INDICATOR_GROUPS.flatMap(g => g.ids);
 export const subjectsOf = (ctx, indicator) => { const k = INDICATORS[indicator]?.entity; return k ? ENTITY_KINDS[k].list(ctx) : []; };
 
 /** Texte d'une valeur dans l'unité de son indicateur : « 34,5 % », « 1 200 $ », « 1,8 fois », « 2 ». */
-export const fmtObjValue = (v, unit) => (v == null ? '—' : unit === '$' ? `${formatCurrency(v)} $` : unit === '%' ? `${formatNumber(v, 1)} %` : unit === 'fois' ? `${formatNumber(v, 1)} fois` : formatNumber(v, 0));
+export const fmtObjValue = (v, unit) => (v == null ? '—' : unit === '$' ? `${formatCurrency(v)}\u00A0$` : unit === '%' ? `${formatNumber(v, 1)}\u00A0%` : unit === 'fois' ? `${formatNumber(v, 1)} fois` : formatNumber(v, 0));
 /** Suffixe affiché à côté de la zone de saisie. */
 export const unitSuffix = (unit) => (unit === 'n' ? '' : unit);
 

@@ -49,7 +49,7 @@ describe('Registre des infobulles', () => {
         const unknown = [...used, ...tipProps].filter((k) => !TIPS[k]);
         expect(unknown).toEqual([]);
     });
-    it('aucune infobulle orpheline : chaque clé du registre est utilisée', () => {
+    it('aucune infobulle orpheline : chaque clé du registre est utilisée', () => {
         const orphans = Object.keys(TIPS).filter((k) => !allSource.includes(`"${k}"`));
         expect(orphans).toEqual([]);
     });

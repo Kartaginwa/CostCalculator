@@ -175,7 +175,7 @@ export const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange
         // individuellement ("Items / par / page :" sur 3 lignes).
         <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
             <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-sm text-gray-700">Items par page :</span>
+                <span className="text-sm text-gray-700">Éléments par page&nbsp;:</span>
                 <select
                     value={itemsPerPage}
                     onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
@@ -338,7 +338,7 @@ export const Combobox = ({ options, value, onChange, getOptionLabel, getOptionKe
                     onChange={handleInputChange}
                     onFocus={openDropdown}
                     className="w-full p-1 border rounded"
-                    placeholder="Saisir ou sélectionner..."
+                    placeholder="Saisir ou sélectionner…"
                 />
                 <button type="button" onClick={() => isOpen ? setIsOpen(false) : openDropdown()} className="absolute right-1 p-1">
                     <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -617,7 +617,7 @@ export const AllergenModal = ({ isOpen, onClose, ingredientName, assignedAllerge
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg p-6 shadow-xl max-w-2xl w-full">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                    Gérer les allergènes pour : <span className="font-bold">{ingredientName}</span>
+                    Gérer les allergènes pour&nbsp;: <span className="font-bold">{ingredientName}</span>
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {MAJOR_ALLERGENS.map(allergen => (
@@ -727,7 +727,7 @@ export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdateP
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Assigner le personnel pour : "{step.stepName}"</h3>
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Assigner le personnel pour&nbsp;: «&nbsp;{step.stepName}&nbsp;»</h3>
                 <div className="space-y-4">
                     {laborDatabase.length > 0 ? (
                         laborDatabase.map(post => {
@@ -757,7 +757,7 @@ export const PersonnelModal = ({ isOpen, onClose, step, laborDatabase, onUpdateP
                             );
                         })
                     ) : (
-                        <p className="text-center text-gray-500">Veuillez d'abord définir des postes et des employés dans l'onglet "Main-d'œuvre".</p>
+                        <p className="text-center text-gray-500">Veuillez d'abord définir des postes et des employés dans l'onglet «&nbsp;Main-d'œuvre&nbsp;».</p>
                     )}
                 </div>
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
@@ -875,7 +875,7 @@ export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, 
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1">Ajouter un format</h3>
-                <p className="text-sm text-gray-500 mb-4">Nouveau format (emballage + quantité) pour : <span className="font-medium">{productName}</span></p>
+                <p className="text-sm text-gray-500 mb-4">Nouveau format (emballage + quantité) pour&nbsp;: <span className="font-medium">{productName}</span></p>
 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                     <div>
@@ -897,7 +897,7 @@ export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, 
                     </div>
                 </div>
 
-                <label htmlFor="newFormatSku" className="block text-sm font-medium text-gray-700">SKU (optionnel — sinon déduit automatiquement de la recette et du format)</label>
+                <label htmlFor="newFormatSku" className="block text-sm font-medium text-gray-700">SKU (facultatif — sinon déduit automatiquement de la recette et du format)</label>
                 <input
                     type="text" id="newFormatSku" value={sku} onChange={(e) => setSku(e.target.value)}
                     placeholder="généré automatiquement si laissé vide"
@@ -914,7 +914,7 @@ export const AddFormatModal = ({ isOpen, onClose, productName, existingFormats, 
                         <option key={f.id} value={f.id}>Copier la fiche de « {formatQuantityLabel(f.portionSize, f.portionUnit) || `Format ${i + 1}`} » en bloc</option>
                     ))}
                 </select>
-                <p className="mt-1 text-xs text-gray-500">Une copie complète (ingrédients, étapes de production, prix...) est un point de départ pratique pour un format très semblable — le nouveau format et le SKU ci-dessus restent les vôtres, seule la fiche recette est copiée. Vous pourrez ensuite ajuster ou copier section par section depuis n'importe quel autre SKU.</p>
+                <p className="mt-1 text-xs text-gray-500">Une copie complète (ingrédients, étapes de production, prix…) est un point de départ pratique pour un format très semblable — le nouveau format et le SKU ci-dessus restent les vôtres, seule la fiche recette est copiée. Vous pourrez ensuite ajuster ou copier section par section depuis n'importe quel autre SKU.</p>
 
                 <div className="mt-6 flex justify-end gap-2">
                     <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
@@ -942,7 +942,7 @@ export const CopyFromFormatControl = ({ formats, currentFormatId, onCopy, label 
                 onChange={(e) => setSourceId(e.target.value)}
                 className="p-1 border rounded text-xs text-gray-700 max-w-[160px]"
             >
-                <option value="">Copier depuis un format...</option>
+                <option value="">Copier depuis un format…</option>
                 {others.map((f, i) => (
                     <option key={f.id} value={f.id}>{formatQuantityLabel(f.portionSize, f.portionUnit) || `Format ${i + 1}`}</option>
                 ))}

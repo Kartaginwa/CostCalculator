@@ -311,7 +311,7 @@ export const getDefaultState = () => {
         { id: 'ing_courge', name: 'Courge musquée en dés surgelée', provider: 'Maraîcher du Nord', purchaseFormat: 10, unit: 'kg', purchasePrice: 19.00, unitPrice: 1.90, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: [] },
         { id: 'ing_pdt_flocons', name: 'Pommes de terre en flocons', provider: 'Épicerie Grossiste Boréal', purchaseFormat: 10, unit: 'kg', purchasePrice: 38.00, unitPrice: 3.80, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: [] },
         { id: 'ing_riz', name: 'Riz basmati', provider: 'Épicerie Grossiste Boréal', purchaseFormat: 20, unit: 'kg', purchasePrice: 48.00, unitPrice: 2.40, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: [] },
-        { id: 'ing_creme', name: 'Crème 35 %', provider: 'Fromagerie du Lac', purchaseFormat: 4, unit: 'L', purchasePrice: 42.00, unitPrice: 10.50, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['milk'] },
+        { id: 'ing_creme', name: 'Crème 35 %', provider: 'Fromagerie du Lac', purchaseFormat: 4, unit: 'L', purchasePrice: 42.00, unitPrice: 10.50, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['milk'] },
         { id: 'ing_beurre', name: 'Beurre non salé', provider: 'Fromagerie du Lac', purchaseFormat: 5, unit: 'kg', purchasePrice: 52.00, unitPrice: 10.40, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['milk'] },
         { id: 'ing_farine', name: 'Farine tout usage', provider: 'Épicerie Grossiste Boréal', purchaseFormat: 20, unit: 'kg', purchasePrice: 23.00, unitPrice: 1.15, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: ['gluten'] },
         { id: 'ing_tomates', name: 'Tomates broyées en conserve', provider: 'Épicerie Grossiste Boréal', purchaseFormat: 3, unit: 'kg', purchasePrice: 9.00, unitPrice: 3.00, isRecipe: false, lossPercentage: 0, lastUpdated: today, allergens: [] },
@@ -323,9 +323,9 @@ export const getDefaultState = () => {
     // --- EMBALLAGE (Phase 2) : catalogue miroir des ingrédients (fournisseur, format d'achat,
     // unité, prix, perte %), mais jamais fusionné au coût matière — voir 04-Conception-Modele.md.
     const packaging = [
-        { id: 'pkg_barq_s', name: 'Barquette operable 340 ml', provider: 'Emballages Boréal', purchaseFormat: 200, unit: 'unité', purchasePrice: 84.00, unitPrice: 0.42, lossPercentage: 1, lastUpdated: today },
-        { id: 'pkg_barq_f', name: 'Barquette operable 900 ml (familiale)', provider: 'Emballages Boréal', purchaseFormat: 150, unit: 'unité', purchasePrice: 102.00, unitPrice: 0.68, lossPercentage: 1, lastUpdated: today },
-        { id: 'pkg_pellicule', name: 'Pellicule scellante operable', provider: 'Emballages Boréal', purchaseFormat: 500, unit: 'unité', purchasePrice: 40.00, unitPrice: 0.08, lossPercentage: 2, lastUpdated: today },
+        { id: 'pkg_barq_s', name: 'Barquette operculable 340 ml', provider: 'Emballages Boréal', purchaseFormat: 200, unit: 'unité', purchasePrice: 84.00, unitPrice: 0.42, lossPercentage: 1, lastUpdated: today },
+        { id: 'pkg_barq_f', name: 'Barquette operculable 900 ml (familiale)', provider: 'Emballages Boréal', purchaseFormat: 150, unit: 'unité', purchasePrice: 102.00, unitPrice: 0.68, lossPercentage: 1, lastUpdated: today },
+        { id: 'pkg_pellicule', name: 'Pellicule scellante operculable', provider: 'Emballages Boréal', purchaseFormat: 500, unit: 'unité', purchasePrice: 40.00, unitPrice: 0.08, lossPercentage: 2, lastUpdated: today },
         { id: 'pkg_boite', name: 'Manchon de carton imprimé', provider: 'Cartons Pro-Nord', purchaseFormat: 100, unit: 'unité', purchasePrice: 55.00, unitPrice: 0.55, lossPercentage: 1, lastUpdated: today },
         { id: 'pkg_etiquette', name: 'Étiquette nutritionnelle / code-barres', provider: 'Impression Boréale', purchaseFormat: 1000, unit: 'unité', purchasePrice: 70.00, unitPrice: 0.07, lossPercentage: 2, lastUpdated: today },
         { id: 'pkg_sac_soupe', name: 'Sac sous-vide pour soupe 750 ml', provider: 'Emballages Boréal', purchaseFormat: 300, unit: 'unité', purchasePrice: 90.00, unitPrice: 0.30, lossPercentage: 1, lastUpdated: today },
@@ -359,7 +359,7 @@ export const getDefaultState = () => {
         { id: 'post_resp', postName: 'Responsable de production', employees: [
             { id: 'emp_resp', employeeName: 'Mireille', hourlyRate: 32, socialCharges: 16, vacationPercentage: 6, productiveTimePercentage: 85, workedHours: 20 },
         ] },
-        { id: 'post_cuisinier', postName: 'Cuisinier de production', employees: [
+        { id: 'post_cuisinier', postName: 'Opérateur de production', employees: [
             { id: 'emp_cuisinier_1', employeeName: 'Hugo', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 96 },
             { id: 'emp_cuisinier_2', employeeName: 'Félix', hourlyRate: 22, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 90, workedHours: 96 },
             { id: 'emp_cuisinier_3', employeeName: 'Sarah', hourlyRate: 21, socialCharges: 16, vacationPercentage: 4, productiveTimePercentage: 92, workedHours: 86 },
@@ -396,7 +396,7 @@ export const getDefaultState = () => {
                 ],
                 packagingItems: [],
                 productionSteps: [
-                    { stepId: 's_bo_1', stepName: 'Mijotage du bouillon', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 7200 },
+                    { stepId: 's_bo_1', stepName: 'Mijotage du bouillon', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 7200 },
                     // Étape sans personne (refroidissement en cellule) : elle apparaît dans la ligne « Sans main-d'œuvre » du diagramme de production.
                     { stepId: 's_bo_2', stepName: 'Refroidissement rapide', personnel: [], startTime: 7200, duration: 3600 },
                 ],
@@ -420,7 +420,7 @@ export const getDefaultState = () => {
                 ],
                 packagingItems: [],
                 productionSteps: [
-                    { stepId: 's_puv_1', stepName: 'Cuisson et pilage (lot de 5 kg)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 400 },
+                    { stepId: 's_puv_1', stepName: 'Cuisson et pilage (lot de 5 kg)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 400 },
                 ],
             }],
         },
@@ -447,7 +447,7 @@ export const getDefaultState = () => {
                     { rowId: 'p_pu_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_pu_1', stepName: 'Cuisson et pilage (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 400 },
+                    { stepId: 's_pu_1', stepName: 'Cuisson et pilage (lot de 20 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 400 },
                     { stepId: 's_pu_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 400, duration: 315 },
                 ],
             }],
@@ -479,7 +479,7 @@ export const getDefaultState = () => {
                         { rowId: 'p_pa_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                     ],
                     productionSteps: [
-                        { stepId: 's_pa_1', stepName: 'Cuisson du bœuf et assemblage (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 400 },
+                        { stepId: 's_pa_1', stepName: 'Cuisson du bœuf et assemblage (lot de 20 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 400 },
                         { stepId: 's_pa_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 400, duration: 470 },
                     ],
                 },
@@ -502,7 +502,7 @@ export const getDefaultState = () => {
                         { rowId: 'p_paf_4', id: 'pkg_etiquette', quantity: 10, recipeUnit: 'unité' },
                     ],
                     productionSteps: [
-                        { stepId: 's_paf_1', stepName: 'Cuisson du bœuf et assemblage (lot familial de 10 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 470 },
+                        { stepId: 's_paf_1', stepName: 'Cuisson du bœuf et assemblage (lot familial de 10 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 470 },
                         { stepId: 's_paf_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 470, duration: 570 },
                         { stepId: 's_paf_3', stepName: 'Contrôle qualité', personnel: [{ postId: 'Contrôleur qualité' }], startTime: 1040, duration: 240 },
                     ],
@@ -531,8 +531,8 @@ export const getDefaultState = () => {
                     { rowId: 'p_tao_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_tao_1', stepName: 'Cuisson du poulet et de la sauce (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 670 },
-                    { stepId: 's_tao_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Cuisinier de production' }], startTime: 670, duration: 540 },
+                    { stepId: 's_tao_1', stepName: 'Cuisson du poulet et de la sauce (lot de 20 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 670 },
+                    { stepId: 's_tao_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Opérateur de production' }], startTime: 670, duration: 540 },
                     { stepId: 's_tao_3', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 1210, duration: 630 },
                 ],
             }],
@@ -564,8 +564,8 @@ export const getDefaultState = () => {
                     { rowId: 'p_sa_3', id: 'pkg_etiquette', quantity: 15, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_sa_1', stepName: 'Cuisson du saumon (lot de 15 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 465 },
-                    { stepId: 's_sa_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Cuisinier de production' }], startTime: 465, duration: 465 },
+                    { stepId: 's_sa_1', stepName: 'Cuisson du saumon (lot de 15 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 465 },
+                    { stepId: 's_sa_2', stepName: 'Cuisson du riz et des légumes', personnel: [{ postId: 'Opérateur de production' }], startTime: 465, duration: 465 },
                     { stepId: 's_sa_3', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 930, duration: 510 },
                 ],
             }],
@@ -597,7 +597,7 @@ export const getDefaultState = () => {
                         { rowId: 'p_th_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                     ],
                     productionSteps: [
-                        { stepId: 's_th_1', stepName: 'Cuisson du poulet et des légumes (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 670 },
+                        { stepId: 's_th_1', stepName: 'Cuisson du poulet et des légumes (lot de 20 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 670 },
                         { stepId: 's_th_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 670, duration: 630 },
                     ],
                 },
@@ -655,7 +655,7 @@ export const getDefaultState = () => {
                     { rowId: 'p_ch_3', id: 'pkg_etiquette', quantity: 20, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_ch_1', stepName: 'Mijotage du chili (lot de 20 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 670 },
+                    { stepId: 's_ch_1', stepName: 'Mijotage du chili (lot de 20 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 670 },
                     { stepId: 's_ch_2', stepName: 'Portionnement et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 670, duration: 630 },
                 ],
             }],
@@ -690,7 +690,7 @@ export const getDefaultState = () => {
                     { rowId: 'p_so_2', id: 'pkg_etiquette', quantity: 47, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_so_1', stepName: 'Mijotage du lot (40 L)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 5400 },
+                    { stepId: 's_so_1', stepName: 'Mijotage du lot (40 L)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 5400 },
                     { stepId: 's_so_2', stepName: 'Mise en sacs et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 5400, duration: 2700 },
                 ],
             }],
@@ -723,7 +723,7 @@ export const getDefaultState = () => {
                     { rowId: 'p_po_2', id: 'pkg_etiquette', quantity: 15, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_po_1', stepName: 'Mijotage et velouté (lot de 15 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 1630 },
+                    { stepId: 's_po_1', stepName: 'Mijotage et velouté (lot de 15 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 1630 },
                     { stepId: 's_po_2', stepName: 'Mise en sac et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 1630, duration: 510 },
                 ],
             }],
@@ -757,7 +757,7 @@ export const getDefaultState = () => {
                     { rowId: 'p_ss_3', id: 'pkg_etiquette', quantity: 15, recipeUnit: 'unité' },
                 ],
                 productionSteps: [
-                    { stepId: 's_ss_1', stepName: 'Mijotage de la sauce (lot de 15 portions)', personnel: [{ postId: 'Cuisinier de production' }], startTime: 0, duration: 930 },
+                    { stepId: 's_ss_1', stepName: 'Mijotage de la sauce (lot de 15 portions)', personnel: [{ postId: 'Opérateur de production' }], startTime: 0, duration: 930 },
                     { stepId: 's_ss_2', stepName: 'Mise en pot et scellage', personnel: [{ postId: "Opérateur d'emballage" }], startTime: 930, duration: 510 },
                 ],
             }],

@@ -111,7 +111,7 @@ export const InstructionModal = ({ isOpen, onClose, anchor = null, appLogoBase64
                             <input
                                 type="text"
                                 data-testid="guide-search"
-                                placeholder="Rechercher un terme (ex. « marge nette », « point mort », « CICI »)…"
+                                placeholder="Rechercher un terme (ex. «&nbsp;marge nette&nbsp;», «&nbsp;point mort&nbsp;», «&nbsp;CICI&nbsp;»)…"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full p-2 border rounded-md border-gray-300"

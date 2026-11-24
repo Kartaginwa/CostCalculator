@@ -76,7 +76,7 @@ export const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filter
                     <thead>
                         <tr className="text-gray-500 border-b">
                             {columns.map(col => (
-                                <th key={col.key} className={`py-2 px-3 ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
+                                <th key={col.key} className={`py-2 px-3 ${col.align === 'right' ? 'text-center' : 'text-center'}`}>
                                     <span className={`inline-flex items-center gap-1 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
                                         <button onClick={() => requestSort(col.key)} className={`inline-flex items-center gap-1 hover:text-gray-800 ${col.align === 'right' ? 'flex-row-reverse' : ''}`}>
                                             {col.label}
@@ -95,12 +95,12 @@ export const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filter
                                 <tr key={v.id} className={`border-b border-gray-100 ${v.tier === 'elevee' ? 'bg-orange-50' : ''}`}>
                                     <td className="py-2 px-3">{v.name}</td>
                                     <td className="py-2 px-3 text-gray-500">{v.provider || '—'}</td>
-                                    <td className="py-2 px-3 text-right text-gray-600">{formatCurrency(v.currentPrice)} $</td>
+                                    <td className="py-2 px-3 text-right text-gray-600">{formatCurrency(v.currentPrice)}&nbsp;$</td>
                                     <td className={`py-2 px-3 text-right ${v.trendPercent > 0.5 ? 'text-red-600' : v.trendPercent < -0.5 ? 'text-green-600' : 'text-gray-500'}`}>
-                                        {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {formatNumber(Math.abs(v.trendPercent), 0)} %
+                                        {v.trendPercent > 0.5 ? '▲' : v.trendPercent < -0.5 ? '▼' : '→'} {formatNumber(Math.abs(v.trendPercent), 0)}&nbsp;%
                                     </td>
                                     <td className={`py-2 px-3 text-right ${tier.className}`}>
-                                        {formatNumber(v.amplitudePercent, 0)} % · {tier.label}
+                                        {formatNumber(v.amplitudePercent, 0)}&nbsp;% · {tier.label}
                                     </td>
                                 </tr>
                             );

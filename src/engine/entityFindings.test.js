@@ -9,7 +9,7 @@ import { classifyFinding, severityOf } from './findingMeta.js';
 import { demoContext } from './testing/demoFindingsContext.js';
 const byId = (res, id) => res.all.find(f => f.id === id);
 
-describe('classement : chaque identifiant du moteur a une portée', () => {
+describe('classement : chaque identifiant du moteur a une portée', () => {
     it('tout identifiant écrit dans keyFindings.js et entityFindings.js est classé', () => {
         const unclassified = [];
         for (const file of ['keyFindings.js', 'entityFindings.js']) {
@@ -34,7 +34,7 @@ describe('classement : chaque identifiant du moteur a une portée', () => {
         }
     });
 
-    it('portées : général pour l\'entreprise, spécifique pour un produit, un canal, un poste, un fournisseur', () => {
+    it('portées : général pour l\'entreprise, spécifique pour un produit, un canal, un poste, un fournisseur', () => {
         expect(classifyFinding('safety')).toEqual({ scope: 'general', subjectType: 'entreprise' });
         expect(classifyFinding('rec-net').scope).toBe('general');
         expect(classifyFinding('channel-dependency')).toEqual({ scope: 'specific', subjectType: 'canal' });
@@ -47,7 +47,7 @@ describe('classement : chaque identifiant du moteur a une portée', () => {
 });
 
 describe('gravité', () => {
-    it('majeure : niveau 1, impact ≥ 3 % des ventes, constat structurel, ou général de poids ≥ 80 ; moyenne : poids ≥ 50 ou impact ≥ 1 % ; sinon mineure', () => {
+    it('majeure : niveau 1, impact ≥ 3 % des ventes, constat structurel, ou général de poids ≥ 80 ; moyenne : poids ≥ 50 ou impact ≥ 1 % ; sinon mineure', () => {
         const f = (weight, impact = null, scope = 'general', id = 'x') => ({ id, weight, impact, scope });
         expect(severityOf(f(30), 100000, 1)).toBe('major');
         expect(severityOf(f(80), 100000, 2)).toBe('major');
@@ -63,7 +63,7 @@ describe('gravité', () => {
         expect(severityOf(f(40), 0, 3)).toBe('minor'); // sans ventes, l'impact ne compte pas
     });
 
-    it('sensibilité : un bénéfice qui résiste n\'est plus de niveau 1 ; la gravité suit l\'ampleur de la perte simulée', () => {
+    it('sensibilité : un bénéfice qui résiste n\'est plus de niveau 1 ; la gravité suit l\'ampleur de la perte simulée', () => {
         const res = computeKeyFindings(demoContext());
         expect(tierOf({ id: 'sens-inputs', tone: 'force' })).toBe(3);
         expect(tierOf({ id: 'sens-inputs', tone: 'faiblesse' })).toBe(1);
@@ -77,18 +77,18 @@ describe('constats par entité (démo)', () => {
     const base = computeKeyFindings(ctx);
     const res = computeKeyFindings(ctx, { entities: true });
 
-    it('par défaut, rien ne change : 50 constats agrégés (dont 6 objectifs), aucun constat par entité', () => {
+    it('par défaut, rien ne change : 50 constats agrégés (dont 6 objectifs), aucun constat par entité', () => {
         expect(base.all).toHaveLength(50);
         expect(base.all.every(f => !/^(sku-class|sku-loss|sku-over-cost|sku-hour|cell-deficit|post-state|supplier-dep|volatile-item|loss-item|format-gap-of)-/.test(f.id))).toBe(true);
     });
 
-    it('avec les entités : les versions agrégées sont conservées et les versions par entité s\'y ajoutent', () => {
+    it('avec les entités : les versions agrégées sont conservées et les versions par entité s\'y ajoutent', () => {
         expect(res.all.length).toBeGreaterThan(base.all.length);
         base.all.forEach(f => expect(byId(res, f.id)).toBeTruthy());
         ['sku-losers', 'bcg-cows', 'supplier-ing', 'loss-high', 'format-gap'].forEach(id => expect(byId(res, id).form).toBe('aggregate'));
     });
 
-    it('tout constat porte portée, gravité, type de sujet et forme ; un constat par entité porte son sujet', () => {
+    it('tout constat porte portée, gravité, type de sujet et forme ; un constat par entité porte son sujet', () => {
         expect(new Set(res.all.map(f => f.id)).size).toBe(res.all.length);
         for (const f of res.all) {
             expect(['general', 'specific']).toContain(f.scope);
@@ -102,17 +102,17 @@ describe('constats par entité (démo)', () => {
         expect(withActivity.all.find(f => f.id === 'activity-deficit-act_x').subject).toEqual({ type: 'activité', id: 'act_x', name: 'Activité X' });
     });
 
-    it('format : le Chili est une vache à lait, perd dans 2 canaux sur 3 (≈ 425 $), dépasse la cible de coût matière', () => {
+    it('format : le Chili est une vache à lait, perd dans 2 canaux sur 3 (≈ 425 $), dépasse la cible de coût matière', () => {
         expect(byId(res, 'sku-class-fmt_chili')).toMatchObject({ tone: 'faiblesse', subject: { type: 'format', id: 'fmt_chili' } });
         const loss = byId(res, 'sku-loss-fmt_chili');
         expect(loss.title).toContain('2 canaux sur 3');
         expect(loss.detail).toContain('Grandes surfaces');
         expect(loss.impact).toBeCloseTo(424.9, 0);
-        expect(byId(res, 'sku-over-cost-fmt_chili').detail).toContain('34,9 %');
+        expect(byId(res, 'sku-over-cost-fmt_chili').detail).toContain('34,9 %');
         expect(byId(res, 'sku-hour-fmt_chili')).toMatchObject({ tone: 'force' }); // 117 $/h contre 87 $ (moyenne de l'écran Main-d'œuvre)
     });
 
-    it('format : les cinq formats perdants, les quatre au-dessus de la cible, les rentables partout, les bons et mauvais usages du temps', () => {
+    it('format : les cinq formats perdants, les quatre au-dessus de la cible, les rentables partout, les bons et mauvais usages du temps', () => {
         expect(res.all.filter(f => f.id.startsWith('sku-loss-')).map(f => f.id).sort()).toEqual(['sku-loss-fmt_chili', 'sku-loss-fmt_potage', 'sku-loss-fmt_sauce_spag', 'sku-loss-fmt_sauce_terroir', 'sku-loss-fmt_thai_f']);
         expect(res.all.filter(f => f.id.startsWith('sku-over-cost-'))).toHaveLength(4);
         expect(res.all.filter(f => f.id.startsWith('sku-positive-'))).toHaveLength(7);
@@ -123,27 +123,27 @@ describe('constats par entité (démo)', () => {
         expect(byId(res, 'sku-hour-fmt_pate_s')).toMatchObject({ tone: 'force' });
     });
 
-    it('produit à plusieurs formats : l\'écart de marge du Sauté de poulet thaï (27,4 % contre 4,0 %)', () => {
+    it('produit à plusieurs formats : l\'écart de marge du Sauté de poulet thaï (27,4 % contre 4,0 %)', () => {
         const gap = byId(res, 'format-gap-of-prod_thai');
         expect(gap.subject.type).toBe('produit');
-        expect(gap.detail).toContain('27,4 %');
-        expect(gap.detail).toContain('4,0 %');
+        expect(gap.detail).toContain('27,4 %');
+        expect(gap.detail).toContain('4,0 %');
     });
 
-    it('activité × canal : seules les soupes et les sauces en grandes surfaces perdent de l\'argent', () => {
+    it('activité × canal : seules les soupes et les sauces en grandes surfaces perdent de l\'argent', () => {
         const cells = res.all.filter(f => f.id.startsWith('cell-deficit-'));
         expect(cells.map(f => f.id).sort()).toEqual(['cell-deficit-act_sauces-channel_gs', 'cell-deficit-act_soupes-channel_gs']);
         expect(cells.find(f => f.id.includes('sauces')).impact).toBeCloseTo(392.8, 0);
         expect(cells[0].subject.type).toBe('activité × canal');
     });
 
-    it('postes : un constat par poste de production, bien occupé', () => {
+    it('postes : un constat par poste de production, bien occupé', () => {
         const posts = res.all.filter(f => f.id.startsWith('post-state-'));
-        expect(posts.map(f => f.subject.id).sort()).toEqual(['Contrôleur qualité', 'Cuisinier de production', 'Opérateur d\'emballage']);
+        expect(posts.map(f => f.subject.id).sort()).toEqual(['Contrôleur qualité', 'Opérateur d\'emballage', 'Opérateur de production']);
         posts.forEach(f => expect(f.tone).toBe('force'));
     });
 
-    it('approvisionnement : fournisseurs en dépendance, éléments volatils de classe A, ingrédients qui pèsent dans la perte stock', () => {
+    it('approvisionnement : fournisseurs en dépendance, éléments volatils de classe A, ingrédients qui pèsent dans la perte en stock', () => {
         expect(byId(res, 'supplier-dep-ing-Boucherie Nordique').subject.type).toBe('fournisseur');
         expect(byId(res, 'supplier-dep-pkg-Emballages Boréal')).toBeTruthy();
         expect(res.all.filter(f => f.id.startsWith('volatile-item-ing-'))).toHaveLength(4);
@@ -152,7 +152,7 @@ describe('constats par entité (démo)', () => {
         expect(byId(res, 'loss-item-ing_boeuf').impact).toBeCloseTo(459, 0);
     });
 
-    it('évolution par format : un coût de revient qui monte de 25 % ressort comme constat du format', () => {
+    it('évolution par format : un coût de revient qui monte de 25 % ressort comme constat du format', () => {
         const nowCost = demoContext().analysis.activeProducts.find(p => p.id === 'fmt_chili').costs.totalCostPerPortion;
         const rise = computeKeyFindings(demoContext((points) => {
             const point = points[points.length - 2];
@@ -162,7 +162,7 @@ describe('constats par entité (démo)', () => {
         }), { entities: true });
         const f = byId(rise, 'sku-cost-trend-fmt_chili');
         expect(f).toMatchObject({ tone: 'faiblesse', group: 'evolution', subject: { type: 'format', id: 'fmt_chili' } });
-        expect(f.title).toContain('hausse de 25 %');
+        expect(f.title).toContain('hausse de 25 %');
     });
 
     it('sans données, les règles par entité se taisent', () => {

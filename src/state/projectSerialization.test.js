@@ -121,14 +121,14 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(pkg.uniqueId).toBe('');
     });
 
-    it('crée une activité de production « Activité 1 » par défaut pour un projet antérieur à cette notion', () => {
+    it('crée une activité de production « Activité 1 » par défaut pour un projet antérieur à cette notion', () => {
         const legacy = { generalInfo: { totalIndirects: 1000 } }; // pas de productionActivities
         const parsed = parseProjectData(legacy, getEmptyState());
         expect(parsed.productionActivities).toHaveLength(1);
         expect(parsed.productionActivities[0].name).toBe('Activité 1');
     });
 
-    it('crée un circuit de vente "Vente directe" par défaut pour un projet antérieur à la Phase 3 (sans salesChannels)', () => {
+    it('crée un canal de vente "Vente directe" par défaut pour un projet antérieur à la Phase 3 (sans salesChannels)', () => {
         const legacy = { generalInfo: { totalIndirects: 1000 } }; // pas de salesChannels
         const parsed = parseProjectData(legacy, getEmptyState());
         expect(parsed.salesChannels).toHaveLength(1);
@@ -136,7 +136,7 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(parsed.salesChannels[0].links).toEqual([]);
     });
 
-    it('préserve les circuits de vente déjà présents sur un projet', () => {
+    it('préserve les canaux de vente déjà présents sur un projet', () => {
         const legacy = { salesChannels: [{ id: 'c1', name: 'Grande distribution', links: [{ id: 'l1', name: 'Distributeur', type: 'margin', percent: 20 }] }] };
         const parsed = parseProjectData(legacy, getEmptyState());
         expect(parsed.salesChannels).toEqual(legacy.salesChannels);
@@ -217,7 +217,7 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(parsed.expenseLines[0].channelAllocations).toEqual({ channel_disparu: 1000 });
     });
 
-    it("repartitionKeys absent devient une liste vide ; une clé personnalisée est préservée et ses parts d'activité orphelines refondent dans Général", () => {
+    it("repartitionKeys absent devient une liste vide ; une clé personnalisée est préservée et ses parts d'activité orphelines refondent dans Général", () => {
         const legacy = {
             productionActivities: [{ id: 'act_1', name: 'Confitures' }],
             repartitionKeys: [
@@ -231,7 +231,7 @@ describe('round-trip sauvegarde -> chargement', () => {
         expect(parseProjectData({}, getEmptyState()).repartitionKeys).toEqual([]);
     });
 
-    it("revalide la clé de répartition d'une ligne de frais fixes : activité orpheline refond vers 'activity:general', canal/clé personnalisée orphelins retombent sur 'manual'", () => {
+    it("revalide la clé de répartition d'une ligne de frais fixes : activité orpheline refond vers 'activity:general', canal/clé personnalisée orphelins retombent sur 'manual'", () => {
         const legacy = {
             productionActivities: [{ id: 'act_1', name: 'Confitures' }],
             repartitionKeys: [{ id: 'rk_1', name: 'Clé encore valide', activityShares: {}, channelShares: {} }],

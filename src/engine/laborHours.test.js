@@ -16,7 +16,7 @@ const plat = (over = {}, row = {}) => ({ id: 'p_plat', activityId: 'a2', formats
 })] });
 
 describe('computeLaborHoursNeeded', () => {
-    it('sans sous-recette : durée des étapes × lots vendus', () => {
+    it('sans sous-recette : durée des étapes × lots vendus', () => {
         const r = computeLaborHoursNeeded([plat({ ingredients: [] })]);
         expect(r.byPost.Cuisinier).toBeCloseTo(15, 8); // 100 portions ÷ 20 = 5 lots × 3 h
         expect(r.total).toBeCloseTo(15, 8);
@@ -34,7 +34,7 @@ describe('computeLaborHoursNeeded', () => {
         const r = computeLaborHoursNeeded([sauce(), plat({}, { quantity: 2000, recipeUnit: 'ml' })]);
         expect(r.byPost.Cuisinier).toBeCloseTo(17, 8);
     });
-    it('suit le rendement de la ligne, comme le coût (rendement 50 % = deux fois plus de sauce)', () => {
+    it('suit le rendement de la ligne, comme le coût (rendement 50 % = deux fois plus de sauce)', () => {
         const r = computeLaborHoursNeeded([sauce(), plat({}, { yieldPercentage: 50 })]);
         expect(r.byPost.Cuisinier).toBeCloseTo(15 + 4, 8);
     });
@@ -71,7 +71,7 @@ describe('computeLaborHoursNeeded', () => {
 
 describe('Taux d\'absorption avec sous-recettes', () => {
     const labor = [{ postName: 'Cuisinier', employees: [{ workedHours: 100, hourlyRate: 20, socialCharges: 0, vacationPercentage: 0 }] }];
-    it('le temps de la sous-recette relève le taux : 17 h au lieu de 15 h sur 100 h payées', () => {
+    it('le temps de la sous-recette relève le taux : 17 h au lieu de 15 h sur 100 h payées', () => {
         const without = computeLaborAbsorption([plat()], labor, []);
         expect(without.kitchenProductivity).toBeCloseTo(15, 8);
         const withSub = computeLaborAbsorption([sauce(), plat()], labor, []);
@@ -80,7 +80,7 @@ describe('Taux d\'absorption avec sous-recettes', () => {
     });
 });
 
-describe("computeLaborHoursNeeded : canal supprimé (21/11)", () => {
+describe("computeLaborHoursNeeded : canal supprimé (21/11)", () => {
     it("les ventes d'un canal qui n'existe plus ne demandent aucune heure de production", () => {
         const product = plat({ ingredients: [], channelPrices: [{ channelId: 'c1', netPrice: 5, volume: 100 }, { channelId: 'supprime', netPrice: 5, volume: 400 }] });
         const channels = [{ id: 'c1', name: 'Direct' }];

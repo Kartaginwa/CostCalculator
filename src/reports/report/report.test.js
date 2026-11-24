@@ -29,7 +29,7 @@ describe('formats', () => {
         expect(sgn(5)).toBe('+5');
         expect(sgn(-5)).toBe('−5');
     });
-    it('une valeur absente s\'imprime « — » : jamais NaN, undefined ni null', () => {
+    it('une valeur absente s\'imprime « — » : jamais NaN, undefined ni null', () => {
         for (const v of [null, undefined, NaN, Infinity, 'x']) { expect(f(v)).toBe('—'); expect(usd(v)).toBe('—'); expect(pc(v)).toBe('—'); expect(sgn(v)).toBe('—'); }
     });
     it('un petit négatif qui s\'arrondit à zéro n\'a pas de signe moins', () => {
@@ -45,7 +45,7 @@ describe('formats', () => {
         expect(shortMonth('2026-08-15T12:00:00')).toBe('août 26');
         expect(longDate('pas une date')).toBe('');
     });
-    it('couleur d\'une cellule de marge : vert, rouge, blanc', () => {
+    it('couleur d\'une cellule de marge : vert, rouge, blanc', () => {
         expect(marginCell(0.3)).toContain('22,163,74');
         expect(marginCell(-0.1)).toContain('220,38,38');
         expect(marginCell(0)).toContain('#fff');
@@ -69,9 +69,9 @@ describe('période', () => {
 
 describe('glossaire', () => {
     it('ne garde que les termes présents dans le texte, au singulier ou au pluriel', () => {
-        const terms = [{ term: 'Marge brute', def: 'a' }, { term: 'Perte stock', def: 'b' }, { term: 'Point mort (seuil de rentabilité)', def: 'c' }, { term: 'Analyse ABC', def: 'd' }, { term: 'Lot', def: 'e' }];
-        const text = '<p>La marge brute et les pertes stock. Le point mort baisse. Un classement ABC.</p> Un lotissement.';
-        expect(selectGlossary(text, terms).map(t => t.term)).toEqual(['Marge brute', 'Perte stock', 'Point mort (seuil de rentabilité)', 'Analyse ABC']);
+        const terms = [{ term: 'Marge brute', def: 'a' }, { term: 'Perte en stock', def: 'b' }, { term: 'Point mort (seuil de rentabilité)', def: 'c' }, { term: 'Analyse ABC', def: 'd' }, { term: 'Lot', def: 'e' }];
+        const text = '<p>La marge brute et les pertes en stock. Le point mort baisse. Un classement ABC.</p> Un lotissement.';
+        expect(selectGlossary(text, terms).map(t => t.term)).toEqual(['Marge brute', 'Perte en stock', 'Point mort (seuil de rentabilité)', 'Analyse ABC']);
     });
     it('un mot n\'est pas trouvé à l\'intérieur d\'un autre (lot / lotissement)', () => {
         expect(termIsUsed('Lot', 'un lotissement')).toBe(false);
@@ -82,7 +82,7 @@ describe('glossaire', () => {
         const r = selectGlossary('marge', [{ term: 'Marge', def: 'Voir la [[guide-x|marge nette]] et [[guide-y]].' }]);
         expect(r[0].def).toBe('Voir la marge nette et guide-y.');
     });
-    it('sur le texte du démo : une sélection (pas tout le glossaire), sans renvoi brut', () => {
+    it('sur le texte du démo : une sélection (pas tout le glossaire), sans renvoi brut', () => {
         const { state, analysisData, calculatedGeneralInfo, trackingPoints } = demoInputs();
         const m = buildReportModel({ project: { ...state, trackingPoints }, analysisData, calculatedGeneralInfo });
         const text = buildUnits(m, { chapters: ['1', '2', '3', '4', '5', '6'] }, noMap).map(u => u.html).join(' ');
@@ -101,7 +101,7 @@ describe('graphiques', () => {
         expect(waterfall([])).toBe('');
         expect(waterfall([{ label: 'a', value: 0, total: true }, { label: 'b', value: 1 }])).toBe('');
     });
-    it('un graphique en barres court ne se coupe pas ; un long (plus de 12 lignes) se coupe entre deux lignes', () => {
+    it('un graphique en barres court ne se coupe pas ; un long (plus de 12 lignes) se coupe entre deux lignes', () => {
         const short = hbars(Array.from({ length: 5 }, (_, i) => ({ n: `n${i}`, v: i + 1 })));
         expect(short).not.toContain('data-split');
         expect((short.match(/data-keep="next"/g) || []).length).toBe(4);
@@ -115,7 +115,7 @@ describe('graphiques', () => {
         expect(niceScale([])).toEqual({ min: 0, max: 1, step: 1 });
     });
     it('une courbe ne contient jamais NaN', () => {
-        const svg = lineChart({ labels: ['a', 'b', 'c'], series: [{ name: 'x', color: '#000', vals: [1, null, 3], endLabel: '3 %' }], ymin: 0, ymax: 4, ystep: 1 });
+        const svg = lineChart({ labels: ['a', 'b', 'c'], series: [{ name: 'x', color: '#000', vals: [1, null, 3], endLabel: '3 %' }], ymin: 0, ymax: 4, ystep: 1 });
         expect(svg).not.toMatch(/NaN|undefined/);
         expect(svg).toContain('<polyline');
     });
@@ -152,10 +152,10 @@ describe('modèle de données (démo)', () => {
         const lines = calculateCostLines(product, calculatedGeneralInfo, state.ingredientsList, state.products, state.laborDatabase, row.format, state.basePackaging);
         expect(m.fiches.find(x => x.id === 'fmt_chili').lines).toEqual(lines);
     });
-    it('la moyenne de bénéfice brut par heure est celle de l\'écran Main-d\'œuvre (87,39 $/h)', () => {
+    it('la moyenne de bénéfice brut par heure est celle de l\'écran Main-d\'œuvre (87,39 $/h)', () => {
         expect(m.labor.average).toBeCloseTo(87.39, 2);
     });
-    it('les achats : fournisseurs, ABC, perte stock, prix volatils', () => {
+    it('les achats : fournisseurs, ABC, perte en stock, prix volatils', () => {
         const ing = m.supply.ing;
         expect(ing.total).toBeCloseTo(19823, 0);
         expect(ing.providers[0].provider).toBe('Boucherie Nordique');
@@ -169,7 +169,7 @@ describe('modèle de données (démo)', () => {
         expect(m.catalogues.packaging).toHaveLength(8);
         expect(m.company).toEqual({ name: 'Boréal', logo: 'data:image/png;base64,AAA' });
     });
-    it('Forces et faiblesses : les constats majeurs du groupe « structure », avec le renvoi à leur page', () => {
+    it('Forces et faiblesses : les constats majeurs du groupe « structure », avec le renvoi à leur page', () => {
         const all = [...m.findings.strengths.forces, ...m.findings.strengths.faiblesses];
         expect(all.length).toBeGreaterThan(3);
         expect(all.every(x => x.severity === 'major' && x.group === 'structure')).toBe(true);
@@ -198,21 +198,21 @@ describe('mêmes adresses que l\'application (engine/findingSurfaces.js)', () =>
     const all = computeKeyFindings(demoContext(), { entities: true }).all;
     const ids = (list) => list.map(x => x.id);
 
-    it('chapitre 1 : les trois blocs de la Vue d\'ensemble, mêmes constats dans le même ordre', () => {
+    it('chapitre 1 : les trois blocs de la Vue d\'ensemble, mêmes constats dans le même ordre', () => {
         const o = objectiveFindings(all), e = evolutionFindings(all), s = overviewStrengths(all);
         expect(ids([...m.findings.objectives.forces, ...m.findings.objectives.faiblesses]).sort()).toEqual(ids(o).sort());
         expect(ids([...m.findings.evolution.forces, ...m.findings.evolution.faiblesses]).sort()).toEqual(ids(e).sort());
         expect(ids(m.findings.strengths.forces)).toEqual(ids(s.forces));
         expect(ids(m.findings.strengths.faiblesses)).toEqual(ids(s.faiblesses));
     });
-    it('chapitres 3 à 6 : le bandeau de chaque sous-onglet, tel que l\'application l\'affiche', () => {
+    it('chapitres 3 à 6 : le bandeau de chaque sous-onglet, tel que l\'application l\'affiche', () => {
         for (const tab of ['portfolio', 'bySku', 'byChannel', 'byActivity', 'ingredients', 'packaging', 'labor']) {
             expect(ids(m.findings.tabs[tab]), tab).toEqual(ids(tabFindings(all, tab).all));
         }
         expect(ids(m.supply.ing.findings)).toEqual(ids(tabFindings(all, 'ingredients').all));
         expect(ids(m.supply.pkg.findings)).toEqual(ids(tabFindings(all, 'packaging').all));
     });
-    it('chapitre 2 : les constats généraux non majeurs qui n\'ont aucune autre adresse', () => {
+    it('chapitre 2 : les constats généraux non majeurs qui n\'ont aucune autre adresse', () => {
         expect(ids(m.findings.results)).toEqual(ids(resultsFindings(all)));
         expect(m.findings.results.length).toBeGreaterThan(0);
     });
@@ -222,14 +222,14 @@ describe('mêmes adresses que l\'application (engine/findingSurfaces.js)', () =>
         expect(everywhere.filter(x => x.subject?.type === 'format')).toEqual([]);
         m.fiches.forEach(F => F.findings.filter(x => x.subject?.type === 'format').forEach(x => expect(x.subject.id).toBe(F.id)));
     });
-    it('la gravité du moteur est reprise : chaque liste est triée du plus grave au moins grave', () => {
+    it('la gravité du moteur est reprise : chaque liste est triée du plus grave au moins grave', () => {
         const rank = { major: 3, medium: 2, minor: 1 };
         for (const list of [m.findings.results, ...Object.values(m.findings.tabs), ...m.fiches.map(f => f.findings)]) {
             const s = list.map(x => rank[x.severity]);
             expect(s).toEqual([...s].sort((a, b) => b - a));
         }
     });
-    it('fiche : les constats du produit viennent APRÈS la cascade de marge par canal, avant la recette détaillée', () => {
+    it('fiche : les constats du produit viennent APRÈS la cascade de marge par canal, avant la recette détaillée', () => {
         const chili = m.fiches.find(f => f.id === 'fmt_chili');
         const html = ficheHtml(chili, m);
         const iCascade = html.indexOf('Cascade de marge par canal'), iFindings = html.indexOf('Constats du produit'), iRecipe = html.indexOf('Recette détaillée'), iTiles = html.indexOf('Coût de production (total)');
@@ -238,15 +238,15 @@ describe('mêmes adresses que l\'application (engine/findingSurfaces.js)', () =>
         expect(iFindings).toBeGreaterThan(iCascade);
         expect(iRecipe).toBeGreaterThan(iFindings);
     });
-    it('sections : titres des constats par sous-onglet, comme dans l\'application', () => {
+    it('sections : titres des constats par sous-onglet, comme dans l\'application', () => {
         const units = buildUnits(m, {}, noMap), html = (c) => units.find(u => u.chapter === c).html;
         const order = (h, titles) => { const idx = titles.map(x => h.indexOf(x)); idx.forEach(i => expect(i).toBeGreaterThan(-1)); expect([...idx].sort((a, b) => a - b)).toEqual(idx); };
         order(html('1'), ['Objectifs stratégiques', 'Amélioration / détérioration', 'Forces et faiblesses']);
         expect(html('2')).toContain('Constats complémentaires');
-        order(html('3'), ['Constats : Portefeuille', 'Constats : Par SKU']);
-        order(html('4'), ['Constats : Par Canal', 'Les activités de production', 'Constats : Par Activité']);
-        expect(html('5')).toContain('Constats : Ingrédients');
-        expect(html('6')).toContain('Constats : Main-d\'œuvre');
+        order(html('3'), ['Constats : Portefeuille', 'Constats : Par SKU']);
+        order(html('4'), ['Constats : Par canal', 'Les activités de production', 'Constats : Par activité']);
+        expect(html('5')).toContain('Constats : Ingrédients');
+        expect(html('6')).toContain('Constats : Main-d\'œuvre');
     });
 });
 
@@ -258,7 +258,7 @@ describe('gabarits HTML (démo)', () => {
     it('sept chapitres et les annexes, chacun une unité, dans l\'ordre', () => {
         expect(buildUnits(m, {}, noMap).map(u => u.chapter)).toEqual(['1', '2', '3', '4', '5', '6', '7', 'A']);
     });
-    it('aucun « NaN », « undefined », « null » ni « [object » dans le texte du rapport', () => {
+    it('aucun « NaN », « undefined », « null » ni « [object » dans le texte du rapport', () => {
         const html = buildUnits(m, { includeSalaries: true, comments: { 1: 'Un commentaire' } }, noMap).map(u => u.html).join(' ');
         const text = html.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ');
         expect(text).not.toMatch(/NaN|undefined|\bnull\b|\[object/);
@@ -290,23 +290,23 @@ describe('gabarits HTML (démo)', () => {
         expect(a1).toContain('Annexe C');
         expect(a1).toContain('Mireille');
     });
-    it('seuls les chapitres choisis sont produits ; un chapitre sans données est écarté', () => {
+    it('seuls les chapitres choisis sont produits ; un chapitre sans données est écarté', () => {
         expect(buildUnits(m, { chapters: ['3', '6'] }, noMap).map(u => u.chapter)).toEqual(['3', '6']);
         const empty = { ...m, availability: { ...m.availability, '6': 'Aucune paie saisie.' } };
         expect(resolveOptions(empty, {}).chapters).not.toContain('6');
         expect(buildUnits(empty, {}, noMap).map(u => u.chapter)).not.toContain('6');
     });
-    it('le glossaire suit les chapitres inclus : moins de chapitres, moins de termes', () => {
+    it('le glossaire suit les chapitres inclus : moins de chapitres, moins de termes', () => {
         const termsOf = (chapters) => { const a = buildUnits(m, { chapters }, noMap).find(u => u.chapter === 'A').html; return Number((/(\d+) termes employés/.exec(a) || [0, 0])[1]); };
         expect(termsOf(['A'])).toBeLessThan(termsOf(['1', '2', '3', '4', '5', '6', '7', 'A']));
     });
-    it('les renvois « p. N » restent « … » tant que la carte des pages est vide, puis prennent la page du repère', () => {
+    it('les renvois « p. N » restent « … » tant que la carte des pages est vide, puis prennent la page du repère', () => {
         const ch1 = (map) => buildUnits(m, { chapters: ['1'] }, map)[0].html;
         expect(clean(ch1(noMap))).toContain('→ p. …');
         const map = { marks: { ingr: 13, resultats: 5, 'fiche:fmt_chili': 31 }, chapters: {}, total: 44 };
         expect(clean(ch1(map))).toContain('→ p. 13');
     });
-    it('le texte de période ne figure que s\'il existe : sans dates, aucune ligne « Période analysée »', () => {
+    it('le texte de période ne figure que s\'il existe : sans dates, aucune ligne « Période analysée »', () => {
         expect(m.period).toBeNull();
         const withDates = buildReportModel({ project: { ...project, generalInfo: { ...project.generalInfo, startDate: '2026-10-01', endDate: '2026-10-31' } }, analysisData, calculatedGeneralInfo: { ...calculatedGeneralInfo, startDate: '2026-10-01', endDate: '2026-10-31' } });
         expect(withDates.period).toBe('du 1er octobre 2026 au 31 octobre 2026');
@@ -322,11 +322,11 @@ describe('projet vide', () => {
     const info = computeCalculatedGeneralInfo({ generalInfo: base.generalInfo, products: s.products, baseIngredients: s.ingredientsList, laborDatabase: s.laborDatabase, productionActivities: s.productionActivities, salesChannels: s.salesChannels });
     const m = buildReportModel({ project: { ...s, trackingPoints: [] }, analysisData: base.data, calculatedGeneralInfo: info });
 
-    it('ne plante pas : les chapitres sans données sont écartés, avec leur raison', () => {
+    it('ne plante pas : les chapitres sans données sont écartés, avec leur raison', () => {
         ['1', '2', '3', '4', '5', '6', '7'].forEach(id => expect(typeof m.availability[id]).toBe('string'));
         expect(buildUnits(m, {}, noMap).map(u => u.chapter)).toEqual(['A']);
     });
-    it('aucun « NaN » ni « undefined » dans les annexes', () => {
+    it('aucun « NaN » ni « undefined » dans les annexes', () => {
         expect(buildUnits(m, {}, noMap)[0].html).not.toMatch(/NaN|undefined/);
     });
 });

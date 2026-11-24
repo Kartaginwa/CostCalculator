@@ -23,7 +23,7 @@ const Quadrant = ({ title, icon, items, bgColor, borderColor, tooltipText }) => 
             {items.length > 0 ? items.map(p => (
                 <li key={p.id} className="flex justify-between items-center">
                     <span>• {p.displayName}</span>
-                    <span className="text-xs text-gray-600 ml-2 flex-shrink-0">
+                    <span className="text-xs text-gray-600 ml-2 flex-shrink-0" title="Pop. : popularité (part des ventes du produit). Marge&nbsp;: marge brute par unité.">
                         {/* Marge brute (coût matière + emballage + main-d'œuvre) : l'axe de rentabilité de la matrice. */}
                         {`Pop: ${formatNumber(p.popularity, 1)}% | Marge: ${formatCurrency(p.margeBruteDollar)}$`}
                     </span>
@@ -61,41 +61,41 @@ export const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) 
             <div data-tour="kpi-tiles" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 text-center">
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">
                     <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
-                        Coût Matière Moyen Pondéré
+                        Coût matière moyen pondéré
                         <Tooltip tip="kpi.matiere" />
                         <ObjectiveBadge id="matiere" value={weightedMaterialCost * 100} info={generalInfo} />
                     </div>
-                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)} %</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedMaterialCost)}&nbsp;%</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">
                     <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
-                        Coût Emballage Moyen Pondéré
+                        Coût emballage moyen pondéré
                         <Tooltip tip="kpi.emballage" />
                         <ObjectiveBadge id="emballage" value={weightedPackagingCost * 100} info={generalInfo} />
                     </div>
-                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)} %</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedPackagingCost)}&nbsp;%</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">
                     <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">
-                        Coût Main-d'œuvre Moyen Pondéré
+                        Coût main-d'œuvre moyen pondéré
                         <Tooltip tip="kpi.mo" />
                         <ObjectiveBadge id="mo" value={weightedLaborCost * 100} info={generalInfo} />
                     </div>
-                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedLaborCost)} %</p>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedLaborCost)}&nbsp;%</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">
-                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Marge Brute Moyenne Pondérée <Tooltip tip="kpi.margeBrute" /><ObjectiveBadge id="margeBrute" value={weightedGrossMargin * 100} info={generalInfo} /></div>
-                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)} %</p>
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Marge brute moyenne pondérée <Tooltip tip="kpi.margeBrute" /><ObjectiveBadge id="margeBrute" value={weightedGrossMargin * 100} info={generalInfo} /></div>
+                    <p className="text-2xl font-bold text-blue-600">{formatPercent(weightedGrossMargin)}&nbsp;%</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">
-                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Point Mort des Produits Actifs <Tooltip tip="kpi.pointMort" /></div>
-                    <p className="text-2xl font-bold text-blue-600">{formatCurrency(globalBreakEven)} $</p>
+                    <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Point mort des produits actifs <Tooltip tip="kpi.pointMort" /></div>
+                    <p className="text-2xl font-bold text-blue-600">{formatCurrency(globalBreakEven)}&nbsp;$</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow flex flex-col">
                     <div className="text-sm text-gray-500 flex flex-1 items-center justify-center">Marge de sécurité <Tooltip tip="kpi.margeSecurite" /></div>
                     {safetyMargin ? (
                         <>
-                            <p className={`text-2xl font-bold ${safetyMargin.ratio < 0 ? 'text-red-600' : 'text-blue-600'}`}>{formatPercent(safetyMargin.ratio)} %</p>
+                            <p className={`text-2xl font-bold ${safetyMargin.ratio < 0 ? 'text-red-600' : 'text-blue-600'}`}>{formatPercent(safetyMargin.ratio)}&nbsp;%</p>
                         </>
                     ) : <p className="text-2xl font-bold text-gray-400" title="Aucune vente prévue ou point mort non calculable">—</p>}
                 </div>
@@ -103,7 +103,7 @@ export const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) 
             {Math.round(totalSalesMix) !== 100 && totalSalesMix > 0 && (
                  <div className="p-3 mb-4 bg-yellow-100 text-yellow-800 rounded-md text-center text-sm">
                     <AlertTriangle className="inline h-4 w-4 mr-2"/>
-                    Attention : Le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}%. Pour une analyse précise, il devrait être de 100%.
+                    Attention&nbsp;: le total de vos parts des ventes est de {formatNumber(totalSalesMix, 1)}&nbsp;%. Pour une analyse précise, il devrait être de 100&nbsp;%.
                 </div>
             )}
 
@@ -123,10 +123,10 @@ export const StrategicAnalysis = ({ analysisData, generalInfo, globalKpiData }) 
                 <SimpleLineChart
                     data={globalKpiData}
                     lines={[
-                        { dataKey: "Marge Brute Moyenne", color: "#82ca9d", unit: '%' },
-                        { dataKey: "Coût Matière Moyen", color: "#ffc658", unit: '%' },
-                        { dataKey: "Coût Emballage Moyen", color: "#db2777", unit: '%' },
-                        { dataKey: "Coût Main-d'œuvre Moyen", color: "#ff7300", unit: '%' },
+                        { dataKey: "Marge brute moyenne", color: "#82ca9d", unit: '%' },
+                        { dataKey: "Coût matière moyen", color: "#ffc658", unit: '%' },
+                        { dataKey: "Coût emballage moyen", color: "#db2777", unit: '%' },
+                        { dataKey: "Coût main-d'œuvre moyen", color: "#ff7300", unit: '%' },
                     ]}
                     yAxisLabel="Pourcentage (%)"
                 />
@@ -187,7 +187,7 @@ export const BcgMatrix = ({ analysisData, salesChannels }) => {
             <p className="text-sm text-gray-500 mb-4">Classe chaque produit selon sa popularité et sa rentabilité (matrice de Boston Consulting Group).</p>
 
             <div className="flex items-center gap-2 mb-4">
-                <label htmlFor="bcgChannelFilter" className="text-sm font-medium text-gray-700">Analyse BCG pour :</label>
+                <label htmlFor="bcgChannelFilter" className="text-sm font-medium text-gray-700">Analyse BCG pour&nbsp;:</label>
                 <select
                     id="bcgChannelFilter"
                     value={bcgChannelId}

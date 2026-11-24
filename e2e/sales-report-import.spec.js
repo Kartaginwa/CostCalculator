@@ -24,22 +24,22 @@ test('import d\'un rapport de ventes : crée un canal, met à jour le prix net +
 
     // Étape 1 : téléversement.
     await modal.locator('input[type="file"]').setInputFiles(fixturePath);
-    await expect(modal.getByText('Étape 2: Correspondance des colonnes')).toBeVisible();
+    await expect(modal.getByText('Étape 2 : Correspondance des colonnes')).toBeVisible();
 
     // Étape 2 : la correspondance des colonnes se devine automatiquement (mots-clés).
     await modal.getByText('Suivant').click();
-    await expect(modal.getByText('Étape 3: Prévisualisation et résolution')).toBeVisible();
+    await expect(modal.getByText('Étape 3 : Prévisualisation et résolution')).toBeVisible();
 
     // Étape 3 : le plat est reconnu, le format "1 unité" aussi ; le canal, absent, est proposé à
     // la création par défaut.
     const row = modal.locator('tbody tr').filter({ hasText: 'Chili con carne mijoté' });
-    await expect(row.getByText('Lié à "Chili con carne mijoté"')).toBeVisible();
+    await expect(row.getByText('Lié à « Chili con carne mijoté »')).toBeVisible();
     await expect(row.locator('select').nth(1)).toHaveValue('create');
     await modal.getByText('Suivant').click();
 
     // Étape 4 : confirmation.
-    await expect(modal.getByText('Étape 4: Confirmation')).toBeVisible();
-    await modal.getByText('Confirmer et Importer').click();
+    await expect(modal.getByText('Étape 4 : Confirmation')).toBeVisible();
+    await modal.getByText('Confirmer et importer').click();
     await expect(page.getByText('Importation réussie')).toBeVisible();
 
     // Le nouveau canal existe désormais dans Paramètres.

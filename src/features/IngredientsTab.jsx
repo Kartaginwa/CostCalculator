@@ -171,7 +171,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             const usages = findIngredientUsages(products, id);
             if (usages.length > 0) {
                 showNotification({
-                    message: `L'unité de « ${originalItem.name || 'cet ingrédient'} » est passée de ${unitLabel(originalItem.unit)} à ${unitLabel(value)}, une autre famille d'unités. Les recettes qui l'utilisent (${formatNameList(usages)}) gardent l'ancienne unité : corrigez-la dans chaque recette, sinon leur coût est faux.`,
+                    message: `L'unité de « ${originalItem.name || 'cet ingrédient'} » est passée de ${unitLabel(originalItem.unit)} à ${unitLabel(value)}, une autre famille d'unités. Les recettes qui l'utilisent (${formatNameList(usages)}) gardent l'ancienne unité\u00A0: corrigez-la dans chaque recette, sinon leur coût est faux.`,
                     type: 'error',
                 });
             }
@@ -194,7 +194,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             onUpdateIngredientsList(newList);
 
             showNotification({
-                message: `L'ingrédient "${ingredientToDelete.name}" a été supprimé.`,
+                message: `L'ingrédient «\u00A0${ingredientToDelete.name}\u00A0» a été supprimé.`,
                 type: 'info',
                 onUndo: () => {
                     onUpdateIngredientsList(originalList);
@@ -206,8 +206,8 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
         const usages = findIngredientUsages(products, id);
         if (usages.length > 0) {
             requestConfirmation({
-                title: 'Supprimer cet ingrédient ?',
-                message: `« ${ingredientToDelete.name || 'Sans nom'} » est utilisé dans : ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0 $ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
+                title: 'Supprimer cet ingrédient ?',
+                message: `« ${ingredientToDelete.name || 'Sans nom'} » est utilisé dans\u00A0: ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0\u00A0$ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
                 onConfirm: performDelete,
             });
             return;
@@ -290,7 +290,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                         value={filterName}
                         onChange={e => setFilterName(e.target.value)}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                        placeholder="Rechercher un ingrédient..."
+                        placeholder="Rechercher un ingrédient…"
                     />
                 </div>
                 <div>
@@ -315,7 +315,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                         onChange={e => setComparisonIngredient(e.target.value)}
                         list="ingredient-name-list"
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
-                        placeholder="Nom de l'ingrédient..."
+                        placeholder="Nom de l'ingrédient…"
                     />
                 </div>
             </div>
@@ -327,24 +327,24 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
             {/* --- Section de comparaison des prix --- */}
             {comparisonResults.length > 0 && (
                 <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-2">Comparaison des prix pour "{comparisonIngredient}"</h3>
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2">Comparaison des prix pour «&nbsp;{comparisonIngredient}&nbsp;»</h3>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-blue-100">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Fournisseur</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Prix unitaire</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Perte estimée</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Prix efficace ($/{comparisonResults[0]?.unit})</th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-600">Fournisseur</th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-600">Prix unitaire</th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-600">Perte estimée</th>
+                                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-600">Prix effectif ($/{comparisonResults[0]?.unit})</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {comparisonResults.map((item, index) => (
                                     <tr key={item.id} className={index === 0 ? 'bg-green-100' : ''}>
                                         <td className="px-4 py-2 font-medium">{item.provider}</td>
-                                        <td className="px-4 py-2">{formatUnitPrice(item.unitPrice)} $</td>
+                                        <td className="px-4 py-2">{formatUnitPrice(item.unitPrice)}&nbsp;$</td>
                                         <td className="px-4 py-2 text-red-600">
-                                            {formatUnitPrice(item.lossCostPerUnit)} $ 
+                                            {formatUnitPrice(item.lossCostPerUnit)}&nbsp;$ 
                                             <span className="text-xs text-gray-500 ml-1">({item.lossPercentage || 0}%)</span>
                                         </td>
                                         <td className="px-4 py-2 font-bold">
@@ -367,44 +367,44 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-100">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('name')} className="flex items-center w-full">Ingrédient {getSortIcon('name')}</button></th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('provider')} className="flex items-center w-full">Fournisseur {getSortIcon('provider')}</button></th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchaseFormat')} className="flex items-center w-full">Format d'achat {getSortIcon('purchaseFormat')}</button></th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">Unité de base</th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchasePrice')} className="flex items-center w-full">Prix achat ($) {getSortIcon('purchasePrice')}</button></th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
-                                <div className="flex items-center">
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('name')} className="flex items-center w-full justify-center">Ingrédient {getSortIcon('name')}</button></th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 w-1/6"><button onClick={() => requestSort('provider')} className="flex items-center w-full justify-center">Fournisseur {getSortIcon('provider')}</button></th>
+                            <th className="px-2 py-3 text-center text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchaseFormat')} className="flex items-center w-full justify-center">Format d'achat {getSortIcon('purchaseFormat')}</button></th>
+                            <th className="px-2 py-3 text-center text-xs font-medium text-gray-500">Unité de base</th>
+                            <th className="px-2 py-3 text-center text-xs font-medium text-gray-500"><button onClick={() => requestSort('purchasePrice')} className="flex items-center w-full justify-center">Prix d'achat ($) {getSortIcon('purchasePrice')}</button></th>
+                            <th className="px-2 py-3 text-center text-xs font-medium text-gray-500">
+                                <div className="flex items-center justify-center">
                                     Escompte (%)
                                     <Tooltip tip="ing.escompte" />
                                 </div>
                             </th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
-                                <div className="flex items-center">
+                            <th className="px-2 py-3 text-center text-xs font-medium text-gray-500">
+                                <div className="flex items-center justify-center">
                                     Transport ($)
                                     <Tooltip tip="ing.transport" />
                                 </div>
                             </th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
-                            <div className="flex items-center">
-                                <button onClick={() => requestSort('lossPercentage')} className="flex items-center">
+                            <th className="px-2 py-3 text-center text-xs font-medium text-gray-500">
+                            <div className="flex items-center justify-center">
+                                <button onClick={() => requestSort('lossPercentage')} className="flex items-center justify-center">
                                     Taux de perte (%) {getSortIcon('lossPercentage')}
                                 </button>
                                 <Tooltip tip="ing.perte" />
                             </div>
                         </th>
-                            <th className="px-2 py-3 text-left text-xs font-medium text-gray-500">
-                                <div className="flex items-center">
-                                    <button onClick={() => requestSort('unitPrice')} className="flex items-center">Prix unitaire ($) {getSortIcon('unitPrice')}</button>
+                            <th className="px-2 py-3 text-center text-xs font-medium text-gray-500">
+                                <div className="flex items-center justify-center">
+                                    <button onClick={() => requestSort('unitPrice')} className="flex items-center justify-center">Prix unitaire ($) {getSortIcon('unitPrice')}</button>
                                     <Tooltip tip="ing.prixUnitaire" />
                                 </div>
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
-                                <div className="flex items-center">
-                                    <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full">Dernière màj {getSortIcon('lastUpdated')}</button>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500">
+                                <div className="flex items-center justify-center">
+                                    <button onClick={() => requestSort('lastUpdated')} className="flex items-center w-full justify-center">Dernière mise à jour {getSortIcon('lastUpdated')}</button>
                                     <Tooltip tip="ing.maj" />
                                 </div>
                             </th>
-                            <th className="relative px-4 py-3"><span className="sr-only">Actions</span></th>
+                            <th className="relative px-4 py-3 text-center"><span className="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">

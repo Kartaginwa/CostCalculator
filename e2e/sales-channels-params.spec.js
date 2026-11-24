@@ -4,7 +4,7 @@
 // par format × circuit (Phase 3.2) n'existe pas encore : cette section ne définit que la structure.
 import { test, expect } from '@playwright/test';
 
-test('gestion des circuits de vente dans Paramètres : canal, maillons, suppression avec garde-fou', async ({ page }) => {
+test('gestion des canaux de vente dans Paramètres : canal, maillons, suppression avec garde-fou', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -52,13 +52,13 @@ test('gestion des circuits de vente dans Paramètres : canal, maillons, suppress
     await expect(secondCard.getByText('Aucun maillon')).toBeVisible();
 
     // Supprimer le canal "Vente directe" (garde "Grande distribution"), notification avec Annuler.
-    await section.locator('button[title="Supprimer le circuit de vente"]').first().click();
+    await section.locator('button[title="Supprimer le canal de vente"]').first().click();
     await expect(channelCards).toHaveCount(1);
     await expect(page.getByText('a été supprimé')).toBeVisible();
 
     // Empêche de supprimer le dernier circuit restant.
-    await section.locator('button[title="Supprimer le circuit de vente"]').first().click();
-    await expect(page.getByText('Vous devez conserver au moins un circuit de vente.')).toBeVisible();
+    await section.locator('button[title="Supprimer le canal de vente"]').first().click();
+    await expect(page.getByText('Vous devez conserver au moins un canal de vente.')).toBeVisible();
     await expect(channelCards).toHaveCount(1);
 
     expect(errors, `Erreurs console/page inattendues :\n${errors.join('\n')}`).toEqual([]);

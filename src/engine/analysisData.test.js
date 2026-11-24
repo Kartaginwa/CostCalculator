@@ -153,7 +153,7 @@ describe('computeAnalysisData - contribution au profit', () => {
     });
 });
 
-describe('computeAnalysisData - volumes (corrigé le 18/10 : volume RÉEL par canal, jamais reconstruit)', () => {
+describe('computeAnalysisData - volumes (corrigé le 18/10 : volume RÉEL par canal, jamais reconstruit)', () => {
     it('utilise directement le volume réel par canal, indépendamment du prix ou du mix de vente', () => {
         // Deux plats au même salesMix (50/50) mais à prix très différents et volumes réels
         // IDENTIQUES (50 chacun) : le volume réel ne dépend ni du prix ni du mix — contrairement à
@@ -220,8 +220,8 @@ describe('computeAnalysisData - matrice sur marge incluant la main-d\'œuvre (se
     });
 });
 
-describe('computeAnalysisData - règle des 70 % sur la popularité', () => {
-    it('classe comme populaire un plat au-dessus de 70 % de la part moyenne (et non de la moyenne brute)', () => {
+describe('computeAnalysisData - règle des 70 % sur la popularité', () => {
+    it('classe comme populaire un plat au-dessus de 70 % de la part moyenne (et non de la moyenne brute)', () => {
         // 3 plats, part moyenne = 33,3 %. Seuil à 70 % = 23,3 %. Le plat à 25 % est POPULAIRE selon
         // la règle des 70 % (alors qu'il serait « peu populaire » avec le seuil = moyenne brute).
         const products = [
@@ -488,7 +488,7 @@ describe('computeAnalysisData - channelBreakdown par ligne (Phase 3.3)', () => {
     });
 });
 
-describe('computeAnalysisData - vue « tous canaux » des KPIs pondérés et de la contribution (06/10)', () => {
+describe('computeAnalysisData - vue « tous canaux » des KPIs pondérés et de la contribution (06/10)', () => {
     it("pondère les coûts/marges par le volume RÉEL de CHAQUE canal, pas seulement le canal principal", () => {
         const salesChannels = [
             { id: 'c_direct', name: 'Vente directe', links: [] },
@@ -543,7 +543,7 @@ describe('computeAnalysisData - vue « tous canaux » des KPIs pondérés et de 
         expect(result.contributionData[0].totalContribution).toBeCloseTo(600);
     });
 
-    it("la popularité « tous canaux » de la matrice BCG utilise le volume RÉEL agrégé à travers les canaux, jamais salesMix (évite la dilution par un format en mode manuel — 07/10)", () => {
+    it("la popularité « tous canaux » de la matrice BCG utilise le volume RÉEL agrégé à travers les canaux, jamais salesMix (évite la dilution par un format en mode manuel — 07/10)", () => {
         const salesChannels = [{ id: 'c1', name: 'Canal 1', links: [] }];
         // `tracked` a un salesMix de 10 % (dilué par le 90 % fixe de `manual`), mais un volume
         // RÉEL de 1000 unités sur son seul canal. `manual` a un salesMix de 90 % mais ZÉRO volume
@@ -643,7 +643,7 @@ describe('computeChannelRevenueShareByActivity — ventilation indicative des re
     });
 });
 
-describe('computeActivitySummaries / computeChannelSummaries — rapports agrégés Par Activité et Par Canal (révisé le 02/11)', () => {
+describe('computeActivitySummaries / computeChannelSummaries — rapports agrégés Par activité et Par canal (révisé le 02/11)', () => {
     const salesChannels = [{ id: 'c1', name: 'Canal 1' }, { id: 'c2', name: 'Canal 2' }];
     const productionActivities = [{ id: 'act1', name: 'Activité 1' }, { id: 'act2', name: 'Activité 2' }];
 
@@ -695,7 +695,7 @@ describe('computeActivitySummaries / computeChannelSummaries — rapports agrég
         expect(act1.byChannel).toBeUndefined();
     });
 
-    it("point mort en $ DE REVENU (pas en unités) : frais fixes (Général+Activité+Canal+MO traitée comme fixe) ÷ ratio de marge de contribution, à l'échelle de toute l'activité", () => {
+    it("point mort en $ DE REVENU (pas en unités) : frais fixes (Général+Activité+Canal+MO traitée comme fixe) ÷ ratio de marge de contribution, à l'échelle de toute l'activité", () => {
         const result = computeActivitySummaries(productsWithCosts, productionActivities);
         const act1 = result.find(r => r.activityId === 'act1');
 
@@ -747,7 +747,7 @@ describe('computeActivitySummaries / computeChannelSummaries — rapports agrég
         expect(c1.revenueTotal).toBeCloseTo(1800 + 50);
     });
 
-    it("computeActivityChannelMarginMatrix : bénéfice net $ (et marge nette % pour la palette) de CHAQUE combinaison activité × canal, $ sommés puis divisés (jamais une moyenne de %)", () => {
+    it("computeActivityChannelMarginMatrix : bénéfice net $ (et marge nette % pour la palette) de CHAQUE combinaison activité × canal, $ sommés puis divisés (jamais une moyenne de %)", () => {
         const matrix = computeActivityChannelMarginMatrix(productsWithCosts, productionActivities, salesChannels);
 
         // act1 × c1 = A@c1 + B@c1 : bénéfice net = 1130-158 = 972 $ ; marge nette = 972/1800 = 54 %.
@@ -802,7 +802,7 @@ describe('computeActivityImpact — simulateur de chocs de coûts par activité 
     });
 });
 
-describe('computeChannelImpact — simulateur de chocs de coûts par circuit de vente (Phase 6)', () => {
+describe('computeChannelImpact — simulateur de chocs de coûts par canal de vente (Phase 6)', () => {
     const salesChannels = [{ id: 'channel_direct', name: 'Vente directe' }, { id: 'channel_epi', name: 'Épiceries' }];
 
     it('pondère marge/coûts PAR CANAL (pas la vue tous-canaux) selon le volume réel de ce canal', () => {
@@ -855,7 +855,7 @@ describe('computeDirectCostAllocation — ventilation indicative des charges dir
         expect(result.channelSharesByActivity.act_sauces).toEqual({ channel_direct: 1 });
     });
 
-    it('omet une activité sans coût théorique de CE type (ex. 100 % revente, pas de main-d\'œuvre directe) plutôt que de forcer une part à 0', () => {
+    it('omet une activité sans coût théorique de CE type (ex. 100 % revente, pas de main-d\'œuvre directe) plutôt que de forcer une part à 0', () => {
         const productsWithCosts = [
             { activityId: 'act_revente', costs: { costLaborPerPortion: 0 }, channelBreakdown: [{ channelId: 'channel_direct', volume: 100 }] },
             { activityId: 'act_prod', costs: { costLaborPerPortion: 3 }, channelBreakdown: [{ channelId: 'channel_direct', volume: 10 }] },
@@ -914,7 +914,7 @@ describe('computeRealVsTheoreticalReconciliation — réconciliation réel/théo
         expect(lossTheo.theoretical).toBeCloseTo(-500);
         expect(lossTheo.diffPercent).toBeCloseTo(1100 / 500);
     });
-    it("diffPercent absent (pas 0 %) quand le théorique d'une ligne est nul — jamais une précision inventée", () => {
+    it("diffPercent absent (pas 0 %) quand le théorique d'une ligne est nul — jamais une précision inventée", () => {
         const result = computeRealVsTheoreticalReconciliation({
             totalRevenue: 1200, totalDirectCosts: 450,
             activeProducts: [], unitsSoldById: {}, menuRevenue: 0, totalIndirects: 100,
@@ -965,7 +965,7 @@ describe('computeGrossProfitTotals/computeNetProfitTotals — Bénéfice brut/ne
         expect(bucketValues).toEqual({ general: 600, act1: 200 });
     });
 
-    it('Bénéfice brut par canal : visible seulement si revenus ET charges directes ont une part pour ce canal', () => {
+    it('Bénéfice brut par canal : visible seulement si revenus ET charges directes ont une part pour ce canal', () => {
         const { channelValues } = computeGrossProfitTotals({
             activityBuckets: [], salesChannels,
             bucketTotals: {}, directCostBucketTotals: {},
@@ -1127,7 +1127,7 @@ describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
         expect(rowA.costs.totalCostPerPortion).toBeCloseTo(rowA.costs.totalDirectCostPerPortion + 2);
     });
 
-    it('sans indirectPools : repli historique de calculateCosts.js (comportement antérieur à la Phase 4.6, inchangé)', () => {
+    it('sans indirectPools : repli historique de calculateCosts.js (comportement antérieur à la Phase 4.6, inchangé)', () => {
         const product = baseProduct({ id: 'A', activityId: 'act1', prixVente: 20, salesMix: 100, channelPrices: channelPrice(20, 10) });
         const generalInfo = baseGeneralInfo({ totalIndirects: 50 });
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
@@ -1141,7 +1141,7 @@ describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
         expect(withoutPools.productsWithCosts[0].costs.costIndirectPerPortion).toBeCloseTo(5);
     });
 
-    it('avec indirectPools mais des pools entièrement vides : aucun coût Général/Activité/Canal ajouté (jamais un 0 inventé par le repli historique, qui est désactivé dès que indirectPools existe)', () => {
+    it('avec indirectPools mais des pools entièrement vides : aucun coût Général/Activité/Canal ajouté (jamais un 0 inventé par le repli historique, qui est désactivé dès que indirectPools existe)', () => {
         const product = baseProduct({ id: 'A', activityId: 'act1', prixVente: 20, salesMix: 100, channelPrices: channelPrice(20, 10) });
         const generalInfo = baseGeneralInfo({ totalIndirects: 50 });
         const calculatedGeneralInfo = { ...generalInfo, productivityReport: {} };
@@ -1207,7 +1207,7 @@ describe('computeAnalysisData — pools Activité/Canal (Phase 4.6)', () => {
     });
 });
 
-describe('computeIndirectCostDriverTotals — driver « volume » (22/10)', () => {
+describe('computeIndirectCostDriverTotals — driver « volume » (22/10)', () => {
     it("agrège le volume physique total vendu (portionSize converti vers la famille choisie × portionsSold) pour Général et pour l'activité, en excluant les formats d'une autre famille physique", () => {
         const productsWithCosts = [
             // A : 250 g, 10 vendues → 2500 g.
@@ -1228,7 +1228,7 @@ describe('computeIndirectCostDriverTotals — driver « volume » (22/10)', () =
         expect(activityDriverTotals.act1.volume).toBeCloseTo(7500);
     });
 
-    it("n'agrège rien pour le driver « volume » tant qu'aucune famille physique n'est choisie pour ce pool (jamais une famille devinée)", () => {
+    it("n'agrège rien pour le driver « volume » tant qu'aucune famille physique n'est choisie pour ce pool (jamais une famille devinée)", () => {
         const productsWithCosts = [
             { id: 'A', activityId: 'act1', portionUnit: 'g', costs: { portionSize: 250, portionsSold: 10, nbPortions: 1, totalDirectCostPerPortion: 2, productionTimeSeconds: 0 } },
         ];
@@ -1242,11 +1242,11 @@ describe('computeIndirectCostDriverTotals — driver « volume » (22/10)', () =
     });
 });
 
-describe('computeSnapshotMenuKpis : pondération par le revenu d\'un point de référence', () => {
+describe('computeSnapshotMenuKpis : pondération par le revenu d\'un point de référence', () => {
     const row = (over) => ({ onMenu: true, salesMix: 0, prixVente: 0, costs: {}, ...over });
     const costs = (marge, mat) => ({ margeBrutePercent: marge, costMatierePercent: mat, costPackagingPercent: 0.1, costLaborPercent: 0.1 });
 
-    it('repli : le poids est le mix (unités) × le prix de vente, pas le mix seul', () => {
+    it('repli : le poids est le mix (unités) × le prix de vente, pas le mix seul', () => {
         // A : 4 $, 50 % de marge, 20 000 unités ; B : 10 $, 30 %, 5 000 unités ; C : 6 $, 25 %, 10 000 unités
         const rows = [
             row({ salesMix: 20000, prixVente: 4, costs: costs(0.5, 0.3) }),
@@ -1264,7 +1264,7 @@ describe('computeSnapshotMenuKpis : pondération par le revenu d\'un point de r�
         const k = computeSnapshotMenuKpis([withCh(0.5, 4, 20000), withCh(0.3, 10, 5000)]);
         expect(k.weightedGrossMargin).toBeCloseTo((0.5 * 80000 + 0.3 * 50000) / 130000, 6);
     });
-    it('ignore les produits hors menu ; null (donnée absente) quand aucun poids n\'est calculable', () => {
+    it('ignore les produits hors menu ; null (donnée absente) quand aucun poids n\'est calculable', () => {
         expect(computeSnapshotMenuKpis([row({ onMenu: false, salesMix: 100, prixVente: 5 })])).toBeNull();
         expect(computeSnapshotMenuKpis([row({ salesMix: 0, prixVente: 5 })])).toBeNull();
         expect(computeSnapshotMenuKpis([])).toBeNull();
@@ -1282,7 +1282,7 @@ describe("computeGlobalBreakEven - vieillissement (21/11)", () => {
     });
 });
 
-describe("canal supprimé (21/11) : ses ventes ne comptent ni dans le volume des frais fixes ni dans les marges", () => {
+describe("canal supprimé (21/11) : ses ventes ne comptent ni dans le volume des frais fixes ni dans les marges", () => {
     const channels = [{ id: 'c1', name: 'Direct' }];
     const product = (prices) => baseProduct({ id: 'A', isResaleProduct: true, purchaseCost: 4, prixVente: 10, channelPrices: prices });
     const run = (prices, salesChannels) => {

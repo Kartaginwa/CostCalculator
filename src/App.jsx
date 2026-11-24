@@ -153,7 +153,7 @@ const App = ({ tourMode = false } = {}) => {
     const [reportSelectedSkuId, setReportSelectedSkuId] = useState(null);
     const [reportSelectedIngredientId, setReportSelectedIngredientId] = useState('');
     const [reportSelectedPackagingId, setReportSelectedPackagingId] = useState('');
-    // Sous-onglets Par Activité / Par Canal : une ligne par activité/canal (révisé le 02/11), plus
+    // Sous-onglets Par activité / Par canal : une ligne par activité/canal (révisé le 02/11), plus
     // de sélection à persister — `reportActiveSubTab` seul suffit pour revenir au bon sous-onglet.
 
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -233,7 +233,7 @@ const App = ({ tourMode = false } = {}) => {
         }));
 
         showNotification({
-            message: `Importation réussie ! ${items.length} ligne(s) traitée(s).`,
+            message: `Importation réussie\u00A0! ${items.length} ligne(s) traitée(s).`,
             type: 'success'
         });
     };
@@ -506,7 +506,7 @@ const App = ({ tourMode = false } = {}) => {
         const newProducts = [...products];
         newProducts[productIndex] = { ...product, formats: newFormats };
         setProducts(newProducts);
-        showNotification({ message: 'Format copié sans ses volumes de vente : saisissez-les dans la colonne Canaux.', type: 'info' });
+        showNotification({ message: 'Format copié sans ses volumes de vente : saisissez-les dans la colonne Canaux.', type: 'info' });
     };
 
     const handleDeleteFormat = (productIndex, formatIndex) => {
@@ -530,7 +530,7 @@ const App = ({ tourMode = false } = {}) => {
             setEditingFormatIndex(prev => (editingProductIndex !== productIndex ? prev : Math.max(0, Math.min(prev > formatIndex ? prev - 1 : prev, newFormats.length - 1))));
 
             showNotification({
-                message: `Le format "${formatToDelete.sku || 'sans SKU'}" a été supprimé.`,
+                message: `Le format «\u00A0${formatToDelete.sku || 'sans SKU'}\u00A0» a été supprimé.`,
                 type: 'info',
                 // Annuler remet CE format à sa place, sans toucher au reste du projet (les modifications faites entre-temps sont conservées).
                 onUndo: () => {
@@ -546,8 +546,8 @@ const App = ({ tourMode = false } = {}) => {
         };
         if (usages.length > 0) {
             requestConfirmation({
-                title: 'Supprimer ce format ?',
-                message: `Le format « ${formatToDelete.sku || 'sans SKU'} » de la sous-recette « ${product.platName || 'Sans nom'} » est utilisé dans : ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0 $ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
+                title: 'Supprimer ce format ?',
+                message: `Le format « ${formatToDelete.sku || 'sans SKU'} » de la sous-recette « ${product.platName || 'Sans nom'} » est utilisé dans\u00A0: ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0\u00A0$ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
                 onConfirm: performDelete,
             });
             return;
@@ -615,8 +615,8 @@ const App = ({ tourMode = false } = {}) => {
         const usages = findSubRecipeUsages(products, productToDelete);
         if (usages.length > 0) {
             requestConfirmation({
-                title: 'Supprimer cette sous-recette ?',
-                message: `« ${productToDelete.platName || 'Sans nom'} » est utilisée comme ingrédient dans : ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0 $ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
+                title: 'Supprimer cette sous-recette ?',
+                message: `« ${productToDelete.platName || 'Sans nom'} » est utilisée comme ingrédient dans\u00A0: ${formatNameList(usages)}. Ces recettes compteront cette ligne à 0\u00A0$ jusqu'à ce que vous choisissiez un autre ingrédient. Vous pourrez annuler juste après.`,
                 onConfirm: () => performDeleteProduct(indexToDelete),
             });
             return;
@@ -643,7 +643,7 @@ const App = ({ tourMode = false } = {}) => {
 
         // 3. Affiche la notification avec l'option "Annuler"
         showNotification({
-            message: `Le produit "${productToDelete.platName}" a été supprimé.`,
+            message: `Le produit «\u00A0${productToDelete.platName}\u00A0» a été supprimé.`,
             type: 'info',
             onUndo: () => {
                 // Si l'utilisateur clique sur "Annuler"
@@ -690,7 +690,7 @@ const App = ({ tourMode = false } = {}) => {
         newProduct.salesMix = 0;
         newProducts.splice(indexToDuplicate + 1, 0, newProduct);
         setProducts(newProducts);
-        showNotification({ message: 'Produit copié sans ses volumes de vente : saisissez-les dans la colonne Canaux de chaque format.', type: 'info' });
+        showNotification({ message: 'Produit copié sans ses volumes de vente : saisissez-les dans la colonne Canaux de chaque format.', type: 'info' });
     };
 
     const editProduct = (index, formatIndex = 0) => {
@@ -781,7 +781,7 @@ const App = ({ tourMode = false } = {}) => {
         setOpenPostIds(new Set(defaultState.laborDatabase.map(p => p.id)));
         setEditingProductIndex(0);
         setActiveTab('info');
-        if (!tourMode) showNotification({ message: "Projet d'exemple chargé avec succès !", type: 'success' });
+        if (!tourMode) showNotification({ message: "Projet d'exemple chargé avec succès !", type: 'success' });
         resetSessionMemory(sessionScope); setProjectEpoch(e => e + 1);
         setIsProjectLoaded(true);
         setBaselineTick(t => t + 1);
@@ -828,7 +828,7 @@ const App = ({ tourMode = false } = {}) => {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(href);
-            showNotification({ message: 'Projet sauvegardé avec succès !', type: 'success' });
+            showNotification({ message: 'Projet sauvegardé avec succès !', type: 'success' });
         } catch (error) {
             console.error("Erreur de sauvegarde:", error);
             showNotification('Une erreur est survenue lors de la sauvegarde.', 'error');
@@ -873,7 +873,7 @@ const App = ({ tourMode = false } = {}) => {
 
                 setEditingProductIndex(0);
                 setActiveTab('info');
-                showNotification({ message: 'Projet importé avec succès !', type: 'success' });
+                showNotification({ message: 'Projet importé avec succès !', type: 'success' });
                 resetSessionMemory(sessionScope); setProjectEpoch(e => e + 1);
                 setIsProjectLoaded(true);
                 setBaselineTick(t => t + 1);
@@ -911,7 +911,7 @@ const App = ({ tourMode = false } = {}) => {
         await new Promise(resolve => setTimeout(resolve, 60)); // laisse l'indicateur s'afficher avant la composition
         const outcome = await runReportExport({ model: reportModel, options: chosen, companyName, logoUrl, appLogoUrl: appLogoBase64 || './Logo_RestoCalculateur3.png' });
         setIsExporting(false);
-        if (outcome.status === 'saved') { showNotification({ message: `Rapport enregistré : ${outcome.path}`, type: 'success' }); setIsPdfModalOpen(false); }
+        if (outcome.status === 'saved') { showNotification({ message: `Rapport enregistré\u00A0: ${outcome.path}`, type: 'success' }); setIsPdfModalOpen(false); }
         else if (outcome.status === 'browser-print') setIsPdfModalOpen(false);
         else if (outcome.status === 'error') showNotification({ message: outcome.message, type: 'error' });
         // 'canceled' : la fenêtre reste ouverte (l'utilisateur peut ajuster ses choix)
@@ -937,7 +937,7 @@ const App = ({ tourMode = false } = {}) => {
                     <img src="./Logo_RestoCalculateur3.png" alt="Logo TransfoCalculateur" className="h-28 w-auto" />
                     <div id="tutorial-main-functions" className="flex space-x-2 items-center">
                         {hasUnsavedChanges && (
-                            <span data-testid="unsaved-indicator" title="Votre travail n'est conservé qu'en mémoire : cliquez sur « Sauvegarder » pour l'enregistrer dans un fichier." className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1 mr-1">
+                            <span data-testid="unsaved-indicator" title="Votre travail n'est conservé qu'en mémoire&nbsp;: cliquez sur «&nbsp;Sauvegarder&nbsp;» pour l'enregistrer dans un fichier." className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1 mr-1">
                                 <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>Modifications non sauvegardées
                             </span>
                         )}
@@ -1135,7 +1135,7 @@ const App = ({ tourMode = false } = {}) => {
                         onConfirm={handleConfirmReset}
                         title="Réinitialiser le projet"
                     >
-                        Êtes-vous sûr de vouloir effacer toutes les données et commencer un nouveau projet ? Cette action est irréversible.
+                        Êtes-vous sûr de vouloir effacer toutes les données et commencer un nouveau projet&nbsp;? Cette action est irréversible.
                     </ConfirmationModal>
                     <ConfirmationModal
                         isOpen={showOpenConfirm}

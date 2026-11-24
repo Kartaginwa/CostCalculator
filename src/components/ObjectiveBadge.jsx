@@ -13,8 +13,8 @@ export const ObjectiveBadge = ({ id, value, info }) => {
     if (!(target > 0) || !Number.isFinite(value)) return null;
     const dir = INDICATORS[id].dir;
     const met = dir === 'max' ? value <= target + 1e-9 : value >= target - 1e-9;
-    const title = `Objectif : ${dirText(dir)} ${target} %`;
+    const title = `Objectif\u00A0: ${dirText(dir)} ${target}\u00A0%`;
     return met
-        ? <CheckCircle className="text-green-500 ml-2" size={16} aria-label={`${title} : atteint`}><title>{`${title} : atteint`}</title></CheckCircle>
-        : <AlertTriangle className="text-red-500 ml-2" size={16} aria-label={`${title} : à atteindre`}><title>{`${title} : à atteindre`}</title></AlertTriangle>;
+        ? <CheckCircle className="text-green-500 ml-2" size={16} aria-label={`${title}\u00A0: atteint`}><title>{`${title}\u00A0: atteint`}</title></CheckCircle>
+        : <AlertTriangle className="text-red-500 ml-2" size={16} aria-label={`${title}\u00A0: à atteindre`}><title>{`${title}\u00A0: à atteindre`}</title></AlertTriangle>;
 };

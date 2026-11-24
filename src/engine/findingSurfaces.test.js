@@ -71,21 +71,21 @@ describe('sur le projet démo', () => {
     });
 });
 
-describe('surfaces de l\'application : une adresse par constat', () => {
+describe('surfaces de l\'application : une adresse par constat', () => {
     const all = computeKeyFindings(demoContext(), { entities: true }).all;
     const TABS = ['portfolio', 'bySku', 'byActivity', 'byChannel', 'ingredients', 'packaging', 'labor'];
     const objectifs = objectiveFindings(all), evolution = evolutionFindings(all), strengths = overviewStrengths(all);
     const strengthsAll = [...strengths.forces, ...strengths.faiblesses];
 
-    it('Objectifs : le groupe des objectifs, sans la version par format (elle vit dans la fiche du format)', () => {
+    it('Objectifs : le groupe des objectifs, sans la version par format (elle vit dans la fiche du format)', () => {
         expect(objectifs.length).toBeGreaterThan(0);
         expect(objectifs.every(x => x.group === 'objectif' && x.subject?.type !== 'format')).toBe(true);
     });
-    it('Amélioration / détérioration : l\'évolution générale seulement', () => {
+    it('Amélioration / détérioration : l\'évolution générale seulement', () => {
         expect(evolution.length).toBeGreaterThan(0);
         expect(evolution.every(x => x.group === 'evolution' && x.scope === 'general')).toBe(true);
     });
-    it('Forces et faiblesses : les mêmes règles que le PDF (majeurs seulement), sans objectifs ni évolution', () => {
+    it('Forces et faiblesses : les mêmes règles que le PDF (majeurs seulement), sans objectifs ni évolution', () => {
         expect(strengthsAll.length).toBeGreaterThan(0);
         expect(strengthsAll.every(x => x.group === 'structure' && x.severity === 'major')).toBe(true);
         const sev = strengthsAll.map(x => SEVERITY_ORDER[x.severity]);
@@ -116,14 +116,14 @@ describe('surfaces de l\'application : une adresse par constat', () => {
         expect(tabFindings(all, 'simulation').all).toEqual([]);
         expect(tabFindings(all, 'overview').all).toEqual([]);
     });
-    it('Par SKU : la fiche du SKU choisi s\'ajoute, jamais celle des autres formats', () => {
+    it('Par SKU : la fiche du SKU choisi s\'ajoute, jamais celle des autres formats', () => {
         const fmt = all.find(x => x.subject?.type === 'format');
         const withSel = tabFindings(all, 'bySku', { formatId: fmt.subject.id });
         expect(withSel.all.some(x => x.subject?.type === 'format' && x.subject.id === fmt.subject.id)).toBe(true);
         expect(withSel.all.filter(x => x.subject?.type === 'format').every(x => x.subject.id === fmt.subject.id)).toBe(true);
         expect(tabFindings(all, 'bySku').all.some(x => x.subject?.type === 'format')).toBe(false);
     });
-    it('hors des redondances voulues, chaque constat a une adresse (un seul recouvrement : le spécifique majeur promu)', () => {
+    it('hors des redondances voulues, chaque constat a une adresse (un seul recouvrement : le spécifique majeur promu)', () => {
         const home = new Set([...objectifs, ...evolution, ...strengthsAll].map(x => x.id));
         const tabIds = TABS.flatMap(t => tabFindings(all, t).all.map(x => x.id));
         tabIds.forEach(id => home.add(id));
@@ -135,7 +135,7 @@ describe('surfaces de l\'application : une adresse par constat', () => {
         const overlap = tabIds.filter(id => strengthsAll.some(x => x.id === id));
         for (const id of overlap) { const x = all.find(y => y.id === id); expect([x.scope, x.severity]).toEqual(['specific', 'major']); }
     });
-    it('sans redondance : le constat agrégé écarte sa version par entité, sauf pour les postes (l\'entité en dit plus)', () => {
+    it('sans redondance : le constat agrégé écarte sa version par entité, sauf pour les postes (l\'entité en dit plus)', () => {
         const ing = tabFindings(all, 'ingredients').all.map(x => x.id);
         expect(ing).not.toContain('loss-item-ing_boeuf');
         expect(ing.some(id => id.startsWith('volatile-item-'))).toBe(false);
@@ -145,10 +145,10 @@ describe('surfaces de l\'application : une adresse par constat', () => {
     });
 });
 
-describe('Forces et faiblesses du démo : équilibrées, sans constat d\'un seul produit', () => {
+describe('Forces et faiblesses du démo : équilibrées, sans constat d\'un seul produit', () => {
     const all = computeKeyFindings(demoContext(), { entities: true }).all;
     const s = overviewStrengths(all);
-    it('au moins trois forces majeures, et « rentable partout » (un seul produit) n\'en fait pas partie', () => {
+    it('au moins trois forces majeures, et « rentable partout » (un seul produit) n\'en fait pas partie', () => {
         expect(s.forces.length).toBeGreaterThanOrEqual(3);
         const ids = [...s.forces, ...s.faiblesses].map(x => x.id);
         expect(ids).not.toContain('sku-best');
@@ -159,7 +159,7 @@ describe('Forces et faiblesses du démo : équilibrées, sans constat d\'un seul
     });
 });
 
-describe('chapitre 2 du PDF : les constats sans adresse dans l\'application', () => {
+describe('chapitre 2 du PDF : les constats sans adresse dans l\'application', () => {
     const all = computeKeyFindings(demoContext(), { entities: true }).all;
     const TABS = ['portfolio', 'bySku', 'byActivity', 'byChannel', 'ingredients', 'packaging', 'labor'];
     const results = resultsFindings(all);
@@ -167,7 +167,7 @@ describe('chapitre 2 du PDF : les constats sans adresse dans l\'application', ()
         expect(results.length).toBeGreaterThan(0);
         expect(results.every(x => x.scope === 'general' && x.severity !== 'major' && x.subject?.type !== 'format' && x.group !== 'objectif' && x.group !== 'evolution' && ['overview', 'simulation'].includes(x.link.subTab))).toBe(true);
     });
-    it('ils n\'apparaissent dans aucune autre adresse : aucun constat n\'est imprimé deux fois', () => {
+    it('ils n\'apparaissent dans aucune autre adresse : aucun constat n\'est imprimé deux fois', () => {
         const others = [...objectiveFindings(all), ...evolutionFindings(all), ...Object.values(overviewStrengths(all)).flat(), ...TABS.flatMap(t => tabFindings(all, t).all)].map(x => x.id);
         expect(results.filter(x => others.includes(x.id)).map(x => x.id)).toEqual([]);
     });
@@ -177,7 +177,7 @@ describe('chapitre 2 du PDF : les constats sans adresse dans l\'application', ()
         const keys = results.map(x => `${x.title}|${x.detail}`);
         expect(new Set(keys).size).toBe(keys.length);
     });
-    it('chaque constat non par format a une adresse : bloc de la Vue d\'ensemble, bandeau, ou chapitre 2 (sauf les redondances voulues)', () => {
+    it('chaque constat non par format a une adresse : bloc de la Vue d\'ensemble, bandeau, ou chapitre 2 (sauf les redondances voulues)', () => {
         const home = new Set([...objectiveFindings(all), ...evolutionFindings(all), ...Object.values(overviewStrengths(all)).flat(), ...TABS.flatMap(t => tabFindings(all, t).all), ...results].map(x => x.id));
         const redundant = /^(volatile-item-|loss-item-|format-gap-of-|post-(underused|overloaded|used)$|supplier-dep-)/;
         expect(all.filter(x => x.subject?.type !== 'format' && !home.has(x.id) && !redundant.test(x.id)).map(x => x.id)).toEqual([]);

@@ -27,7 +27,7 @@ test("Main-d'œuvre : rapport de productivité étendu par activité de producti
     const byActivitySection = page.locator('h2', { hasText: 'Charge de travail par activité' }).locator('xpath=..');
     await expect(byActivitySection.getByRole('heading', { name: 'Charge de travail par activité' })).toBeVisible();
     await expect(byActivitySection.locator('th', { hasText: 'Activité' })).toBeVisible();
-    await expect(byActivitySection.locator('th', { hasText: 'Heures Productives Réelles' })).toBeVisible();
+    await expect(byActivitySection.locator('th', { hasText: 'Heures productives réelles' })).toBeVisible();
     await expect(byActivitySection.locator('th', { hasText: 'Part du total' })).toBeVisible();
 
     const rows = byActivitySection.locator('tbody tr');

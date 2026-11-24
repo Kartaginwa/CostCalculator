@@ -71,7 +71,7 @@ const safetyRule = (c) => {
     if (!sm) return [];
     const detail = `Ventes prévues de ${usd(c.analysis.menuRevenue)} pour un point mort de ${usd(c.analysis.globalBreakEven)}.`;
     if (sm.ratio < 0) return [weak('safety', 'Rentabilité', 100, `Vous êtes ${usd(-sm.surplus)} sous le point mort`, detail, 'overview')];
-    if (sm.ratio < T.safetyMarginLow) return [weak('safety', 'Rentabilité', 85, `Marge de sécurité mince : ${pct(sm.ratio)}`, detail, 'overview')];
+    if (sm.ratio < T.safetyMarginLow) return [weak('safety', 'Rentabilité', 85, `Marge de sécurité mince\u00A0: ${pct(sm.ratio)}`, detail, 'overview')];
     if (sm.ratio >= T.safetyMarginComfortable) return [force('safety', 'Rentabilité', 90, `Marge de sécurité de ${pct(sm.ratio)}`, `Les ventes prévues dépassent le point mort de ${usd(sm.surplus)}.`, 'overview')];
     return [];
 };
@@ -80,7 +80,7 @@ const netProfitRule = (c) => {
     const net = c.reconciliation.rows.find(r => r.label === 'Bénéfice net');
     const revenue = c.analysis.menuRevenue;
     if (!net || !(revenue > 0)) return [];
-    if (net.theoretical < 0) return [weak('net-theoretical', 'Rentabilité', 95, `Bénéfice net prévu négatif : ${usd(net.theoretical)}`, `Vos prix, volumes et frais fixes actuels ne couvrent pas tous vos coûts.`, 'overview')];
+    if (net.theoretical < 0) return [weak('net-theoretical', 'Rentabilité', 95, `Bénéfice net prévu négatif\u00A0: ${usd(net.theoretical)}`, `Vos prix, volumes et frais fixes actuels ne couvrent pas tous vos coûts.`, 'overview')];
     if (net.theoretical > 0) return [force('net-theoretical', 'Rentabilité', 70, `Bénéfice net prévu de ${usd(net.theoretical)}`, `Soit ${pct(net.theoretical / revenue)} des ventes prévues, tous coûts et frais fixes déduits.`, 'overview')];
     return [];
 };
@@ -95,11 +95,11 @@ const costTargetRules = (c) => {
     // Coût matière : les produits qui dépassent la cible sont dits dans le détail du constat (un seul constat par objectif, décision du 24/11).
     const matTarget = P(activeTarget(c.info, 'matiere'));
     const over = matTarget > 0 ? (a.activeProducts || []).filter(p => p.costs && p.costs.costMatierePercent * 100 > matTarget) : [];
-    const overText = over.length > 0 ? ` ${over.length} produit${over.length > 1 ? 's' : ''} sur ${(a.activeProducts || []).length} dépasse${over.length > 1 ? 'nt' : ''} cette cible : ${names(over.map(p => p.displayName))}.` : '';
+    const overText = over.length > 0 ? ` ${over.length} produit${over.length > 1 ? 's' : ''} sur ${(a.activeProducts || []).length} dépasse${over.length > 1 ? 'nt' : ''} cette cible\u00A0: ${names(over.map(p => p.displayName))}.` : '';
     for (const [id, label, value, targetRaw, weight, subTab] of items) {
         const target = P(targetRaw);
         if (!(target > 0) || !Number.isFinite(value)) continue; // pas de cible saisie : règle muette
-        const detail = `À ${pct(value, 2)} contre une cible de ${formatNumber(target, 0)} %.${id === 'matiere' ? overText : ''}`;
+        const detail = `À ${pct(value, 2)} contre une cible de ${formatNumber(target, 0)}\u00A0%.${id === 'matiere' ? overText : ''}`;
         if (value * 100 > target) out.push(weak(`cost-${id}`, 'Coûts', weight, `Coût ${label} au-dessus de la cible`, detail, subTab));
         else out.push(force(`cost-${id}`, 'Coûts', weight - 15, `Coût ${label} sous sa cible`, detail, 'overview'));
     }
@@ -123,7 +123,7 @@ const productRules = (c) => {
     const allPositive = rows.filter(r => r.margins.every(m => m.pct > 0));
     if (losers.length > 0) {
         const worst = losers.map(r => ({ r, m: r.margins.reduce((a, b) => (b.pct < a.pct ? b : a)) })).sort((x, y) => x.m.pct - y.m.pct)[0];
-        out.push(weak('sku-losers', 'Produits', 88, `${losers.length} produit${losers.length > 1 ? 's' : ''} sur ${rows.length} perdent de l'argent dans au moins un canal`, `Le pire : « ${worst.r.name} », ${pct(worst.m.pct)} de marge nette (${worst.m.channel}).`, 'portfolio'));
+        out.push(weak('sku-losers', 'Produits', 88, `${losers.length} produit${losers.length > 1 ? 's' : ''} sur ${rows.length} perdent de l'argent dans au moins un canal`, `Le pire\u00A0: « ${worst.r.name} », ${pct(worst.m.pct)} de marge nette (${worst.m.channel}).`, 'portfolio'));
     }
     if (everywhereNegative.length > 0) out.push(weak('sku-negative-everywhere', 'Produits', 92, `${everywhereNegative.length} produit${everywhereNegative.length > 1 ? 's' : ''} déficitaire${everywhereNegative.length > 1 ? 's' : ''} dans tous leurs canaux`, names(everywhereNegative.map(r => `« ${r.name} »`)), 'portfolio'));
     if (allPositive.length > 0) {
@@ -133,9 +133,9 @@ const productRules = (c) => {
         if (best) out.push(force('sku-best', 'Produits', 80, `« ${best.r.name} » est rentable partout`, `Marge nette positive dans ses ${best.r.margins.length} canaux, de ${pct(best.min)} à ${pct(best.max)}.`, 'portfolio'));
     }
     const m = c.analysis.menuEngineeringData || {};
-    if ((m.stars || []).length > 0) out.push(force('bcg-stars', 'Produits', 50, `${m.stars.length} étoile${m.stars.length > 1 ? 's' : ''} : à protéger`, names(m.stars.map(s => `« ${s.displayName} »`)), 'portfolio'));
-    if ((m.dogs || []).length > 0) out.push(weak('bcg-dogs', 'Produits', 48, `${m.dogs.length} poids mort${m.dogs.length > 1 ? 's' : ''} : à repenser ou retirer`, names(m.dogs.map(s => `« ${s.displayName} »`)), 'portfolio'));
-    if ((m.cows || []).length > 0) out.push(weak('bcg-cows', 'Produits', 42, `${m.cows.length} vache${m.cows.length > 1 ? 's' : ''} à lait à optimiser`, `Très vendus mais peu rentables : ${names(m.cows.map(s => `« ${s.displayName} »`))}.`, 'portfolio'));
+    if ((m.stars || []).length > 0) out.push(force('bcg-stars', 'Produits', 50, `${m.stars.length} étoile${m.stars.length > 1 ? 's' : ''}\u00A0: à protéger`, names(m.stars.map(s => `« ${s.displayName} »`)), 'portfolio'));
+    if ((m.dogs || []).length > 0) out.push(weak('bcg-dogs', 'Produits', 48, `${m.dogs.length} poids mort${m.dogs.length > 1 ? 's' : ''}\u00A0: à repenser ou retirer`, names(m.dogs.map(s => `« ${s.displayName} »`)), 'portfolio'));
+    if ((m.cows || []).length > 0) out.push(weak('bcg-cows', 'Produits', 42, `${m.cows.length} vache${m.cows.length > 1 ? 's' : ''} à lait à optimiser`, `Très vendus mais peu rentables\u00A0: ${names(m.cows.map(s => `« ${s.displayName} »`))}.`, 'portfolio'));
     // Profit concentré sur le produit n° 1
     const contributions = (c.analysis.contributionData || []).filter(x => x.totalContribution > 0);
     const total = contributions.reduce((s, x) => s + x.totalContribution, 0);
@@ -154,8 +154,8 @@ const channelRules = (c) => {
     const top = [...rows].sort((a, b) => b.revenueTotal - a.revenueTotal)[0];
     if (rows.length >= 2 && top.revenueTotal / revenue >= T.channelDependency) {
         const profitShare = net > 0 ? top.margeNetteTotal / net : null;
-        out.push(weak('channel-dependency', 'Canaux', 92, `${top.channelName} : ${pct(top.revenueTotal / revenue, 0)} des revenus${profitShare != null ? `, ${pct(profitShare, 0)} du bénéfice net` : ''}`,
-            profitShare != null && profitShare < top.revenueTotal / revenue ? `${usd(top.margeNetteTotal)} de bénéfice net sur ${usd(net)} : le canal qui pèse le plus rapporte proportionnellement le moins.` : 'Une grande part de vos revenus dépend d\'un seul canal.', 'byChannel'));
+        out.push(weak('channel-dependency', 'Canaux', 92, `${top.channelName}\u00A0: ${pct(top.revenueTotal / revenue, 0)} des revenus${profitShare != null ? `, ${pct(profitShare, 0)} du bénéfice net` : ''}`,
+            profitShare != null && profitShare < top.revenueTotal / revenue ? `${usd(top.margeNetteTotal)} de bénéfice net sur ${usd(net)}\u00A0: le canal qui pèse le plus rapporte proportionnellement le moins.` : 'Une grande part de vos revenus dépend d\'un seul canal.', 'byChannel'));
     }
     if (rows.length >= 2 && top.revenueTotal / revenue < T.channelDependency) {
         out.push(force('channel-balanced', 'Canaux', 60, 'Revenus bien répartis entre vos canaux', `Le premier canal, ${top.channelName}, ne pèse que ${pct(top.revenueTotal / revenue, 0)} des revenus.`, 'byChannel'));
@@ -163,7 +163,7 @@ const channelRules = (c) => {
     rows.filter(r => r.margeNetteTotal < 0).forEach(r => out.push(weak(`channel-deficit-${r.channelId}`, 'Canaux', 80, `${r.channelName} perd de l'argent`, `Bénéfice net de ${usd(r.margeNetteTotal)} pour ${usd(r.revenueTotal)} de revenus.`, 'byChannel')));
     if (rows.length >= 2) {
         const best = [...rows].sort((a, b) => b.margeNettePercent - a.margeNettePercent)[0];
-        if (best.margeNettePercent > 0 && best.channelId !== top.channelId) out.push(force('channel-best', 'Canaux', 65, `${best.channelName} : la meilleure marge nette`, `${pct(best.margeNettePercent)} de marge nette pour ${pct(best.revenueTotal / revenue, 0)} des revenus.`, 'byChannel'));
+        if (best.margeNettePercent > 0 && best.channelId !== top.channelId) out.push(force('channel-best', 'Canaux', 65, `${best.channelName}\u00A0: la meilleure marge nette`, `${pct(best.margeNettePercent)} de marge nette pour ${pct(best.revenueTotal / revenue, 0)} des revenus.`, 'byChannel'));
     }
     return out;
 };
@@ -172,8 +172,8 @@ const activityRules = (c) => {
     const rows = c.activitySummaries || [];
     const out = [];
     rows.filter(r => r.margeNetteTotal < 0).forEach(r => out.push(weak(`activity-deficit-${r.activityId}`, 'Activités', 85, `${r.activityName} perd de l'argent`, `Bénéfice net de ${usd(r.margeNetteTotal)} pour ${usd(r.revenueTotal)} de revenus.`, 'byActivity')));
-    rows.filter(r => r.margeNetteTotal > 0 && r.margeNettePercent < T.lowNetMargin).forEach(r => out.push(weak(`activity-low-${r.activityId}`, 'Activités', 50, `${r.activityName} : marge nette de ${pct(r.margeNettePercent)}`, `${usd(r.margeNetteTotal)} de bénéfice net sur ${usd(r.revenueTotal)} de revenus.`, 'byActivity')));
-    if (rows.length >= 2 && rows.every(r => r.margeNetteTotal > 0)) out.push(force('activities-positive', 'Activités', 55, `Les ${rows.length} activités sont bénéficiaires`, `Bénéfice net positif pour chacune : ${names(rows.map(r => usd(r.margeNetteTotal)), 5)}.`, 'byActivity'));
+    rows.filter(r => r.margeNetteTotal > 0 && r.margeNettePercent < T.lowNetMargin).forEach(r => out.push(weak(`activity-low-${r.activityId}`, 'Activités', 50, `${r.activityName}\u00A0: marge nette de ${pct(r.margeNettePercent)}`, `${usd(r.margeNetteTotal)} de bénéfice net sur ${usd(r.revenueTotal)} de revenus.`, 'byActivity')));
+    if (rows.length >= 2 && rows.every(r => r.margeNetteTotal > 0)) out.push(force('activities-positive', 'Activités', 55, `Les ${rows.length} activités sont bénéficiaires`, `Bénéfice net positif pour chacune\u00A0: ${names(rows.map(r => usd(r.margeNetteTotal)), 5)}.`, 'byActivity'));
     return out;
 };
 
@@ -185,11 +185,11 @@ const supplyRules = (c) => {
     ];
     for (const [id, noun, shares, vol, abc, report, subTab, k] of sets) {
         const top = shares.rows[0];
-        if (top && top.isDependent) out.push(weak(`supplier-${id}`, 'Approvisionnement', Math.round(80 * k), `${top.provider} : ${pct(top.share, 0)} des achats ${noun}`, 'Une dépendance à un seul fournisseur.', subTab));
+        if (top && top.isDependent) out.push(weak(`supplier-${id}`, 'Approvisionnement', Math.round(80 * k), `${top.provider}\u00A0: ${pct(top.share, 0)} des achats ${noun}`, 'Une dépendance à un seul fournisseur.', subTab));
         const classA = (abc?.A || []);
         if (vol.hasEnoughData && classA.length > 0) {
             const volatile = classA.filter(i => vol.byName[i.name]?.isVolatile);
-            if (volatile.length > 0) out.push(weak(`volatile-a-${id}`, 'Approvisionnement', Math.round(78 * k), `${volatile.length} ${id === 'ing' ? 'ingrédient' : 'emballage'}${volatile.length > 1 ? 's' : ''} de classe A à prix volatil`, `${names(volatile.map(i => `${i.name} (${formatNumber(vol.byName[i.name].amplitudePercent, 0)} %)`))} : amplitudes de prix sur ${vol.pointCount} relevés.`, subTab));
+            if (volatile.length > 0) out.push(weak(`volatile-a-${id}`, 'Approvisionnement', Math.round(78 * k), `${volatile.length} ${id === 'ing' ? 'ingrédient' : 'emballage'}${volatile.length > 1 ? 's' : ''} de classe A à prix volatil`, `${names(volatile.map(i => `${i.name} (${formatNumber(vol.byName[i.name].amplitudePercent, 0)}\u00A0%)`))}\u00A0: amplitudes de prix sur ${vol.pointCount} relevés.`, subTab));
             else out.push(force(`stable-a-${id}`, 'Approvisionnement', Math.round(45 * k), `Les ${id === 'ing' ? 'ingrédients' : 'emballages'} de classe A ont des prix stables`, `Aucun des ${classA.length} éléments de classe A n'a un prix volatil.`, subTab));
         }
         // Perte stock prévue
@@ -198,8 +198,8 @@ const supplyRules = (c) => {
             const share = loss.loss / loss.total;
             const items = Object.values(report.groupedByProvider || {}).flatMap(g => g.items);
             const topItem = [...items].sort((a, b) => b.lossCost - a.lossCost)[0];
-            if (share >= T.lossShareHigh && topItem) out.push(weak('loss-high', 'Approvisionnement', 42, `Perte stock prévue : ${usd(loss.loss)} (${pct(share)} des achats)`, `La plus coûteuse : ${topItem.name}, ${usd(topItem.lossCost)}.`, subTab));
-            else if (share < T.lossShareLow) out.push(force('loss-low', 'Approvisionnement', 30, `Perte stock faible : ${pct(share)} des achats`, `${usd(loss.loss)} à acheter en plus pour la compenser.`, subTab));
+            if (share >= T.lossShareHigh && topItem) out.push(weak('loss-high', 'Approvisionnement', 42, `Perte en stock prévue\u00A0: ${usd(loss.loss)} (${pct(share)} des achats)`, `La plus coûteuse\u00A0: ${topItem.name}, ${usd(topItem.lossCost)}.`, subTab));
+            else if (share < T.lossShareLow) out.push(force('loss-low', 'Approvisionnement', 30, `Perte en stock faible\u00A0: ${pct(share)} des achats`, `${usd(loss.loss)} à acheter en plus pour la compenser.`, subTab));
         }
     }
     return out;
@@ -210,21 +210,21 @@ const laborRules = (c) => {
     const cas = c.cascade;
     if (cas.payroll > 0 && cas.unusedShare != null) {
         if (cas.unusedShare >= T.unusedPayHigh) out.push(weak('labor-unused', 'Main-d\'œuvre', 70, `${pct(cas.unusedShare)} de la paie n'est pas utilisée`, `Soit ${usd(cas.unusedPay)} payés sans produire, absorbés dans le coût de vos produits.`, 'labor'));
-        else if (cas.unusedShare <= T.unusedPayLow) out.push(force('labor-used', 'Main-d\'œuvre', 50, `Seulement ${pct(cas.unusedShare)} de la paie non utilisée`, `Votre équipe est bien occupée : ${usd(cas.unusedPay)} sur ${usd(cas.payroll)}.`, 'labor'));
+        else if (cas.unusedShare <= T.unusedPayLow) out.push(force('labor-used', 'Main-d\'œuvre', 50, `Seulement ${pct(cas.unusedShare)} de la paie non utilisée`, `Votre équipe est bien occupée\u00A0: ${usd(cas.unusedPay)} sur ${usd(cas.payroll)}.`, 'labor'));
     }
     const posts = (c.info.productivityReport?.rows || []).filter(r => r.actual > 0 && r.expected > 0);
     const best = [...posts].sort((a, b) => b.utilization - a.utilization)[0];
-    if (best && best.utilization / 100 >= T.postWellUsed) out.push(force('post-used', 'Main-d\'œuvre', 40, `${best.postName} à ${formatNumber(best.utilization, 0)} % d'utilisation`, 'Le poste de production le plus sollicité est bien occupé.', 'labor'));
+    if (best && best.utilization / 100 >= T.postWellUsed) out.push(force('post-used', 'Main-d\'œuvre', 40, `${best.postName} à ${formatNumber(best.utilization, 0)}\u00A0% d'utilisation`, 'Le poste de production le plus sollicité est bien occupé.', 'labor'));
     const ranked = c.productRows.filter(r => r.grossProfitPerHour != null);
     if (ranked.length >= 3) {
         const sorted = [...ranked].sort((a, b) => b.grossProfitPerHour - a.grossProfitPerHour);
         // Moyenne de l'écran Main-d'œuvre (marge de croissance) : bénéfice brut ÷ TOUTES les heures de production ; absente, la comparaison l'est aussi.
         const avg = c.growth ? c.growth.grossProfitPerHour : null;
-        out.push(force('product-best-hour', 'Main-d\'œuvre', 75, `« ${sorted[0].name} » : le meilleur usage du temps`, `${usd(sorted[0].grossProfitPerHour)} de bénéfice brut par heure de main-d'œuvre${avg != null ? ` (moyenne : ${usd(avg)})` : ''}.`, 'labor'));
+        out.push(force('product-best-hour', 'Main-d\'œuvre', 75, `« ${sorted[0].name} »\u00A0: le meilleur usage du temps`, `${usd(sorted[0].grossProfitPerHour)} de bénéfice brut par heure de main-d'œuvre${avg != null ? ` (moyenne\u00A0: ${usd(avg)})` : ''}.`, 'labor'));
         const worst = sorted[sorted.length - 1];
         if (avg != null && worst.grossProfitPerHour < avg * T.productHourLow) out.push(weak('product-worst-hour', 'Main-d\'œuvre', 45, `« ${worst.name} » rapporte peu à l'heure`, `${usd(worst.grossProfitPerHour)} par heure, contre ${usd(avg)} en moyenne.`, 'labor'));
     }
-    if (c.growth && c.growth.freeHours >= T.growthMinShare * (c.cascade.expectedHours || 0)) out.push(force('labor-growth', 'Main-d\'œuvre', 55, `Marge de croissance : ${formatNumber(c.growth.freeHours, 0)} h libres`, `Environ ${usd(Math.round(c.growth.additionalRevenue / 100) * 100)} de ventes de plus possibles sans embauche (estimation).`, 'labor'));
+    if (c.growth && c.growth.freeHours >= T.growthMinShare * (c.cascade.expectedHours || 0)) out.push(force('labor-growth', 'Main-d\'œuvre', 55, `Marge de croissance\u00A0: ${formatNumber(c.growth.freeHours, 0)} h libres`, `Environ ${usd(Math.round(c.growth.additionalRevenue / 100) * 100)} de ventes de plus possibles sans embauche (estimation).`, 'labor'));
     return out;
 };
 
@@ -238,7 +238,7 @@ const objectiveRules = (c) => {
         if (o.met == null || ['matiere', 'emballage', 'mo'].includes(o.key)) continue;
         const detail = `À ${money(o.current, o.unit)} contre un objectif d'${o.dir === 'min' ? 'au moins' : 'au plus'} ${money(o.target, o.unit)}.`;
         const id = `obj-${o.key}`;
-        if (o.met) out.push(force(id, o.theme, 45, `${o.label} : objectif atteint`, detail, o.subTab));
+        if (o.met) out.push(force(id, o.theme, 45, `${o.label}\u00A0: objectif atteint`, detail, o.subTab));
         else out.push(weak(id, o.theme, Math.round(60 + Math.min(25, o.target > 0 ? (o.gap / o.target) * 100 : 25)), `${o.label} ${o.dir === 'min' ? 'sous' : 'au-dessus de'} l'objectif`, detail, o.subTab));
     }
     return out;
@@ -250,7 +250,7 @@ const reconciliationRules = (c) => {
     const row = (label) => c.reconciliation.rows.find(r => r.label === label);
     const rev = row('Revenus'), direct = row('Charges directes'), net = row('Bénéfice net');
     if (rev && rev.diffPercent != null && Math.abs(rev.diffPercent) <= T.reconciliationClose) out.push(force('rec-revenue', 'Réel vs théorique', 50, `Revenus réels alignés sur votre modèle (${rev.diffPercent >= 0 ? '+' : ''}${pct(rev.diffPercent)})`, `${usd(rev.real)} réels contre ${usd(rev.theoretical)} prévus.`, 'overview'));
-    if (direct && direct.diffPercent != null && direct.diffPercent >= T.reconciliationGap) out.push(weak('rec-direct', 'Réel vs théorique', 60, `Charges directes réelles au-dessus du modèle (+${pct(direct.diffPercent)})`, `${direct.diff >= 0 ? '+' : ''}${usd(direct.diff)} : pertes, rendements ou prix payés plus élevés que prévu.`, 'overview'));
+    if (direct && direct.diffPercent != null && direct.diffPercent >= T.reconciliationGap) out.push(weak('rec-direct', 'Réel vs théorique', 60, `Charges directes réelles au-dessus du modèle (+${pct(direct.diffPercent)})`, `${direct.diff >= 0 ? '+' : ''}${usd(direct.diff)}\u00A0: pertes, rendements ou prix payés plus élevés que prévu.`, 'overview'));
     if (net && net.diffPercent != null) {
         if (net.diffPercent <= -T.reconciliationNetGap) out.push(weak('rec-net', 'Réel vs théorique', 75, `Bénéfice net réel sous le modèle (${pct(net.diffPercent)})`, `${usd(net.real)} réels contre ${usd(net.theoretical)} prévus.`, 'overview'));
         else if (net.diffPercent >= T.reconciliationNetGap) out.push(force('rec-net', 'Réel vs théorique', 60, `Bénéfice net réel au-dessus du modèle (+${pct(net.diffPercent)})`, `${usd(net.real)} réels contre ${usd(net.theoretical)} prévus.`, 'overview'));
@@ -281,46 +281,46 @@ const trendRules = (c) => {
     const worst = [...costChanges].sort((x, y) => y.d - x.d)[0];
     if (worst && worst.d >= T.skuCostChange) {
         const n = costChanges.filter(x => x.d >= T.skuCostChange).length;
-        out.push(weak('history-sku-cost-up', 'Évolution', 56, `Coût de revient en hausse pour ${n} produit${n > 1 ? 's' : ''}`, `Le plus touché : « ${worst.name} », +${pct(worst.d, 0)} ${since}.`, 'bySku'));
+        out.push(weak('history-sku-cost-up', 'Évolution', 56, `Coût de revient en hausse pour ${n} produit${n > 1 ? 's' : ''}`, `Le plus touché\u00A0: « ${worst.name} », +${pct(worst.d, 0)} ${since}.`, 'bySku'));
     }
     // 16 : coût de revient en baisse
     const best = [...costChanges].sort((x, y) => x.d - y.d)[0];
     if (best && best.d <= -T.skuCostChange) {
         const n = costChanges.filter(x => x.d <= -T.skuCostChange).length;
-        out.push(force('history-sku-cost-down', 'Évolution', 46, `Coût de revient en baisse pour ${n} produit${n > 1 ? 's' : ''}`, `Le plus allégé : « ${best.name} », ${pct(best.d, 0)} ${since}.`, 'bySku'));
+        out.push(force('history-sku-cost-down', 'Évolution', 46, `Coût de revient en baisse pour ${n} produit${n > 1 ? 's' : ''}`, `Le plus allégé\u00A0: « ${best.name} », ${pct(best.d, 0)} ${since}.`, 'bySku'));
     }
     // 28 : marge nette d'un produit
     const marginChanges = pairs.map(x => ({ id: x.now.id, name: x.now.displayName, then: skuNetMargin(x.then), now: skuNetMargin(x.now) })).filter(x => x.then != null && x.now != null).map(x => ({ ...x, d: x.now - x.then }));
     const down = [...marginChanges].sort((x, y) => x.d - y.d)[0];
-    if (down && down.d <= -T.skuMarginPoints) out.push(weak('history-sku-margin-down', 'Évolution', 54, `Marge nette en recul pour ${marginChanges.filter(x => x.d <= -T.skuMarginPoints).length} produit(s)`, `Le plus touché : « ${down.name} », de ${pct(down.then)} à ${pct(down.now)} ${since}.`, 'bySku'));
+    if (down && down.d <= -T.skuMarginPoints) out.push(weak('history-sku-margin-down', 'Évolution', 54, `Marge nette en recul pour ${marginChanges.filter(x => x.d <= -T.skuMarginPoints).length} produit(s)`, `Le plus touché\u00A0: « ${down.name} », de ${pct(down.then)} à ${pct(down.now)} ${since}.`, 'bySku'));
     const up = [...marginChanges].sort((x, y) => y.d - x.d)[0];
-    if (up && up.d >= T.skuMarginPoints) out.push(force('history-sku-margin-up', 'Évolution', 46, `Marge nette en progrès pour ${marginChanges.filter(x => x.d >= T.skuMarginPoints).length} produit(s)`, `Le plus amélioré : « ${up.name} », de ${pct(up.then)} à ${pct(up.now)} ${since}.`, 'bySku'));
+    if (up && up.d >= T.skuMarginPoints) out.push(force('history-sku-margin-up', 'Évolution', 46, `Marge nette en progrès pour ${marginChanges.filter(x => x.d >= T.skuMarginPoints).length} produit(s)`, `Le plus amélioré\u00A0: « ${up.name} », de ${pct(up.then)} à ${pct(up.now)} ${since}.`, 'bySku'));
     // 74 : érosion de marge — le coût monte, le prix net n'a pas bougé
     const eroded = pairs.map(x => ({ name: x.now.displayName, cost: rel(P(x.now.costs?.totalCostPerPortion), P(x.then.costs?.totalCostPerPortion)), price: rel(skuAvgNetPrice(x.now), skuAvgNetPrice(x.then)) }))
         .filter(x => x.cost != null && x.price != null && x.cost >= T.skuCostChange && Math.abs(x.price) < 0.01);
-    if (eroded.length > 0) out.push(weak('history-erosion', 'Évolution', 62, `${eroded.length} produit${eroded.length > 1 ? 's' : ''} dont le coût monte sans hausse de prix`, `Érosion de marge : ${names(eroded.map(x => `« ${x.name} » (coût +${pct(x.cost, 0)})`))}.`, 'bySku'));
+    if (eroded.length > 0) out.push(weak('history-erosion', 'Évolution', 62, `${eroded.length} produit${eroded.length > 1 ? 's' : ''} dont le coût monte sans hausse de prix`, `Érosion de marge\u00A0: ${names(eroded.map(x => `« ${x.name} » (coût +${pct(x.cost, 0)})`))}.`, 'bySku'));
     // Par format (constats par entité, demandés par les fiches produits)
     if (c.includeEntities) {
         costChanges.filter(x => Math.abs(x.d) >= T.skuCostChange).forEach(x => out.push(finding(`sku-cost-trend-${x.id}`, x.d > 0 ? 'faiblesse' : 'force', 'Évolution', x.d > 0 ? 56 : 46,
-            `« ${x.name} » : coût de revient en ${x.d > 0 ? 'hausse' : 'baisse'} de ${pct(Math.abs(x.d), 0)}`, `${since.charAt(0).toUpperCase()}${since.slice(1)}.`, 'bySku', null, subject('format', x.id, x.name))));
+            `« ${x.name} »\u00A0: coût de revient en ${x.d > 0 ? 'hausse' : 'baisse'} de ${pct(Math.abs(x.d), 0)}`, `${since.charAt(0).toUpperCase()}${since.slice(1)}.`, 'bySku', null, subject('format', x.id, x.name))));
         marginChanges.filter(x => Math.abs(x.d) >= T.skuMarginPoints).forEach(x => out.push(finding(`sku-margin-trend-${x.id}`, x.d > 0 ? 'force' : 'faiblesse', 'Évolution', x.d > 0 ? 46 : 54,
-            `« ${x.name} » : marge nette en ${x.d > 0 ? 'progrès' : 'recul'}`, `De ${pct(x.then)} à ${pct(x.now)} ${since}.`, 'bySku', null, subject('format', x.id, x.name))));
+            `« ${x.name} »\u00A0: marge nette en ${x.d > 0 ? 'progrès' : 'recul'}`, `De ${pct(x.then)} à ${pct(x.now)} ${since}.`, 'bySku', null, subject('format', x.id, x.name))));
     }
     // 37 : canaux
     const chRev = (rows) => { const m = new Map(); for (const p of activeRows(rows)) for (const cb of p.channelBreakdown || []) m.set(cb.channelId, (m.get(cb.channelId) || 0) + P(cb.netPrice) * P(cb.volume)); return m; };
     const chNow = chRev(nowRows), chThen = chRev(thenRows);
     const chChanges = [...chNow].map(([id, v]) => ({ name: c.channelNames[id], d: rel(v, chThen.get(id)) })).filter(x => x.name && x.d != null);
     const grow = [...chChanges].sort((x, y) => y.d - x.d)[0];
-    if (grow && grow.d >= T.channelChange) out.push(force('history-channel-up', 'Évolution', 50, `${grow.name} : revenus en hausse de ${pct(grow.d, 0)}`, `${since}.`, 'byChannel'));
+    if (grow && grow.d >= T.channelChange) out.push(force('history-channel-up', 'Évolution', 50, `${grow.name}\u00A0: revenus en hausse de ${pct(grow.d, 0)}`, `${since}.`, 'byChannel'));
     const shrink = [...chChanges].sort((x, y) => x.d - y.d)[0];
-    if (shrink && shrink.d <= -T.channelChange) out.push(weak('history-channel-down', 'Évolution', 50, `${shrink.name} : revenus en baisse de ${pct(-shrink.d, 0)}`, `${since}.`, 'byChannel'));
+    if (shrink && shrink.d <= -T.channelChange) out.push(weak('history-channel-down', 'Évolution', 50, `${shrink.name}\u00A0: revenus en baisse de ${pct(-shrink.d, 0)}`, `${since}.`, 'byChannel'));
     // 49, 50 : prix des intrants (au moins 3 relevés pour parler de tendance soutenue)
     for (const [key, vol, label, subTab] of [['ing', c.ingredientVolatilityRecent, 'ingrédient', 'ingredients'], ['pkg', c.packagingVolatilityRecent, 'emballage', 'packaging']]) {
         const list = (vol?.list || []).filter(x => x.count >= 3);
         const ups = list.filter(x => x.trendPercent / 100 >= T.priceTrend).sort((x, y) => y.trendPercent - x.trendPercent);
         const downs = list.filter(x => x.trendPercent / 100 <= -T.priceTrend).sort((x, y) => x.trendPercent - y.trendPercent);
-        if (ups.length) out.push(weak(`history-price-up-${key}`, 'Évolution', 53, `${ups.length} ${label}${ups.length > 1 ? 's' : ''} en hausse soutenue`, `${names(ups.map(x => `${x.name} (+${formatNumber(x.trendPercent, 0)} %)`))}.`, subTab));
-        if (downs.length) out.push(force(`history-price-down-${key}`, 'Évolution', 43, `${downs.length} ${label}${downs.length > 1 ? 's' : ''} en baisse de prix`, `${names(downs.map(x => `${x.name} (${formatNumber(x.trendPercent, 0)} %)`))}.`, subTab));
+        if (ups.length) out.push(weak(`history-price-up-${key}`, 'Évolution', 53, `${ups.length} ${label}${ups.length > 1 ? 's' : ''} en hausse soutenue`, `${names(ups.map(x => `${x.name} (+${formatNumber(x.trendPercent, 0)}\u00A0%)`))}.`, subTab));
+        if (downs.length) out.push(force(`history-price-down-${key}`, 'Évolution', 43, `${downs.length} ${label}${downs.length > 1 ? 's' : ''} en baisse de prix`, `${names(downs.map(x => `${x.name} (${formatNumber(x.trendPercent, 0)}\u00A0%)`))}.`, subTab));
     }
     // 56 : fournisseurs (variation moyenne des prix de leurs intrants)
     const byProvider = new Map();
@@ -329,9 +329,9 @@ const trendRules = (c) => {
     }
     const prov = [...byProvider].filter(([, e]) => e.n >= 2).map(([name, e]) => ({ name, avg: e.sum / e.n, n: e.n }));
     const dear = prov.sort((x, y) => y.avg - x.avg)[0];
-    if (dear && dear.avg / 100 >= T.providerTrend) out.push(weak('history-provider-up', 'Évolution', 47, `${dear.name} : prix en hausse de ${formatNumber(dear.avg, 0)} % en moyenne`, `Moyenne sur ${dear.n} ingrédients ${since}.`, 'ingredients'));
+    if (dear && dear.avg / 100 >= T.providerTrend) out.push(weak('history-provider-up', 'Évolution', 47, `${dear.name}\u00A0: prix en hausse de ${formatNumber(dear.avg, 0)}\u00A0% en moyenne`, `Moyenne sur ${dear.n} ingrédients ${since}.`, 'ingredients'));
     const cheap = prov.sort((x, y) => x.avg - y.avg)[0];
-    if (cheap && cheap.avg / 100 <= -T.providerTrend) out.push(force('history-provider-down', 'Évolution', 41, `${cheap.name} : prix en baisse de ${formatNumber(-cheap.avg, 0)} % en moyenne`, `Moyenne sur ${cheap.n} ingrédients ${since}.`, 'ingredients'));
+    if (cheap && cheap.avg / 100 <= -T.providerTrend) out.push(force('history-provider-down', 'Évolution', 41, `${cheap.name}\u00A0: prix en baisse de ${formatNumber(-cheap.avg, 0)}\u00A0% en moyenne`, `Moyenne sur ${cheap.n} ingrédients ${since}.`, 'ingredients'));
     return out;
 };
 
@@ -395,7 +395,7 @@ const evolutionRules = (c) => {
                 out.push(make(`history-${m.id}`, m.weight + 4, total, `constante depuis ${series.length - 1} relevés`, `De ${fmt(series[0].v)} (« ${series[0].label} ») à ${fmt(last.v)} aujourd'hui.`));
             } else {
                 const d = delta(prev.v, last.v);
-                if (d != null && Math.abs(d) >= thr) out.push(make(`history-${m.id}`, m.weight, d, `depuis « ${prev.label} »`.replace('depuis « aujourd\'hui »', ''), `De ${fmt(prev.v)} à ${fmt(last.v)}.`));
+                if (d != null && Math.abs(d) >= thr) out.push(make(`history-${m.id}`, m.weight, d, `depuis « ${prev.label} »`.replace('depuis « aujourd\'hui »', ''), `De ${fmt(prev.v)} à ${fmt(last.v)}.`));
             }
         }
         // 12 mois : le relevé le plus proche d'il y a un an, pourvu qu'il diffère du relevé de comparaison récent
@@ -429,7 +429,7 @@ const economicsRules = (c) => {
     if (revenue > 0 && sum(rows, r => r.totalIndirectTotal) > 0) {
         const share = sum(rows, r => r.totalIndirectTotal) / revenue;
         if (share >= T.fixedShareHigh) out.push(weak('fixed-share', 'Rentabilité', 58, `Les frais fixes pèsent ${pct(share, 0)} des revenus`, 'Une structure de frais lourde exige un volume élevé pour être rentable.', 'overview'));
-        else if (share <= T.fixedShareLow) out.push(force('fixed-share', 'Rentabilité', 40, `Frais fixes légers : ${pct(share, 0)} des revenus`, 'Une structure légère rend l\'entreprise plus résistante à un recul des ventes.', 'overview'));
+        else if (share <= T.fixedShareLow) out.push(force('fixed-share', 'Rentabilité', 40, `Frais fixes légers\u00A0: ${pct(share, 0)} des revenus`, 'Une structure légère rend l\'entreprise plus résistante à un recul des ventes.', 'overview'));
     }
     // 17 : vieillissement
     const aging = sum(rows, r => r.costAgingTotal);
@@ -437,7 +437,7 @@ const economicsRules = (c) => {
     if (aging > 0 && allCosts > 0 && aging / allCosts >= T.agingShare) out.push(weak('aging-share', 'Coûts', 45, `Le vieillissement pèse ${pct(aging / allCosts, 0)} de vos coûts`, `${usd(aging)} de coût de vieillissement (capital immobilisé et pertes) sur ${usd(allCosts)} de coûts totaux.`, 'overview', aging));
     // 66 : part de la main-d'œuvre dans les coûts
     const labor = sum(rows, r => r.costLaborTotal);
-    if (allCosts > 0 && labor / allCosts >= T.laborCostShare) out.push(weak('labor-cost-share', 'Main-d\'œuvre', 52, `La main-d'œuvre pèse ${pct(labor / allCosts, 0)} de vos coûts`, `${usd(labor)} sur ${usd(allCosts)} : le premier levier est la productivité du temps.`, 'labor'));
+    if (allCosts > 0 && labor / allCosts >= T.laborCostShare) out.push(weak('labor-cost-share', 'Main-d\'œuvre', 52, `La main-d'œuvre pèse ${pct(labor / allCosts, 0)} de vos coûts`, `${usd(labor)} sur ${usd(allCosts)}\u00A0: le premier levier est la productivité du temps.`, 'labor'));
     // 71, 73 : sensibilité à une hausse de coûts, mesurée sur le bénéfice net prévu
     const net = c.reconciliation?.rows?.find(r => r.label === 'Bénéfice net')?.theoretical;
     if (net != null && net > 0) {
@@ -457,7 +457,7 @@ const economicsRules = (c) => {
         const items = Object.values(c.analysis.purchasingReportData?.groupedByProvider || {}).flatMap(g => g.items);
         const top = [...items].sort((x, y) => y.totalCost - x.totalCost)[0];
         if (top && top.totalCost * T.sensitivityItemShock >= net * T.sensitivityItemNetShare) {
-            out.push(weak('sens-item', 'Approvisionnement', 38, `${top.name} : +${pct(T.sensitivityItemShock, 0)} de prix coûterait ${usd(top.totalCost * T.sensitivityItemShock)}`, `L'intrant qui pèse le plus dans vos achats : ${pct(top.totalCost * T.sensitivityItemShock / net, 0)} de votre bénéfice net prévu.`, 'ingredients', top.totalCost * T.sensitivityItemShock));
+            out.push(weak('sens-item', 'Approvisionnement', 38, `${top.name}\u00A0: +${pct(T.sensitivityItemShock, 0)} de prix coûterait ${usd(top.totalCost * T.sensitivityItemShock)}`, `L'intrant qui pèse le plus dans vos achats\u00A0: ${pct(top.totalCost * T.sensitivityItemShock / net, 0)} de votre bénéfice net prévu.`, 'ingredients', top.totalCost * T.sensitivityItemShock));
         }
     }
     // 69 : bénéfice brut réel vs théorique
@@ -479,14 +479,14 @@ const moreChannelRules = (c) => {
     const avg = sum(rows, r => r.margeNetteTotal) / revenue;
     // 33 : forte marge, peu exploité
     const under = rows.filter(r => r.margeNettePercent >= avg + T.marginEdge && r.revenueTotal / revenue < T.underusedShare).sort((x, y) => y.margeNettePercent - x.margeNettePercent)[0];
-    if (under) out.push(force('channel-underused', 'Canaux', 52, `${under.channelName} : forte marge, encore peu exploité`, `${pct(under.margeNettePercent)} de marge nette (moyenne : ${pct(avg)}) pour ${pct(under.revenueTotal / revenue, 0)} des revenus : un canal à développer.`, 'byChannel'));
+    if (under) out.push(force('channel-underused', 'Canaux', 52, `${under.channelName}\u00A0: forte marge, encore peu exploité`, `${pct(under.margeNettePercent)} de marge nette (moyenne\u00A0: ${pct(avg)}) pour ${pct(under.revenueTotal / revenue, 0)} des revenus\u00A0: un canal à développer.`, 'byChannel'));
     // 35 : grand écart de marge
     const sorted = [...rows].sort((x, y) => y.margeNettePercent - x.margeNettePercent);
     const gap = sorted[0].margeNettePercent - sorted[sorted.length - 1].margeNettePercent;
-    if (gap >= T.channelMarginGap) out.push(weak('channel-gap', 'Canaux', 44, `Grand écart de marge entre vos canaux : ${pts(gap)}`, `De ${pct(sorted[sorted.length - 1].margeNettePercent)} (${sorted[sorted.length - 1].channelName}) à ${pct(sorted[0].margeNettePercent)} (${sorted[0].channelName}).`, 'byChannel'));
+    if (gap >= T.channelMarginGap) out.push(weak('channel-gap', 'Canaux', 44, `Grand écart de marge entre vos canaux\u00A0: ${pts(gap)}`, `De ${pct(sorted[sorted.length - 1].margeNettePercent)} (${sorted[sorted.length - 1].channelName}) à ${pct(sorted[0].margeNettePercent)} (${sorted[0].channelName}).`, 'byChannel'));
     // 36 : frais de mise en marché
     const heavy = rows.filter(r => r.costIndirectChannelTotal / r.revenueTotal >= T.channelFeesShare);
-    if (heavy.length) out.push(weak('channel-fees', 'Canaux', 46, `Frais de mise en marché élevés : ${names(heavy.map(r => `${r.channelName} (${pct(r.costIndirectChannelTotal / r.revenueTotal, 0)})`))}`, 'Ces frais rattachés au canal (commissions, marketing, livraison) absorbent une grande part du prix de vente.', 'byChannel'));
+    if (heavy.length) out.push(weak('channel-fees', 'Canaux', 46, `Frais de mise en marché élevés\u00A0: ${names(heavy.map(r => `${r.channelName} (${pct(r.costIndirectChannelTotal / r.revenueTotal, 0)})`))}`, 'Ces frais rattachés au canal (commissions, marketing, livraison) absorbent une grande part du prix de vente.', 'byChannel'));
     // 76 : produits rentables absents du canal le plus rentable
     const best = sorted[0];
     if (best.margeNettePercent > 0) {
@@ -495,7 +495,7 @@ const moreChannelRules = (c) => {
             const margin = netMarginOfRows([p]);
             return margin != null && margin > 0 && cbs.length > 0 && !cbs.some(cb => cb.channelId === best.channelId);
         });
-        if (missing.length) out.push(weak('sku-missed-channel', 'Canaux', 41, `${missing.length} produit${missing.length > 1 ? 's' : ''} rentable${missing.length > 1 ? 's' : ''} absent${missing.length > 1 ? 's' : ''} de votre meilleur canal`, `${best.channelName} (${pct(best.margeNettePercent)} de marge nette) : ${names(missing.map(p => `« ${p.displayName} »`))}.`, 'portfolio'));
+        if (missing.length) out.push(weak('sku-missed-channel', 'Canaux', 41, `${missing.length} produit${missing.length > 1 ? 's' : ''} rentable${missing.length > 1 ? 's' : ''} absent${missing.length > 1 ? 's' : ''} de votre meilleur canal`, `${best.channelName} (${pct(best.margeNettePercent)} de marge nette)\u00A0: ${names(missing.map(p => `« ${p.displayName} »`))}.`, 'portfolio'));
     }
     return out;
 };
@@ -516,11 +516,11 @@ const moreActivityRules = (c) => {
     if (rows.length >= 2) {
         const top = [...rows].sort((x, y) => y.revenueTotal - x.revenueTotal)[0];
         // 43 : une activité domine
-        if (top.revenueTotal / revenue >= T.activityDominance) out.push(weak('activity-dominant', 'Activités', 47, `${top.activityName} : ${pct(top.revenueTotal / revenue, 0)} des revenus`, 'Une seule activité porte l\'entreprise : un recul y serait difficile à compenser.', 'byActivity'));
+        if (top.revenueTotal / revenue >= T.activityDominance) out.push(weak('activity-dominant', 'Activités', 47, `${top.activityName}\u00A0: ${pct(top.revenueTotal / revenue, 0)} des revenus`, 'Une seule activité porte l\'entreprise : un recul y serait difficile à compenser.', 'byActivity'));
         // 44 : forte marge, peu de revenu
         const avg = sum(rows, r => r.margeNetteTotal) / revenue;
         const under = rows.filter(r => r.margeNettePercent >= avg + T.marginEdge && r.revenueTotal / revenue < T.underusedShare).sort((x, y) => y.margeNettePercent - x.margeNettePercent)[0];
-        if (under) out.push(force('activity-underused', 'Activités', 43, `${under.activityName} : forte marge, encore peu exploitée`, `${pct(under.margeNettePercent)} de marge nette (moyenne : ${pct(avg)}) pour ${pct(under.revenueTotal / revenue, 0)} des revenus.`, 'byActivity'));
+        if (under) out.push(force('activity-underused', 'Activités', 43, `${under.activityName}\u00A0: forte marge, encore peu exploitée`, `${pct(under.margeNettePercent)} de marge nette (moyenne\u00A0: ${pct(avg)}) pour ${pct(under.revenueTotal / revenue, 0)} des revenus.`, 'byActivity'));
     }
     return out;
 };
@@ -529,19 +529,19 @@ const moreProductRules = (c) => {
     const out = [];
     const m = c.analysis.menuEngineeringData || {};
     // 23 : dilemmes
-    if ((m.questions || []).length > 0) out.push(weak('bcg-questions', 'Produits', 40, `${m.questions.length} dilemme${m.questions.length > 1 ? 's' : ''} : rentables, mais peu vendus`, `À promouvoir ou à abandonner : ${names(m.questions.map(s => `« ${s.displayName} »`))}.`, 'portfolio'));
+    if ((m.questions || []).length > 0) out.push(weak('bcg-questions', 'Produits', 40, `${m.questions.length} dilemme${m.questions.length > 1 ? 's' : ''}\u00A0: rentables, mais peu vendus`, `À promouvoir ou à abandonner\u00A0: ${names(m.questions.map(s => `« ${s.displayName} »`))}.`, 'portfolio'));
     // 26 : profit bien réparti
     const contributions = (c.analysis.contributionData || []).filter(x => x.totalContribution > 0);
     const total = sum(contributions, x => x.totalContribution);
     if (contributions.length >= 5 && total > 0) {
         const top3 = sum(contributions.slice(0, 3), x => x.totalContribution) / total;
-        if (top3 <= T.profitSpreadTop3) out.push(force('profit-spread', 'Produits', 38, `Profit bien réparti : les 3 premiers produits pèsent ${pct(top3, 0)}`, `Sur ${contributions.length} produits contributifs : aucun ne porte à lui seul l'entreprise.`, 'portfolio'));
+        if (top3 <= T.profitSpreadTop3) out.push(force('profit-spread', 'Produits', 38, `Profit bien réparti\u00A0: les 3 premiers produits pèsent ${pct(top3, 0)}`, `Sur ${contributions.length} produits contributifs\u00A0: aucun ne porte à lui seul l'entreprise.`, 'portfolio'));
     }
     // 27 : écart de marge entre formats d'un même produit
     const spread = computeFormatSpread(c.analysis.activeProducts);
     if (spread.length) {
         const worst = spread[0].l.reduce((a, b) => (b.margin < a.margin ? b : a)), best = spread[0].l.reduce((a, b) => (b.margin > a.margin ? b : a));
-        out.push(weak('format-gap', 'Produits', 43, `${spread.length} produit${spread.length > 1 ? 's' : ''} aux marges très différentes selon le format`, `Le plus marqué : « ${best.name} » à ${pct(best.margin)} contre « ${worst.name} » à ${pct(worst.margin)}.`, 'bySku'));
+        out.push(weak('format-gap', 'Produits', 43, `${spread.length} produit${spread.length > 1 ? 's' : ''} aux marges très différentes selon le format`, `Le plus marqué\u00A0: « ${best.name} » à ${pct(best.margin)} contre « ${worst.name} » à ${pct(worst.margin)}.`, 'bySku'));
     }
     // 29 : une sous-recette pèse lourd dans le coût matière d'un plat
     const catalogue = new Map((c.baseIngredients || []).map(i => [i.id, i]));
@@ -559,18 +559,18 @@ const moreProductRules = (c) => {
     }
     if (heavy.length) {
         const top = heavy.sort((x, y) => y.share - x.share)[0];
-        out.push(weak('subrecipe-weight', 'Produits', 36, `${heavy.length} plat${heavy.length > 1 ? 's' : ''} dont une sous-recette pèse plus de ${pct(T.subRecipeShare, 0)} du coût matière`, `Le plus marqué : « ${top.name} », ${pct(top.share, 0)} (${top.subName}). Une économie sur cette sous-recette se répercute sur tout le plat.`, 'bySku'));
+        out.push(weak('subrecipe-weight', 'Produits', 36, `${heavy.length} produit${heavy.length > 1 ? 's' : ''} dont une sous-recette pèse plus de ${pct(T.subRecipeShare, 0)} du coût matière`, `Le plus marqué\u00A0: « ${top.name} », ${pct(top.share, 0)} (${top.subName}). Une économie sur cette sous-recette se répercute sur tout le produit.`, 'bySku'));
     }
     // 75 : revenus de produits de revente
     const rev = sum(c.productRows, r => r.revenue || 0);
     const resale = sum(c.productRows.filter(r => r.isResale), r => r.revenue || 0);
-    if (rev > 0 && resale / rev >= T.resaleShare) out.push(weak('resale-share', 'Produits', 49, `${pct(resale / rev, 0)} des revenus viennent de produits de revente`, 'Un produit de revente ajoute peu de valeur à un transformateur : sa marge dépend de votre prix d\'achat.', 'portfolio'));
+    if (rev > 0 && resale / rev >= T.resaleShare) out.push(weak('resale-share', 'Produits', 49, `${pct(resale / rev, 0)} des revenus viennent de produits de revente`, 'Un produit de revente ajoute peu de valeur à un transformateur : sa marge dépend de votre prix d\'achat.', 'portfolio'));
     // 78 : écart entre temps consommé et profit
     const made = c.productRows.filter(r => !r.isResale && r.hours > 0);
     const hours = sum(made, r => r.hours), profit = sum(made, r => r.grossProfit);
     if (made.length >= 3 && hours > 0 && profit > 0) {
         const hog = made.map(r => ({ r, hs: r.hours / hours, ps: r.grossProfit / profit })).filter(x => x.hs >= T.hourHogShare && x.ps <= x.hs / 2).sort((x, y) => y.hs - x.hs)[0];
-        if (hog) out.push(weak('hours-vs-profit', 'Main-d\'œuvre', 51, `« ${hog.r.name} » : ${pct(hog.hs, 0)} des heures, ${pct(hog.ps, 0)} du bénéfice brut`, 'Un produit qui occupe beaucoup de temps pour peu de profit : à repenser (prix, recette, processus).', 'labor'));
+        if (hog) out.push(weak('hours-vs-profit', 'Main-d\'œuvre', 51, `« ${hog.r.name} » : ${pct(hog.hs, 0)} des heures, ${pct(hog.ps, 0)} du bénéfice brut`, 'Un produit qui occupe beaucoup de temps pour peu de profit : à repenser (prix, recette, processus).', 'labor'));
     }
     return out;
 };
@@ -600,7 +600,7 @@ const moreSupplyRules = (c) => {
     const ranked = abc ? [...abc.A, ...abc.B, ...abc.C] : [];
     if (ranked.length >= 8) {
         const top5 = sum(ranked.slice(0, 5), i => i.percent) / 100;
-        if (top5 >= T.top5Inputs) out.push(weak('inputs-top5', 'Approvisionnement', 39, `Cinq ingrédients pèsent ${pct(top5, 0)} de vos achats`, `Sur ${ranked.length} ingrédients : surveillez en priorité ${names(ranked.slice(0, 5).map(i => i.name), 5)}.`, 'ingredients'));
+        if (top5 >= T.top5Inputs) out.push(weak('inputs-top5', 'Approvisionnement', 39, `Cinq ingrédients pèsent ${pct(top5, 0)} de vos achats`, `Sur ${ranked.length} ingrédients\u00A0: surveillez en priorité ${names(ranked.slice(0, 5).map(i => i.name), 5)}.`, 'ingredients'));
     }
     // 77 : un autre fournisseur offre un meilleur prix efficace (perte incluse)
     const effective = (i) => P(i.unitPrice) / (1 - Math.min(P(i.lossPercentage) / 100, 0.9));
@@ -613,7 +613,7 @@ const moreSupplyRules = (c) => {
     }
     if (savings.length) {
         const top = savings.sort((x, y) => y.saving - x.saving)[0];
-        out.push(weak('supplier-cheaper', 'Approvisionnement', 47, `${savings.length} ingrédient${savings.length > 1 ? 's' : ''} moins cher${savings.length > 1 ? 's' : ''} chez un autre fournisseur`, `Le plus marqué : ${top.name} chez ${top.provider}, ${pct(top.pct, 0)} de moins (perte incluse), soit ${usd(top.saving)} sur vos volumes prévus.`, 'ingredients', top.saving));
+        out.push(weak('supplier-cheaper', 'Approvisionnement', 47, `${savings.length} ingrédient${savings.length > 1 ? 's' : ''} moins cher${savings.length > 1 ? 's' : ''} chez un autre fournisseur`, `Le plus marqué\u00A0: ${top.name} chez ${top.provider}, ${pct(top.pct, 0)} de moins (perte incluse), soit ${usd(top.saving)} sur vos volumes prévus.`, 'ingredients', top.saving));
     }
     // 55 : effet en dollars des variations de prix récentes, aux volumes actuels (calcul partagé avec le rapport PDF : computeIngredientPriceEffect)
     const pe = computeIngredientPriceEffect(c.analysis.purchasingReportData, c.ingredientVolatilityRecent);
@@ -627,7 +627,7 @@ const moreSupplyRules = (c) => {
     const totalFixed = sum(lines, l => l.amount);
     if (lines.length >= 5 && totalFixed > 0) {
         const top3 = sum(lines.slice(0, 3), l => l.amount) / totalFixed;
-        if (top3 >= T.fixedTop3) out.push(weak('fixed-concentration', 'Coûts', 34, `Trois lignes de frais fixes pèsent ${pct(top3, 0)} du total`, `${names(lines.slice(0, 3).map(l => l.label), 3)} : ${usd(sum(lines.slice(0, 3), l => l.amount))} sur ${usd(totalFixed)}.`, 'overview'));
+        if (top3 >= T.fixedTop3) out.push(weak('fixed-concentration', 'Coûts', 34, `Trois lignes de frais fixes pèsent ${pct(top3, 0)} du total`, `${names(lines.slice(0, 3).map(l => l.label), 3)}\u00A0: ${usd(sum(lines.slice(0, 3), l => l.amount))} sur ${usd(totalFixed)}.`, 'overview'));
     }
     return out;
 };
@@ -637,10 +637,10 @@ const moreLaborRules = (c) => {
     const posts = (c.info.productivityReport?.rows || []).filter(r => r.actual > 0 && r.expected > 0);
     // 57 : poste sous-utilisé
     const low = posts.filter(r => r.utilization / 100 < T.postUnderUsed).sort((x, y) => x.utilization - y.utilization);
-    if (low.length) out.push(weak('post-underused', 'Main-d\'œuvre', 48, `${low.length} poste${low.length > 1 ? 's' : ''} utilisé${low.length > 1 ? 's' : ''} à moins de ${pct(T.postUnderUsed, 0)}`, `Le plus bas : ${low[0].postName}, ${formatNumber(low[0].utilization, 0)} % d'utilisation.`, 'labor'));
+    if (low.length) out.push(weak('post-underused', 'Main-d\'œuvre', 48, `${low.length} poste${low.length > 1 ? 's' : ''} utilisé${low.length > 1 ? 's' : ''} à moins de ${pct(T.postUnderUsed, 0)}`, `Le plus bas\u00A0: ${low[0].postName}, ${formatNumber(low[0].utilization, 0)}\u00A0% d'utilisation.`, 'labor'));
     // 65 : poste surchargé
     const over = posts.filter(r => r.utilization > 100).sort((x, y) => y.utilization - x.utilization);
-    if (over.length) out.push(weak('post-overloaded', 'Main-d\'œuvre', 56, `${over.length} poste${over.length > 1 ? 's' : ''} surchargé${over.length > 1 ? 's' : ''} (plus de 100 %)`, `Le plus chargé : ${over[0].postName}, ${formatNumber(over[0].utilization, 0)} % : la capacité réelle est dépassée.`, 'labor'));
+    if (over.length) out.push(weak('post-overloaded', 'Main-d\'œuvre', 56, `${over.length} poste${over.length > 1 ? 's' : ''} surchargé${over.length > 1 ? 's' : ''} (plus de 100\u00A0%)`, `Le plus chargé\u00A0: ${over[0].postName}, ${formatNumber(over[0].utilization, 0)} %\u00A0: la capacité réelle est dépassée.`, 'labor'));
     // 60 : coût réel d'une heure productive vs taux moyen
     const cas = c.cascade;
     if (cas.effectiveHourlyCost != null && cas.averageLoadedRate > 0 && cas.effectiveHourlyCost / cas.averageLoadedRate >= T.hourCostGap) {
@@ -651,7 +651,7 @@ const moreLaborRules = (c) => {
     const ratios = computeActivityLaborRatios(c.analysis.activeProducts || [], byAct, c.productionActivities || []).filter(r => r.grossProfitPerHour != null && r.hours > 0);
     if (ratios.length >= 2) {
         const sorted = [...ratios].sort((x, y) => y.grossProfitPerHour - x.grossProfitPerHour);
-        out.push(force('activity-best-hour', 'Main-d\'œuvre', 46, `${sorted[0].activityName} : l'activité la plus rentable à l'heure`, `${usd(sorted[0].grossProfitPerHour)} de bénéfice brut par heure, contre ${usd(sorted[sorted.length - 1].grossProfitPerHour)} pour ${sorted[sorted.length - 1].activityName}.`, 'byActivity'));
+        out.push(force('activity-best-hour', 'Main-d\'œuvre', 46, `${sorted[0].activityName}\u00A0: l'activité la plus rentable à l'heure`, `${usd(sorted[0].grossProfitPerHour)} de bénéfice brut par heure, contre ${usd(sorted[sorted.length - 1].grossProfitPerHour)} pour ${sorted[sorted.length - 1].activityName}.`, 'byActivity'));
     }
     return out;
 };

@@ -15,7 +15,7 @@ const AbcItem = ({ item, volatilityByName }) => {
                 {item.name}
                 {v && v.isVolatile && (
                     <span
-                        title={`Prix volatil : amplitude ${formatNumber(v.amplitudePercent, 0)} % entre son plus bas et son plus haut sur les points de référence.`}
+                        title={`Prix volatil\u00A0: amplitude ${formatNumber(v.amplitudePercent, 0)}\u00A0% entre son plus bas et son plus haut sur les points de référence.`}
                         className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700"
                     >
                         volatile

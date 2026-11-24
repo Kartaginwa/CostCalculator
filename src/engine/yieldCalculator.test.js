@@ -62,12 +62,12 @@ describe('computeYieldUnits', () => {
 });
 
 describe('effectiveNbPortions (source unique de la quantité produite)', () => {
-    it('quantité saisie sans grille ; vide ou 0 → 1', () => {
+    it('quantité saisie sans grille ; vide ou 0 → 1', () => {
         expect(effectiveNbPortions({ nbPortions: '12' })).toBe(12);
         expect(effectiveNbPortions({ nbPortions: '' })).toBe(1);
         expect(effectiveNbPortions({ nbPortions: 0 })).toBe(1);
     });
-    it('avec grille : la quantité CALCULÉE prime sur le champ saisi resté à son ancienne valeur', () => {
+    it('avec grille : la quantité CALCULÉE prime sur le champ saisi resté à son ancienne valeur', () => {
         const fmt = { nbPortions: 20, portionSize: 500, yieldGrid: { enabled: true, baseQuantity: 8000, stages: [{ percentEffect: -20 }], rejectRate: 5 } };
         expect(effectiveNbPortions(fmt)).toBeCloseTo(12.16, 8); // 8000 × 0,8 × 0,95 ÷ 500
     });

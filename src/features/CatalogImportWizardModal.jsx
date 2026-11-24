@@ -28,7 +28,7 @@ export const CatalogImportWizardModal = ({
     const [selectedItems, setSelectedItems] = useState(new Set());
 
     // « Nom de l'ingrédient » / « Nom de l'emballage » — seul champ dont le libellé nomme le type
-    // d'item ; le reste d'APP_FIELDS est déjà générique (Fournisseur, Format d'Achat...).
+    // d'item ; le reste d'APP_FIELDS est déjà générique (Fournisseur, Format d'achat...).
     const appFields = useMemo(
         () => APP_FIELDS.map(f => f.key === 'name' ? { ...f, label: `Nom de l'${itemLabel}` } : f),
         [itemLabel]
@@ -322,7 +322,7 @@ export const CatalogImportWizardModal = ({
         onUpdateItemsList(itemsToUpdate);
         // Affiche une notification de succès et ferme l'assistant
         showNotification({
-            message: `Importation réussie : ${newCount} ${itemLabel}(s) ajouté(s), ${updatedCount} mis à jour.`,
+            message: `Importation réussie\u00A0: ${newCount} ${itemLabel}(s) ajouté(s), ${updatedCount} mis à jour.`,
             type: 'success'
         });
         handleClose();
@@ -370,7 +370,7 @@ export const CatalogImportWizardModal = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full h-full max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b">
-                    <h2 className="text-2xl font-bold text-gray-800">Assistant d'Importation d'{itemLabelPlural} (Étape {step}/4)</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">Assistant d'importation d'{itemLabelPlural} (Étape {step}/4)</h2>
                     <button onClick={handleClose} className="p-2 rounded-full hover:bg-gray-200">
                         <X className="h-6 w-6 text-gray-600" />
                     </button>
@@ -379,7 +379,7 @@ export const CatalogImportWizardModal = ({
                 <div className="p-6 flex-1 overflow-y-auto">
                     {step === 1 && (
                         <div className="text-center">
-                            <h3 className="text-xl font-semibold mb-4">Étape 1: Téléverser votre fichier</h3>
+                            <h3 className="text-xl font-semibold mb-4">Étape 1&nbsp;: Téléverser votre fichier</h3>
                             <p className="text-gray-600 mb-8">Sélectionnez un fichier CSV ou Excel (.csv, .xls, .xlsx) contenant votre liste d'{itemLabelPlural.toLowerCase()}.</p>
                             <input
                                 type="file"
@@ -399,7 +399,7 @@ export const CatalogImportWizardModal = ({
                     )}
                     {step === 1.5 && (
                         <div>
-                            <h3 className="text-xl font-semibold mb-4">Étape 1.5: Choisir un onglet</h3>
+                            <h3 className="text-xl font-semibold mb-4">Étape 1.5&nbsp;: Choisir un onglet</h3>
                             <p className="text-gray-600 mb-8">Votre fichier contient plusieurs onglets. Veuillez sélectionner celui qui contient la liste d'{itemLabelPlural.toLowerCase()} à importer.</p>
                             <div className="space-y-2">
                                 {sheetNames.map(name => (
@@ -420,11 +420,11 @@ export const CatalogImportWizardModal = ({
                     )}
                     {step === 2 && (
                         <div>
-                            <h3 className="text-xl font-semibold mb-2">Étape 2: Correspondance des colonnes</h3>
+                            <h3 className="text-xl font-semibold mb-2">Étape 2&nbsp;: Correspondance des colonnes</h3>
                             <p className="text-gray-600 mb-6">Associez les colonnes de votre fichier aux champs de l'application. Les champs marqués d'un astérisque (*) sont obligatoires.</p>
                             <div className="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg">
                                 <label htmlFor="defaultProvider" className="block text-sm font-medium text-gray-700 flex items-center">
-                                    Fournisseur par défaut (Optionnel)
+                                    Fournisseur par défaut (facultatif)
                                     <Tooltip tip="import.fournisseurDefaut" />
                                 </label>
                                 <input
@@ -432,7 +432,7 @@ export const CatalogImportWizardModal = ({
                                     id="defaultProvider"
                                     value={defaultProvider}
                                     onChange={(e) => setDefaultProvider(e.target.value)}
-                                    placeholder="Ex: Distributeur HRI"
+                                    placeholder="Ex. : Distributeur HRI"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                                 />
                             </div>
@@ -461,11 +461,11 @@ export const CatalogImportWizardModal = ({
                     )}
                     {step === 3 && (
                         <div>
-                            <h3 className="text-xl font-semibold mb-2">Étape 3: Prévisualisation et Validation</h3>
+                            <h3 className="text-xl font-semibold mb-2">Étape 3&nbsp;: Prévisualisation et validation</h3>
                             <p className="text-gray-600 mb-6">Vérifiez les premières lignes de vos données. Les erreurs sont surlignées en rouge. Les {itemLabel}s existants seront mis à jour.</p>
 
                             <div className="flex items-center space-x-4 mb-4 p-2 bg-gray-50 rounded-md">
-                                <span className="text-sm font-medium text-gray-700">Sélections rapides:</span>
+                                <span className="text-sm font-medium text-gray-700">Sélections rapides&nbsp;:</span>
                                 <button onClick={handleItemSelectUpdates} className="text-sm text-blue-600 hover:underline">
                                     Importer uniquement les mises à jour
                                 </button>
@@ -491,11 +491,11 @@ export const CatalogImportWizardModal = ({
                                                     className="h-4 w-4"
                                                 />
                                             </th>
-                                            <th className="p-2 text-left">Statut</th>
-                                            <th className="p-2 text-left">Nom (Fichier)</th>
-                                            <th className="p-2 text-left">Lier à un {itemLabel} existant</th>
-                                            <th className="p-2 text-right">Prix d'Achat</th>
-                                            <th className="p-2 text-right">Format</th>
+                                            <th className="p-2 text-center">Statut</th>
+                                            <th className="p-2 text-center">Nom (fichier)</th>
+                                            <th className="p-2 text-center">Lier à un {itemLabel} existant</th>
+                                            <th className="p-2 text-center">Prix d'achat</th>
+                                            <th className="p-2 text-center">Format</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
@@ -522,7 +522,7 @@ export const CatalogImportWizardModal = ({
                                                             onChange={(e) => handleManualLink(item.rowIndex, e.target.value)}
                                                             value="new"
                                                         >
-                                                            <option value="new">-- Créer un nouvel item --</option>
+                                                            <option value="new">-- Créer un nouvel élément --</option>
                                                             {baseItems.map(it => (
                                                                 <option key={it.id} value={it.id}>{it.name} ({it.provider})</option>
                                                             ))}
@@ -530,7 +530,7 @@ export const CatalogImportWizardModal = ({
                                                     )}
                                                     {item.importStatus === 'update' && (
                                                         <span className="text-xs text-gray-500 italic">
-                                                            Lié à "{baseItems.find(it => it.id === item.existingId)?.name}"
+                                                            Lié à «&nbsp;{baseItems.find(it => it.id === item.existingId)?.name}&nbsp;»
                                                         </span>
                                                     )}
                                                 </td>
@@ -552,9 +552,9 @@ export const CatalogImportWizardModal = ({
                     )}
                     {step === 4 && (
                         <div className="text-center">
-                            <h3 className="text-xl font-semibold mb-4">Étape 4: Confirmation</h3>
+                            <h3 className="text-xl font-semibold mb-4">Étape 4&nbsp;: Confirmation</h3>
                             <div className="p-4 bg-gray-100 rounded-lg space-y-2 text-left max-w-md mx-auto">
-                                <p>Vous êtes sur le point de :</p>
+                                <p>Vous êtes sur le point de&nbsp;:</p>
                                 <ul className="list-disc list-inside">
                                     <li><strong>Mettre à jour</strong> {processedData.filter(item => item.importStatus === 'update' && selectedItems.has(item.rowIndex)).length} {itemLabel}(s) existant(s).</li>
                                     <li><strong>Ajouter</strong> {processedData.filter(item => item.importStatus === 'new' && selectedItems.has(item.rowIndex)).length} nouveau(x) {itemLabel}(s).</li>
@@ -587,7 +587,7 @@ export const CatalogImportWizardModal = ({
                                 onClick={() => setStep(3)}
                                 disabled={!mappings[Object.keys(mappings).find(h => mappings[h] === 'name')] || !mappings[Object.keys(mappings).find(h => mappings[h] === 'purchasePrice')]}
                                 className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
-                                title={(!mappings[Object.keys(mappings).find(h => mappings[h] === 'name')] || !mappings[Object.keys(mappings).find(h => mappings[h] === 'purchasePrice')]) ? "Veuillez mapper les champs 'Nom' et 'Prix' pour continuer." : ""}
+                                title={(!mappings[Object.keys(mappings).find(h => mappings[h] === 'name')] || !mappings[Object.keys(mappings).find(h => mappings[h] === 'purchasePrice')]) ? "Veuillez associer les champs « Nom » et « Prix » pour continuer." : ""}
                             >
                                 Suivant
                             </button>
@@ -597,7 +597,7 @@ export const CatalogImportWizardModal = ({
                                 onClick={() => setStep(4)}
                                 disabled={selectedItems.size === 0}
                                 className="px-4 py-2 border rounded-md text-xs text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
-                                title={selectedItems.size === 0 ? "Veuillez sélectionner au moins un item." : ""}
+                                title={selectedItems.size === 0 ? "Veuillez sélectionner au moins un élément." : ""}
                             >
                                 Suivant
                             </button>
@@ -607,7 +607,7 @@ export const CatalogImportWizardModal = ({
                                 onClick={handleImport}
                                 className="px-4 py-2 border rounded-md text-xs text-white bg-green-600 hover:bg-green-700"
                             >
-                                Confirmer et Importer
+                                Confirmer et importer
                             </button>
                         )}
                     </div>

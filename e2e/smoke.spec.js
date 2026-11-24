@@ -51,7 +51,7 @@ test.describe('Parcours projet vierge', () => {
         // hook order corrigé — la toute première étape doit passer sans plantage).
         await page.locator('#tab-recipe').click();
         await page.locator('#tutorial-add-ingredient-to-recipe').click();
-        const combo = page.locator('input[placeholder="Saisir ou sélectionner..."]').first();
+        const combo = page.locator('input[placeholder="Saisir ou sélectionner…"]').first();
         await combo.click();
         await combo.fill('Farine');
         const option = page.locator('li:has-text("Farine Test")').first();
@@ -122,7 +122,7 @@ test.describe('Projet démo', () => {
         const secondShock = page.locator('div.bg-gray-50').nth(1);
         await secondShock.locator('select').first().selectOption('labor');
         await secondShock.locator('input[placeholder="ex. +15"]').fill('10');
-        await expect(page.getByText(/MO ·/)).toBeVisible();
+        await expect(page.getByText(/Main-d'œuvre ·/)).toBeVisible();
 
         // Assistants d'import : ouverture/fermeture ne doivent pas planter
         await page.locator('button:has-text("Paramètres")').click();

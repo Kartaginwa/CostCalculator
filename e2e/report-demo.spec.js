@@ -69,7 +69,7 @@ test('rapport du démo : mise en page, chiffres et impression', async ({ page })
     const flat = all.replace(/\s+/g, ' ');
     expect(flat).toContain(`${(out.weightedMaterial * 100).toFixed(2).replace('.', ',')} %`);
     expect(flat).toContain('79 714 $');
-    for (const title of ['Synthèse de direction', 'Résultats : prévu, réel et tendance', 'Produits : où l’argent se fait et se perd', 'Canaux et activités', 'Approvisionnement', 'Main-d’œuvre', 'Fiches produits', 'Annexes et méthodes']) expect(all).toContain(title);
+    for (const title of ['Synthèse de direction', 'Résultats : prévu, réel et tendance', 'Produits : où l’argent se fait et se perd', 'Canaux et activités', 'Approvisionnement', 'Main-d’œuvre', 'Fiches produits', 'Annexes et méthodes']) expect(flat).toContain(title);
     // Le sommaire renvoie à la page réelle de chaque chapitre
     for (const [k, p] of Object.entries(out.chapters)) expect(pages[p - 1], `chapitre ${k}`).toContain(k === 'chA' ? 'Annexe' : `Chapitre ${k.slice(2)}`);
     // Aucune donnée salariale sans la case cochée

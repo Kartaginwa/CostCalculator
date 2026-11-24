@@ -48,7 +48,7 @@ test('Rapport : lignes désambiguïsées par format + édition ouvre le bon ongl
     // Cliquer éditer sur la ligne du format 1 unité doit ouvrir Recette & Calcul sur "Chili con
     // carne mijoté" avec l'onglet "1 unité" actif (pas le format par défaut "400 g").
     const rowUnite = summaryRows.filter({ hasText: 'Chili con carne mijoté (1 unité)' }).first();
-    await rowUnite.locator('button[title="Éditer le produit"]').click();
+    await rowUnite.locator('button[title="Modifier le produit"]').click();
     await page.waitForTimeout(500);
 
     await expect(page.locator('h1:has-text("Production pour")')).toBeVisible();

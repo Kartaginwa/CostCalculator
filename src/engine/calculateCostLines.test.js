@@ -44,7 +44,9 @@ describe('calculateCostLines', () => {
     it('un produit de revente n\'a aucune ligne de recette', () => {
         const p = product({ isResaleProduct: true, purchaseCost: 12 });
         const lines = calculateCostLines(p, info, [farine], [p], laborDatabase, null, [boite]);
-        expect(lines).toEqual({ ingredients: [], packaging: [], steps: [] });
+        expect(lines.ingredients).toEqual([]);
+        expect(lines.steps).toEqual([]);
+        expect(lines.packaging.length).toBe((p.packagingItems || []).length); // l'emballage d'un produit de revente est conservé (audit C11)
     });
 
     it('ne change pas calculateCosts : même résultat qu\'avant, et le cache n\'embarque jamais le détail', () => {

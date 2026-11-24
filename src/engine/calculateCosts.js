@@ -240,13 +240,13 @@ const computeCostParts = (product, generalInfo, baseIngredients, allProducts, la
     // Coûts d'emballage (Phase 2.2) — poste SÉPARÉ, jamais fusionné au coût matière (voir
     // 04-Conception-Modele.md). Même logique de conversion d'unité et de perte que les
     // ingrédients, mais sans notion de rendement : un emballage ne « rétrécit » pas pendant la
-    // production (pas d'équivalent de l'épluchage/la cuisson). Absent pour un produit de revente,
-    // comme les ingrédients et la main-d'œuvre (pas de recette du tout dans ce cas).
+    // production (pas d'équivalent de l'épluchage/la cuisson). Un produit de revente peut aussi porter de
+    // l'emballage (ré-étiquetage, ré-emballage), alors que ses ingrédients et sa main-d'œuvre restent absents (23/11, audit C11).
     let totalPackagingCost = 0;
     let totalBasePackagingCost = 0;
     let totalPackagingLossCost = 0;
     const packagingLines = [];
-    if (!fmt.isResaleProduct) {
+    {
         const packagingCosts = (fmt.packagingItems || []).reduce((acc, item) => {
             const basePkg = basePackaging.find(pkg => pkg.id === item.id);
             if (!basePkg) return acc;

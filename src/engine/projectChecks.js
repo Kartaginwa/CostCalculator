@@ -134,7 +134,7 @@ export function computeProjectChecks({
     }
     if (Array.isArray(basePackaging)) {
         const affected = [];
-        for (const { p, f } of recipeFormats) {
+        for (const { p, f } of everyFormat) {
             for (const row of (f.packagingItems || [])) {
                 if (!basePackaging.some(i => i.id === row.id)) affected.push(p);
             }

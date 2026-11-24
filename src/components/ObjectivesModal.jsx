@@ -3,9 +3,9 @@ import { PlusCircle, Trash2, CheckCircle } from 'lucide-react';
 import { Tooltip } from './common.jsx';
 import { useEscapeKey } from '../ui-utils.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
-import { formatNumber, formatCurrency, isInvalidPercentage, isValidPositiveNumber } from '../utils.js';
+import { formatNumber, parseLocaleNumber, isInvalidPercentage, isValidPositiveNumber } from '../utils.js';
 import { buildKeyFindingsContext } from '../engine/keyFindings.js';
-import { INDICATORS, INDICATOR_IDS, DEFAULT_OBJECTIVES, MAX_CUSTOM_OBJECTIVES, evaluateObjectives, dirText } from '../engine/objectives.js';
+import { INDICATORS, INDICATOR_GROUPS, DEFAULT_OBJECTIVES, MAX_CUSTOM_OBJECTIVES, evaluateObjectives, dirText, subjectsOf, fmtObjValue, unitSuffix } from '../engine/objectives.js';
 
 // Fenêtre « Gérer les objectifs » (24/11) : tous les objectifs stratégiques au même endroit. Les neuf objectifs par défaut (sens fixe : un coût « au plus », une marge
 // « au moins »), qu'on peut désactiver sans les supprimer, et jusqu'à 20 objectifs sur mesure (indicateur, sens et valeur au choix). Un objectif atteint est surligné en vert.
@@ -17,16 +17,26 @@ const INDICATOR_TIPS = {
     utilisation: "obj.utilisation", paieNonUtilisee: "obj.paieNonUtilisee", perteStock: "obj.perteStock", fraisFixes: "obj.fraisFixes",
     margeSecurite: "objInd.margeSecurite", pointMort: "objInd.pointMort", revenus: "objInd.revenus", partFournisseur: "objInd.partFournisseur",
     partCanal: "objInd.partCanal", margeProduitMin: "objInd.margeProduitMin",
+    beneficeNet: "objInd.beneficeNet", fixedCover: "objInd.fixedCover", ecartRevenus: "objInd.ecartRevenus", produitsDeficitaires: "objInd.produitsDeficitaires",
+    partPremierProduit: "objInd.partPremierProduit", margeCanalMin: "objInd.margeCanalMin", posteMoinsUtilise: "objInd.posteMoinsUtilise",
+    ingPart: "objInd.ingPart", ingDepense: "objInd.ingDepense", ingPerte: "objInd.ingPerte", ingVolatilite: "objInd.ingVolatilite",
+    pkgPart: "objInd.pkgPart", pkgDepense: "objInd.pkgDepense", pkgPerte: "objInd.pkgPerte", pkgVolatilite: "objInd.pkgVolatilite",
+    fournIngPart: "objInd.fournIngPart", fournEmbPart: "objInd.fournEmbPart",
+    posteUtilisation: "objInd.posteUtilisation", posteCoutHoraire: "objInd.posteCoutHoraire", posteMasse: "objInd.posteMasse", posteInutilise: "objInd.posteInutilise", posteInutilisePart: "objInd.posteInutilisePart",
+    fmtMargeBrute: "objInd.fmtMargeBrute", fmtMargeNette: "objInd.fmtMargeNette", fmtMatiere: "objInd.fmtMatiere", fmtEmballage: "objInd.fmtEmballage", fmtMo: "objInd.fmtMo", fmtBeneficeHeure: "objInd.fmtBeneficeHeure",
+    canalMargeBrute: "objInd.canalMargeBrute", canalMargeNette: "objInd.canalMargeNette", canalPart: "objInd.canalPart",
+    actMargeBrute: "objInd.actMargeBrute", actMargeNette: "objInd.actMargeNette", actPart: "objInd.actPart",
 };
 
 // Colonnes (une seule ligne par objectif, en-têtes alignés) : case à cocher, nom ou libellé, [indicateur], sens, valeur, valeur actuelle, état.
 const DEFAULT_COLS = '2rem minmax(0,1.7fr) 5rem 8.5rem minmax(0,0.9fr) minmax(0,1.5fr)';
-const CUSTOM_COLS = '2rem minmax(0,1.2fr) minmax(0,1.6fr) 6.5rem 8.5rem minmax(0,0.9fr) minmax(0,1.5fr)';
+const CUSTOM_COLS = '2rem minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.2fr) 6rem 8.5rem minmax(0,0.9fr) minmax(0,1.4fr)';
 const headCls = 'grid gap-2 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500';
 
-const fmtValue = (v, unit) => (v == null ? '—' : unit === '$' ? `${formatCurrency(v)} $` : `${formatNumber(v, 1)} %`);
+const fmtValue = fmtObjValue;
 const inputCls = (bad) => `p-1.5 text-sm border rounded-md text-right ${bad ? 'border-red-500' : 'border-gray-300'}`;
-const invalidValue = (raw, unit) => raw !== '' && raw != null && (unit === '$' ? !isValidPositiveNumber(raw) : isInvalidPercentage(raw));
+// Une valeur invalide : un pourcentage hors de 0-100, un montant ou un nombre négatif ou illisible (un nombre de produits peut valoir 0).
+const invalidValue = (raw, unit) => raw !== '' && raw != null && (unit === '%' ? isInvalidPercentage(raw) : unit === 'n' ? !(Number.isFinite(parseLocaleNumber(raw)) && parseLocaleNumber(raw) >= 0) : !isValidPositiveNumber(raw));
 
 const StatusCell = ({ o }) => {
     if (!o.enabled) return <span className="text-xs text-gray-400">Désactivé</span>;
@@ -51,7 +61,9 @@ const ObjectivesBody = ({ onClose }) => {
     const setOff = (key, isOff) => onUpdateGeneralInfo('objectivesOff', isOff ? [...off.filter(k => k !== key), key] : off.filter(k => k !== key));
     const setCustoms = (next) => onUpdateGeneralInfo('customObjectives', next);
     const patchCustom = (id, patch) => setCustoms(customs.map(c => (c.id === id ? { ...c, ...patch } : c)));
-    const addCustom = () => setCustoms([...customs, { id: `custom_${Date.now().toString(36)}`, indicator: 'margeSecurite', dir: INDICATORS.margeSecurite.dir, value: '', name: '' }]);
+    const addCustom = () => setCustoms([...customs, { id: `custom_${Date.now().toString(36)}`, indicator: 'margeSecurite', dir: INDICATORS.margeSecurite.dir, value: '', name: '', subject: '' }]);
+    // Changer d'indicateur : le sens naturel se présélectionne, et le premier sujet disponible pour un indicateur « par entité » (sinon aucun).
+    const changeIndicator = (id, indicator) => patchCustom(id, { indicator, dir: INDICATORS[indicator].dir, subject: subjectsOf(ctx, indicator)[0]?.id ?? '' });
     const removeCustom = (id) => { setCustoms(customs.filter(c => c.id !== id)); if (off.includes(id)) setOff(id, false); };
 
     const evaluable = list.filter(o => o.met != null);
@@ -63,7 +75,7 @@ const ObjectivesBody = ({ onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div role="dialog" aria-label="Gérer les objectifs" className="bg-white rounded-lg p-6 shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+            <div role="dialog" aria-label="Gérer les objectifs" className="bg-white rounded-lg p-6 shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1 flex items-center">Gérer les objectifs<Tooltip tip="obj.gerer" /></h3>
                 <p className="text-xs text-gray-500 mb-4">
                     Un objectif compare une valeur que l'application mesure déjà à la cible que vous choisissez. Un objectif sans valeur, désactivé ou sans donnée ne produit aucun constat ni voyant.
@@ -98,11 +110,11 @@ const ObjectivesBody = ({ onClose }) => {
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mt-5 mb-2 flex items-center">Objectifs sur mesure ({customs.length} sur {MAX_CUSTOM_OBJECTIVES})<Tooltip tip="obj.surMesure" /></h4>
                 {customs.length > 0 && (
                     <div className={headCls} style={{ gridTemplateColumns: CUSTOM_COLS }} aria-hidden="true">
-                        <span /><span>Nom (facultatif)</span><span>Indicateur</span><span>Sens</span><span className="flex items-center justify-end gap-1"><span className="w-20 text-center">Valeur</span><span className="w-3" /></span><span className="pl-3">Actuel</span><span>État</span>
+                        <span /><span>Nom (facultatif)</span><span>Indicateur</span><span>Sujet</span><span>Sens</span><span className="flex items-center justify-end gap-1"><span className="w-20 text-center">Valeur</span><span className="w-8" /></span><span className="pl-3">Actuel</span><span>État</span>
                     </div>
                 )}
                 <div className="space-y-1" data-testid="objectives-custom">
-                    {customs.length === 0 && <p className="text-sm text-gray-500 p-2">Aucun objectif sur mesure. Choisissez un indicateur, un sens et une valeur.</p>}
+                    {customs.length === 0 && <p className="text-sm text-gray-500 p-2">Aucun objectif sur mesure. Choisissez un indicateur (au besoin, un sujet précis : un ingrédient, un poste, un canal…), un sens et une valeur.</p>}
                     {customs.map(c => {
                         const o = list.find(x => x.key === c.id);
                         if (!o) return null;
@@ -111,18 +123,30 @@ const ObjectivesBody = ({ onClose }) => {
                                 <div className="flex justify-center">{toggle(o)}</div>
                                 <input type="text" aria-label="Nom de l'objectif" value={c.name || ''} placeholder="Nom (facultatif)" onChange={(e) => patchCustom(c.id, { name: e.target.value })} className="w-full min-w-0 p-1.5 text-sm border border-gray-300 rounded-md placeholder-gray-300" />
                                 <div className="flex items-center min-w-0">
-                                    <select aria-label="Indicateur" value={c.indicator} onChange={(e) => patchCustom(c.id, { indicator: e.target.value, dir: INDICATORS[e.target.value].dir })} className="w-full min-w-0 p-1.5 text-sm border border-gray-300 rounded-md">
-                                        {INDICATOR_IDS.map(id => <option key={id} value={id}>{INDICATORS[id].label}</option>)}
+                                    <select aria-label="Indicateur" value={c.indicator} onChange={(e) => changeIndicator(c.id, e.target.value)} className="w-full min-w-0 p-1.5 text-sm border border-gray-300 rounded-md">
+                                        {/* Un ancien objectif sur mesure bâti sur un des neuf indicateurs par défaut garde son choix, même s'il n'est plus proposé. */}
+                                        {!INDICATOR_GROUPS.some(g => g.ids.includes(c.indicator)) && <option value={c.indicator}>{INDICATORS[c.indicator].label}</option>}
+                                        {INDICATOR_GROUPS.map(g => (
+                                            <optgroup key={g.label} label={g.label}>
+                                                {g.ids.map(id => <option key={id} value={id}>{INDICATORS[id].label}</option>)}
+                                            </optgroup>
+                                        ))}
                                     </select>
                                     <Tooltip tip={INDICATOR_TIPS[c.indicator]} />
                                 </div>
+                                {INDICATORS[c.indicator].entity ? (
+                                    <select aria-label="Sujet de l'objectif" value={c.subject ?? ''} onChange={(e) => patchCustom(c.id, { subject: e.target.value })} className="w-full min-w-0 p-1.5 text-sm border border-gray-300 rounded-md">
+                                        {!subjectsOf(ctx, c.indicator).some(x => x.id === String(c.subject ?? '')) && <option value={c.subject ?? ''}>{c.subject ? 'Introuvable' : 'Choisir…'}</option>}
+                                        {subjectsOf(ctx, c.indicator).map(x => <option key={x.id} value={x.id}>{x.label}</option>)}
+                                    </select>
+                                ) : <span className="text-xs text-gray-400">Toute l'entreprise</span>}
                                 <select aria-label="Sens de l'objectif" value={c.dir === 'min' ? 'min' : 'max'} onChange={(e) => patchCustom(c.id, { dir: e.target.value })} className="w-full p-1.5 text-sm border border-gray-300 rounded-md">
                                     <option value="max">au plus</option>
                                     <option value="min">au moins</option>
                                 </select>
                                 <div className="flex items-center justify-end gap-1">
                                     <input type="text" inputMode="decimal" aria-label="Valeur de l'objectif" value={c.value ?? ''} onChange={(e) => patchCustom(c.id, { value: e.target.value })} className={`${inputCls(invalidValue(c.value, o.unit))} w-20`} />
-                                    <span className="text-sm text-gray-500 w-3">{o.unit}</span>
+                                    <span className="text-sm text-gray-500 w-8 text-left">{unitSuffix(o.unit)}</span>
                                 </div>
                                 <div className="pl-3">{current(o)}</div>
                                 <div className="flex items-center justify-between gap-1">

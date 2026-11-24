@@ -320,14 +320,17 @@ describe('calculateCosts - coûts d\'emballage (Phase 2.2)', () => {
         expect(costs.totalPackagingLossCost).toBeCloseTo(0.25);
     });
 
-    it("n'applique aucun coût d'emballage à un produit de revente (pas de recette)", () => {
+    it("un produit de revente porte son emballage (ré-étiquetage, ré-emballage), pas d'ingrédients (audit C11)", () => {
         const basePackaging = [{ id: 'pot', unitPrice: 5, lossPercentage: 0, unit: 'unité' }];
         const product = baseProduct({
             isResaleProduct: true, purchaseCost: 3,
             packagingItems: [{ id: 'pot', quantity: 1, recipeUnit: 'unité' }],
         });
         const costs = calculateCosts(product, baseGeneralInfo(), [], [product], [], null, {}, new Set(), null, basePackaging);
-        expect(costs.totalPackagingCost).toBe(0);
+        expect(costs.totalPackagingCost).toBe(5);
+        expect(costs.totalIngredientsCost).toBe(3);
+        expect(costs.costPackagingPerPortion).toBe(5);
+        expect(costs.totalDirectCostPerPortion).toBe(8);
     });
 
     it("le coût d'emballage réduit la marge nette, au même titre que les autres coûts directs", () => {

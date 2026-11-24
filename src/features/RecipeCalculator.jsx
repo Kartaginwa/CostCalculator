@@ -325,10 +325,9 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
         updateFormat(f => ({
             ...f,
             isResaleProduct: checked,
-            // Vide la recette pour éviter de conserver des données erronées en passant en revente
-            // (un produit de revente n'a pas de coût d'emballage distinct non plus — voir
-            // calculateCosts.js).
-            ...(checked ? { ingredients: [], productionSteps: [], packagingItems: [] } : {}),
+            // Vide la recette pour éviter de conserver des données erronées en passant en revente.
+            // L'emballage est conservé : un produit revendu peut être ré-étiqueté ou ré-emballé.
+            ...(checked ? { ingredients: [], productionSteps: [] } : {}),
         }));
     };
 
@@ -926,6 +925,68 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 </div>
             )}
             </div>
+            </>
+             )}
+
+            {format.isResaleProduct && (
+                <div className="p-4 bg-green-50 rounded-lg">
+                    <div
+                        onClick={() => toggleSection('ingredients')}
+                        role="button"
+                        tabIndex="0"
+                        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSection('ingredients')}
+                        className="w-full flex justify-between items-center cursor-pointer"
+                        aria-expanded={openRecipeSections.has('ingredients')}
+                    >
+                        <h2 className="text-2xl font-bold text-green-700">1. Coût d'Achat</h2>
+                        <ChevronDown className={`h-6 w-6 text-green-700 transform transition-transform duration-200 ${openRecipeSections.has('ingredients') ? 'rotate-180' : ''}`} />
+                    </div>
+                    {openRecipeSections.has('ingredients') && (
+                        <div className="mt-4">
+                    <div className="flex justify-end mb-2">
+                        <CopyFromFormatControl formats={formats} currentFormatId={format.id} onCopy={copyResalePurchaseFrom} label="le coût d'achat" />
+                    </div>
+                    <div>
+                        <label htmlFor="purchaseCost" className="block text-sm font-medium text-gray-700">Coût d'achat par unité ($)</label>
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            id="purchaseCost"
+                            value={format.purchaseCost || ''}
+                            onChange={(e) => handleFormatChange('purchaseCost', e.target.value)}
+                            className={`mt-1 block w-full max-w-xs rounded-md shadow-sm p-2 border text-right ${!isValidNumber(format.purchaseCost) ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {!isValidNumber(format.purchaseCost) && <ValidationMessage message="Veuillez entrer un nombre positif." />}
+                    </div>
+                    <div className="mt-4 p-3 bg-green-100 rounded-md grid grid-cols-2 gap-4">
+                        <p className="font-bold text-green-800">Total Coût Direct: <span>{formatCurrency(costs.totalDirectCostPerPortion)} $</span></p>
+                        <p className="font-bold text-green-800">Coût par Unité: <span>{formatCurrency(costs.totalDirectCostPerPortion)} $</span></p>
+                    </div>
+                    {/* NOUVEAU: Gestion des allergènes pour les produits de revente */}
+                    {format.isResaleProduct && (
+                        <>
+                            <div className="mt-4">
+                                <button
+                                    onClick={() => setIsResaleAllergenModalOpen(true)}
+                                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                                >
+                                    <AlertCircle className="h-5 w-5 mr-2" />
+                                    Gérer les allergènes du produit de revente
+                                </button>
+                            </div>
+                            <AllergenModal
+                                isOpen={isResaleAllergenModalOpen}
+                                onClose={() => setIsResaleAllergenModalOpen(false)}
+                                ingredientName={product.platName}
+                                assignedAllergens={format.manualAllergens || []}
+                                onUpdateAllergens={handleResaleAllergenChange}
+                            />
+                        </>
+                    )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Emballage (Phase 2.2) — poste de coût séparé du coût matière, voir
                 04-Conception-Modele.md. Même patron visuel que les Ingrédients (table de rendu
@@ -1027,6 +1088,8 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
                 )}
             </div>
 
+            {!format.isResaleProduct && (
+            <>
             {/* Processus de production et main-d'œuvre */}
             <div id="tutorial-section-recipe-labor" className="p-4 bg-yellow-50 rounded-lg relative z-10">
                 <div
@@ -1214,65 +1277,6 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
              )}
 
 
-            {format.isResaleProduct && (
-                <div className="p-4 bg-green-50 rounded-lg">
-                    <div
-                        onClick={() => toggleSection('ingredients')}
-                        role="button"
-                        tabIndex="0"
-                        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSection('ingredients')}
-                        className="w-full flex justify-between items-center cursor-pointer"
-                        aria-expanded={openRecipeSections.has('ingredients')}
-                    >
-                        <h2 className="text-2xl font-bold text-green-700">1. Coût d'Achat</h2>
-                        <ChevronDown className={`h-6 w-6 text-green-700 transform transition-transform duration-200 ${openRecipeSections.has('ingredients') ? 'rotate-180' : ''}`} />
-                    </div>
-                    {openRecipeSections.has('ingredients') && (
-                        <div className="mt-4">
-                    <div className="flex justify-end mb-2">
-                        <CopyFromFormatControl formats={formats} currentFormatId={format.id} onCopy={copyResalePurchaseFrom} label="le coût d'achat" />
-                    </div>
-                    <div>
-                        <label htmlFor="purchaseCost" className="block text-sm font-medium text-gray-700">Coût d'achat par unité ($)</label>
-                        <input
-                            type="text"
-                            inputMode="decimal"
-                            id="purchaseCost"
-                            value={format.purchaseCost || ''}
-                            onChange={(e) => handleFormatChange('purchaseCost', e.target.value)}
-                            className={`mt-1 block w-full max-w-xs rounded-md shadow-sm p-2 border text-right ${!isValidNumber(format.purchaseCost) ? 'border-red-500' : 'border-gray-300'}`}
-                        />
-                        {!isValidNumber(format.purchaseCost) && <ValidationMessage message="Veuillez entrer un nombre positif." />}
-                    </div>
-                    <div className="mt-4 p-3 bg-green-100 rounded-md grid grid-cols-2 gap-4">
-                        <p className="font-bold text-green-800">Total Coût Direct: <span>{formatCurrency(costs.totalDirectCostPerPortion)} $</span></p>
-                        <p className="font-bold text-green-800">Coût par Unité: <span>{formatCurrency(costs.totalDirectCostPerPortion)} $</span></p>
-                    </div>
-                    {/* NOUVEAU: Gestion des allergènes pour les produits de revente */}
-                    {format.isResaleProduct && (
-                        <>
-                            <div className="mt-4">
-                                <button
-                                    onClick={() => setIsResaleAllergenModalOpen(true)}
-                                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                                >
-                                    <AlertCircle className="h-5 w-5 mr-2" />
-                                    Gérer les allergènes du produit de revente
-                                </button>
-                            </div>
-                            <AllergenModal
-                                isOpen={isResaleAllergenModalOpen}
-                                onClose={() => setIsResaleAllergenModalOpen(false)}
-                                ingredientName={product.platName}
-                                assignedAllergens={format.manualAllergens || []}
-                                onUpdateAllergens={handleResaleAllergenChange}
-                            />
-                        </>
-                    )}
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* Coûts additionnels : sous-traitance et vieillissement (Phase 1.4/1.5) — masqués par
                 défaut, rattachés au FORMAT sélectionné (voir 04-Conception-Modele.md). */}

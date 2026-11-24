@@ -34,6 +34,7 @@ export function computeLaborCascade(laborDatabase, productivityRows) {
         paidHours: 0, expectedHours: 0, usedHours: 0, idleHours: 0, nonProductiveHours: 0, overloadHours: 0, freeProductionHours: 0, noRecipeIdleHours: 0,
         payroll: 0, costUsed: 0, costIdle: 0, costNonProductive: 0,
     };
+    const posts = []; // le détail de chaque poste (objectifs sur mesure : un poste précis)
     for (const post of laborDatabase || []) {
         let paid = 0, expected = 0, pay = 0;
         for (const emp of post.employees || []) {
@@ -52,11 +53,13 @@ export function computeLaborCascade(laborDatabase, productivityRows) {
         out.overloadHours += Math.max(0, actual - expected);
         if (actual > 0) out.freeProductionHours += idle;
         else out.noRecipeIdleHours += idle;
+        posts.push({ postName: post.postName, paidHours: paid, payroll: pay, hourlyRate: rate, usedHours: used, idleHours: idle, nonProductiveHours: nonProductive, unusedPay: idle * rate + nonProductive * rate });
         out.payroll += pay; out.costUsed += used * rate; out.costIdle += idle * rate; out.costNonProductive += nonProductive * rate;
     }
     const unusedPay = out.costIdle + out.costNonProductive;
     return {
         ...out,
+        posts,
         unusedPay,
         unusedShare: out.payroll > 0 ? unusedPay / out.payroll : null,
         // Coût réel d'une heure productive : la paie totale répartie sur les seules heures réellement utilisées ; à comparer au taux moyen chargé.

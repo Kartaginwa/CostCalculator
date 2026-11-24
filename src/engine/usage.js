@@ -10,7 +10,7 @@ const namesUsing = (products, rowsKey, ids, excludeProductId = null) => {
     const names = new Set();
     for (const p of products || []) {
         if (excludeProductId !== null && p.id === excludeProductId) continue;
-        const used = formatsOf(p).some(f => !f.isResaleProduct && (f[rowsKey] || []).some(row => wanted.has(row.id)));
+        const used = formatsOf(p).some(f => (rowsKey === 'packagingItems' || !f.isResaleProduct) && (f[rowsKey] || []).some(row => wanted.has(row.id)));
         if (used) names.add((p.platName || '').trim() || 'Sans nom');
     }
     return [...names].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));

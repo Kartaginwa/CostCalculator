@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Une case à cocher n'est cliquable que sur la case et son libellé : l'étiquette ne s'étire plus sur toute la largeur de la ligne,
+   sinon un clic dans l'espace vide à côté la cochait (Production, export du rapport, objectifs...). */
+label:has(> input[type="checkbox"]) {
+    width: fit-content;
+    max-width: 100%;
+}

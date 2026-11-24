@@ -161,3 +161,38 @@ test('Infobulles de la fenêtre : chaque ligne explique ce que l\'objectif veut 
     await dialog.getByTestId('objective-utilisation').locator('svg').first().hover();
     await expect(page.getByText('heures réelles de production ÷ heures attendues').first()).toBeVisible();
 });
+
+test('Objectif sur un sujet précis : famille, indicateur, menu Sujet, valeur, constat, zéro permis pour un nombre', async ({ page }) => {
+    const errors = await startDemo(page);
+    const dialog = await openModal(page);
+    await dialog.getByRole('button', { name: 'Ajouter un objectif sur mesure' }).click();
+    const custom = dialog.getByTestId('objectives-custom').locator('[data-testid^="objective-custom_"]').first();
+    // Un indicateur d'entreprise n'a pas de sujet ; un indicateur par entité fait apparaître le menu Sujet.
+    await expect(custom).toContainText('Toute l\'entreprise');
+    await custom.getByLabel('Indicateur').selectOption({ label: 'Part dans les achats d\'ingrédients' });
+    const subject = custom.getByLabel('Sujet de l\'objectif');
+    await expect(subject).toBeVisible();
+    await subject.selectOption({ label: 'Bœuf haché mi-maigre' });
+    await custom.getByLabel('Valeur de l\'objectif').fill('20');
+    await expect(custom).toHaveAttribute('data-met', 'false'); // le bœuf pèse environ 28 % des achats d'ingrédients
+    await expect(custom).toContainText('À atteindre');
+    // Changer d'indicateur change le sujet proposé (canaux au lieu d'ingrédients).
+    await custom.getByLabel('Indicateur').selectOption('canalMargeNette');
+    await expect(subject).toContainText('Grandes surfaces');
+    await subject.selectOption({ label: 'Grandes surfaces' });
+    await custom.getByLabel('Sens de l\'objectif').selectOption('min');
+    await custom.getByLabel('Valeur de l\'objectif').fill('5');
+    await expect(custom).toHaveAttribute('data-met', 'false'); // Grandes surfaces : environ 2 %
+    await subject.selectOption({ label: 'Vente directe (boutique en ligne)' });
+    await expect(custom).toHaveAttribute('data-met', 'true');
+    // Un nombre de produits peut avoir zéro pour objectif.
+    await custom.getByLabel('Indicateur').selectOption('produitsDeficitaires');
+    await custom.getByLabel('Valeur de l\'objectif').fill('0');
+    await expect(custom.getByLabel('Valeur de l\'objectif')).not.toHaveClass(/border-red-500/);
+    await expect(custom).toHaveAttribute('data-met', 'false');
+    await dialog.getByRole('button', { name: 'Terminé' }).click();
+    await page.locator('#tab-summary').click();
+    await page.getByTestId('findings-group-objectif').getByRole('button', { name: /Voir tout/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Objectifs stratégiques' })).toContainText('Produits déficitaires dans au moins un canal');
+    expect(errors).toEqual([]);
+});

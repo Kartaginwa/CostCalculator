@@ -1440,11 +1440,12 @@ export const SummaryTable = ({
             )}
 
             {/* Barre des sous-onglets (21/11, refonte de Rapport et suivi) : quatre groupes dans l'ordre — Vue d'ensemble, produits et segments,
-                approvisionnement et équipe, simulation. Pas de trait vertical entre les groupes (retour utilisateur) ; la barre passe à la ligne
+                approvisionnement et équipe, simulation. Un trait vertical sépare les groupes (rétabli le 23/11 à la demande de l'utilisateur) ; la barre passe à la ligne
                 dans une fenêtre étroite au lieu de défiler. Voir Projet_Claude/03-Feuille-de-route.md. */}
             <div data-tour="subtab-bar" className="flex flex-wrap gap-x-1 border-b border-gray-200 mb-6">
                 {REPORT_SUBTAB_GROUPS.map((group, groupIndex) => (
                     <React.Fragment key={groupIndex}>
+                        {groupIndex > 0 && <span aria-hidden="true" className="mx-2 self-center h-5 w-px bg-gray-300 flex-shrink-0" />}
                         {group.map(tab => (
                             <button
                                 key={tab.id}

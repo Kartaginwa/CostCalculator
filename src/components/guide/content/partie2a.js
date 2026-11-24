@@ -1,5 +1,19 @@
 import { fromApp } from '../guideFormat.js';
 import { DEMO } from '../guideNumbers.js';
+import { INDICATORS, INDICATOR_GROUPS } from '../../../engine/objectives.js';
+import { INDICATOR_DOCS } from '../../../engine/objectiveDocs.js';
+
+// Tables des indicateurs d'objectifs sur mesure ajoutés le 24/11 : générées depuis le catalogue (engine/objectives.js) et ses descriptions (objectiveDocs.js),
+// les mêmes textes que les infobulles de la fenêtre « Gérer les objectifs ». Un identifiant d'ancre par indicateur : guide-obj-ind-<id>.
+const lowerFirst = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+const sens = (id) => (INDICATORS[id].dir === 'min' ? 'Au moins' : 'Au plus');
+const indicatorTable = (group, ids, withGroup) => ({
+    type: 'table', head: ['Indicateur', 'Ce qu\'il mesure', 'Sens habituel'], wrapCells: true,
+    rowIds: ids.map(id => `guide-obj-ind-${id.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`),
+    rows: ids.map(id => [withGroup ? `${group} : ${lowerFirst(INDICATORS[id].label)}` : INDICATORS[id].label, INDICATOR_DOCS[id], sens(id)]),
+});
+const ENTITY_GROUPS = INDICATOR_GROUPS.filter(g => g.label !== 'Entreprise');
+const ENTERPRISE_NEW = INDICATOR_GROUPS[0].ids.filter(id => INDICATOR_DOCS[id]);
 
 // Partie 2 — Utiliser l'application. Chapitre « Paramètres ».
 // Les chiffres du projet démo sont lus dans DEMO (vérifiés par e2e/guide-demo-numbers.spec.js).
@@ -44,7 +58,7 @@ export const chapitreParametres = {
         { type: 'p', id: 'guide-obj-sens', text: 'Le **sens** d\'un objectif par défaut est fixe : un coût se lit « au plus » et une marge « au moins ». Les voyants et les constats reposent sur ce sens ; l\'inverser donnerait des résultats absurdes. Pour un autre sens, créez un objectif sur mesure.' },
         { type: 'p', text: 'Un objectif peut être **désactivé sans être supprimé** : il garde sa valeur, mais n\'agit plus nulle part (ni voyant, ni constat). Réactivez-le quand vous voulez. Un objectif sans valeur, ou dont la donnée est absente, reste muet.' },
         { type: 'h', id: 'guide-obj-sur-mesure', text: 'Objectifs sur mesure' },
-        { type: 'p', text: 'Avec {{Ajouter un objectif sur mesure}}, vous créez jusqu\'à **20 objectifs** : un nom facultatif, un indicateur choisi dans la liste, un sens (« au plus » ou « au moins ») et une valeur. Le sens se présélectionne selon l\'indicateur, mais vous pouvez le changer. Il n\'y a pas de formule libre : seuls les indicateurs que l\'application calcule déjà sont proposés, les neuf indicateurs ci-dessus et ceux-ci.' },
+        { type: 'p', text: 'Avec {{Ajouter un objectif sur mesure}}, vous créez jusqu\'à **20 objectifs** : un nom facultatif, un indicateur choisi dans la liste, un sens (« au plus » ou « au moins ») et une valeur. Le sens se présélectionne selon l\'indicateur, mais vous pouvez le changer. Il n\'y a pas de formule libre : seuls les indicateurs que l\'application calcule déjà sont proposés. Ils se rangent en deux familles : ceux de l\'**entreprise entière**, et ceux qui visent **un sujet précis** (un ingrédient, un emballage, un fournisseur, un poste, un format, un canal ou une activité). Pour ces derniers, un menu {{Sujet}} apparaît à côté de l\'indicateur ; un sujet absent du projet (supprimé, ou sans ventes) rend l\'objectif muet. Les neuf objectifs par défaut ne sont pas répétés dans la liste.' },
         {
             type: 'table', head: ['Indicateur', 'Ce qu\'il mesure', 'Sens habituel'], wrapCells: true,
             rowIds: ['guide-obj-ind-securite', 'guide-obj-ind-point-mort', 'guide-obj-ind-revenus', 'guide-obj-ind-fournisseur', 'guide-obj-ind-canal', 'guide-obj-ind-produit'],
@@ -57,7 +71,10 @@ export const chapitreParametres = {
                 ['Marge nette du produit le moins rentable', 'La marge nette du produit le moins rentable, tous canaux confondus : un plancher de marge par produit.', 'Au moins'],
             ],
         },
-        { type: 'callout', kind: 'exemple', text: 'Pour ne jamais dépendre d\'un seul canal, créez « Part du premier canal », au plus 40 %. Pour exiger qu\'aucun produit ne tombe sous 5 % de marge nette, créez « Marge nette du produit le moins rentable », au moins 5 %.' },
+        { type: 'p', text: '**Autres indicateurs de l\'entreprise.**' },
+        indicatorTable('Entreprise', ENTERPRISE_NEW, false),
+        ...ENTITY_GROUPS.flatMap(g => [{ type: 'p', text: `**Sur ${lowerFirst(g.label)}.**` }, indicatorTable(g.label, g.ids, true)]),
+        { type: 'callout', kind: 'exemple', text: 'Pour ne jamais dépendre d\'un seul canal, créez « Part du premier canal », au plus 40 %. Pour exiger qu\'aucun produit ne tombe sous 5 % de marge nette, créez « Marge nette du produit le moins rentable », au moins 5 %. Pour surveiller un ingrédient précis, choisissez la famille « Un ingrédient », l\'indicateur « Part dans les achats d\'ingrédients », le sujet voulu, puis « au plus » 25 %.' },
 
         // ---------------------------------------------------------------------------------
         { type: 'h', id: 'guide-param-unites', text: 'Unités de mesure' },

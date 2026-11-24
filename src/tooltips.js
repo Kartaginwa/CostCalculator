@@ -4,7 +4,13 @@
 // `complet: true` : le texte se suffit à lui-même, aucun lien n'est affiché.
 // Les composants s'en servent avec <Tooltip tip="clé" />. Le test tooltips.test.js vérifie les longueurs, les
 // ancres, le vocabulaire et qu'aucune infobulle du code ne contourne ce registre.
+import { INDICATOR_DOCS } from './engine/objectiveDocs.js';
+
+// Infobulles des indicateurs d'objectifs sur mesure ajoutés le 24/11 : générées depuis objectiveDocs.js (même texte que la table du guide).
+const OBJ_IND_TIPS = Object.fromEntries(Object.entries(INDICATOR_DOCS).map(([id, text]) => [`objInd.${id}`, { text, guide: `guide-obj-ind-${id.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}` }]));
+
 export const TIPS = {
+    ...OBJ_IND_TIPS,
     "import.fournisseurDefaut": { text: "Appliqué aux nouveaux éléments importés quand votre fichier n'a pas de colonne fournisseur.", guide: "guide-ing-import-colonnes" },
     "sim.colMatiere": { text: "Coût matière, en % du prix de vente.", guide: "guide-sim-impact-activite", complet: true },
     "sim.colMo": { text: "Coût de main-d'œuvre, en % du prix de vente.", guide: "guide-sim-impact-activite", complet: true },
@@ -93,7 +99,7 @@ export const TIPS = {
     "obj.fraisFixes": { text: "Frais fixes répartis ÷ revenus prévus. Objectif « au plus » : des frais légers résistent mieux à un recul des ventes.", guide: "guide-obj-frais-fixes" },
     "obj.gerer": { text: "Activez ou désactivez chaque objectif sans le supprimer, saisissez ses valeurs ou créez les vôtres. Un objectif atteint est surligné en vert.", guide: "guide-obj-gerer" },
     "obj.sens": { text: "Le sens est fixe : un coût se lit « au plus », une marge « au moins ». Pour un autre sens, créez un objectif sur mesure.", guide: "guide-obj-sens" },
-    "obj.surMesure": { text: "Choisissez un indicateur que l’application mesure déjà, un sens et une valeur ; le nom est facultatif. Jusqu’à 20 objectifs.", guide: "guide-obj-sur-mesure" },
+    "obj.surMesure": { text: "Choisissez un indicateur que l’application mesure déjà (au besoin, un sujet précis), un sens et une valeur. Jusqu’à 20 objectifs.", guide: "guide-obj-sur-mesure" },
     "objInd.margeSecurite": { text: "Baisse de ventes possible avant le point mort, comme la tuile Marge de sécurité. Sens habituel : au moins.", guide: "guide-obj-ind-securite" },
     "objInd.pointMort": { text: "Chiffre d'affaires à atteindre pour couvrir les frais fixes, comme la tuile Point mort. Sens habituel : au plus.", guide: "guide-obj-ind-point-mort" },
     "objInd.revenus": { text: "Ventes prévues de l'ensemble des produits actifs (prix net × volumes). Sens habituel : au moins.", guide: "guide-obj-ind-revenus" },

@@ -21,7 +21,7 @@ const byKey = (list, key) => list.find(o => o.key === key);
 describe('catalogue', () => {
     it('neuf objectifs par défaut, une quinzaine d\'indicateurs, chaque objectif par défaut a son indicateur et son champ', () => {
         expect(DEFAULT_OBJECTIVES).toHaveLength(9);
-        expect(Object.keys(INDICATORS).length).toBe(15);
+        expect(Object.keys(INDICATORS).length).toBe(9 + 6 + 7 + 4 + 4 + 2 + 5 + 6 + 3 + 3);
         for (const o of DEFAULT_OBJECTIVES) { expect(INDICATORS[o.id]).toBeTruthy(); expect(o.field).toMatch(/Target$/); }
         expect(DEFAULT_OBJECTIVES.filter(o => o.principal).map(o => o.id)).toEqual(['matiere', 'emballage', 'mo', 'margeBrute']);
         expect(MAX_CUSTOM_OBJECTIVES).toBe(20);

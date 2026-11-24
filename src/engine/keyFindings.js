@@ -9,7 +9,7 @@
 import { parseLocaleNumber as P, formatNumber, unitConversionFactor } from '../utils.js';
 import { SUBTAB_LABELS, pct, usd, names, finding, force, weak, subject, activeRows, netMarginOfRows, computeFormatSpread } from './findingKit.js';
 import { classifyFinding, severityOf } from './findingMeta.js';
-import { evaluateObjectives, activeTarget } from './objectives.js';
+import { evaluateObjectives, activeTarget, fmtObjValue } from './objectives.js';
 import { ENTITY_RULES } from './entityFindings.js';
 import { REPORT_THRESHOLDS as T } from './reportThresholds.js';
 import {
@@ -232,14 +232,14 @@ const laborRules = (c) => {
 // sur mesure. Un objectif sans valeur, désactivé ou sans donnée est muet. Les cibles de coût matière, d'emballage et de main-d'œuvre gardent leurs règles ci-dessus
 // (identifiants stables pour le guide).
 const objectiveRules = (c) => {
-    const money = (v, unit) => (unit === '$' ? usd(v) : `${formatNumber(v, 1)} %`);
+    const money = fmtObjValue;
     const out = [];
     for (const o of evaluateObjectives(c)) {
         if (o.met == null || ['matiere', 'emballage', 'mo'].includes(o.key)) continue;
         const detail = `À ${money(o.current, o.unit)} contre un objectif d'${o.dir === 'min' ? 'au moins' : 'au plus'} ${money(o.target, o.unit)}.`;
         const id = `obj-${o.key}`;
         if (o.met) out.push(force(id, o.theme, 45, `${o.label} : objectif atteint`, detail, o.subTab));
-        else out.push(weak(id, o.theme, Math.round(60 + Math.min(25, (o.gap / o.target) * 100)), `${o.label} ${o.dir === 'min' ? 'sous' : 'au-dessus de'} l'objectif`, detail, o.subTab));
+        else out.push(weak(id, o.theme, Math.round(60 + Math.min(25, o.target > 0 ? (o.gap / o.target) * 100 : 25)), `${o.label} ${o.dir === 'min' ? 'sous' : 'au-dessus de'} l'objectif`, detail, o.subTab));
     }
     return out;
 };

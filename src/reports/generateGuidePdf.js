@@ -112,13 +112,13 @@ export function generateGuidePdf(parts, { showNotification, appLogoBase64 = null
     const lineH = (size) => size * MM * 1.42;
 
     // dry = true : on calcule seulement la hauteur, sans dessiner ni changer de page.
-    const paragraph = (text, { x = PAGE.left, width = WIDTH, size = 10, dry = false, indentFirst = 0, hanging = null, color = null, space = 2.4, bold = false } = {}) => {
+    const paragraph = (text, { x = PAGE.left, width = WIDTH, size = 10, dry = false, indentFirst = 0, color = null, space = 2.4, bold = false } = {}) => {
         const runs = toRuns(text);
         if (bold) runs.forEach((r) => { if (r.style === 'normal') r.style = 'bold'; });
         const lines = layout(runs, width, size, indentFirst);
         const h = lines.length * lineH(size);
         if (dry) return h + space;
-        lines.forEach((ln, i) => {
+        lines.forEach((ln) => {
             ensure(lineH(size));
             ln.forEach((tk) => {
                 setStyle(tk.style, size, color);

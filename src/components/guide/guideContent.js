@@ -8,7 +8,7 @@ import { partie4 } from './content/partie4.js';
 
 // Le guide complet : quatre parties (+ la partie 0 « Bien utiliser ce guide »). Le sommaire, les
 // ancres et la recherche sont tous dérivés de cette structure ; voir InstructionModal.jsx.
-export const partie2 = {
+const partie2 = {
     id: 'guide-partie-2',
     title: 'Partie 2 — Utiliser l\'application, onglet par onglet',
     lead: 'Un chapitre par onglet : à quoi il sert, comment le remplir, et ce que montrent les chiffres du projet démo.',

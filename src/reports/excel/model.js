@@ -12,7 +12,6 @@ import { computeFormatAllergens } from '../../engine/allergens.js';
 import { computeGlobalSeries } from '../../engine/trackingSeries.js';
 import { computeIndirectPools, REPARTITION_ACTIVITY_PREFIX, REPARTITION_CHANNEL_PREFIX, REPARTITION_CUSTOM_PREFIX } from '../../engine/analysisData.js';
 
-export const FAMILIES = ['Vue unique', 'Produits', 'Ventes', 'Intrants', 'Main-d\'œuvre et frais', 'Suivi dans le temps', 'Accompagnement'];
 
 const ALLERGEN_NAME = Object.fromEntries(MAJOR_ALLERGENS.map(a => [a.key, a.name]));
 const C = (k, label, kind, fmt, def) => ({ k, label, kind, fmt, def });

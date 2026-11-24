@@ -20,7 +20,7 @@ const CLASS_TEXT = {
     dogs: ['faiblesse', 48, 'un poids mort', 'Peu populaire et peu rentable : à repenser ou à retirer.'],
 };
 
-export const formatRules = (c) => {
+const formatRules = (c) => {
     const a = c.analysis, out = [];
     const rows = a.activeProducts || [];
     const m = a.menuEngineeringData || {};
@@ -87,11 +87,11 @@ export const deficitCells = (c) => {
     }
     return out;
 };
-export const cellRules = (c) => deficitCells(c).map(({ act, ch, cell }) => weak(`cell-deficit-${act.id}-${ch.id}`, 'Activités', 60, `${act.name} en ${ch.name} : perd de l'argent`,
+const cellRules = (c) => deficitCells(c).map(({ act, ch, cell }) => weak(`cell-deficit-${act.id}-${ch.id}`, 'Activités', 60, `${act.name} en ${ch.name} : perd de l'argent`,
     `Bénéfice net de ${usd(cell.margeNetteTotal)} (${pct(cell.margeNettePercent)} de marge nette).`, 'byActivity', Math.abs(cell.margeNetteTotal), subject('activité × canal', `${act.id}:${ch.id}`, `${act.name} × ${ch.name}`)));
 
 // ---------- postes de production ----------
-export const postRules = (c) => {
+const postRules = (c) => {
     const out = [];
     for (const r of (c.info.productivityReport?.rows || []).filter(x => x.actual > 0 && x.expected > 0)) {
         const u = r.utilization / 100, sub = subject('poste', r.postName, r.postName);
@@ -103,7 +103,7 @@ export const postRules = (c) => {
 };
 
 // ---------- approvisionnement : fournisseurs et éléments du catalogue ----------
-export const supplyEntityRules = (c) => {
+const supplyEntityRules = (c) => {
     const out = [];
     const sets = [
         ['ing', 'd\'ingrédients', 'ingrédient', c.ingredientShares, c.ingredientVolatility, c.analysis.abcAnalysisData, c.analysis.purchasingReportData, 'ingredients', 1],

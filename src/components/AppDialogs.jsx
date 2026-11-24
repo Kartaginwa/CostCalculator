@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { CheckCircle, AlertTriangle, Info, X, FilePlus, FolderOpen, FileText, PlayCircle } from 'lucide-react';
 
 // Composant de notification (Version améliorée avec option Annuler)

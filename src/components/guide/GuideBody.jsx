@@ -34,7 +34,7 @@ const highlight = (text, term) => {
         : part));
 };
 
-export const Inline = ({ text, term, onLink }) => {
+const Inline = ({ text, term, onLink }) => {
     const parts = frTypo(text).split(INLINE_PATTERN).filter((p) => p !== '');
     return parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{highlight(part.slice(2, -2), term)}</strong>;
@@ -93,7 +93,7 @@ const Table = ({ block, term, onLink }) => (
     </div>
 );
 
-export const Blocks = ({ blocks, term, onLink }) => (
+const Blocks = ({ blocks, term, onLink }) => (
     <>
         {blocks.map((block, i) => {
             switch (block.type) {

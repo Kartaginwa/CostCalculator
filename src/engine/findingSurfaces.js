@@ -100,7 +100,7 @@ export function tabFindings(all, subTab, { formatId, productId } = {}) {
 //   - agrégé gardé (il nomme déjà les éléments) : « N ingrédients de classe A à prix volatil », « perte stock prévue », « marges différentes selon le format » ;
 //   - par entité gardé (il en dit davantage) : l'état de chaque poste de production (le « poste le plus sollicité » agrégé n'en nomme qu'un).
 const hasId = (list, re) => list.some(f => re.test(f.id));
-export const withoutRedundancy = (list) => list.filter(f => {
+const withoutRedundancy = (list) => list.filter(f => {
     if (/^volatile-item-(ing|pkg)-/.test(f.id)) return !hasId(list, new RegExp(`^volatile-a-${f.id.split('-')[2]}$`));
     if (/^loss-item-/.test(f.id)) return !hasId(list, /^loss-high$/);
     if (/^format-gap-of-/.test(f.id)) return !hasId(list, /^format-gap$/);

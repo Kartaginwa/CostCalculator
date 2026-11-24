@@ -4,7 +4,7 @@
 
 // En-têtes : bleu = valeur saisie, gris = valeur calculée, ardoise = feuille d'accompagnement.
 export const HEADER_FILL = { in: '2563EB', calc: '6B7280', meta: '374151' };
-export const NUMBER_FORMATS = { usd: '"$"#,##0.00', pct: '0.0%', int: '#,##0', num: '#,##0.00' };
+const NUMBER_FORMATS = { usd: '"$"#,##0.00', pct: '0.0%', int: '#,##0', num: '#,##0.00' };
 
 const headerStyle = (kind) => ({
     font: { bold: true, color: { rgb: 'FFFFFF' } },

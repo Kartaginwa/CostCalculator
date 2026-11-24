@@ -136,4 +136,3 @@ export const scrollToEl = (el, block = 'center') => {
     window.scrollTo({ top: Math.max(0, window.scrollY + delta), behavior: reduceMotion ? 'auto' : 'smooth' });
 };
 
-export const isVisible = (el) => !!el && el.getClientRects().length > 0;

@@ -5,7 +5,7 @@
 import { REPORT_THRESHOLDS as T } from './reportThresholds.js';
 
 // [motif d'identifiant, portée, type de sujet]. Premier motif qui correspond ; un test vérifie que CHAQUE identifiant du moteur est classé.
-export const SCOPE_RULES = [
+const SCOPE_RULES = [
     // Constats par entité propres à un format (alimentent les fiches produits)
     [/^(sku-class|sku-loss|sku-positive|sku-over-cost|sku-hour|sku-cost-trend|sku-margin-trend|format-gap-of)-/, 'specific', 'format'],
     // Généraux : l'entreprise dans son ensemble

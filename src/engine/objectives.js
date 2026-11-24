@@ -172,7 +172,6 @@ export const INDICATOR_GROUPS = [
     { label: 'Une activité', ids: ['actMargeBrute', 'actMargeNette', 'actPart'] },
 ];
 export const CUSTOM_INDICATOR_IDS = INDICATOR_GROUPS.flatMap(g => g.ids);
-export const INDICATOR_IDS = Object.keys(INDICATORS);
 
 /** Sujets disponibles pour un indicateur (liste vide pour un indicateur d'entreprise). */
 export const subjectsOf = (ctx, indicator) => { const k = INDICATORS[indicator]?.entity; return k ? ENTITY_KINDS[k].list(ctx) : []; };
@@ -194,7 +193,6 @@ export const DEFAULT_OBJECTIVES = [
     { id: 'perteStock', field: 'lossTarget', principal: false, suggestion: T.lossShareHigh * 100 },
     { id: 'fraisFixes', field: 'fixedShareTarget', principal: false, suggestion: T.fixedShareHigh * 100 },
 ];
-export const DEFAULT_FIELDS = DEFAULT_OBJECTIVES.map(o => o.field);
 const DEFAULT_BY_ID = Object.fromEntries(DEFAULT_OBJECTIVES.map(o => [o.id, o]));
 
 export const isObjectiveOff = (info, id) => (info?.objectivesOff || []).includes(id);

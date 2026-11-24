@@ -13,7 +13,7 @@ const orDash = (v, fn) => (finite(v) ? fn(v) : '—');
 const productFindings = (F) => findingCards(F.findings);
 
 /** Cascade de marge par canal : du PDS à la marge nette et au point mort, identique à l'écran Par SKU. */
-export function cascadeTable(F) {
+function cascadeTable(F) {
     const { pds, linkRows, channels } = F.cascade;
     if (!channels.length) return '';
     const cols = channels.length + 1;

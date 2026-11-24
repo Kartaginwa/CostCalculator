@@ -25,12 +25,12 @@ export const FINDING_THEMES = ['Rentabilité', 'Coûts', 'Produits', 'Canaux', '
 //   objectif  — « Suis-je là où je veux aller ? » : écart aux cibles saisies (coûts) ; tone 'force' = atteint, 'faiblesse' = à atteindre ;
 //   evolution — « Dans quelle direction vais-je ? » : variation depuis le dernier point de référence (ou tendance sur plusieurs relevés) ; 'force' = amélioration, 'faiblesse' = détérioration ;
 //   structure — « Quelle est ma solidité ? » : forces et faiblesses générales (capacité, dépendances, résilience).
-export const FINDING_GROUPS = [
+const FINDING_GROUPS = [
     { id: 'objectif', label: 'Objectifs stratégiques', forceLabel: 'Objectifs atteints', weakLabel: 'Objectifs à atteindre', forceTag: 'Atteint', weakTag: 'À atteindre' },
     { id: 'evolution', label: 'Amélioration / détérioration', forceLabel: 'Améliorations', weakLabel: 'Détériorations', forceTag: 'Amélioration', weakTag: 'Détérioration' },
     { id: 'structure', label: 'Forces et faiblesses', forceLabel: 'Forces', weakLabel: 'Faiblesses', forceTag: 'Force', weakTag: 'Faiblesse' },
 ];
-export const groupOf = (id) => (/^(cost-|sku-over-cost-|obj-)/.test(id) ? 'objectif' : /^(history-|sku-cost-trend-|sku-margin-trend-)/.test(id) ? 'evolution' : 'structure');
+const groupOf = (id) => (/^(cost-|sku-over-cost-|obj-)/.test(id) ? 'objectif' : /^(history-|sku-cost-trend-|sku-margin-trend-)/.test(id) ? 'evolution' : 'structure');
 export { SUBTAB_LABELS }; // défini dans findingKit.js (partagé avec les règles par entité)
 
 
@@ -691,7 +691,7 @@ const impactOf = (c, f) => {
     if (!key) return null;
     try { const v = IMPACTS[key](c, f.id); return Number.isFinite(v) ? v : null; } catch { return null; }
 };
-export const rankOf = (f, revenue) => (5 - tierOf(f)) * 1000 + (f.impact != null && revenue > 0 ? Math.min(100, (f.impact / revenue) * 1000) : f.weight);
+const rankOf = (f, revenue) => (5 - tierOf(f)) * 1000 + (f.impact != null && revenue > 0 ? Math.min(100, (f.impact / revenue) * 1000) : f.weight);
 
 export const FINDING_RULES = [
     safetyRule, netProfitRule, costTargetRules, objectiveRules, productRules, channelRules, activityRules, supplyRules, laborRules, reconciliationRules,
@@ -734,7 +734,5 @@ export function computeKeyFindings(ctx, { entities = false } = {}) {
     return { ...split(sorted), groups };
 }
 
-// Pour l'affichage : combien de constats par colonne avant la fenêtre « Voir tous les constats ».
-export const VISIBLE_FINDINGS_PER_COLUMN = 5;
 // TEST : nombre de lignes visibles par groupe (le reste est dans la fenêtre « Voir tout »).
 export const VISIBLE_FINDINGS_PER_GROUP = 3;

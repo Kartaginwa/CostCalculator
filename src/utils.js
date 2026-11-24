@@ -38,7 +38,7 @@ export const todayLocalISO = () => {
 // « 1 234,56 », « 1,234.56 », « 1.234,56 »). Règle : si les deux séparateurs sont présents, le
 // DERNIER est le décimal ; si un seul type est présent plusieurs fois, ce sont des milliers ;
 // un seul séparateur présent une fois est le décimal.
-export const normalizeNumberString = (stringValue) => {
+const normalizeNumberString = (stringValue) => {
     let s = String(stringValue).replace(/[^0-9,.-]/g, '');
     const lastComma = s.lastIndexOf(',');
     const lastDot = s.lastIndexOf('.');

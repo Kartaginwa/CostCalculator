@@ -565,7 +565,7 @@ export function computeActivityChannelMarginMatrix(productsWithCosts, production
 // 04-Conception-Modele.md, section 1bis) : on ne répartit jamais un $ réel d'un type avec la clé
 // théorique d'un AUTRE type (ex. de l'emballage réel avec une clé de main-d'œuvre théorique serait
 // arbitraire).
-export const DIRECT_COST_TYPE_FIELDS = {
+const DIRECT_COST_TYPE_FIELDS = {
     'Matière première': 'costMatierePerPortion',
     "Main-d'œuvre directe": 'costLaborPerPortion',
     'Emballage': 'costPackagingPerPortion',

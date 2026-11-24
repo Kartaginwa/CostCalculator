@@ -756,7 +756,6 @@ CHAPTERS.forEach((c) => { c.introMs = Math.max(INTRO_MS, Math.round(words(c.narr
 export const narrationOf = (scene) => stripPauses(scene.caption).replace(/\*\*/g, '');
 export const voiceOf = (scene) => scene.caption.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
 export const introNarrationOf = (chapterIndex) => stripPauses(CHAPTERS[chapterIndex].narration);
-export const introVoiceOf = (chapterIndex) => CHAPTERS[chapterIndex].narration.replace(/\s+/g, ' ').trim();
 // Nom du fichier audio de la carte de titre d'un chapitre (par exemple « intro-entreprise.mp3 »).
 export const introAudioId = (chapterIndex) => `intro-${CHAPTERS[chapterIndex].id}`;
 

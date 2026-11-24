@@ -25,8 +25,8 @@ const targetOf = (v) => positive(P(v));
 // Page (repère) où un constat est détaillé : la fiche du format pour un constat de format, sinon la section de l'onglet auquel il renvoie.
 const MARK_OF_TAB = { overview: 'resultats', simulation: 'tendance', portfolio: 'portefeuille', bySku: 'skutable', byChannel: 'canaux', byActivity: 'canaux', ingredients: 'ingr', packaging: 'emb', labor: 'mo1' };
 // Les sous-onglets qui ont un bandeau de constats dans l'application (Vue d'ensemble : trois blocs ; Simulation : aucun). Le rapport imprime les MÊMES constats.
-export const FINDING_TABS = ['portfolio', 'bySku', 'byChannel', 'byActivity', 'ingredients', 'packaging', 'labor'];
-export const markOfFinding = (f) => (f.subject?.type === 'format' ? `fiche:${f.subject.id}` : MARK_OF_TAB[f.link?.subTab] || 'resultats');
+const FINDING_TABS = ['portfolio', 'bySku', 'byChannel', 'byActivity', 'ingredients', 'packaging', 'labor'];
+const markOfFinding = (f) => (f.subject?.type === 'format' ? `fiche:${f.subject.id}` : MARK_OF_TAB[f.link?.subTab] || 'resultats');
 
 /**
  * @param {object} inputs

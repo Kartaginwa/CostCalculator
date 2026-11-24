@@ -5,7 +5,7 @@ import { computeProjectAnalysis } from '../analysisPipeline.js';
 import { computeCalculatedGeneralInfo } from '../calculatedGeneralInfo.js';
 
 /** Les entrées d'un rapport pour un état de projet quelconque (mêmes fonctions du moteur que l'application). */
-export const inputsFromState = (s) => {
+const inputsFromState = (s) => {
     const base = computeProjectAnalysis({
         products: s.products, baseIngredients: s.ingredientsList, basePackaging: s.basePackaging, laborDatabase: s.laborDatabase, generalInfo: s.generalInfo,
         salesChannels: s.salesChannels, productionActivities: s.productionActivities, expenseLines: s.expenseLines, revenueLines: s.revenueLines,

@@ -45,7 +45,7 @@
     "autoprefixer": "^10.4.20",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "electron": "^29.0.0",
+    "electron": "^35.7.5",
     "electron-builder": "^26.0.12",
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",

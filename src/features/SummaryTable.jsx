@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, Label, ResponsiveContainer, Bar, LabelList, Cell } from 'recharts';
 import { ArrowUpDown, FileDown, Pencil, AlertTriangle, Star, HelpCircle as QuestionMark, Milk, Bone, Camera, Trash2, ChevronDown } from 'lucide-react';
-import { unnamedLabel, parseLocaleNumber, formatCurrency, formatPercent, formatNumber } from '../utils.js';
-import { useEscapeKey, useSessionState } from '../ui-utils.jsx';
+import { unnamedLabel, parseLocaleNumber, formatCurrency, formatPercent, formatNumber, snapshotDateLabel } from '../utils.js';
+import { useEscapeKey, useSessionState, useStateResetOnChange } from '../ui-utils.jsx';
 import { ObjectiveBadge } from '../components/ObjectiveBadge.jsx';
 import { Tooltip, Pagination, CostNatureBadge, EmptyState } from '../components/common.jsx';
 import { useProject } from '../state/ProjectContext.jsx';
@@ -48,8 +48,8 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
     const [sort, setSort] = useSessionState(`${memoryKey}.sort`, { key: 'amplitudePercent', direction: 'descending' });
     const [filterName, setFilterName] = useSessionState(`${memoryKey}.filterName`, '');
     const [filterProvider, setFilterProvider] = useSessionState(`${memoryKey}.filterProvider`, 'all');
-    const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [page, setPage] = useStateResetOnChange(1, [filterName, filterProvider, perPage]); // revient à la page 1 si un filtre change
 
     const providers = useMemo(
         () => ['all', ...[...new Set(volatility.list.map(v => v.provider).filter(Boolean))].sort()],
@@ -69,7 +69,6 @@ const VolatilityTable = ({ volatility, itemLabel, nameColumnLabel, filterPlaceho
             return ((av || 0) - (bv || 0)) * dir;
         });
     }, [volatility, filterName, filterProvider, sort]);
-    useEffect(() => { setPage(1); }, [filterName, filterProvider, perPage]);
     const paged = useMemo(() => filtered.slice((page - 1) * perPage, (page - 1) * perPage + perPage), [filtered, page, perPage]);
     const requestSort = (key) => setSort(prev => ({
         key, direction: prev.key === key && prev.direction === 'descending' ? 'ascending' : 'descending',
@@ -314,8 +313,8 @@ const ManagePointsModal = ({ isOpen, onClose, trackingPoints, selectedSnapshotId
     useEscapeKey(isOpen, onClose);
     const [snapSort, setSnapSort] = useState({ key: 'timestamp', direction: 'descending' });
     const [snapFilter, setSnapFilter] = useState('');
-    const [snapPage, setSnapPage] = useState(1);
     const [snapPerPage, setSnapPerPage] = useState(10);
+    const [snapPage, setSnapPage] = useStateResetOnChange(1, [snapFilter, snapPerPage]);
 
     const filteredSnapshots = useMemo(() => {
         let list = trackingPoints;
@@ -329,7 +328,6 @@ const ManagePointsModal = ({ isOpen, onClose, trackingPoints, selectedSnapshotId
             return String(a[snapSort.key] || '').localeCompare(String(b[snapSort.key] || '')) * dir;
         });
     }, [trackingPoints, snapFilter, snapSort]);
-    useEffect(() => { setSnapPage(1); }, [snapFilter, snapPerPage]);
     const pagedSnapshots = useMemo(
         () => filteredSnapshots.slice((snapPage - 1) * snapPerPage, (snapPage - 1) * snapPerPage + snapPerPage),
         [filteredSnapshots, snapPage, snapPerPage]
@@ -1010,10 +1008,7 @@ export const SummaryTable = ({
     const projectChecks = useMemo(() => computeProjectChecks({
         products, baseIngredients, basePackaging, productionActivities, salesChannels, trackingPoints, fixedCosts: indirectPools?.meta,
     }), [products, baseIngredients, basePackaging, productionActivities, salesChannels, trackingPoints, indirectPools]);
-    const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [sortConfig]);
+    const [currentPage, setCurrentPage] = useStateResetOnChange(1, [sortConfig]);
 
     // --- LOGIQUE CENTRALISÉE ---
     const { productsWithCosts, contributionData } = analysisData;
@@ -1101,7 +1096,7 @@ export const SummaryTable = ({
         return displayedTrackingPoints.map(point => {
             const ingredientData = (point.baseIngredients || []).find(ing => String(ing.id) === String(selectedIngredientId));
             return {
-                name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
+                name: snapshotDateLabel(point.timestamp),
                 label: point.name,
                 note: point.note,
                 "Prix Unitaire": ingredientData ? ingredientData.unitPrice : null,
@@ -1130,7 +1125,7 @@ export const SummaryTable = ({
         return displayedTrackingPoints.map(point => {
             const packagingData = (point.basePackaging || []).find(pkg => String(pkg.id) === String(selectedPackagingId));
             return {
-                name: new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
+                name: snapshotDateLabel(point.timestamp),
                 label: point.name,
                 note: point.note,
                 "Prix Unitaire": packagingData ? packagingData.unitPrice : null,
@@ -1154,7 +1149,7 @@ export const SummaryTable = ({
             // ultérieurs.
             const newSnapshot = {
                 id: Date.now(),
-                name: name || new Date().toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
+                name: name || snapshotDateLabel(Date.now()),
                 note: note || '',
                 timestamp: new Date().toISOString(),
                 generalInfo: { ...generalInfo },
@@ -1297,10 +1292,7 @@ export const SummaryTable = ({
     // plus haut pour Par Activité/Par Canal) plutôt que de re-sommer la matrice — même donnée,
     // jamais deux calculs indépendants qui pourraient diverger.
     const [activityMatrixSort, setActivityMatrixSort] = useSessionState('summary.activityMatrixSort', { key: 'activityName', direction: 'descending' });
-    const [activityMatrixPage, setActivityMatrixPage] = useState(1);
-    useEffect(() => {
-        setActivityMatrixPage(1);
-    }, [activityMatrixSort]);
+    const [activityMatrixPage, setActivityMatrixPage] = useStateResetOnChange(1, [activityMatrixSort]);
 
     const activityChannelMatrix = useMemo(
         () => computeActivityChannelMarginMatrix(productsWithCosts, productionActivities, salesChannels),

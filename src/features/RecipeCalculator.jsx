@@ -4,7 +4,7 @@ import {
     unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveInteger, isValidPositiveNumber, isInvalidPercentage,
     formatCurrency, formatUnitPrice, formatSecondsToTime, formatPercent, formatQuantityLabel,
     getCompatibleUnits, loadedHourlyRate, isDiscreteUnit, MAJOR_ALLERGENS, FORMAT_FLAT_MIRROR_FIELDS, filterActiveUnits, formatNumber, unitConversionFactor, unitLabel } from '../utils.js';
-import { getCostTargetIndicator, useValueFlash, useSessionState } from '../ui-utils.jsx';
+import { getCostTargetIndicator, useValueFlash, useSessionState, useStateResetOnChange } from '../ui-utils.jsx';
 import { activeTarget } from '../engine/objectives.js';
 import { Tooltip, EmptyState, CostNatureBadge, ValidationMessage, FlashingCell, GanttChart, PersonnelModal, AllergenModal, Combobox, TimeInput, AddFormatModal, CopyFromFormatControl } from '../components/common.jsx';
 import { calculateCosts, computeChannelBreakdown } from '../engine/calculateCosts.js';
@@ -17,7 +17,9 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
     const { products, baseIngredients, basePackaging, salesChannels, onUpdateProducts, generalInfo, ingredientsList, laborDatabase, showNotification, setNotification, analysisData, activeUnits, goToTab } = useProject();
     const product = products[editingProductIndex] || null;
 
-    const [selectedFormatIndex, setSelectedFormatIndex] = useState(0);
+    // Revient au format par défaut (0) en changeant de plat — ou au format précis visé par la navigation (ex. clic sur une ligne du
+    // Résumé, Phase 1.6b), sans interférer avec un clic ultérieur sur un autre onglet : ne se remet à zéro que si l'un des deux change.
+    const [selectedFormatIndex, setSelectedFormatIndex] = useStateResetOnChange(initialFormatIndex || 0, [editingProductIndex, initialFormatIndex]);
     const [isAddFormatModalOpen, setIsAddFormatModalOpen] = useState(false);
     const formats = product?.formats || [];
     const format = formats[selectedFormatIndex] || formats[0] || null;
@@ -41,13 +43,6 @@ export const RecipeCalculator = ({ editingProductIndex, initialFormatIndex = 0, 
             return newSet;
         });
     };
-
-    // Revient au format par défaut (0) en changeant de plat — ou au format précis visé par la
-    // navigation (ex. clic sur une ligne du Résumé, Phase 1.6b), sans interférer avec un clic
-    // ultérieur sur un autre onglet : cet effet ne redéclenche que si l'un des deux change.
-    useEffect(() => {
-        setSelectedFormatIndex(initialFormatIndex || 0);
-    }, [editingProductIndex, initialFormatIndex]);
 
     useEffect(() => {
         if (newlyAddedStepId) {

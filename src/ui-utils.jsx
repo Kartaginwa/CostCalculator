@@ -79,6 +79,18 @@ export const resetSessionMemory = (scope = '') => {
 // Conteneur où les infobulles s'affichent : celui de l'instance d'application qui les contient (la visite
 // a le sien ; l'application cachée derrière garde le sien).
 export const TooltipHostContext = createContext(null);
+// État qui revient à `initialValue` dès que l'une des `deps` change (page d'une liste qui repart à 1 quand un filtre change, par
+// exemple). Remplace le patron « useEffect(() => setX(1), [filtres]) » : la remise à zéro se fait PENDANT le rendu (patron
+// recommandé par React), donc sans rendu intermédiaire où l'ancienne page s'affiche avec les nouveaux filtres.
+export const useStateResetOnChange = (initialValue, deps) => {
+    const [value, setValue] = useState(initialValue);
+    const [previousDeps, setPreviousDeps] = useState(deps);
+    if (deps.length !== previousDeps.length || deps.some((d, i) => !Object.is(d, previousDeps[i]))) {
+        setPreviousDeps(deps);
+        setValue(initialValue);
+    }
+    return [value, setValue];
+};
 export const useSessionState = (key, initialValue) => {
     const fullKey = useContext(SessionScopeContext) + key;
     const [value, setValue] = useState(() => (sessionMemory.has(fullKey)

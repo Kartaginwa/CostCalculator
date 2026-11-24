@@ -6,7 +6,7 @@
 
 import { buildDefaultFormat, stripFormatOwnedFields } from './initialState.js';
 import { normalizeReportOptions } from './reportOptions.js';
-import { todayLocalISO, EXPENSE_CATEGORIES, sumLineAmounts, parseLocaleNumber } from '../utils.js';
+import { todayLocalISO, snapshotDateLabel, EXPENSE_CATEGORIES, sumLineAmounts, parseLocaleNumber } from '../utils.js';
 
 // Un contenant ('general' ou l'id d'une activité) revalidé contre les activités réellement
 // présentes : une activité supprimée depuis la sauvegarde ne doit jamais laisser une référence
@@ -66,7 +66,7 @@ export function parseProjectData(data, emptyState) {
     const trackingPoints = (data.trackingPoints || []).map(point => ({
         ...point,
         // Rétrocompatibilité : nom/note absents des anciens points de référence.
-        name: point.name || new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }),
+        name: point.name || snapshotDateLabel(point.timestamp),
         note: point.note || ''
     }));
 

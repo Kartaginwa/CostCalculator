@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
+import { useTouched, focusSoon, useSessionState, useStateResetOnChange } from '../ui-utils.jsx';
 import { ArrowUpDown, Upload, PlusCircle, AlertCircle, Copy, Trash2 } from 'lucide-react';
 import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, formatUnitPrice, formatCurrency, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, unitLabel, areUnitsCompatible } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, AllergenModal, EmptyState } from '../components/common.jsx';
@@ -18,7 +18,7 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     const [sortConfig, setSortConfig] = useSessionState('ingredients.sortConfig', { key: 'name', direction: 'ascending' });
     const [newlyAddedId, setNewlyAddedId] = useState(null);
     const [editingIngredientId, setEditingIngredientId] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useStateResetOnChange(1, [filterName, filterProvider, itemsPerPage]); // revient à la page 1 si un filtre change
     const [comparisonIngredient, setComparisonIngredient] = useSessionState('ingredients.comparison', '');
     const [isSortDisabled, setIsSortDisabled] = useState(false);
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
@@ -85,11 +85,6 @@ export const IngredientsTab = ({ itemsPerPage, onItemsPerPageChange }) => {
         return sortableItems;
     }, [ingredientsList, filterName, filterProvider, sortConfig, isSortDisabled]);
     
-    // Effet pour revenir à la première page si les filtres changent
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [filterName, filterProvider, itemsPerPage]);
-
     // Effet pour gérer la réactivation du tri en cliquant en dehors de la nouvelle ligne
     useEffect(() => {
         // On n'active cet effet que si le tri est désactivé.

@@ -32,6 +32,9 @@ export const todayLocalISO = () => {
     const pad = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
+// Libellé de date et d'heure d'un relevé (« 23 novembre 2026 à 14 h 05 min 12 s »), à partir d'un horodatage ; un horodatage absent reste « Invalid Date », jamais remplacé par maintenant. Source unique : nom par défaut d'un relevé,
+// série de suivi et migration des anciens projets l'utilisaient chacun de leur côté, avec les mêmes options.
+export const snapshotDateLabel = (when) => new Date(when).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' });
 
 // Normalise une saisie numérique vers la forme « -1234.56 » : accepte le point OU la virgule
 // décimale, et des séparateurs de milliers (espace, espace insécable, ou le « autre » séparateur :

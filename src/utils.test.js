@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadedHourlyRate, landedUnitPrice, looksLikeProductionLabor, parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
+import { snapshotDateLabel, loadedHourlyRate, landedUnitPrice, looksLikeProductionLabor, parseLocaleNumber, isValidNumber, isDiscreteUnit, isValidPositiveNumber, sumLineAmounts, sumAmountsMap, formatCurrency, guessExpenseCategory, parsePdfStatementLine, filterActiveUnits, DEFAULT_ACTIVE_UNITS, getCompatibleUnits } from './utils.js';
 
 describe('formatCurrency', () => {
     it('ajoute un espace comme séparateur de milliers, virgule comme séparateur décimal', () => {
@@ -199,5 +199,17 @@ describe('loadedHourlyRate (taux horaire chargé, formule unique)', () => {
         expect(loadedHourlyRate({ hourlyRate: 22, socialCharges: 16, vacationPercentage: 4 })).toBeCloseTo(22 * 1.16 * 1.04, 10);
         expect(loadedHourlyRate({ hourlyRate: 20 })).toBe(20);
         expect(loadedHourlyRate(undefined)).toBe(0);
+    });
+});
+
+// Libellé de date des relevés (23/11) : même texte qu'avant la centralisation, et un horodatage absent n'est jamais remplacé par maintenant.
+describe('snapshotDateLabel', () => {
+    it("donne la date et l'heure en français, comme l'ancien appel direct", () => {
+        const ts = new Date(2026, 10, 23, 14, 5, 12).getTime();
+        expect(snapshotDateLabel(ts)).toBe(new Date(ts).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' }));
+        expect(snapshotDateLabel(ts)).toMatch(/23 novembre 2026/);
+    });
+    it('laisse un horodatage absent absent', () => {
+        expect(snapshotDateLabel(undefined)).toBe('Invalid Date');
     });
 });

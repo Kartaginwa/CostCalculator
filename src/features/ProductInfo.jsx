@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
+import { useTouched, focusSoon, useSessionState, useStateResetOnChange } from '../ui-utils.jsx';
 import { ArrowDownAZ, ArrowDownZA, ArrowLeft, AlertTriangle, Upload, Copy, Trash2, PlusCircle, Layers, ChevronDown, Star } from 'lucide-react';
 import { unnamedLabel, parseLocaleNumber, isValidNumber, isValidPositiveNumber, isInvalidPercentage, isNotEmpty, CONVERSION_FACTORS, filterActiveUnits, formatNumber, unitLabel } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, Combobox, ChannelLinksModal, UnitsModal } from '../components/common.jsx';
@@ -23,7 +23,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
     const [filterCategory, setFilterCategory] = useSessionState('info.filterCategory', 'all');
     const [filterActivity, setFilterActivity] = useSessionState('info.filterActivity', 'all');
     const [sortConfig, setSortConfig] = useSessionState('info.sortConfig', { key: 'platName', direction: 'ascending' });
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useStateResetOnChange(1, [filterName, filterCategory, filterActivity]); // revient à la page 1 si un filtre change
     // Phase 3.2 : détail "prix par canal" repliable par format — évite d'alourdir le tableau
     // Produits et SKUs quand on n'a pas besoin de voir ce détail (voir discussion méthodologique).
     const [expandedFormatIds, setExpandedFormatIds] = useState(new Set());
@@ -95,11 +95,6 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
         return filteredAndSortedProducts.slice(startIndex, startIndex + itemsPerPage);
     }, [filteredAndSortedProducts, currentPage, itemsPerPage]);
 
-    useEffect(() => {
-        // Revient à la page 1 si on change les filtres
-        setCurrentPage(1);
-    }, [filterName, filterCategory, filterActivity]);
-
     // Sélectionne automatiquement tout produit qui vient d'apparaître dans `products` (ajout d'un
     // item, duplicata, ou restauration via "Annuler" une suppression) — détecté par comparaison
     // d'ids avec le rendu précédent, peu importe à quel index il atterrit (un ajout va en tête,
@@ -116,7 +111,7 @@ export const ProductInfo = ({ onNewProduct, onDeleteProduct, onDuplicateProduct,
             setMobileShowDetail(true);
         }
         prevProductIdsRef.current = currentIds;
-    }, [products, setSelectedProductId]);
+    }, [products, setSelectedProductId, setCurrentPage]);
 
     // Garde la sélection valide : si le produit sélectionné disparaît de la liste filtrée/triée
     // actuelle (supprimé, ou simplement masqué par un filtre), retombe sur le premier produit

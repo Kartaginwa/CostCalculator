@@ -2,10 +2,10 @@
 // Fonctions pures, extraites de SummaryTable.jsx le 22/11 (phase 1 de la refonte de l'export PDF) : l'écran et le
 // rapport PDF tracent les MÊMES variables. Les clés (libellés français) sont celles des `dataKey` des graphiques.
 // Donnée absente = null (un trou dans la ligne), jamais forcée à 0.
-import { parseLocaleNumber } from '../utils.js';
+import { parseLocaleNumber, snapshotDateLabel } from '../utils.js';
 import { computeSnapshotBreakEven, computeSnapshotMenuKpis } from './analysisData.js';
 
-const pointName = (point) => new Date(point.timestamp).toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'medium' });
+const pointName = (point) => snapshotDateLabel(point.timestamp);
 
 /** Évolution globale : marge brute, coût matière, coût emballage, coût main-d'œuvre (moyennes pondérées par le revenu, en %), point mort. */
 export function computeGlobalSeries(points = []) {

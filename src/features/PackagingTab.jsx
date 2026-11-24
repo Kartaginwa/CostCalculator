@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import { useTouched, focusSoon, useSessionState } from '../ui-utils.jsx';
+import { useTouched, focusSoon, useSessionState, useStateResetOnChange } from '../ui-utils.jsx';
 import { ArrowUpDown, Copy, PlusCircle, Trash2, Upload } from 'lucide-react';
 import { todayLocalISO, landedUnitPrice, parseLocaleNumber, generateSlug, formatCurrency, formatUnitPrice, isNotEmpty, isValidNumber, isInvalidPercentage, CONVERSION_FACTORS, filterActiveUnits, unitLabel, areUnitsCompatible } from '../utils.js';
 import { Tooltip, ValidationMessage, Pagination, EmptyState } from '../components/common.jsx';
@@ -23,7 +23,7 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
     const [filterProvider, setFilterProvider] = useSessionState('packaging.filterProvider', 'all');
     const [sortConfig, setSortConfig] = useSessionState('packaging.sortConfig', { key: 'name', direction: 'ascending' });
     const [newlyAddedId, setNewlyAddedId] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useStateResetOnChange(1, [filterName, filterProvider, itemsPerPage]); // revient à la page 1 si un filtre change
     const [isSortDisabled, setIsSortDisabled] = useState(false);
     const [comparisonPackaging, setComparisonPackaging] = useSessionState('packaging.comparison', '');
 
@@ -80,10 +80,6 @@ export const PackagingTab = ({ itemsPerPage, onItemsPerPageChange }) => {
 
         return items;
     }, [basePackaging, filterName, filterProvider, sortConfig, isSortDisabled]);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [filterName, filterProvider, itemsPerPage]);
 
     useEffect(() => {
         if (!isSortDisabled) return;

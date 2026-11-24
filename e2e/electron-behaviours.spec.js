@@ -25,6 +25,19 @@ for (const mode of MODES) {
     test.describe(mode.name, () => {
         test.skip(!mode.available(), `${mode.name} absente : lancer « npm run build » (et « npx electron-builder --win --dir »)`);
 
+        test("La version d'Electron qui tourne est celle installée (jamais un ancien exécutable)", async () => {
+            test.setTimeout(60000);
+            const installed = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'node_modules', 'electron', 'package.json'), 'utf8')).version;
+            const app = await launch(mode);
+            try {
+                const versions = await app.evaluate(() => ({ electron: process.versions.electron, chrome: process.versions.chrome, node: process.versions.node }));
+                console.log(`VERSIONS (${mode.name}) : Electron ${versions.electron}, Chromium ${versions.chrome}, Node ${versions.node}`);
+                expect(versions.electron).toBe(installed);
+            } finally {
+                await app.evaluate(({ app: electronApp }) => electronApp.exit(0)).catch(() => {});
+            }
+        });
+
         test('Fermeture avec des modifications : « Rester » garde la fenêtre, « Quitter » la ferme', async () => {
             test.setTimeout(120000);
             const app = await launch(mode);
